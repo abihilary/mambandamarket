@@ -57,17 +57,95 @@ class ListingsRepository {
   }
 
   Future<List<Category>> categories() async {
-    // Categories are seeded reference data, read straight from Supabase under
-    // RLS (public read) — no need for an API round-trip.
-    final rows = await Supabase.instance.client
-        .from('categories')
-        .select('slug,label,icon,sort_order')
-        .order('sort_order');
-    return (rows as List)
+    // Served by the API rather than read from Supabase directly, so the client
+    // depends on one contract instead of also knowing the table shape.
+    final json = await _api.get('/categories') as Map<String, dynamic>;
+    return (json['items'] as List? ?? [])
         .whereType<Map>()
         .map((m) => Category.fromJson(m.cast<String, dynamic>()))
         .toList();
   }
+
+  /// "More like this" for the detail screen — same seller first, then category.
+  Future<List<Listing>> related(String id, {int limit = 8}) async {
+    final json = await _api.get('/listings/$id/related', query: {'limit': limit})
+        as Map<String, dynamic>;
+    return (json['items'] as List? ?? [])
+        .whereType<Map>()
+        .map((m) => Listing.fromJson(m.cast<String, dynamic>()))
+        .toList();
+  }
+
+  /// The seller's own feed — includes sold and hidden items, and carries
+  /// `inquiry_count` per listing for the hub's "N chats" line.
+  Future<List<Listing>> sellerListings(
+    String sellerId, {
+    String status = 'all',
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final json = await _api.get('/sellers/$sellerId/listings',
+            query: {'status': status, 'limit': limit, 'offset': offset})
+        as Map<String, dynamic>;
+    return (json['items'] as List? ?? [])
+        .whereType<Map>()
+        .map((m) => Listing.fromJson(m.cast<String, dynamic>()))
+        .toList();
+  }
+
+  Future<({List<Sale> items, int totalCents})> sales(String sellerId,
+      {int limit = 50}) async {
+    final json = await _api.get('/sellers/$sellerId/sales', query: {'limit': limit})
+        as Map<String, dynamic>;
+    return (
+      items: (json['items'] as List? ?? [])
+          .whereType<Map>()
+          .map((m) => Sale.fromJson(m.cast<String, dynamic>()))
+          .toList(),
+      totalCents: (json['total_cents'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  // ── Images on an existing listing ──────────────────────────────────────────
+
+  Future<List<ListingImage>> images(String listingId) async {
+    final json = await _api.get('/listings/$listingId/images') as Map<String, dynamic>;
+    return (json['items'] as List? ?? [])
+        .whereType<Map>()
+        .map((m) => ListingImage.fromJson(m.cast<String, dynamic>()))
+        .toList();
+  }
+
+  /// Appends after the current last image; the server enforces the 12 cap.
+  Future<List<ListingImage>> addImages(String listingId, List<String> storagePaths) async {
+    final json = await _api.post('/listings/$listingId/images', {
+      'images': [for (final p in storagePaths) {'storage_path': p}],
+    }) as Map<String, dynamic>;
+    return (json['items'] as List? ?? [])
+        .whereType<Map>()
+        .map((m) => ListingImage.fromJson(m.cast<String, dynamic>()))
+        .toList();
+  }
+
+  Future<void> removeImage(String listingId, String imageId) =>
+      _api.delete('/listings/$listingId/images/$imageId');
+
+  /// [orderedIds] must list every image on the listing exactly once.
+  Future<void> reorderImages(String listingId, List<String> orderedIds) =>
+      _api.patch('/listings/$listingId/images', {'order': orderedIds});
+
+  // ── Seller reputation ──────────────────────────────────────────────────────
+
+  Future<ReviewSummary> sellerReviews(String sellerId) async {
+    final json = await _api.get('/sellers/$sellerId/reviews') as Map<String, dynamic>;
+    return ReviewSummary.fromJson(json);
+  }
+
+  Future<void> reviewSeller(String sellerId, {required int rating, String? comment}) =>
+      _api.post('/sellers/$sellerId/reviews', {
+        'rating': rating,
+        if (comment != null && comment.isNotEmpty) 'comment': comment,
+      });
 
   /// Publish. Throws [ApiException] with `isListingLimit` when the plan quota
   /// is exhausted — surface that as an upgrade prompt.
@@ -126,11 +204,19 @@ class ListingsRepository {
   }
 
   /// Upload an image straight to Supabase Storage using a short-lived signed
-  /// URL from the API, and return the storage path to attach to a listing.
-  Future<String> uploadImage(File file, {String? listingId}) async {
+  /// URL from the API, and return the storage path.
+  ///
+  /// [bucket] selects the destination — listing photos, avatars, or store
+  /// banners/logos. The server namespaces every path under the caller's user
+  /// id, so one user can never write into another's folder.
+  Future<String> uploadImage(
+    File file, {
+    String? listingId,
+    String bucket = 'listing-images',
+  }) async {
     final ext = file.path.split('.').last.toLowerCase();
     final signed = await _api.post('/uploads/sign', {
-      'bucket': 'listing-images',
+      'bucket': bucket,
       'ext': ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic'].contains(ext)
           ? ext
           : 'jpg',
@@ -139,7 +225,7 @@ class ListingsRepository {
 
     final path = signed['path'].toString();
     await Supabase.instance.client.storage
-        .from('listing-images')
+        .from(bucket)
         .uploadToSignedUrl(path, signed['token'].toString(), file);
     return path;
   }
@@ -197,5 +283,164 @@ class FavoritesRepository {
       favoriteIds.value = reverted;
       rethrow;
     }
+  }
+}
+
+/// Business storefronts.
+class StoresRepository {
+  StoresRepository._();
+  static final StoresRepository instance = StoresRepository._();
+
+  final _api = ApiClient.instance;
+
+  /// The caller's own store, or null when they haven't opened one.
+  ///
+  /// The API deliberately returns null rather than 404 so onboarding can tell
+  /// "no store yet" apart from a failure.
+  Future<Store?> mine() async {
+    final json = await _api.get('/stores/mine') as Map<String, dynamic>;
+    final s = (json['store'] as Map?)?.cast<String, dynamic>();
+    return s == null ? null : Store.fromJson(s);
+  }
+
+  Future<Store> create({
+    required String shopName,
+    String? description,
+    String? bannerUrl,
+    String? logoUrl,
+    String? supportPhone,
+  }) async {
+    final json = await _api.post('/stores', {
+      'shop_name': shopName,
+      if (description != null && description.isNotEmpty) 'description': description,
+      if (bannerUrl != null) 'banner_url': bannerUrl,
+      if (logoUrl != null) 'logo_url': logoUrl,
+      if (supportPhone != null && supportPhone.isNotEmpty) 'support_phone': supportPhone,
+    }) as Map<String, dynamic>;
+    return Store.fromJson((json['store'] as Map).cast<String, dynamic>());
+  }
+
+  Future<Store> update(String id, Map<String, dynamic> fields) async {
+    final json = await _api.patch('/stores/$id', fields) as Map<String, dynamic>;
+    return Store.fromJson((json['store'] as Map).cast<String, dynamic>());
+  }
+
+  /// Public storefront: the store plus its active listings.
+  Future<({Store store, List<Listing> listings})> publicStore(String id) async {
+    final json = await _api.get('/stores/$id') as Map<String, dynamic>;
+    return (
+      store: Store.fromJson((json['store'] as Map).cast<String, dynamic>()),
+      listings: (json['listings'] as List? ?? [])
+          .whereType<Map>()
+          .map((m) => Listing.fromJson(m.cast<String, dynamic>()))
+          .toList(),
+    );
+  }
+
+  Future<List<Review>> reviews(String storeId) async {
+    final json = await _api.get('/stores/$storeId/reviews') as Map<String, dynamic>;
+    return (json['reviews'] as List? ?? [])
+        .whereType<Map>()
+        .map((m) => Review.fromJson(m.cast<String, dynamic>()))
+        .toList();
+  }
+
+  Future<void> review(String storeId, {required int rating, String? comment}) =>
+      _api.post('/stores/$storeId/reviews', {
+        'rating': rating,
+        if (comment != null && comment.isNotEmpty) 'comment': comment,
+      });
+}
+
+/// Chat threads and message history.
+///
+/// Real-time delivery arrives later with the Socket.IO service; until then the
+/// room screen polls. The shapes are identical either way, so swapping in live
+/// push is a transport change, not a data change.
+class ChatRepository {
+  ChatRepository._();
+  static final ChatRepository instance = ChatRepository._();
+
+  final _api = ApiClient.instance;
+
+  /// Inbox threads plus the badge total, kept here so the shell can watch it.
+  final ValueNotifier<List<Conversation>> threads = ValueNotifier([]);
+  final ValueNotifier<int> totalUnread = ValueNotifier(0);
+
+  Future<List<Conversation>> refresh() async {
+    if (AuthService.instance.session == null) {
+      threads.value = [];
+      totalUnread.value = 0;
+      return [];
+    }
+    final json = await _api.get('/conversations') as Map<String, dynamic>;
+    final items = (json['items'] as List? ?? [])
+        .whereType<Map>()
+        .map((m) => Conversation.fromJson(m.cast<String, dynamic>()))
+        .toList();
+    threads.value = items;
+    totalUnread.value = (json['total_unread'] as num?)?.toInt() ?? 0;
+    return items;
+  }
+
+  /// Open (or reuse) the thread for a listing. Buyer-side action.
+  Future<Conversation> start(String listingId) async {
+    final json = await _api.post('/conversations', {'listing_id': listingId})
+        as Map<String, dynamic>;
+    return Conversation.fromJson((json['conversation'] as Map).cast<String, dynamic>());
+  }
+
+  Future<Conversation> thread(String id) async {
+    final json = await _api.get('/conversations/$id') as Map<String, dynamic>;
+    return Conversation.fromJson((json['conversation'] as Map).cast<String, dynamic>());
+  }
+
+  /// Message history, oldest first. Pass [before] to page further back.
+  Future<({List<Message> items, String? nextBefore})> messages(
+    String conversationId, {
+    int limit = 50,
+    String? before,
+  }) async {
+    final json = await _api.get('/conversations/$conversationId/messages',
+        query: {'limit': limit, 'before': before}) as Map<String, dynamic>;
+    return (
+      items: (json['items'] as List? ?? [])
+          .whereType<Map>()
+          .map((m) => Message.fromJson(m.cast<String, dynamic>()))
+          .toList(),
+      nextBefore: ((json['page'] as Map?)?['next_before'])?.toString(),
+    );
+  }
+
+  Future<Message> send(String conversationId, {String? body, String? attachmentPath}) async {
+    final json = await _api.post('/conversations/$conversationId/messages', {
+      if (body != null && body.isNotEmpty) 'body': body,
+      if (attachmentPath != null) 'attachment_path': attachmentPath,
+    }) as Map<String, dynamic>;
+    return Message.fromJson((json['message'] as Map).cast<String, dynamic>());
+  }
+
+  /// Clears the caller's unread and stamps read_at on the other side.
+  Future<void> markRead(String conversationId) async {
+    await _api.post('/conversations/$conversationId/read');
+    // Reflect it locally so the badge updates without a full refresh.
+    threads.value = [
+      for (final t in threads.value)
+        if (t.id == conversationId)
+          Conversation(
+            id: t.id,
+            listingId: t.listingId,
+            buyerId: t.buyerId,
+            sellerId: t.sellerId,
+            role: t.role,
+            unread: 0,
+            lastMessageAt: t.lastMessageAt,
+            counterparty: t.counterparty,
+            listing: t.listing,
+          )
+        else
+          t,
+    ];
+    totalUnread.value = threads.value.fold(0, (s, t) => s + t.unread);
   }
 }

@@ -1,6 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 
+import '../api/api_client.dart';
+import '../api/auth_service.dart';
+import '../api/models.dart' as api;
+import '../api/repositories.dart';
 import 'CreateListingScreen.dart';
 
 class BusinessDashboardScreen extends StatefulWidget {
@@ -13,52 +17,82 @@ class BusinessDashboardScreen extends StatefulWidget {
 class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
   String _selectedFilter = 'All';
 
-  final List<Map<String, dynamic>> _mockInventory = [
-    {
-      'id': '1',
-      'title': 'Toyota Land Cruiser V8 (2022)',
-      'price': 65000.0,
-      'quantity': 1,
-      'category': 'Auto & Rad',
-      'condition': 'Like New',
-      'hasGuarantee': true,
-      'views': 412,
-      'inStock': true,
-      'images': [
-        'https://picsum.photos/300/200?random=1',
-        'https://picsum.photos/300/200?random=11',
-      ],
-    },
-    {
-      'id': '2',
-      'title': 'MacBook Pro 16" M3 Max (64GB RAM)',
-      'price': 3499.0,
-      'quantity': 3,
-      'category': 'Elektronik',
-      'condition': 'New',
-      'hasGuarantee': true,
-      'views': 890,
-      'inStock': true,
-      'images': [
-        'https://picsum.photos/300/200?random=2',
-        'https://picsum.photos/300/200?random=12',
-      ],
-    },
-    {
-      'id': '3',
-      'title': 'Samsung 65" Neo QLED 4K TV',
-      'price': 1200.0,
-      'quantity': 0,
-      'category': 'Elektronik',
-      'condition': 'Refurbished',
-      'hasGuarantee': true,
-      'views': 230,
-      'inStock': false,
-      'images': [
-        'https://picsum.photos/300/200?random=3',
-      ],
-    },
-  ];
+  // Inventory comes from the seller's own feed, which unlike public browse
+  // includes sold and hidden items and carries per-listing inquiry counts.
+  // Rows are rendered from maps, so API models are adapted rather than
+  // rewriting every widget; `priceLabel` is pre-formatted because listings are
+  // priced in XAF and this screen originally hardcoded a dollar sign.
+  final List<Map<String, dynamic>> _mockInventory = [];
+
+  bool _isLoading = true;
+  String? _error;
+  api.Store? _store;
+  api.SellerDashboard? _stats;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Map<String, dynamic> _adapt(api.Listing l) => {
+        'id': l.id,
+        'title': l.title,
+        'priceLabel': l.displayPrice,
+        'priceCents': l.priceCents,
+        'quantity': l.quantity,
+        'category': l.categorySlug,
+        'category_slug': l.categorySlug,
+        'condition': l.condition ?? '',
+        'hasGuarantee': l.hasGuarantee,
+        'views': l.viewCount,
+        'inStock': l.quantity > 0,
+        'status': l.status,
+        'currency': l.currency,
+        'images': l.imageUrls,
+      };
+
+  /// Currency of the inventory, so revenue isn't rendered with a stray symbol.
+  String get _storeCurrency => _mockInventory.isEmpty
+      ? 'XAF'
+      : (_mockInventory.first['currency'] as String? ?? 'XAF');
+
+  Future<void> _load() async {
+    final uid = AuthService.instance.userId;
+    if (uid == null) {
+      setState(() { _isLoading = false; _error = 'Sign in to manage your store.'; });
+      return;
+    }
+    setState(() { _isLoading = true; _error = null; });
+    try {
+      final results = await Future.wait([
+        ListingsRepository.instance.sellerListings(uid, status: 'all'),
+        ListingsRepository.instance.dashboard(uid),
+        StoresRepository.instance.mine(),
+      ]);
+      if (!mounted) return;
+      final listings = (results[0] as List<api.Listing>)
+          .where((l) => l.status != 'deleted')
+          .toList();
+      setState(() {
+        _mockInventory
+          ..clear()
+          ..addAll(listings.map(_adapt));
+        _stats = results[1] as api.SellerDashboard;
+        _store = results[2] as api.Store?;
+        _isLoading = false;
+      });
+    } on ApiException catch (e) {
+      if (mounted) setState(() { _error = e.message; _isLoading = false; });
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _error = 'Could not load your inventory. Check your connection.';
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   // Open Create Modal
   void _openCreateListingModal() async {
@@ -68,9 +102,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
     );
 
     if (newItem != null) {
-      setState(() {
-        _mockInventory.insert(0, newItem);
-      });
+      await _load();
       _showSnackBar('Listing created successfully!');
     }
   }
@@ -85,9 +117,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
     );
 
     if (updatedItem != null) {
-      setState(() {
-        _mockInventory[index] = updatedItem;
-      });
+      await _load();
       _showSnackBar('Item updated successfully!');
     }
   }
@@ -105,12 +135,15 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              setState(() {
-                _mockInventory.removeWhere((item) => item['id'] == id);
-              });
-              _showSnackBar('Item deleted successfully');
+              try {
+                await ListingsRepository.instance.delete(id);
+                await _load();
+                _showSnackBar('Item deleted successfully');
+              } on ApiException catch (e) {
+                _showSnackBar(e.message);
+              }
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),
@@ -242,15 +275,48 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: displayedList.length,
-              itemBuilder: (context, index) {
-                final item = displayedList[index];
-                return _buildInventoryCard(item, index, theme);
-              },
-            ),
+            if (_isLoading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 48),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_error != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 32),
+                child: Column(
+                  children: [
+                    const Icon(Icons.cloud_off, size: 44, color: Colors.grey),
+                    const SizedBox(height: 12),
+                    Text(_error!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.grey)),
+                    const SizedBox(height: 16),
+                    OutlinedButton(onPressed: _load, child: const Text('Try again')),
+                  ],
+                ),
+              )
+            else if (displayedList.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 40),
+                child: Center(
+                  child: Text(
+                    _selectedFilter == 'All'
+                        ? 'No items in your inventory yet.'
+                        : 'Nothing matches "$_selectedFilter".',
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                ),
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: displayedList.length,
+                itemBuilder: (context, index) {
+                  final item = displayedList[index];
+                  return _buildInventoryCard(item, index, theme);
+                },
+              ),
             const SizedBox(height: 80),
           ],
         ),
@@ -302,20 +368,27 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                         children: [
                           Row(
                             children: [
-                              const Text(
-                                'Apex Auto & Tech Store',
-                                style: TextStyle(
+                              Text(
+                                _store?.shopName ?? 'Your store',
+                                style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
                                 ),
                               ),
                               const SizedBox(width: 4),
-                              Icon(Icons.verified, size: 16, color: theme.primaryColor),
+                              // Only badge stores the backend actually marked verified.
+                              if (_store?.isVerified == true)
+                                Icon(Icons.verified, size: 16, color: theme.primaryColor),
                             ],
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Verified Merchant • 4.9 ★ (128 Reviews)',
+                            _store == null
+                                ? 'Set up your storefront'
+                                : '${_store!.isVerified ? "Verified Merchant • " : ""}'
+                                    '${_store!.ratingAvg.toStringAsFixed(1)} ★ '
+                                    '(${_store!.ratingCount} '
+                                    '${_store!.ratingCount == 1 ? "review" : "reviews"})',
                             style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                           ),
                         ],
@@ -368,11 +441,29 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          _buildStatCard(title: 'Total Revenue', value: '\$84,250', icon: Icons.payments_outlined, color: Colors.green),
+          _buildStatCard(
+              title: 'Total Revenue',
+              value: api.formatPrice(_stats?.earningsCents ?? 0, currency: _storeCurrency),
+              icon: Icons.payments_outlined,
+              color: Colors.green),
           const SizedBox(width: 12),
-          _buildStatCard(title: 'Items Sold', value: '42 Units', icon: Icons.shopping_bag_outlined, color: Colors.blue),
+          _buildStatCard(
+              title: 'Items Sold',
+              value: '${_stats?.soldListings ?? 0} Units',
+              icon: Icons.shopping_bag_outlined,
+              color: Colors.blue),
           const SizedBox(width: 12),
-          _buildStatCard(title: 'Store Visits', value: '3,840', icon: Icons.visibility_outlined, color: Colors.orange),
+          _buildStatCard(
+              title: 'Store Visits',
+              value: '${_stats?.totalViews ?? 0}',
+              icon: Icons.visibility_outlined,
+              color: Colors.orange),
+          const SizedBox(width: 12),
+          _buildStatCard(
+              title: 'Inquiries',
+              value: '${_stats?.inquiries ?? 0}',
+              icon: Icons.chat_bubble_outline,
+              color: Colors.deepPurple),
         ],
       ),
     );
@@ -471,7 +562,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '\$${item['price'].toStringAsFixed(2)}',
+                    item['priceLabel'] as String,
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: theme.primaryColor),
                   ),
                   const SizedBox(height: 6),

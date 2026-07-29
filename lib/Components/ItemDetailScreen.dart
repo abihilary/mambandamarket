@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+
 import '../Service/ChatRoomScreen.dart';
-import '../Service/ChatService.dart';
+import '../api/api_client.dart';
+import '../api/auth_service.dart';
+import '../api/models.dart' as api;
+import '../api/repositories.dart';
 import 'ItemCard.dart';
 
 class ItemDetailScreen extends StatefulWidget {
@@ -9,12 +13,18 @@ class ItemDetailScreen extends StatefulWidget {
   final String imageUrl;
   final List<String>? images; // Optional list for multi-image gallery
 
+  /// Backing listing id. Required for anything that touches the server —
+  /// related items, favouriting, and starting a conversation — so those
+  /// actions stay disabled when the screen is opened without one.
+  final String? listingId;
+
   const ItemDetailScreen({
     Key? key,
     required this.title,
     required this.price,
     required this.imageUrl,
     this.images,
+    this.listingId,
   }) : super(key: key);
 
   @override
@@ -29,34 +39,82 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   // List of images (defaults to widget.imageUrl + generated mock samples if empty)
   late List<String> _imageList;
 
-  // Related shop items mock data
-  final List<Map<String, String>> _relatedItems = [
-    {
-      "title": "4x Winterreifen BMW Z4 G29",
-      "price": "650 €",
-      "imageUrl": "https://picsum.photos/300/300?random=21",
-    },
-    {
-      "title": "Original BMW M Performance Lenkrad",
-      "price": "420 €",
-      "imageUrl": "https://picsum.photos/300/300?random=22",
-    },
-    {
-      "title": "Brembo Bremsanlage Vorn",
-      "price": "890 €",
-      "imageUrl": "https://picsum.photos/300/300?random=23",
-    },
-    {
-      "title": "BMW M Auspuffanlage Klappe",
-      "price": "1.100 €",
-      "imageUrl": "https://picsum.photos/300/300?random=24",
-    },
-  ];
+  // "More like this" — same seller first, topped up from the same category.
+  List<api.Listing> _relatedItems = [];
+  bool _startingChat = false;
+
+  Future<void> _loadRelated() async {
+    final id = widget.listingId;
+    if (id == null) return;
+    try {
+      final items = await ListingsRepository.instance.related(id);
+      if (mounted) setState(() => _relatedItems = items);
+    } catch (_) {
+      // Non-fatal: the row just stays empty.
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final id = widget.listingId;
+    if (id == null) return;
+    try {
+      await FavoritesRepository.instance.toggle(id);
+      if (mounted) {
+        setState(() =>
+            _isFavorite = FavoritesRepository.instance.isFavorite(id));
+      }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(
+            e.isUnauthorized ? 'Sign in to save items.' : e.message)),
+      );
+    }
+  }
+
+  /// Opens (or reuses) the thread for this listing, then shows the room.
+  Future<void> _contactSeller() async {
+    final id = widget.listingId;
+    if (id == null) return;
+    if (AuthService.instance.session == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sign in to message the seller.')),
+      );
+      return;
+    }
+    setState(() => _startingChat = true);
+    try {
+      final conversation = await ChatRepository.instance.start(id);
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChatRoomScreen(conversation: conversation),
+        ),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          // The API rejects messaging yourself with a specific code.
+          content: Text(e.code == 'own_listing'
+              ? 'This is your own listing.'
+              : e.message),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _startingChat = false);
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
+    _isFavorite = widget.listingId != null &&
+        FavoritesRepository.instance.isFavorite(widget.listingId!);
+    _loadRelated();
 
     // Populate gallery slider list
     _imageList = widget.images ?? [
@@ -100,9 +158,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     color: _isFavorite ? Colors.red : Colors.white,
                     size: 20,
                   ),
-                  onPressed: () {
-                    setState(() => _isFavorite = !_isFavorite);
-                  },
+                  // Persists through the API; local state follows the server.
+                  onPressed: widget.listingId == null ? null : _toggleFavorite,
                 ),
               ),
               const SizedBox(width: 8),
@@ -263,18 +320,19 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     (context, index) {
                   final item = _relatedItems[index];
                   return ItemCard(
-                    imageUrl: item["imageUrl"]!,
-                    title: item["title"]!,
-                    price: item["price"]!,
+                    imageUrl: item.primaryImageUrl,
+                    title: item.title,
+                    price: item.displayPrice,
                     onTap: () {
-                      // Navigate to another ItemDetailScreen when tapped
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => ItemDetailScreen(
-                            title: item["title"]!,
-                            price: item["price"]!,
-                            imageUrl: item["imageUrl"]!,
+                            title: item.title,
+                            price: item.displayPrice,
+                            imageUrl: item.primaryImageUrl,
+                            images: item.imageUrls,
+                            listingId: item.id,
                           ),
                         ),
                       );
@@ -302,24 +360,15 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
               elevation: 2,
             ),
-            onPressed: () {
-              // 1. Initialize or fetch existing conversation session
-              final conversation = ChatService().startOrGetChat(
-                itemTitle: widget.title,
-                itemPrice: widget.price,
-                itemImageUrl: widget.imageUrl,
-                sellerName: 'Mambanda Seller', // Seller name
-              );
-
-              // 2. Open Chat Room
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ChatRoomScreen(conversation: conversation),
-                ),
-              );
-            },
-            icon: const Icon(Icons.chat_bubble_outline),
+            onPressed:
+                (widget.listingId == null || _startingChat) ? null : _contactSeller,
+            icon: _startingChat
+                ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
+                : const Icon(Icons.chat_bubble_outline),
             label: const Text(
               "Nachricht",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),

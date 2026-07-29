@@ -128,6 +128,9 @@ class _HomeScreenState extends State<HomeScreen> {
           title: listing.title,
           price: listing.displayPrice,
           imageUrl: listing.primaryImageUrl,
+          images: listing.imageUrls,
+          // Needed for related items, favouriting and messaging the seller.
+          listingId: listing.id,
         ),
       ),
     );

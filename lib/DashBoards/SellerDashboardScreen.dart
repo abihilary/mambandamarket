@@ -1,6 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+
 import '../Screens/IndividualSellerOnboardingScreen.dart';
+import '../api/api_client.dart';
+import '../api/auth_service.dart';
+import '../api/models.dart' as api;
+import '../api/repositories.dart';
 import 'CreateListingScreen.dart';
 
 
@@ -15,57 +20,23 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  final List<Map<String, dynamic>> _activeItems = [
-    {
-      'id': '101',
-      'title': 'iPhone Pro (128GB) - Graphite',
-      'price': 520.0,
-      'category': 'Elektronik',
-      'condition': 'Used',
-      'hasGuarantee': false,
-      'views': 128,
-      'inquiries': 5,
-      'datePosted': '2 days ago',
-      'images': [
-        'https://picsum.photos/300/200?random=11',
-        'https://picsum.photos/300/200?random=110',
-      ],
-    },
-    {
-      'id': '102',
-      'title': 'Mountain Bike (27.5" Wheels)',
-      'price': 180.0,
-      'category': 'Sport',
-      'condition': 'Like New',
-      'hasGuarantee': false,
-      'views': 45,
-      'inquiries': 2,
-      'datePosted': '5 days ago',
-      'images': [
-        'https://picsum.photos/300/200?random=12',
-      ],
-    },
-  ];
+  // The render code below is map-driven, so the API models are adapted into
+  // that shape rather than rewriting every row widget. Prices arrive
+  // pre-formatted (`priceLabel`) because listings are priced in XAF and the
+  // original UI hardcoded a dollar sign.
+  final List<Map<String, dynamic>> _activeItems = [];
+  final List<Map<String, dynamic>> _soldItems = [];
 
-  final List<Map<String, dynamic>> _soldItems = [
-    {
-      'id': '103',
-      'title': 'Sony WH-1000XM4 Headphones',
-      'price': 140.0,
-      'category': 'Elektronik',
-      'condition': 'Used',
-      'soldDate': 'Jul 18, 2026',
-      'buyerName': 'Sarah M.',
-      'images': [
-        'https://picsum.photos/300/200?random=13',
-      ],
-    },
-  ];
+  bool _isLoading = true;
+  String? _error;
+  int _earnedCents = 0;
+  api.SellerDashboard? _stats;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _load();
   }
 
   @override
@@ -74,10 +45,88 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     super.dispose();
   }
 
-  // Calculate total earnings dynamically from sold items
-  double get _totalEarned {
-    return _soldItems.fold(0.0, (sum, item) => sum + (item['price'] as double? ?? 0.0));
+  Map<String, dynamic> _fromListing(api.Listing l) => {
+        'id': l.id,
+        'title': l.title,
+        'priceLabel': l.displayPrice,
+        'category': l.categorySlug,
+        'condition': l.condition ?? '',
+        'hasGuarantee': l.hasGuarantee,
+        'views': l.viewCount,
+        'inquiries': l.inquiryCount,
+        'quantity': l.quantity,
+        'images': l.imageUrls,
+        'priceCents': l.priceCents,
+      };
+
+  Map<String, dynamic> _fromSale(api.Sale s) => {
+        'id': s.listing?.id ?? s.id,
+        'saleId': s.id,
+        'title': s.listing?.title ?? 'Article vendu',
+        'priceLabel': s.displayPrice,
+        'category': s.listing?.categorySlug ?? '',
+        'condition': '',
+        'soldDate': s.soldAt == null
+            ? ''
+            : '${s.soldAt!.day}/${s.soldAt!.month}/${s.soldAt!.year}',
+        'buyerName': s.buyer?.displayName ?? 'Acheteur',
+        'images': s.listing?.imageUrls ?? const <String>[],
+      };
+
+  Future<void> _load() async {
+    final uid = AuthService.instance.userId;
+    if (uid == null) {
+      setState(() {
+        _isLoading = false;
+        _error = 'Sign in to view your seller hub.';
+      });
+      return;
+    }
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final repo = ListingsRepository.instance;
+      final results = await Future.wait([
+        repo.sellerListings(uid, status: 'active'),
+        repo.sales(uid),
+        repo.dashboard(uid),
+      ]);
+      if (!mounted) return;
+      final listings = results[0] as List<api.Listing>;
+      final sales = results[1] as ({List<api.Sale> items, int totalCents});
+      setState(() {
+        _activeItems
+          ..clear()
+          ..addAll(listings.map(_fromListing));
+        _soldItems
+          ..clear()
+          ..addAll(sales.items.map(_fromSale));
+        _earnedCents = sales.totalCents;
+        _earnedCurrency = sales.items.isNotEmpty
+            ? (sales.items.first.listing?.currency ?? 'XAF')
+            : (listings.isNotEmpty ? listings.first.currency : 'XAF');
+        _stats = results[2] as api.SellerDashboard;
+        _isLoading = false;
+      });
+    } on ApiException catch (e) {
+      if (mounted) setState(() { _error = e.message; _isLoading = false; });
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _error = 'Could not load your listings. Check your connection.';
+          _isLoading = false;
+        });
+      }
+    }
   }
+
+  /// Earnings in the currency the items were actually priced in, rather than
+  /// the dollar sign the template hardcoded.
+  String _earnedCurrency = 'XAF';
+  String get _totalEarnedLabel =>
+      api.formatPrice(_earnedCents, currency: _earnedCurrency);
 
   // Helper method to display either Network or File images seamlessly
   Widget _buildImageWidget(String path) {
@@ -110,41 +159,38 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     }
   }
 
-  // Open CreateListingScreen & receive newly created item
+  // Open CreateListingScreen; it publishes through the API itself, so we just
+  // reload to pick the new item up with its server-assigned fields.
   void _openCreateListingModal() async {
-    final newItem = await Navigator.push<Map<String, dynamic>>(
+    final created = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const CreateListingScreen()),
     );
 
-    if (newItem != null) {
-      setState(() {
-        _activeItems.insert(0, newItem);
-      });
+    if (created != null) {
+      await _load();
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Item listed for sale successfully!')),
       );
     }
   }
 
-  // Handle Mark as Sold
-  void _markItemAsSold(Map<String, dynamic> item) {
-    setState(() {
-      _activeItems.removeWhere((element) => element['id'] == item['id']);
-
-      // Update item metadata for sold status
-      final soldItem = Map<String, dynamic>.from(item);
-      soldItem['soldDate'] = 'Today';
-      soldItem['buyerName'] = 'Marketplace Buyer';
-
-      _soldItems.insert(0, soldItem);
-    });
-
-    // TODO: Send backend update: API request to update item status to "SOLD" in DB
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('"${item['title']}" marked as sold!')),
-    );
+  Future<void> _markItemAsSold(Map<String, dynamic> item) async {
+    try {
+      await ListingsRepository.instance
+          .markSold(item['id'] as String, soldPriceCents: item['priceCents'] as int?);
+      await _load();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('"${item['title']}" marked as sold!')),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: Colors.red.shade700),
+      );
+    }
   }
 
   // Handle Edit Action
@@ -172,21 +218,25 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              setState(() {
-                if (isActive) {
-                  _activeItems.removeWhere((e) => e['id'] == item['id']);
-                } else {
-                  _soldItems.removeWhere((e) => e['id'] == item['id']);
-                }
-              });
-
-              // TODO: Send backend update: API request to DELETE item from DB
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Listing deleted.')),
-              );
+              try {
+                // Soft-delete server-side, then reload so the tabs reflect
+                // what the server actually holds.
+                await ListingsRepository.instance.delete(item['id'] as String);
+                await _load();
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Listing deleted.')),
+                );
+              } on ApiException catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                      content: Text(e.message),
+                      backgroundColor: Colors.red.shade700),
+                );
+              }
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
@@ -259,9 +309,36 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                   Expanded(
                     child: _buildStatTile(
                       title: 'Total Earned',
-                      value: '\$${_totalEarned.toStringAsFixed(2)}',
+                      value: _totalEarnedLabel,
                       icon: Icons.account_balance_wallet_outlined,
                       color: Colors.green,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Reach figures come from the dashboard endpoint, which aggregates
+            // server-side rather than summing whatever page we happen to hold.
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildStatTile(
+                      title: 'Total Views',
+                      value: '${_stats?.totalViews ?? 0}',
+                      icon: Icons.visibility_outlined,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildStatTile(
+                      title: 'Inquiries',
+                      value: '${_stats?.inquiries ?? 0}',
+                      icon: Icons.chat_bubble_outline,
+                      color: Colors.deepPurple,
                     ),
                   ),
                 ],
@@ -430,7 +507,35 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     );
   }
 
+  /// Shared loading/error gate so a slow or failed fetch is distinguishable
+  /// from genuinely having nothing listed.
+  Widget? _gate() {
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.cloud_off, size: 44, color: Colors.grey),
+              const SizedBox(height: 12),
+              Text(_error!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.grey)),
+              const SizedBox(height: 16),
+              OutlinedButton(onPressed: _load, child: const Text('Try again')),
+            ],
+          ),
+        ),
+      );
+    }
+    return null;
+  }
+
   Widget _buildActiveListingsTab(ThemeData theme) {
+    final gate = _gate();
+    if (gate != null) return gate;
     if (_activeItems.isEmpty) {
       return Center(
         child: Text(
@@ -515,7 +620,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '\$${item['price'].toStringAsFixed(2)}',
+                        item['priceLabel'] as String,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
@@ -585,6 +690,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   }
 
   Widget _buildSoldListingsTab(ThemeData theme) {
+    final gate = _gate();
+    if (gate != null) return gate;
     if (_soldItems.isEmpty) {
       return Center(
         child: Text(
@@ -644,7 +751,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '\$${item['price'].toStringAsFixed(2)}',
+                        item['priceLabel'] as String,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,

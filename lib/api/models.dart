@@ -35,6 +35,13 @@ class Listing {
   final List<String> imagePaths;
   final bool isFavorited;
 
+  /// Threads opened about this listing. Only the seller's own listing feed
+  /// (`/sellers/:id/listings`) returns it; elsewhere it stays 0.
+  final int inquiryCount;
+
+  /// Present on the seller's own feed, where sold/hidden items are included.
+  final String status;
+
   const Listing({
     required this.id,
     required this.sellerId,
@@ -53,7 +60,12 @@ class Listing {
     this.distanceMeters,
     this.imagePaths = const [],
     this.isFavorited = false,
+    this.inquiryCount = 0,
+    this.status = 'active',
   });
+
+  bool get isSold => status == 'sold';
+  bool get inStock => quantity > 0;
 
   String get displayPrice => formatPrice(priceCents, currency: currency);
 
@@ -107,6 +119,8 @@ class Listing {
       distanceMeters: (json['distance_m'] as num?)?.toDouble(),
       imagePaths: images,
       isFavorited: json['is_favorited'] == true,
+      inquiryCount: _asInt(json['inquiry_count']),
+      status: json['status']?.toString() ?? 'active',
     );
   }
 }
@@ -217,4 +231,217 @@ class SellerDashboard {
         inquiries: Listing._asInt(json['inquiries']),
         earningsCents: Listing._asInt(json['earnings_cents']),
       );
+}
+
+/// A business storefront (`store_profiles`).
+class Store {
+  final String id;
+  final String ownerId;
+  final String shopName;
+  final String? description;
+  final String? bannerUrl;
+  final String? logoUrl;
+  final String? supportPhone;
+  final bool isVerified;
+  final double ratingAvg;
+  final int ratingCount;
+
+  const Store({
+    required this.id,
+    required this.ownerId,
+    required this.shopName,
+    this.description,
+    this.bannerUrl,
+    this.logoUrl,
+    this.supportPhone,
+    this.isVerified = false,
+    this.ratingAvg = 0,
+    this.ratingCount = 0,
+  });
+
+  factory Store.fromJson(Map<String, dynamic> json) => Store(
+        id: json['id'].toString(),
+        ownerId: json['owner_id']?.toString() ?? '',
+        shopName: json['shop_name']?.toString() ?? '',
+        description: json['description']?.toString(),
+        bannerUrl: json['banner_url']?.toString(),
+        logoUrl: json['logo_url']?.toString(),
+        supportPhone: json['support_phone']?.toString(),
+        isVerified: json['is_verified'] == true,
+        ratingAvg: (json['rating_avg'] as num?)?.toDouble() ?? 0,
+        ratingCount: Listing._asInt(json['rating_count']),
+      );
+}
+
+/// One image attached to a listing.
+class ListingImage {
+  final String id;
+  final String storagePath;
+  final int position;
+
+  const ListingImage({required this.id, required this.storagePath, this.position = 0});
+
+  String get url => AppConfig.storagePublicUrl('listing-images', storagePath);
+
+  factory ListingImage.fromJson(Map<String, dynamic> json) => ListingImage(
+        id: json['id'].toString(),
+        storagePath: json['storage_path']?.toString() ?? '',
+        position: Listing._asInt(json['position']),
+      );
+}
+
+/// A chat thread — one per (listing, buyer).
+///
+/// The API shapes this from the caller's side, so `counterparty` and `unread`
+/// already mean "the other person" and "my unread" without the client having to
+/// work out which side it is on.
+class Conversation {
+  final String id;
+  final String listingId;
+  final String buyerId;
+  final String sellerId;
+  final String role; // buyer | seller
+  final int unread;
+  final DateTime? lastMessageAt;
+  final Profile? counterparty;
+  final Listing? listing;
+
+  const Conversation({
+    required this.id,
+    required this.listingId,
+    required this.buyerId,
+    required this.sellerId,
+    required this.role,
+    this.unread = 0,
+    this.lastMessageAt,
+    this.counterparty,
+    this.listing,
+  });
+
+  factory Conversation.fromJson(Map<String, dynamic> json) {
+    final cp = (json['counterparty'] as Map?)?.cast<String, dynamic>();
+    final l = (json['listing'] as Map?)?.cast<String, dynamic>();
+    return Conversation(
+      id: json['id'].toString(),
+      listingId: json['listing_id']?.toString() ?? '',
+      buyerId: json['buyer_id']?.toString() ?? '',
+      sellerId: json['seller_id']?.toString() ?? '',
+      role: json['role']?.toString() ?? 'buyer',
+      unread: Listing._asInt(json['unread']),
+      lastMessageAt: DateTime.tryParse(json['last_message_at']?.toString() ?? ''),
+      counterparty: cp == null ? null : Profile.fromJson(cp),
+      listing: l == null ? null : Listing.fromJson(l),
+    );
+  }
+}
+
+class Message {
+  final String id;
+  final String conversationId;
+  final String senderId;
+  final String? body;
+  final String? attachmentPath;
+  final DateTime? createdAt;
+  final DateTime? readAt;
+
+  const Message({
+    required this.id,
+    required this.conversationId,
+    required this.senderId,
+    this.body,
+    this.attachmentPath,
+    this.createdAt,
+    this.readAt,
+  });
+
+  bool get isRead => readAt != null;
+  String? get attachmentUrl => attachmentPath == null
+      ? null
+      : AppConfig.storagePublicUrl('chat-attachments', attachmentPath!);
+
+  factory Message.fromJson(Map<String, dynamic> json) => Message(
+        id: json['id'].toString(),
+        conversationId: json['conversation_id']?.toString() ?? '',
+        senderId: json['sender_id']?.toString() ?? '',
+        body: json['body']?.toString(),
+        attachmentPath: json['attachment_path']?.toString(),
+        createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
+        readAt: DateTime.tryParse(json['read_at']?.toString() ?? ''),
+      );
+}
+
+class Review {
+  final String id;
+  final int rating;
+  final String? comment;
+  final DateTime? createdAt;
+  final Profile? author;
+
+  const Review({
+    required this.id,
+    required this.rating,
+    this.comment,
+    this.createdAt,
+    this.author,
+  });
+
+  factory Review.fromJson(Map<String, dynamic> json) {
+    final a = (json['author'] as Map?)?.cast<String, dynamic>();
+    return Review(
+      id: json['id'].toString(),
+      rating: Listing._asInt(json['rating']),
+      comment: json['comment']?.toString(),
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
+      author: a == null ? null : Profile.fromJson(a),
+    );
+  }
+}
+
+/// Aggregate returned alongside a seller's reviews.
+class ReviewSummary {
+  final List<Review> reviews;
+  final double ratingAvg;
+  final int ratingCount;
+
+  const ReviewSummary({this.reviews = const [], this.ratingAvg = 0, this.ratingCount = 0});
+
+  factory ReviewSummary.fromJson(Map<String, dynamic> json) => ReviewSummary(
+        reviews: (json['reviews'] as List? ?? [])
+            .whereType<Map>()
+            .map((m) => Review.fromJson(m.cast<String, dynamic>()))
+            .toList(),
+        ratingAvg: (json['rating_avg'] as num?)?.toDouble() ?? 0,
+        ratingCount: Listing._asInt(json['rating_count']),
+      );
+}
+
+/// A completed sale, as shown in the seller hub's sold tab.
+class Sale {
+  final String id;
+  final int soldPriceCents;
+  final DateTime? soldAt;
+  final Profile? buyer;
+  final Listing? listing;
+
+  const Sale({
+    required this.id,
+    required this.soldPriceCents,
+    this.soldAt,
+    this.buyer,
+    this.listing,
+  });
+
+  String get displayPrice => formatPrice(soldPriceCents);
+
+  factory Sale.fromJson(Map<String, dynamic> json) {
+    final b = (json['buyer'] as Map?)?.cast<String, dynamic>();
+    final l = (json['listing'] as Map?)?.cast<String, dynamic>();
+    return Sale(
+      id: json['id'].toString(),
+      soldPriceCents: Listing._asInt(json['sold_price_cents']),
+      soldAt: DateTime.tryParse(json['sold_at']?.toString() ?? ''),
+      buyer: b == null ? null : Profile.fromJson(b),
+      listing: l == null ? null : Listing.fromJson(l),
+    );
+  }
 }

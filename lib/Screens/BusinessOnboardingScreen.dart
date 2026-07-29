@@ -1,6 +1,11 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+
+import '../api/api_client.dart';
+import '../api/config.dart';
+import '../api/repositories.dart';
 
 class BusinessOnboardingScreen extends StatefulWidget {
   const BusinessOnboardingScreen({super.key});
@@ -105,23 +110,64 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
     );
   }
 
-  void _saveStoreProfile() {
-    if (_formKey.currentState!.validate()) {
-      // Optional validation check for banner/avatar if required
-      /*
-      if (_bannerImage == null || _avatarImage == null) {
-        _showErrorSnackBar('Please upload both a store banner and logo.');
-        return;
-      }
-      */
+  bool _isSaving = false;
 
-      // TODO: Save Store Banner (_bannerImage.path), Avatar (_avatarImage.path), Name, Description to Firestore / Backend
+  /// Uploads a picked image and returns its public URL, or null if there was
+  /// nothing to upload. Banner and logo live in the store-assets bucket.
+  Future<String?> _uploadAsset(XFile? file) async {
+    if (file == null) return null;
+    final path = await ListingsRepository.instance
+        .uploadImage(File(file.path), bucket: 'store-assets');
+    return AppConfig.storagePublicUrl('store-assets', path);
+  }
 
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context);
+  Future<void> _saveStoreProfile() async {
+    if (!_formKey.currentState!.validate() || _isSaving) return;
+    setState(() => _isSaving = true);
+
+    try {
+      final repo = StoresRepository.instance;
+      // Creating twice would 409, so update when a storefront already exists.
+      final existing = await repo.mine();
+
+      final bannerUrl = await _uploadAsset(_bannerImage);
+      final logoUrl = await _uploadAsset(_avatarImage);
+
+      if (existing == null) {
+        await repo.create(
+          shopName: _shopNameController.text.trim(),
+          description: _shopDescriptionController.text.trim(),
+          supportPhone: _phoneController.text.trim(),
+          bannerUrl: bannerUrl,
+          logoUrl: logoUrl,
+        );
       } else {
-        Navigator.pushNamedAndRemoveUntil(context, '/business-dashboard', (route) => false);
+        await repo.update(existing.id, {
+          'shop_name': _shopNameController.text.trim(),
+          'description': _shopDescriptionController.text.trim(),
+          'support_phone': _phoneController.text.trim(),
+          if (bannerUrl != null) 'banner_url': bannerUrl,
+          if (logoUrl != null) 'logo_url': logoUrl,
+        });
       }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Storefront saved.'), backgroundColor: Colors.green),
+      );
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context, true);
+      } else {
+        Navigator.pushNamedAndRemoveUntil(
+            context, '/business-dashboard', (route) => false);
+      }
+    } on ApiException catch (e) {
+      _showErrorSnackBar(e.message);
+    } catch (_) {
+      _showErrorSnackBar('Could not save your storefront. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
