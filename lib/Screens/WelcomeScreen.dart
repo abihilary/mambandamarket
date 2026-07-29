@@ -1,7 +1,52 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 
-class WelcomeScreen extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../api/auth_service.dart';
+
+class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
+
+  @override
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> {
+  StreamSubscription<AuthState>? _authSub;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((state) {
+      if (state.session != null && mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    try {
+      await AuthService.instance.signInWithGoogle();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not start Google sign-in.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,16 +88,7 @@ class WelcomeScreen extends StatelessWidget {
 
               // Primary Action: Google Sign-In
               OutlinedButton.icon(
-                onPressed: () {
-                  // Google OAuth needs a client ID configured in Supabase Auth
-                  // first; until then don't pretend the user is signed in.
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                          'Google sign-in is not configured yet — use email instead.'),
-                    ),
-                  );
-                },
+                onPressed: _isLoading ? null : _handleGoogleSignIn,
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   side: BorderSide(color: Colors.grey.shade300),

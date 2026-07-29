@@ -4,6 +4,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'api_client.dart';
 import 'models.dart';
 
+/// Where Google sends the user back after consent.
+///
+/// On mobile this is a custom scheme handled by the app (registered in the
+/// Android manifest and iOS Info.plist). On web we pass null so Supabase falls
+/// back to the project's configured Site URL.
+const String kOAuthRedirect = 'com.mabanda.mambandamarket://login-callback';
+
 /// Authentication + the signed-in user's profile.
 ///
 /// Supabase Auth issues the JWT; the Core API turns it into a `profiles` row via
@@ -11,10 +18,28 @@ import 'models.dart';
 /// (and later the Chat API), so there is one identity across the whole product.
 class AuthService {
   AuthService._() {
-    _client.auth.onAuthStateChange.listen((state) {
+    _client.auth.onAuthStateChange.listen((state) async {
       final signedIn = state.session != null;
       isSignedIn.value = signedIn;
-      if (!signedIn) me.value = null;
+      if (!signedIn) {
+        me.value = null;
+        return;
+      }
+      // OAuth completes outside our sign-in methods (the user returns via the
+      // deep link), so materialize the profile here — this is the one place
+      // every successful sign-in passes through. Idempotent.
+      if (state.event == AuthChangeEvent.signedIn) {
+        try {
+          await syncProfile(
+            displayName: state.session?.user.userMetadata?['full_name']
+                    as String? ??
+                state.session?.user.userMetadata?['name'] as String?,
+          );
+          await refreshMe();
+        } catch (_) {
+          // Non-fatal: the app still works, /me just retries later.
+        }
+      }
     });
     isSignedIn.value = _client.auth.currentSession != null;
   }
@@ -51,6 +76,21 @@ class AuthService {
       await syncProfile(displayName: displayName, role: role);
       await refreshMe();
     }
+  }
+
+  /// Google sign-in. Opens the consent screen; on mobile the user returns to
+  /// the app through the deep link and `onAuthStateChange` finishes the job
+  /// (profile sync + entitlements), so callers just await this and react to
+  /// the session appearing.
+  ///
+  /// Returns false if the user dismissed the consent screen.
+  Future<bool> signInWithGoogle() async {
+    return _client.auth.signInWithOAuth(
+      OAuthProvider.google,
+      redirectTo: kIsWeb ? null : kOAuthRedirect,
+      authScreenLaunchMode:
+          kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
+    );
   }
 
   Future<void> signOut() async {

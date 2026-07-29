@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -16,9 +18,23 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  StreamSubscription<AuthState>? _authSub;
+
+  @override
+  void initState() {
+    super.initState();
+    // Google sign-in finishes outside this screen (the user comes back via the
+    // deep link), so navigate when the session actually arrives.
+    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((state) {
+      if (state.session != null && mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
+      }
+    });
+  }
 
   @override
   void dispose() {
+    _authSub?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -51,10 +67,19 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleGoogleSignIn() async {
-    // Google OAuth needs a client ID configured in Supabase Auth first
-    // (Milestone 1 follow-up); until then, tell the user rather than
-    // silently dropping them into the app unauthenticated.
-    _showError('Google sign-in is not configured yet — use email and password.');
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    try {
+      // Opens the Google consent screen. On success the session arrives via
+      // onAuthStateChange (see initState), which also syncs the profile.
+      await AuthService.instance.signInWithGoogle();
+    } on AuthException catch (e) {
+      _showError(e.message);
+    } catch (_) {
+      _showError('Could not start Google sign-in. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -157,7 +182,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // Google Sign-In Button
                 OutlinedButton(
-                  onPressed: _handleGoogleSignIn,
+                  onPressed: _isLoading ? null : _handleGoogleSignIn,
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     side: BorderSide(color: Colors.grey.shade300),
