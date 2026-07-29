@@ -58,6 +58,18 @@ android {
                 // working, but such a build must never be distributed.
                 signingConfigs.getByName("debug")
             }
+
+            // R8 strips unused Java/Kotlin classes and unreferenced resources
+            // from the plugin/native side. Flutter and its plugins ship their
+            // own keep rules, so this is safe — but smoke-test a release build
+            // after changing plugins, since shrinking is the usual suspect when
+            // something works in debug and not in release.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }

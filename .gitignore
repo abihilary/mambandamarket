@@ -48,3 +48,7 @@ app.*.map.json
 android/key.properties
 *.jks
 *.keystore
+
+# Obfuscation symbol maps — needed to de-obfuscate crash traces.
+# Keep these archived per release, but not in git.
+/build/symbols/
