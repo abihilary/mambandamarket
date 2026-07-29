@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'api/auth_service.dart';
+import 'api/config.dart';
 
 // Navigation Shell
 
@@ -7,16 +11,26 @@ import 'package:google_fonts/google_fonts.dart';
 // Screens & Dashboards
 import 'package:mambandamarket/DashBoards/CreateListingScreen.dart';
 import 'package:mambandamarket/DashBoards/SellerDashboardScreen.dart';
-import 'package:mambandamarket/Screens/BusinessOnboardingScreen.dart' hide BusinessDashboardScreen;
+import 'package:mambandamarket/Screens/BusinessOnboardingScreen.dart';
 import 'package:mambandamarket/Screens/LoginScreen.dart';
 import 'DashBoards/BusinessDashboardScreen.dart';
 import 'Screens/IndividualSellerOnboardingScreen.dart';
 import 'Screens/RoleSelectionScreen.dart';
 import 'Screens/SplashScreen.dart';
+import 'Screens/SubscriptionScreen.dart';
 import 'Screens/WelcomeScreen.dart';
 import 'Service/MainNavigationShell.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Supabase issues and persists the auth session; the Core API trusts the JWT
+  // it mints. Only the publishable key ships in the client.
+  await Supabase.initialize(
+    url: AppConfig.supabaseUrl,
+    publishableKey: AppConfig.supabasePublishableKey,
+  );
+
   runApp(const MarketplaceApp());
 }
 
@@ -48,6 +62,14 @@ class MarketplaceApp extends StatelessWidget {
         '/business-dashboard': (context) => BusinessDashboardScreen(),
         '/seller-dashboard': (context) => SellerDashboardScreen(),
         '/seller-onboard': (context) => IndividualSellerOnboardingScreen(),
+        // Tier pricing differs for business vs. individual sellers, so pick the
+        // plan set from the signed-in profile's role.
+        '/subscription': (context) => SubscriptionScreen(
+              roleType:
+                  AuthService.instance.me.value?.profile?.isBusiness == true
+                      ? 'business'
+                      : 'buyer_seller',
+            ),
       },
     );
   }

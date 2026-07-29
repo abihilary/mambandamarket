@@ -2,6 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../api/api_client.dart';
+import '../api/models.dart' as api;
+import '../api/repositories.dart';
+
 class CreateListingScreen extends StatefulWidget {
   final Map<String, dynamic>? initialListing;
 
@@ -17,20 +21,14 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
 
-  String _selectedCategory = 'Auto & Rad';
+  /// Category **slug** (the API's identifier), not the display label.
+  String? _selectedCategory;
   String _selectedCondition = 'New';
   bool _hasGuarantee = false;
+  bool _isSubmitting = false;
 
-  final List<String> _categories = [
-    'For You',
-    'RealEstate',
-    'Haus & Garten',
-    'Auto & Rad',
-    'Mode',
-    'Elektronik',
-    'Familie',
-    'Sport',
-  ];
+  /// Loaded from the database so the picker always matches the server.
+  List<api.Category> _categories = [];
 
   final ImagePicker _picker = ImagePicker();
   final List<String> _existingImages = []; // Stores existing network/file image URLs or paths
@@ -39,14 +37,13 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   @override
   void initState() {
     super.initState();
+    _loadCategories();
     if (widget.initialListing != null) {
       final listing = widget.initialListing!;
       _titleController.text = listing['title']?.toString() ?? '';
       _priceController.text = listing['price']?.toString() ?? '';
       _quantityController.text = (listing['quantity'] ?? 1).toString();
-      _selectedCategory = _categories.contains(listing['category'])
-          ? listing['category']
-          : _categories.first;
+      _selectedCategory = listing['category_slug']?.toString();
       _selectedCondition = listing['condition'] ?? 'New';
       _hasGuarantee = listing['hasGuarantee'] ?? false;
 
@@ -55,6 +52,22 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       }
     } else {
       _quantityController.text = '1';
+    }
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final cats = await ListingsRepository.instance.categories();
+      if (!mounted) return;
+      setState(() {
+        _categories = cats;
+        // Keep any pre-selected slug that still exists; otherwise default.
+        if (!cats.any((c) => c.slug == _selectedCategory)) {
+          _selectedCategory = cats.isNotEmpty ? cats.first.slug : null;
+        }
+      });
+    } catch (_) {
+      if (mounted) _showErrorSnackBar('Could not load categories.');
     }
   }
 
@@ -144,34 +157,91 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     );
   }
 
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      final allImagePaths = [
-        ..._existingImages,
-        ..._newImageFiles.map((file) => file.path),
-      ];
+  /// Prompt the user to upgrade when their plan's active-listing quota is full.
+  void _showLimitDialog(String message) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Listing limit reached'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Not now'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.pushNamed(context, '/subscription');
+            },
+            child: const Text('Upgrade plan'),
+          ),
+        ],
+      ),
+    );
+  }
 
-      if (allImagePaths.isEmpty) {
-        _showErrorSnackBar('Please select at least one image.');
-        return;
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate() || _isSubmitting) return;
+
+    if (_selectedCategory == null) {
+      _showErrorSnackBar('Please choose a category.');
+      return;
+    }
+    if (_existingImages.isEmpty && _newImageFiles.isEmpty) {
+      _showErrorSnackBar('Please select at least one image.');
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      // Images go straight to Supabase Storage via short-lived signed URLs —
+      // they never stream through the API.
+      final uploaded = <String>[..._existingImages];
+      for (final file in _newImageFiles) {
+        uploaded.add(
+          await ListingsRepository.instance.uploadImage(File(file.path)),
+        );
       }
 
-      final parsedQuantity = int.tryParse(_quantityController.text) ?? 1;
+      // Money is sent as integer cents; never as a float.
+      final priceCents =
+          ((double.tryParse(_priceController.text.replaceAll(',', '.')) ?? 0) *
+                  100)
+              .round();
+      final quantity = int.tryParse(_quantityController.text) ?? 1;
 
-      final updatedItem = {
-        'id': widget.initialListing?['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
-        'title': _titleController.text,
-        'price': double.tryParse(_priceController.text) ?? 0.0,
-        'quantity': parsedQuantity,
-        'category': _selectedCategory,
-        'condition': _selectedCondition,
-        'hasGuarantee': _hasGuarantee,
-        'views': widget.initialListing?['views'] ?? 0,
-        'inStock': parsedQuantity > 0,
-        'images': allImagePaths,
-      };
+      final listing = await ListingsRepository.instance.create(
+        title: _titleController.text.trim(),
+        priceCents: priceCents,
+        quantity: quantity,
+        categorySlug: _selectedCategory!,
+        condition: _selectedCondition,
+        hasGuarantee: _hasGuarantee,
+        imagePaths: uploaded,
+      );
 
-      Navigator.pop(context, updatedItem);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Listing published.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context, listing);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      if (e.isListingLimit) {
+        _showLimitDialog(e.message);
+      } else if (e.isUnauthorized) {
+        _showErrorSnackBar('Please sign in to publish a listing.');
+      } else {
+        _showErrorSnackBar(e.message);
+      }
+    } catch (_) {
+      if (mounted) _showErrorSnackBar('Could not publish. Check your connection.');
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -286,17 +356,23 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
 
               // CATEGORY SELECTOR
               DropdownButtonFormField<String>(
-                value: _selectedCategory,
+                initialValue: _selectedCategory,
                 decoration: InputDecoration(
                   labelText: 'Select Category',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  hintText: _categories.isEmpty ? 'Loading…' : null,
                 ),
-                items: _categories.map((category) {
-                  return DropdownMenuItem(value: category, child: Text(category));
-                }).toList(),
+                items: _categories
+                    .map((c) => DropdownMenuItem(
+                          value: c.slug,
+                          child: Text(c.label),
+                        ))
+                    .toList(),
                 onChanged: (val) {
                   if (val != null) setState(() => _selectedCategory = val);
                 },
+                validator: (val) =>
+                    val == null ? 'Please choose a category' : null,
               ),
               const SizedBox(height: 16),
 
@@ -380,15 +456,23 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
 
               // SUBMIT BUTTON
               ElevatedButton(
-                onPressed: _submitForm,
+                onPressed: _isSubmitting ? null : _submitForm,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.indigo,
                   foregroundColor: Colors.white,
                   minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: Text(isEditing ? 'Save Changes' : 'Publish Item',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child: _isSubmitting
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
+                      )
+                    : Text(isEditing ? 'Save Changes' : 'Publish Item',
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ],
           ),

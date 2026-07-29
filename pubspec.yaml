@@ -31,11 +31,11 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Firebase Suite
-  firebase_core: ^3.1.0
-  firebase_auth: ^5.1.0
-  cloud_firestore: ^5.0.1
-  firebase_storage: ^12.0.1
+  # Backend: Supabase (auth + storage + realtime) — replaces the Firebase suite.
+  # Data/business logic goes through the Core API; Supabase is used directly for
+  # auth sessions and direct-to-storage uploads. Firebase is only reintroduced
+  # later for Cloud Messaging (push), which does not tie the data layer to it.
+  supabase_flutter: ^2.8.0
 
   # State Management & Helpers
   provider: ^6.1.2
@@ -64,6 +64,23 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+# App icon generation: `dart run flutter_launcher_icons`
+# Source art lives in assets/icon (SVG originals kept alongside the PNGs).
+flutter_launcher_icons:
+  image_path: "assets/icon/icon.png"
+  android: "ic_launcher"
+  ios: true
+  remove_alpha_ios: true
+  # Android adaptive icon: brand indigo plate + transparent storefront mark
+  adaptive_icon_background: "#3F51B5"
+  adaptive_icon_foreground: "assets/icon/icon-foreground.png"
+  web:
+    generate: true
+    image_path: "assets/icon/icon.png"
+    background_color: "#3F51B5"
+    theme_color: "#3F51B5"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

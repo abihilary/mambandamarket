@@ -2,6 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../DashBoards/SellerDashboardScreen.dart';
+import '../api/auth_service.dart';
+import '../api/config.dart';
+import '../api/repositories.dart';
 
 class IndividualSellerOnboardingScreen extends StatefulWidget {
   const IndividualSellerOnboardingScreen({super.key});
@@ -110,26 +113,32 @@ class _IndividualSellerOnboardingScreenState
         _isSubmitting = true;
       });
 
-      // Extract form values ready to send to your backend API
       final String fullName = _nameController.text.trim();
       final String phoneNumber = _phoneController.text.trim();
       final String bio = _bioController.text.trim();
       final File? imageFile = _profileImage;
 
       try {
-        // =========================================================
-        // TODO: BACKEND CONNECTION PLACEHOLDER
-        // Construct your Multipart / HTTP Request here:
-        //
-        // await ApiService.registerSellerProfile(
-        //   name: fullName,
-        //   phone: phoneNumber,
-        //   bio: bio,
-        //   profileImage: imageFile,
-        // );
-        // =========================================================
+        // Promote the account to a seller, then save the profile fields.
+        await AuthService.instance.syncProfile(
+          displayName: fullName,
+          role: 'individual_seller',
+          phone: phoneNumber,
+        );
 
-        await Future.delayed(const Duration(seconds: 2)); // Simulated network delay
+        String? avatarUrl;
+        if (imageFile != null) {
+          // Direct-to-storage upload via a signed URL, same as listing images.
+          final path = await ListingsRepository.instance.uploadImage(imageFile);
+          avatarUrl = AppConfig.storagePublicUrl('listing-images', path);
+        }
+
+        await AuthService.instance.updateProfile({
+          'display_name': fullName,
+          if (phoneNumber.isNotEmpty) 'phone': phoneNumber,
+          if (bio.isNotEmpty) 'bio': bio,
+          if (avatarUrl != null) 'avatar_url': avatarUrl,
+        });
 
         if (!mounted) return;
 
