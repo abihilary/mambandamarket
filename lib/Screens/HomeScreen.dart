@@ -131,6 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
           images: listing.imageUrls,
           // Needed for related items, favouriting and messaging the seller.
           listingId: listing.id,
+          listing: listing,
         ),
       ),
     );

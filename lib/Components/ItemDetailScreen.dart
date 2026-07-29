@@ -18,6 +18,10 @@ class ItemDetailScreen extends StatefulWidget {
   /// actions stay disabled when the screen is opened without one.
   final String? listingId;
 
+  /// Full record, when the caller already has it. Supplies the description,
+  /// location and view count; without it those fall back to placeholders.
+  final api.Listing? listing;
+
   const ItemDetailScreen({
     Key? key,
     required this.title,
@@ -25,6 +29,7 @@ class ItemDetailScreen extends StatefulWidget {
     required this.imageUrl,
     this.images,
     this.listingId,
+    this.listing,
   }) : super(key: key);
 
   @override
@@ -42,6 +47,38 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   // "More like this" — same seller first, topped up from the same category.
   List<api.Listing> _relatedItems = [];
   bool _startingChat = false;
+
+  /// Browse returns a summary (no description, single image), so the full
+  /// record is fetched on open. Until it lands, whatever the caller passed is
+  /// shown, which keeps the screen populated instead of flashing empty.
+  api.Listing? _full;
+  api.Listing? get _listing => _full ?? widget.listing;
+
+  Future<void> _loadDetail() async {
+    final id = widget.listingId;
+    if (id == null) return;
+    try {
+      final full = await ListingsRepository.instance.detail(id);
+      if (!mounted) return;
+      setState(() {
+        _full = full;
+        _isFavorite = full.isFavorited;
+        if (full.imageUrls.isNotEmpty) _imageList = full.imageUrls;
+      });
+    } catch (_) {
+      // Keep the summary we already have.
+    }
+  }
+
+  /// Relative age of the listing, e.g. "Vor 3 Stunden".
+  String get _postedLabel {
+    final at = _listing?.createdAt;
+    if (at == null) return '';
+    final d = DateTime.now().difference(at);
+    if (d.inMinutes < 60) return 'Vor ${d.inMinutes} Minuten';
+    if (d.inHours < 24) return 'Vor ${d.inHours} Stunden';
+    return 'Vor ${d.inDays} Tagen';
+  }
 
   Future<void> _loadRelated() async {
     final id = widget.listingId;
@@ -114,6 +151,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     _pageController = PageController();
     _isFavorite = widget.listingId != null &&
         FavoritesRepository.instance.isFavorite(widget.listingId!);
+    _loadDetail();
     _loadRelated();
 
     // Populate gallery slider list
@@ -228,9 +266,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Location Tag
-                  const Text(
-                    "73434 Aalen",
-                    style: TextStyle(
+                  Text(
+                    _listing?.city ?? '—',
+                    style: const TextStyle(
                       color: Colors.indigo,
                       fontWeight: FontWeight.bold,
                       decoration: TextDecoration.underline,
@@ -263,9 +301,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                           color: Colors.grey.shade200,
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: const Text(
-                          "Nur Abholung",
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                        child: Text(
+                          _listing?.condition ?? 'Nur Abholung',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                         ),
                       ),
                     ],
@@ -274,14 +312,15 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
                   // Meta details
                   Row(
-                    children: const [
-                      Icon(Icons.calendar_today, size: 16, color: Colors.grey),
-                      SizedBox(width: 4),
-                      Text("Vor 11 Stunden", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                      SizedBox(width: 16),
-                      Icon(Icons.remove_red_eye_outlined, size: 16, color: Colors.grey),
-                      SizedBox(width: 4),
-                      Text("377 Aufrufe", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    children: [
+                      const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                      const SizedBox(width: 4),
+                      Text(_postedLabel, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      const SizedBox(width: 16),
+                      const Icon(Icons.remove_red_eye_outlined, size: 16, color: Colors.grey),
+                      const SizedBox(width: 4),
+                      Text('${_listing?.viewCount ?? 0} Aufrufe',
+                          style: const TextStyle(color: Colors.grey, fontSize: 12)),
                     ],
                   ),
                   const Divider(height: 32),
@@ -289,9 +328,11 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   // Description
                   const Text("Details", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
-                  const Text(
-                    "Verkaufe zwei originale BMW M Leichtmetallfelgen Styling 800 M für die Vorderachse, demontiert von meinem BMW Z4 M40i G29. Felgen befinden sich in einem hervorragenden Zustand ohne Bordsteinschäden.",
-                    style: TextStyle(height: 1.4, color: Colors.black87, fontSize: 14),
+                  Text(
+                    (_listing?.description?.isNotEmpty ?? false)
+                        ? _listing!.description!
+                        : 'Keine Beschreibung vorhanden.',
+                    style: const TextStyle(height: 1.4, color: Colors.black87, fontSize: 14),
                   ),
                   const Divider(height: 40),
 
@@ -333,6 +374,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                             imageUrl: item.primaryImageUrl,
                             images: item.imageUrls,
                             listingId: item.id,
+                            listing: item,
                           ),
                         ),
                       );

@@ -7,13 +7,28 @@ import 'config.dart';
 /// Money crosses the wire as integer **cents** (`price_cents`) and is only
 /// formatted for display — never stored or computed as a double.
 
-String formatPrice(int cents, {String currency = 'EUR'}) {
-  final symbols = {'EUR': '€', 'XAF': 'FCFA', 'USD': '\$'};
-  final amount = cents / 100;
+/// Currencies with no minor unit (ISO 4217 exponent 0).
+///
+/// The CFA franc is the important one here: 145000 XAF *is* 145,000 FCFA, not
+/// 1,450. Dividing by 100 the way you would for euros understates every
+/// Cameroonian price by 100x.
+const Set<String> _zeroDecimalCurrencies = {
+  'XAF', 'XOF', 'XPF', 'JPY', 'KRW', 'VND', 'CLP', 'ISK',
+  'GNF', 'RWF', 'UGX', 'DJF', 'KMF', 'PYG', 'VUV', 'BIF',
+};
+
+/// Formats a minor-unit amount for display.
+///
+/// [amountMinor] is whatever the API stores in `price_cents`: hundredths for
+/// euro-style currencies, whole units for zero-decimal ones.
+String formatPrice(int amountMinor, {String currency = 'EUR'}) {
+  final symbols = {'EUR': '€', 'XAF': 'FCFA', 'XOF': 'FCFA', 'USD': '\$'};
+  final isZeroDecimal = _zeroDecimalCurrencies.contains(currency.toUpperCase());
+  final amount = isZeroDecimal ? amountMinor.toDouble() : amountMinor / 100;
   // Whole amounts read better without decimals ("820 €" not "820,00 €").
   final pattern = amount == amount.roundToDouble() ? '#,##0' : '#,##0.00';
   final formatted = NumberFormat(pattern, 'de_DE').format(amount);
-  return '$formatted ${symbols[currency] ?? currency}';
+  return '$formatted ${symbols[currency.toUpperCase()] ?? currency}';
 }
 
 class Listing {
