@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'api/auth_service.dart';
 import 'api/config.dart';
+import 'l10n/l10n.dart';
 
 // Navigation Shell
 
@@ -32,6 +33,10 @@ Future<void> main() async {
     url: AppConfig.supabaseUrl,
     publishableKey: AppConfig.supabasePublishableKey,
   );
+
+  // Restore the saved language before the first frame so the UI never flashes
+  // in the wrong language.
+  await LocaleController.instance.load();
 
   runApp(const MarketplaceApp());
 }
@@ -73,19 +78,27 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: _navigatorKey,
-      title: 'Marketplace',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.indigo,
-        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
-        useMaterial3: true,
-        textTheme: GoogleFonts.poppinsTextTheme(
-          Theme.of(context).textTheme,
+    // Rebuild the whole app when the language changes so every screen picks up
+    // the new locale immediately.
+    return ValueListenableBuilder<Locale?>(
+      valueListenable: LocaleController.instance.locale,
+      builder: (context, locale, _) => MaterialApp(
+        navigatorKey: _navigatorKey,
+        title: 'Mambanda Market',
+        debugShowCheckedModeBanner: false,
+        // null → Flutter falls back to the device language, then to English.
+        locale: locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        theme: ThemeData(
+          primarySwatch: Colors.indigo,
+          scaffoldBackgroundColor: const Color(0xFFF8F9FA),
+          useMaterial3: true,
+          textTheme: GoogleFonts.poppinsTextTheme(
+            Theme.of(context).textTheme,
+          ),
         ),
-      ),
-      initialRoute: '/',
+        initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),
         '/welcome': (context) => const WelcomeScreen(),
@@ -107,7 +120,8 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
                       ? 'business'
                       : 'buyer_seller',
             ),
-      },
+        },
+      ),
     );
   }
 }

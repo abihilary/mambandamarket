@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../api/auth_service.dart';
+import '../l10n/l10n.dart';
 
 /// Create an account with email + password.
 ///
@@ -48,22 +49,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Future<void> _handleResend() async {
     if (_isResending) return;
+    final l10n = context.l10n;
     setState(() => _isResending = true);
     try {
       await AuthService.instance.resendConfirmation(_emailController.text);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Confirmation email sent again.'),
+        SnackBar(
+          content: Text(l10n.confirmationResent),
           backgroundColor: Colors.green,
         ),
       );
     } on AuthException catch (e) {
       _showError(e.message.toLowerCase().contains('rate limit')
-          ? 'Please wait a moment before requesting another email.'
+          ? l10n.resendRateLimited
           : e.message);
     } catch (_) {
-      _showError('Could not resend the email.');
+      _showError(l10n.sendFailed);
     } finally {
       if (mounted) setState(() => _isResending = false);
     }
@@ -71,6 +73,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Future<void> _handleSignUp() async {
     if (!_formKey.currentState!.validate() || _isLoading) return;
+    final l10n = context.l10n;
     setState(() => _isLoading = true);
 
     try {
@@ -95,11 +98,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
       // Supabase's built-in SMTP is heavily rate limited; say so plainly
       // instead of surfacing a raw error.
       final msg = e.message.toLowerCase().contains('rate limit')
-          ? 'Too many sign-up emails right now. Please try again in a while.'
+          ? l10n.signUpRateLimited
           : e.message;
       _showError(msg);
     } catch (_) {
-      _showError('Could not create the account. Please try again.');
+      _showError(l10n.signUpFailed);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -108,6 +111,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     if (_awaitingConfirmation) {
       return Scaffold(
@@ -120,14 +124,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
               Icon(Icons.mark_email_unread_outlined,
                   size: 72, color: theme.primaryColor),
               const SizedBox(height: 24),
-              Text('Confirm your email',
+              Text(l10n.confirmEmailTitle,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.headlineSmall
                       ?.copyWith(fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               Text(
-                'We sent a confirmation link to ${_emailController.text.trim()}. '
-                'Open it, then log in to finish setting up your account.',
+                l10n.confirmEmailBody(_emailController.text.trim()),
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey.shade600, height: 1.4),
               ),
@@ -142,7 +145,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         width: 16,
                         child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.refresh),
-                label: Text(_isResending ? 'Sending…' : 'Resend email'),
+                label: Text(_isResending ? l10n.sending : l10n.resendEmail),
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 48),
                   shape: RoundedRectangleBorder(
@@ -160,8 +163,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Go to log in',
-                    style: TextStyle(
+                child: Text(l10n.goToLogin,
+                    style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ],
@@ -171,7 +174,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Account'), elevation: 0),
+      appBar: AppBar(title: Text(l10n.signUpTitle), elevation: 0),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -184,7 +187,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 Icon(Icons.storefront, size: 64, color: theme.primaryColor),
                 const SizedBox(height: 16),
                 Text(
-                  'Join Mambanda Market',
+                  l10n.joinMambanda,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.headlineSmall
                       ?.copyWith(fontWeight: FontWeight.bold),
@@ -195,13 +198,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   controller: _nameController,
                   textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(
-                    labelText: 'Full Name',
+                    labelText: l10n.fullName,
                     prefixIcon: const Icon(Icons.person_outline),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
                   validator: (val) => val == null || val.trim().length < 2
-                      ? 'Enter your name'
+                      ? l10n.enterName
                       : null,
                 ),
                 const SizedBox(height: 16),
@@ -211,14 +214,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   keyboardType: TextInputType.emailAddress,
                   autocorrect: false,
                   decoration: InputDecoration(
-                    labelText: 'Email Address',
+                    labelText: l10n.emailLabel,
                     prefixIcon: const Icon(Icons.email_outlined),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
                   validator: (val) =>
                       val == null || !val.contains('@') || !val.contains('.')
-                          ? 'Enter a valid email'
+                          ? l10n.invalidEmail
                           : null,
                 ),
                 const SizedBox(height: 16),
@@ -227,8 +230,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    labelText: 'Password',
-                    helperText: 'At least 8 characters',
+                    labelText: l10n.passwordLabel,
+                    helperText: l10n.passwordMin8,
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(_obscurePassword
@@ -241,7 +244,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         borderRadius: BorderRadius.circular(12)),
                   ),
                   validator: (val) => val == null || val.length < 8
-                      ? 'Password must be 8+ characters'
+                      ? l10n.passwordMin8
                       : null,
                 ),
                 const SizedBox(height: 28),
@@ -263,8 +266,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white),
                         )
-                      : const Text('Create Account',
-                          style: TextStyle(
+                      : Text(l10n.createAccount,
+                          style: const TextStyle(
                               fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
                 const SizedBox(height: 16),
@@ -272,11 +275,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Already have an account?'),
+                    Text(l10n.alreadyHaveAccount),
                     TextButton(
                       onPressed: () => Navigator.pushNamed(context, '/login'),
-                      child: const Text('Log In',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text(l10n.signIn,
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),

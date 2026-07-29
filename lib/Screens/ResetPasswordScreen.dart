@@ -38,7 +38,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Password updated.'),
+          content: Text('Mot de passe mis à jour.'),
           backgroundColor: Colors.green,
         ),
       );
@@ -60,7 +60,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not update the password.')),
+        const SnackBar(content: Text('Mise à jour impossible.')),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -72,7 +72,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Set New Password'), elevation: 0),
+      appBar: AppBar(title: const Text('Nouveau mot de passe'), elevation: 0),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -84,7 +84,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 const SizedBox(height: 16),
                 Icon(Icons.password, size: 64, color: theme.primaryColor),
                 const SizedBox(height: 20),
-                Text('Choose a new password',
+                Text('Choisissez un nouveau mot de passe',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.headlineSmall
                         ?.copyWith(fontWeight: FontWeight.bold)),
@@ -94,8 +94,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   controller: _passwordController,
                   obscureText: _obscure,
                   decoration: InputDecoration(
-                    labelText: 'New password',
-                    helperText: 'At least 8 characters',
+                    labelText: 'Nouveau mot de passe',
+                    helperText: '8 caractères minimum',
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -106,7 +106,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         borderRadius: BorderRadius.circular(12)),
                   ),
                   validator: (val) => val == null || val.length < 8
-                      ? 'Password must be 8+ characters'
+                      ? '8 caractères minimum'
                       : null,
                 ),
                 const SizedBox(height: 16),
@@ -115,13 +115,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   controller: _confirmController,
                   obscureText: _obscure,
                   decoration: InputDecoration(
-                    labelText: 'Confirm new password',
+                    labelText: 'Confirmez le mot de passe',
                     prefixIcon: const Icon(Icons.lock_outline),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
                   validator: (val) => val != _passwordController.text
-                      ? 'Passwords do not match'
+                      ? 'Les mots de passe ne correspondent pas'
                       : null,
                 ),
                 const SizedBox(height: 28),
@@ -143,7 +143,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white),
                         )
-                      : const Text('Update password',
+                      : const Text('Mettre à jour',
                           style: TextStyle(
                               fontSize: 16, fontWeight: FontWeight.bold)),
                 ),

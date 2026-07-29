@@ -75,9 +75,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     final at = _listing?.createdAt;
     if (at == null) return '';
     final d = DateTime.now().difference(at);
-    if (d.inMinutes < 60) return 'Vor ${d.inMinutes} Minuten';
-    if (d.inHours < 24) return 'Vor ${d.inHours} Stunden';
-    return 'Vor ${d.inDays} Tagen';
+    if (d.inMinutes < 60) return 'Il y a ${d.inMinutes} min';
+    if (d.inHours < 24) return 'Il y a ${d.inHours} h';
+    return 'Il y a ${d.inDays} j';
   }
 
   Future<void> _loadRelated() async {
@@ -302,7 +302,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          _listing?.condition ?? 'Nur Abholung',
+                          _listing?.condition ?? 'Retrait sur place',
                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                         ),
                       ),
@@ -319,7 +319,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       const SizedBox(width: 16),
                       const Icon(Icons.remove_red_eye_outlined, size: 16, color: Colors.grey),
                       const SizedBox(width: 4),
-                      Text('${_listing?.viewCount ?? 0} Aufrufe',
+                      Text('${_listing?.viewCount ?? 0} vues',
                           style: const TextStyle(color: Colors.grey, fontSize: 12)),
                     ],
                   ),
@@ -331,14 +331,14 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   Text(
                     (_listing?.description?.isNotEmpty ?? false)
                         ? _listing!.description!
-                        : 'Keine Beschreibung vorhanden.',
+                        : 'Aucune description fournie.',
                     style: const TextStyle(height: 1.4, color: Colors.black87, fontSize: 14),
                   ),
                   const Divider(height: 40),
 
                   // 3. Related / Other Shop Items Section Header
                   const Text(
-                    "Ähnliche Angebote im Shop",
+                    "Annonces similaires",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
@@ -412,7 +412,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                         strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.chat_bubble_outline),
             label: const Text(
-              "Nachricht",
+              "Message",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),

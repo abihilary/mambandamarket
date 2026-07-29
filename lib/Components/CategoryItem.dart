@@ -37,7 +37,9 @@ class CategoryBar extends StatelessWidget {
           return GestureDetector(
             onTap: () => onSelectCategory?.call(index),
             child: SizedBox(
-              width: 70, // Fixed width for uniform slider items
+              // French labels run longer than the German originals
+              // ("Électronique" vs "Elektronik"), so allow a little more room.
+              width: 82,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

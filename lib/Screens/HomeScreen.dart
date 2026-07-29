@@ -10,8 +10,10 @@ import '../Components/SearchHeader.dart';
 
 // Backend
 import '../api/api_client.dart';
+import '../api/auth_service.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
+import '../l10n/l10n.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -21,7 +23,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const String _forYou = 'For You';
+  /// Sentinel stored in [_error] for a generic network failure, so the
+  /// user-facing message can be localized in build() rather than baked in at
+  /// fetch time (which runs from initState, before localizations are ready).
+  static const String _networkErrorSentinel = '__network__';
 
   /// Icon per seeded category slug; anything new falls back to a generic tag.
   static const Map<String, IconData> _categoryIcons = {
@@ -51,17 +56,38 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   String? _error;
 
+  /// Search radius shown next to the city. The backend already supports
+  /// `near`/`radius`; wiring a real device position is the remaining step, so
+  /// this is presentational for now rather than pretending to filter.
+  static const int _radiusKm = 25;
+
+  /// The user's own city, once /me has loaded. Falls back to a neutral label
+  /// rather than naming a town the user has nothing to do with.
+  String _locationLabel(BuildContext context) {
+    final city = AuthService.instance.me.value?.profile?.city;
+    return (city == null || city.isEmpty)
+        ? context.l10n.wholeRegion
+        : context.l10n.regionWithRadius(city, _radiusKm);
+  }
+
   @override
   void initState() {
     super.initState();
     _loadCategories();
     _loadListings();
+    // /me may resolve after first paint; refresh the header when it does.
+    AuthService.instance.me.addListener(_onMeChanged);
   }
 
   @override
   void dispose() {
+    AuthService.instance.me.removeListener(_onMeChanged);
     _searchDebounce?.cancel();
     super.dispose();
+  }
+
+  void _onMeChanged() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _loadCategories() async {
@@ -98,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'Could not reach the marketplace. Check your connection.';
+        _error = _networkErrorSentinel;
         _isLoading = false;
       });
     }
@@ -138,6 +164,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _toggleFavorite(Listing listing) async {
+    final l10n = context.l10n;
     try {
       await _favorites.toggle(listing.id);
     } on ApiException catch (e) {
@@ -145,32 +172,32 @@ class _HomeScreenState extends State<HomeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.isUnauthorized
-              ? 'Sign in to save items.'
-              : 'Could not update favorites.'),
+              ? l10n.favoriteSignInRequired
+              : l10n.favoriteUpdateFailed),
         ),
       );
     }
   }
 
-  String get _selectedLabel {
-    if (_selectedSlug == null) return _forYou;
+  String _selectedLabel(BuildContext context) {
+    if (_selectedSlug == null) return context.l10n.forYou;
     return _categories
         .firstWhere(
           (c) => c.slug == _selectedSlug,
           orElse: () => Category(slug: _selectedSlug!, label: _selectedSlug!),
         )
-        .label;
+        .displayLabel;
   }
 
-  List<CategoryItem> get _categoryItems => [
+  List<CategoryItem> _categoryItems(BuildContext context) => [
         CategoryItem(
-          label: _forYou,
+          label: context.l10n.forYou,
           icon: Icons.thumb_up_alt_outlined,
           isSelected: _selectedSlug == null,
         ),
         ..._categories.map(
           (c) => CategoryItem(
-            label: c.label,
+            label: c.displayLabel,
             icon: _categoryIcons[c.slug] ?? Icons.sell_outlined,
             isSelected: c.slug == _selectedSlug,
           ),
@@ -193,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
             slivers: [
               SliverToBoxAdapter(
                 child: SearchHeader(
-                  locationText: "Aalen (+25 km)",
+                  locationText: _locationLabel(context),
                   onSearchChanged: _onSearchChanged,
                   onNotificationTap: () {},
                 ),
@@ -201,7 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               SliverToBoxAdapter(
                 child: CategoryBar(
-                  categories: _categoryItems,
+                  categories: _categoryItems(context),
                   onSelectCategory: _onCategoryTapped,
                 ),
               ),
@@ -239,13 +266,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           const Icon(Icons.cloud_off,
                               size: 48, color: Colors.grey),
                           const SizedBox(height: 12),
-                          Text(_error!,
+                          Text(
+                              _error == _networkErrorSentinel
+                                  ? context.l10n.connectionError
+                                  : _error!,
                               textAlign: TextAlign.center,
                               style: const TextStyle(color: Colors.grey)),
                           const SizedBox(height: 16),
                           OutlinedButton(
                             onPressed: _loadListings,
-                            child: const Text('Try again'),
+                            child: Text(context.l10n.retry),
                           ),
                         ],
                       ),
@@ -266,8 +296,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(height: 12),
                           Text(
                             _searchQuery.isNotEmpty
-                                ? 'Nothing found for "$_searchQuery"'
-                                : "Keine Artikel in '$_selectedLabel'",
+                                ? context.l10n.nothingFoundFor(_searchQuery)
+                                : context.l10n.noListingsIn(_selectedLabel(context)),
                             textAlign: TextAlign.center,
                             style: const TextStyle(color: Colors.grey),
                           ),
@@ -282,7 +312,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16.0, vertical: 8.0),
                     child: Text(
-                      "Galerie ($_selectedLabel)",
+                      context.l10n.galleryTitle(_selectedLabel(context)),
                       style: const TextStyle(
                           fontSize: 18, fontWeight: FontWeight.bold),
                     ),
@@ -313,11 +343,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-                const SliverToBoxAdapter(
+                SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 12.0),
-                    child: Text("Für dich empfohlen",
-                        style: TextStyle(
+                    padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 12.0),
+                    child: Text(context.l10n.recommendedForYou,
+                        style: const TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                 ),

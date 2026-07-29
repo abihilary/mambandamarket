@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
+
 class SearchHeader extends StatefulWidget {
   final String locationText;
   final ValueChanged<String>? onSearchSubmitted;
@@ -9,7 +11,9 @@ class SearchHeader extends StatefulWidget {
 
   const SearchHeader({
     Key? key,
-    this.locationText = "Aalen (+25 km)",
+    // Callers pass the signed-in user's city; this is only the signed-out
+    // fallback, so it must stay location-neutral.
+    this.locationText = "toute la région",
     this.onSearchSubmitted,
     this.onSearchChanged,
     this.onLocationTap,
@@ -59,7 +63,8 @@ class _SearchHeaderState extends State<SearchHeader> {
                       textInputAction: TextInputAction.search,
                       style: const TextStyle(fontSize: 13, color: Colors.black87),
                       decoration: InputDecoration(
-                        hintText: "Suche in ${widget.locationText}",
+                        hintText:
+                            context.l10n.searchHintRegion(widget.locationText),
                         hintStyle: TextStyle(
                           fontSize: 13,
                           color: Colors.grey.shade600,

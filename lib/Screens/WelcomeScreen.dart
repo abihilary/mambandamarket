@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../api/auth_service.dart';
+import '../l10n/l10n.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -35,12 +36,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   Future<void> _handleGoogleSignIn() async {
     if (_isLoading) return;
     setState(() => _isLoading = true);
+    final l10n = context.l10n;
     try {
       await AuthService.instance.signInWithGoogle();
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not start Google sign-in.')),
+          SnackBar(content: Text(l10n.googleSignInFailed)),
         );
       }
     } finally {
@@ -51,6 +53,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return Scaffold(
       body: SafeArea(
@@ -68,7 +71,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                'Find Everything You Need',
+                l10n.welcomeTitle,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
@@ -77,7 +80,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Join thousands of local buyers and sellers in your community today.',
+                l10n.welcomeSubtitle,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: Colors.grey.shade600,
@@ -97,9 +100,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   ),
                 ),
                 icon: const Icon(Icons.g_mobiledata, size: 28, color: Colors.red),
-                label: const Text(
-                  'Continue with Google',
-                  style: TextStyle(
+                label: Text(
+                  l10n.continueWithGoogle,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Colors.black87,
@@ -122,9 +125,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   ),
                   elevation: 0,
                 ),
-                child: const Text(
-                  'Create Account',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                child: Text(
+                  l10n.createAccount,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
               const SizedBox(height: 16),
@@ -134,7 +138,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Already have an account?',
+                    l10n.alreadyHaveAccount,
                     style: TextStyle(color: Colors.grey.shade600),
                   ),
                   TextButton(
@@ -142,9 +146,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       Navigator.pushNamed(context, '/login');
                       // Login modal / screen
                     },
-                    child: const Text(
-                      'Log In',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    child: Text(
+                      l10n.logIn,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],

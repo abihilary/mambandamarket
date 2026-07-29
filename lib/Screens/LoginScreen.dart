@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../api/auth_service.dart';
+import '../l10n/l10n.dart';
 import 'ForgotPasswordScreen.dart';
 import 'SignUpScreen.dart';
 
@@ -51,6 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate() || _isLoading) return;
+    final l10n = context.l10n;
     setState(() => _isLoading = true);
     try {
       await AuthService.instance.signIn(
@@ -62,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } on AuthException catch (e) {
       _showError(e.message);
     } catch (e) {
-      _showError('Could not sign in. Please try again.');
+      _showError(l10n.signInFailed);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -78,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } on AuthException catch (e) {
       _showError(e.message);
     } catch (_) {
-      _showError('Could not start Google sign-in. Please try again.');
+      _showError(context.l10n.googleSignInFailed);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -87,6 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return Scaffold(
       body: SafeArea(
@@ -101,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Icon(Icons.storefront, size: 72, color: theme.primaryColor),
                 const SizedBox(height: 16),
                 Text(
-                  'Welcome Back',
+                  l10n.loginTitle,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
@@ -109,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Sign in to manage your listings and chats',
+                  l10n.loginSubtitle,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.grey.shade600),
                 ),
@@ -120,11 +123,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
-                    labelText: 'Email Address',
+                    labelText: l10n.emailLabel,
                     prefixIcon: const Icon(Icons.email_outlined),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  validator: (val) => val == null || !val.contains('@') ? 'Enter a valid email' : null,
+                  validator: (val) => val == null || !val.contains('@') ? l10n.invalidEmail : null,
                 ),
                 const SizedBox(height: 16),
 
@@ -133,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: l10n.passwordLabel,
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
@@ -141,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  validator: (val) => val == null || val.length < 6 ? 'Password must be 6+ chars' : null,
+                  validator: (val) => val == null || val.length < 6 ? l10n.passwordMin6 : null,
                 ),
 
                 // Recovery path — without this, a forgotten password locks the
@@ -159,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ),
-                    child: const Text('Forgot password?'),
+                    child: Text(l10n.forgotPasswordQuestion),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -181,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white),
                         )
-                      : const Text('Log In', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      : Text(l10n.signIn, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
 
                 const SizedBox(height: 24),
@@ -193,7 +196,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
 
-                      child: Text('OR',style: TextStyle(color: Colors.grey[600], fontSize: 13),),
+                      child: Text(l10n.orDivider,style: TextStyle(color: Colors.grey[600], fontSize: 13),),
                     ),
                     Expanded(child: Divider(color: Colors.grey.shade300)),
                   ],
@@ -229,9 +232,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Text(
-                        'Continue with Google',
-                        style: TextStyle(
+                      Text(
+                        l10n.continueWithGoogle,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: Colors.black87,
@@ -247,7 +250,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text("Don't have an account?"),
+                    Text(l10n.noAccountYet),
                     TextButton(
                       // Straight to sign-up. Role defaults to buyer and can be
                       // upgraded later, rather than routing back through the
@@ -257,7 +260,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         MaterialPageRoute(
                             builder: (_) => const SignUpScreen()),
                       ),
-                      child: const Text('Sign Up', style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text(l10n.signUpLink, style: const TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),

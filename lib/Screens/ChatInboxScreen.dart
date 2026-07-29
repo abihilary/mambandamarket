@@ -4,6 +4,7 @@ import '../Service/ChatRoomScreen.dart';
 import '../api/auth_service.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
+import '../l10n/l10n.dart';
 
 /// Inbox of chat threads.
 ///
@@ -18,6 +19,11 @@ class ChatInboxScreen extends StatefulWidget {
 }
 
 class _ChatInboxScreenState extends State<ChatInboxScreen> {
+  // Errors are stored as sentinels and translated in build(), since _load runs
+  // from initState — before localizations are available.
+  static const _errSignIn = '__signin__';
+  static const _errLoad = '__load__';
+
   final _chat = ChatRepository.instance;
   bool _isLoading = true;
   String? _error;
@@ -32,7 +38,7 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
     if (AuthService.instance.session == null) {
       setState(() {
         _isLoading = false;
-        _error = 'Sign in to see your messages.';
+        _error = _errSignIn;
       });
       return;
     }
@@ -46,7 +52,7 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
     } catch (_) {
       if (mounted) {
         setState(() {
-          _error = 'Could not load your messages.';
+          _error = _errLoad;
           _isLoading = false;
         });
       }
@@ -65,10 +71,11 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Messages & Chats',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(l10n.messagesTitle,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -81,12 +88,15 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
                       children: [
                         const Icon(Icons.cloud_off, size: 44, color: Colors.grey),
                         const SizedBox(height: 12),
-                        Text(_error!,
+                        Text(
+                            _error == _errSignIn
+                                ? l10n.signInToSeeMessages
+                                : l10n.couldNotLoadMessages,
                             textAlign: TextAlign.center,
                             style: const TextStyle(color: Colors.grey)),
                         const SizedBox(height: 16),
                         OutlinedButton(
-                            onPressed: _load, child: const Text('Try again')),
+                            onPressed: _load, child: Text(l10n.retry)),
                       ],
                     ),
                   ),
@@ -95,8 +105,8 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
                   valueListenable: _chat.threads,
                   builder: (context, chats, _) {
                     if (chats.isEmpty) {
-                      return const Center(
-                        child: Text('No active chats yet.',
+                      return Center(
+                        child: Text(l10n.noChatsYet,
                             style: TextStyle(color: Colors.grey)),
                       );
                     }

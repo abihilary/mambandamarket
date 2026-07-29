@@ -6,6 +6,7 @@ import '../Screens/AccountScreen.dart';
 import '../Screens/ChatInboxScreen.dart';
 import '../Screens/FavoritesScreen.dart';
 import '../Screens/HomeScreen.dart';
+import '../l10n/l10n.dart';
          // Profile Tab
 
 class MainNavigationShell extends StatefulWidget {
@@ -56,26 +57,27 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         unselectedItemColor: Colors.grey,
         type: BottomNavigationBarType.fixed,
         onTap: _onTabTapped,
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: "Search",
+            icon: const Icon(Icons.search),
+            label: context.l10n.navSearch,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_border),
-            label: "Favorite",
+            icon: const Icon(Icons.favorite_border),
+            label: context.l10n.navFavorites,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.add_circle_outline, size: 30, color: Colors.indigo),
-            label: "Insert",
+            icon: const Icon(Icons.add_circle_outline,
+                size: 30, color: Colors.indigo),
+            label: context.l10n.navPublish,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline),
-            label: "Chats",
+            icon: const Icon(Icons.chat_bubble_outline),
+            label: context.l10n.navMessages,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: "Account",
+            icon: const Icon(Icons.person_outline),
+            label: context.l10n.navAccount,
           ),
         ],
       ),

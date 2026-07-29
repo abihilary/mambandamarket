@@ -33,7 +33,7 @@ class BottomActionBar extends StatelessWidget {
           onPressed: onMessagePressed,
           icon: const Icon(Icons.chat_bubble_outline, size: 20),
           label: const Text(
-            "Nachricht",
+            "Message",
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
         ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api/auth_service.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
+import '../l10n/l10n.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
@@ -34,16 +35,17 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   Widget build(BuildContext context) {
     final signedIn = AuthService.instance.session != null;
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Saved Favorites',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(l10n.favoritesTitle,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: !signedIn
-          ? const Center(
-              child: Text('Sign in to see your saved items.',
-                  style: TextStyle(color: Colors.grey)),
+          ? Center(
+              child: Text(l10n.signInToSeeFavorites,
+                  style: const TextStyle(color: Colors.grey)),
             )
           : _isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -51,9 +53,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   valueListenable: _repo.favorites,
                   builder: (context, favorites, _) {
                     if (favorites.isEmpty) {
-                      return const Center(
-                        child: Text('No favorite items saved yet.',
-                            style: TextStyle(color: Colors.grey)),
+                      return Center(
+                        child: Text(l10n.noFavoritesYet,
+                            style: const TextStyle(color: Colors.grey)),
                       );
                     }
 

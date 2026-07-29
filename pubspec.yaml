@@ -31,6 +31,15 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Localization (English + French). flutter_localizations supplies the built-in
+  # Material/Cupertino translations; our own strings are generated from the ARB
+  # files in lib/l10n via `flutter gen-l10n` (see l10n.yaml).
+  flutter_localizations:
+    sdk: flutter
+
+  # Persists the user's language choice across launches.
+  shared_preferences: ^2.0.0
+
   # Backend: Supabase (auth + storage + realtime) — replaces the Firebase suite.
   # Data/business logic goes through the Core API; Supabase is used directly for
   # auth sessions and direct-to-storage uploads. Firebase is only reintroduced
@@ -39,7 +48,8 @@ dependencies:
 
   # State Management & Helpers
   provider: ^6.1.2
-  intl: ^0.19.0
+  # Pinned to 0.20.x because flutter_localizations depends on it.
+  intl: ^0.20.2
   http: ^1.2.1
 
   # UI Enhancements
@@ -87,6 +97,9 @@ flutter_launcher_icons:
 
 # The following section is specific to Flutter packages.
 flutter:
+
+  # Generate the AppLocalizations class from lib/l10n/*.arb on build.
+  generate: true
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

@@ -142,10 +142,38 @@ class Listing {
 
 class Category {
   final String slug;
+
+  /// Label as stored in the database — currently German, inherited from the
+  /// UI template the schema was seeded from.
   final String label;
   final String? icon;
 
   const Category({required this.slug, required this.label, this.icon});
+
+  /// Display labels keyed by the stable slug.
+  ///
+  /// The marketplace serves francophone Cameroon, so the German labels sitting
+  /// in `categories.label` are wrong for users. Translating here rather than
+  /// rewriting the rows keeps the slug as the single identifier and is where
+  /// the other locales (the site offers EN/FR/DE) will slot in.
+  static const Map<String, String> _fr = {
+    'auto-rad': 'Auto & Moto',
+    'elektronik': 'Électronique',
+    'mode': 'Mode',
+    'familie': 'Famille & Enfant',
+    'real-estate': 'Immobilier',
+    'sport': 'Sport & Loisirs',
+    'jobs': 'Emplois',
+    'moebel': 'Maison & Jardin',
+    'haustiere': 'Animaux',
+    'dienstleistungen': 'Services',
+    'buecher-musik': 'Livres & Musique',
+    'verschenken': 'À donner',
+  };
+
+  /// Falls back to whatever the API sent, so a category added later still
+  /// renders instead of disappearing.
+  String get displayLabel => _fr[slug] ?? label;
 
   factory Category.fromJson(Map<String, dynamic> json) => Category(
         slug: json['slug'].toString(),
