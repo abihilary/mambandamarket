@@ -1,0 +1,8 @@
+# Copy to android/key.properties and fill in the values you chose when running
+# keytool. That file is git-ignored — never commit it, and keep a backup of the
+# .jks somewhere safe: losing it means you can never update the app in place.
+
+storeFile=/Users/apple/mambandamarket-upload.jks
+storePassword=THE_PASSWORD_YOU_CHOSE
+keyPassword=THE_PASSWORD_YOU_CHOSE
+keyAlias=upload
