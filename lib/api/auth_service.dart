@@ -11,6 +11,14 @@ import 'models.dart';
 /// back to the project's configured Site URL.
 const String kOAuthRedirect = 'com.mabanda.mambandamarket://login-callback';
 
+/// Where the password-recovery email link returns the user.
+///
+/// Supabase opens this after the user clicks "reset password" in their inbox;
+/// the app receives a `passwordRecovery` auth event and can then set a new
+/// password using the short-lived recovery session.
+const String kPasswordResetRedirect =
+    'com.mabanda.mambandamarket://password-reset';
+
 /// Authentication + the signed-in user's profile.
 ///
 /// Supabase Auth issues the JWT; the Core API turns it into a `profiles` row via
@@ -21,6 +29,15 @@ class AuthService {
     _client.auth.onAuthStateChange.listen((state) async {
       final signedIn = state.session != null;
       isSignedIn.value = signedIn;
+
+      // Arriving from a recovery link. Supabase grants a limited session whose
+      // only purpose is setting a new password — flag it so the app routes to
+      // the reset screen instead of dropping the user into the marketplace.
+      if (state.event == AuthChangeEvent.passwordRecovery) {
+        passwordRecoveryRequested.value = true;
+        return;
+      }
+
       if (!signedIn) {
         me.value = null;
         return;
@@ -53,9 +70,18 @@ class AuthService {
   /// Profile + entitlements from `/me`; null until loaded or when signed out.
   final ValueNotifier<Me?> me = ValueNotifier(null);
 
+  /// Fires when the user arrives from a password-recovery link, so the app can
+  /// show the "set a new password" screen.
+  final ValueNotifier<bool> passwordRecoveryRequested = ValueNotifier(false);
+
   Session? get session => _client.auth.currentSession;
   User? get user => _client.auth.currentUser;
   String? get userId => user?.id;
+
+  /// True once the address has been confirmed. Unconfirmed accounts can exist
+  /// (and even hold a session) when confirmations are enabled, so screens use
+  /// this to nudge rather than assume.
+  bool get isEmailConfirmed => user?.emailConfirmedAt != null;
 
   Future<void> signIn({required String email, required String password}) async {
     await _client.auth.signInWithPassword(email: email, password: password);
@@ -91,6 +117,30 @@ class AuthService {
       authScreenLaunchMode:
           kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
     );
+  }
+
+  /// Email a password-recovery link.
+  ///
+  /// Deliberately does not reveal whether the address has an account — the
+  /// caller shows the same confirmation either way, so this can't be used to
+  /// enumerate registered users.
+  Future<void> sendPasswordReset(String email) async {
+    await _client.auth.resetPasswordForEmail(
+      email.trim(),
+      redirectTo: kIsWeb ? null : kPasswordResetRedirect,
+    );
+  }
+
+  /// Set a new password. Requires either a normal session or the short-lived
+  /// recovery session created by the emailed link.
+  Future<void> updatePassword(String newPassword) async {
+    await _client.auth.updateUser(UserAttributes(password: newPassword));
+    passwordRecoveryRequested.value = false;
+  }
+
+  /// Re-send the sign-up confirmation email.
+  Future<void> resendConfirmation(String email) async {
+    await _client.auth.resend(type: OtpType.signup, email: email.trim());
   }
 
   Future<void> signOut() async {

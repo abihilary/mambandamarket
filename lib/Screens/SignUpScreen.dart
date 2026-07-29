@@ -29,6 +29,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _obscurePassword = true;
   bool _isLoading = false;
   bool _awaitingConfirmation = false;
+  bool _isResending = false;
 
   @override
   void dispose() {
@@ -43,6 +44,29 @@ class _SignUpScreenState extends State<SignUpScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red.shade700),
     );
+  }
+
+  Future<void> _handleResend() async {
+    if (_isResending) return;
+    setState(() => _isResending = true);
+    try {
+      await AuthService.instance.resendConfirmation(_emailController.text);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Confirmation email sent again.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } on AuthException catch (e) {
+      _showError(e.message.toLowerCase().contains('rate limit')
+          ? 'Please wait a moment before requesting another email.'
+          : e.message);
+    } catch (_) {
+      _showError('Could not resend the email.');
+    } finally {
+      if (mounted) setState(() => _isResending = false);
+    }
   }
 
   Future<void> _handleSignUp() async {
@@ -107,7 +131,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey.shade600, height: 1.4),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
+              // Without this, a lost or rate-limited confirmation email leaves
+              // the user with no way forward except registering again.
+              OutlinedButton.icon(
+                onPressed: _isResending ? null : _handleResend,
+                icon: _isResending
+                    ? const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.refresh),
+                label: Text(_isResending ? 'Sending…' : 'Resend email'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 12),
               ElevatedButton(
                 onPressed: () => Navigator.pushNamedAndRemoveUntil(
                     context, '/login', (_) => false),

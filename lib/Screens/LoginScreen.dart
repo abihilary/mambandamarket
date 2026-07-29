@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../api/auth_service.dart';
+import 'ForgotPasswordScreen.dart';
+import 'SignUpScreen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -141,7 +143,26 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   validator: (val) => val == null || val.length < 6 ? 'Password must be 6+ chars' : null,
                 ),
-                const SizedBox(height: 24),
+
+                // Recovery path — without this, a forgotten password locks the
+                // user out of the account permanently.
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ForgotPasswordScreen(
+                                  initialEmail: _emailController.text.trim(),
+                                ),
+                              ),
+                            ),
+                    child: const Text('Forgot password?'),
+                  ),
+                ),
+                const SizedBox(height: 8),
 
                 // Email Login Button
                 ElevatedButton(
@@ -228,7 +249,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     const Text("Don't have an account?"),
                     TextButton(
-                      onPressed: () => Navigator.pushNamed(context, '/welcome'),
+                      // Straight to sign-up. Role defaults to buyer and can be
+                      // upgraded later, rather than routing back through the
+                      // welcome and role screens.
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const SignUpScreen()),
+                      ),
                       child: const Text('Sign Up', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ],

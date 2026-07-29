@@ -14,7 +14,9 @@ import 'package:mambandamarket/DashBoards/SellerDashboardScreen.dart';
 import 'package:mambandamarket/Screens/BusinessOnboardingScreen.dart';
 import 'package:mambandamarket/Screens/LoginScreen.dart';
 import 'DashBoards/BusinessDashboardScreen.dart';
+import 'Screens/ForgotPasswordScreen.dart';
 import 'Screens/IndividualSellerOnboardingScreen.dart';
+import 'Screens/ResetPasswordScreen.dart';
 import 'Screens/RoleSelectionScreen.dart';
 import 'Screens/SplashScreen.dart';
 import 'Screens/SubscriptionScreen.dart';
@@ -34,12 +36,45 @@ Future<void> main() async {
   runApp(const MarketplaceApp());
 }
 
-class MarketplaceApp extends StatelessWidget {
+class MarketplaceApp extends StatefulWidget {
   const MarketplaceApp({super.key});
+
+  @override
+  State<MarketplaceApp> createState() => _MarketplaceAppState();
+}
+
+class _MarketplaceAppState extends State<MarketplaceApp> {
+  /// Lets us navigate in response to auth events that arrive from outside the
+  /// widget tree (a password-recovery deep link can land on any screen).
+  final _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    AuthService.instance.passwordRecoveryRequested
+        .addListener(_onPasswordRecovery);
+  }
+
+  @override
+  void dispose() {
+    AuthService.instance.passwordRecoveryRequested
+        .removeListener(_onPasswordRecovery);
+    super.dispose();
+  }
+
+  void _onPasswordRecovery() {
+    if (!AuthService.instance.passwordRecoveryRequested.value) return;
+    // The recovery session only permits setting a new password, so send the
+    // user there rather than into the app.
+    _navigatorKey.currentState?.push(
+      MaterialPageRoute(builder: (_) => const ResetPasswordScreen()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       title: 'Marketplace',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -57,6 +92,8 @@ class MarketplaceApp extends StatelessWidget {
         '/role-selection': (context) => const RoleSelectionScreen(),
         '/home': (context) => const MainNavigationShell(), // Updated to MainNavigationShell
         '/login': (context) => const LoginScreen(),
+        '/forgot-password': (context) => const ForgotPasswordScreen(),
+        '/reset-password': (context) => const ResetPasswordScreen(),
         '/bussiness': (context) => BusinessOnboardingScreen(),
         '/create-listing': (context) => const CreateListingScreen(),
         '/business-dashboard': (context) => BusinessDashboardScreen(),

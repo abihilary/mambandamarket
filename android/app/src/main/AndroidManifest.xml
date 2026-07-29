@@ -50,6 +50,10 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="com.mabanda.mambandamarket"
                       android:host="login-callback"/>
+                <!-- Password-recovery links land here; the app swaps the
+                     recovery session for a new password. -->
+                <data android:scheme="com.mabanda.mambandamarket"
+                      android:host="password-reset"/>
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

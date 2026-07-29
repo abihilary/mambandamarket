@@ -1,10 +1,28 @@
 import 'package:flutter/material.dart';
 
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../api/auth_service.dart';
 import '../api/models.dart';
+import 'ResetPasswordScreen.dart';
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen({super.key});
+
+  Future<void> _resendConfirmation(BuildContext context, String email) async {
+    try {
+      await AuthService.instance.resendConfirmation(email);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Confirmation email sent.')),
+      );
+    } on AuthException catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    }
+  }
 
   Future<void> _logOut(BuildContext context) async {
     await AuthService.instance.signOut();
@@ -60,6 +78,26 @@ class AccountScreen extends StatelessWidget {
                   subtitle: Text(email),
                 ),
 
+                // Unconfirmed accounts can hold a session, so surface it here —
+                // otherwise the user never learns why some things fail.
+                if (!auth.isEmailConfirmed && email.isNotEmpty)
+                  Card(
+                    elevation: 0,
+                    color: Colors.orange.shade50,
+                    child: ListTile(
+                      leading: Icon(Icons.warning_amber_rounded,
+                          color: Colors.orange.shade800),
+                      title: const Text('Email not confirmed',
+                          style: TextStyle(fontWeight: FontWeight.w600)),
+                      subtitle: const Text(
+                          'Confirm your address to secure your account.'),
+                      trailing: TextButton(
+                        onPressed: () => _resendConfirmation(context, email),
+                        child: const Text('Resend'),
+                      ),
+                    ),
+                  ),
+
                 // Plan + remaining quota, straight from /me entitlements.
                 if (me != null)
                   Padding(
@@ -108,6 +146,16 @@ class AccountScreen extends StatelessWidget {
                   onTap: () => Navigator.pushNamed(context, '/seller-dashboard'),
                 ),
                 const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.lock_outline),
+                  title: const Text('Change Password'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const ResetPasswordScreen()),
+                  ),
+                ),
                 ListTile(
                   leading: const Icon(Icons.settings_outlined),
                   title: const Text('Settings & Privacy'),
