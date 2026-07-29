@@ -44,8 +44,14 @@ class WelcomeScreen extends StatelessWidget {
               // Primary Action: Google Sign-In
               OutlinedButton.icon(
                 onPressed: () {
-                  // Route to Role Selection or Auth Handler
-                  Navigator.pushNamed(context, '/role-selection');
+                  // Google OAuth needs a client ID configured in Supabase Auth
+                  // first; until then don't pretend the user is signed in.
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                          'Google sign-in is not configured yet — use email instead.'),
+                    ),
+                  );
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),

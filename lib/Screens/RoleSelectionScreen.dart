@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../api/auth_service.dart';
+import 'SignUpScreen.dart';
 import 'SubscriptionScreen.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
@@ -11,16 +14,47 @@ class RoleSelectionScreen extends StatefulWidget {
 class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   String _selectedRole = 'buyer'; // 'buyer', 'buyer_seller', 'business'
 
-  void _handleRoleSubmission() {
+  /// UI ids map onto the roles the API/database accept.
+  String get _apiRole => switch (_selectedRole) {
+        'buyer_seller' => 'individual_seller',
+        'business' => 'business',
+        _ => 'buyer',
+      };
+
+  Future<void> _handleRoleSubmission() async {
+    final auth = AuthService.instance;
+
+    // No account yet → create one carrying the chosen role.
+    if (auth.session == null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => SignUpScreen(role: _apiRole)),
+      );
+      return;
+    }
+
+    // Already signed in (e.g. upgrading from buyer) → persist the new role.
+    try {
+      await auth.syncProfile(role: _apiRole);
+      await auth.refreshMe();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not update your account type.')),
+      );
+      return;
+    }
+    if (!mounted) return;
+
     switch (_selectedRole) {
       case 'buyer':
-      // FREE tier: Goes directly to Main Shell
+        // FREE tier: straight into the app.
         Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
         break;
 
       case 'buyer_seller':
       case 'business':
-      // PAID tiers: Must complete subscription/billing step
+        // PAID tiers: continue to the subscription step.
         Navigator.push(
           context,
           MaterialPageRoute(
