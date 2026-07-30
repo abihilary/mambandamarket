@@ -326,4 +326,746 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get couldNotLoadMessages => 'Could not load your messages.';
+
+  @override
+  String get bizDashTitle => 'Store Dashboard';
+
+  @override
+  String get bizDashGoToHomeFeed => 'Go to Home Feed';
+
+  @override
+  String get bizDashAddNewItem => 'Add New Item';
+
+  @override
+  String get bizDashPerformanceOverview => 'Performance Overview';
+
+  @override
+  String bizDashActiveListings(Object count) {
+    return 'Active Listings ($count)';
+  }
+
+  @override
+  String get bizDashFilterAll => 'All';
+
+  @override
+  String get bizDashFilterInStock => 'In Stock';
+
+  @override
+  String get bizDashFilterOutOfStock => 'Out of Stock';
+
+  @override
+  String get bizDashTryAgain => 'Try again';
+
+  @override
+  String get bizDashSignInPrompt => 'Sign in to manage your store.';
+
+  @override
+  String get bizDashLoadError =>
+      'Could not load your inventory. Check your connection.';
+
+  @override
+  String get bizDashNoItems => 'No items in your inventory yet.';
+
+  @override
+  String bizDashNoMatch(Object filter) {
+    return 'Nothing matches \"$filter\".';
+  }
+
+  @override
+  String get bizDashYourStore => 'Your store';
+
+  @override
+  String get bizDashSetupStorefront => 'Set up your storefront';
+
+  @override
+  String get bizDashVerifiedMerchant => 'Verified Merchant • ';
+
+  @override
+  String bizDashReviewsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count reviews',
+      one: '$count review',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get bizDashGoToHomeMarketplace => 'Go to Home Marketplace';
+
+  @override
+  String get bizDashEditStore => 'Edit Store';
+
+  @override
+  String get bizDashTotalRevenue => 'Total Revenue';
+
+  @override
+  String get bizDashItemsSold => 'Items Sold';
+
+  @override
+  String bizDashUnitsCount(Object count) {
+    return '$count Units';
+  }
+
+  @override
+  String get bizDashStoreVisits => 'Store Visits';
+
+  @override
+  String get bizDashInquiries => 'Inquiries';
+
+  @override
+  String bizDashImagesCount(Object count) {
+    return '$count imgs';
+  }
+
+  @override
+  String get bizDashGeneralCategory => 'General';
+
+  @override
+  String bizDashQty(Object count) {
+    return '• Qty: $count';
+  }
+
+  @override
+  String get bizDashGuarantee => 'Guarantee';
+
+  @override
+  String get bizDashEditItem => 'Edit Item';
+
+  @override
+  String get bizDashDeleteItem => 'Delete Item';
+
+  @override
+  String get bizDashDeleteTitle => 'Delete Listing';
+
+  @override
+  String bizDashDeleteConfirm(Object title) {
+    return 'Are you sure you want to delete \"$title\"?';
+  }
+
+  @override
+  String get bizDashCancel => 'Cancel';
+
+  @override
+  String get bizDashDelete => 'Delete';
+
+  @override
+  String get bizDashListingCreated => 'Listing created successfully!';
+
+  @override
+  String get bizDashItemUpdated => 'Item updated successfully!';
+
+  @override
+  String get bizDashItemDeleted => 'Item deleted successfully';
+
+  @override
+  String get chatDefaultUser => 'User';
+
+  @override
+  String get chatDefaultListing => 'Listing';
+
+  @override
+  String get chatLoadError => 'Could not load this conversation.';
+
+  @override
+  String get chatTryAgain => 'Try again';
+
+  @override
+  String get chatEmpty => 'Say hello to start the conversation.';
+
+  @override
+  String get chatInputHint => 'Write a message…';
+
+  @override
+  String get createEditItem => 'Edit Item';
+
+  @override
+  String get createAddNewItem => 'Add New Item';
+
+  @override
+  String get createProductImages => 'Product Images';
+
+  @override
+  String get createAddMedia => 'Add Media';
+
+  @override
+  String get createTakePhotoWithCamera => 'Take Photo with Camera';
+
+  @override
+  String get createChooseFromGallery => 'Choose from Gallery';
+
+  @override
+  String get createSelectCategory => 'Select Category';
+
+  @override
+  String get createLoading => 'Loading…';
+
+  @override
+  String get createPleaseChooseCategory => 'Please choose a category';
+
+  @override
+  String get createPleaseChooseACategory => 'Please choose a category.';
+
+  @override
+  String get createListingTitle => 'Listing Title';
+
+  @override
+  String get createPleaseEnterTitle => 'Please enter a title';
+
+  @override
+  String get createPriceLabel => 'Price (€)';
+
+  @override
+  String get createEnterPrice => 'Enter price';
+
+  @override
+  String get createInvalidPrice => 'Invalid price';
+
+  @override
+  String get createQuantity => 'Quantity';
+
+  @override
+  String get createEnterQuantity => 'Enter quantity';
+
+  @override
+  String get createMinQuantity => 'Min 1';
+
+  @override
+  String get createCondition => 'Condition';
+
+  @override
+  String get createConditionNew => 'New';
+
+  @override
+  String get createConditionLikeNew => 'Like New';
+
+  @override
+  String get createConditionUsed => 'Used';
+
+  @override
+  String get createConditionRefurbished => 'Refurbished';
+
+  @override
+  String get createIncludesGuarantee => 'Includes Guarantee / Warranty';
+
+  @override
+  String get createSaveChanges => 'Save Changes';
+
+  @override
+  String get createPublishItem => 'Publish Item';
+
+  @override
+  String get createListingLimitReached => 'Listing limit reached';
+
+  @override
+  String get createNotNow => 'Not now';
+
+  @override
+  String get createUpgradePlan => 'Upgrade plan';
+
+  @override
+  String get createSelectAtLeastOneImage => 'Please select at least one image.';
+
+  @override
+  String get createListingPublished => 'Listing published.';
+
+  @override
+  String get createSignInToPublish => 'Please sign in to publish a listing.';
+
+  @override
+  String get createCouldNotPublish =>
+      'Could not publish. Check your connection.';
+
+  @override
+  String get createCouldNotLoadCategories => 'Could not load categories.';
+
+  @override
+  String createFailedToCapturePhoto(Object error) {
+    return 'Failed to capture photo: $error';
+  }
+
+  @override
+  String createFailedToPickImages(Object error) {
+    return 'Failed to pick images: $error';
+  }
+
+  @override
+  String get detailSignInToSave => 'Sign in to save items.';
+
+  @override
+  String get detailSignInToMessage => 'Sign in to message the seller.';
+
+  @override
+  String get detailOwnListing => 'This is your own listing.';
+
+  @override
+  String get detailConditionFallback => 'Local pickup only';
+
+  @override
+  String detailViews(Object count) {
+    return '$count views';
+  }
+
+  @override
+  String get detailDetails => 'Details';
+
+  @override
+  String get detailNoDescription => 'No description provided.';
+
+  @override
+  String get detailRelated => 'Similar listings';
+
+  @override
+  String get detailMessageSeller => 'Message';
+
+  @override
+  String detailPostedMinutes(Object count) {
+    return '$count min ago';
+  }
+
+  @override
+  String detailPostedHours(Object count) {
+    return '$count h ago';
+  }
+
+  @override
+  String detailPostedDays(Object count) {
+    return '$count d ago';
+  }
+
+  @override
+  String get onbBizTitle => 'Store Profile Setup';
+
+  @override
+  String get onbBizTakePhoto => 'Take Photo with Camera';
+
+  @override
+  String get onbBizChooseFromGallery => 'Choose from Gallery';
+
+  @override
+  String get onbBizSelectBanner => 'Select Store Banner';
+
+  @override
+  String get onbBizSelectLogo => 'Select Store Logo';
+
+  @override
+  String onbBizBannerPickFailed(Object error) {
+    return 'Failed to select banner image: $error';
+  }
+
+  @override
+  String onbBizAvatarPickFailed(Object error) {
+    return 'Failed to select avatar image: $error';
+  }
+
+  @override
+  String get onbBizUploadBanner => 'Upload Store Banner';
+
+  @override
+  String get onbBizChangeBanner => 'Change Banner';
+
+  @override
+  String get onbBizShopNameLabel => 'Shop Name*';
+
+  @override
+  String get onbBizShopNameRequired => 'Shop name required';
+
+  @override
+  String get onbBizShopLocationLabel => 'Shop Location*';
+
+  @override
+  String get onbBizShopLocationRequired => 'Shop location required';
+
+  @override
+  String get onbBizShopDescriptionLabel => 'Shop Description*';
+
+  @override
+  String get onbBizShopDescriptionHint =>
+      'Tell customers about your products and services...';
+
+  @override
+  String get onbBizDescriptionRequired => 'Description required';
+
+  @override
+  String get onbBizSupportPhoneLabel => 'Business Support Phone*';
+
+  @override
+  String get onbBizPhoneRequired => 'Phone required';
+
+  @override
+  String get onbBizSaved => 'Storefront saved.';
+
+  @override
+  String get onbBizSaveFailed =>
+      'Could not save your storefront. Please try again.';
+
+  @override
+  String get onbBizSaveContinue => 'Save & Continue to Dashboard';
+
+  @override
+  String get onbIndChooseFromGallery => 'Choose from Gallery';
+
+  @override
+  String get onbIndTakePhoto => 'Take a Photo';
+
+  @override
+  String get onbIndRemovePhoto => 'Remove Photo';
+
+  @override
+  String onbIndImagePickFailed(Object error) {
+    return 'Failed to pick image: $error';
+  }
+
+  @override
+  String onbIndSubmissionFailed(Object error) {
+    return 'Submission failed: $error';
+  }
+
+  @override
+  String get onbIndAppBarTitle => 'Setup Seller Profile';
+
+  @override
+  String get onbIndHeaderTitle => 'Become an Individual Seller';
+
+  @override
+  String get onbIndHeaderSubtitle =>
+      'Set up your personal seller profile to start listing pre-loved items and connecting with local buyers.';
+
+  @override
+  String get onbIndNameLabel => 'Full Name / Display Name *';
+
+  @override
+  String get onbIndNameHint => 'e.g., Jane Doe';
+
+  @override
+  String get onbIndNameRequired => 'Please enter your name';
+
+  @override
+  String get onbIndNameTooShort => 'Name must be at least 2 characters';
+
+  @override
+  String get onbIndPhoneLabel => 'Phone Number *';
+
+  @override
+  String get onbIndPhoneHint => '+1 234 567 8900';
+
+  @override
+  String get onbIndPhoneHelper => 'For buyer communication and verification';
+
+  @override
+  String get onbIndPhoneRequired => 'Please enter your phone number';
+
+  @override
+  String get onbIndPhoneInvalid => 'Please enter a valid phone number';
+
+  @override
+  String get onbIndBioLabel => 'Short Bio (Optional)';
+
+  @override
+  String get onbIndBioHint =>
+      'Tell buyers a bit about what you sell (e.g., \"Clearing out tech gadgets & outdoor gear in good condition!\")';
+
+  @override
+  String get onbIndInfoBanner =>
+      'Individual seller accounts are meant for private, non-commercial sales. You can upgrade to a business tier anytime later.';
+
+  @override
+  String get onbIndSubmitButton => 'Complete Profile & Open Hub';
+
+  @override
+  String get roleUpdateError => 'Could not update your account type.';
+
+  @override
+  String get roleAppBarTitle => 'Choose Account Type';
+
+  @override
+  String get roleHeading => 'How will you use the platform?';
+
+  @override
+  String get roleSubheading =>
+      'You can update your tier or subscribe anytime later in settings.';
+
+  @override
+  String get roleBuyerTitle => 'Buyer (Individual)';
+
+  @override
+  String get roleBuyerSubtitle =>
+      'Browse items, chat with sellers, save favorites.';
+
+  @override
+  String get roleBadgeFree => 'FREE';
+
+  @override
+  String get roleBuyerSellerTitle => 'Buyer + Seller (Individual)';
+
+  @override
+  String get roleBuyerSellerSubtitle =>
+      'Post & manage items in your personal seller dashboard.';
+
+  @override
+  String get roleBadgeSubscription => 'SUBSCRIPTION';
+
+  @override
+  String get roleBusinessTitle => 'Business Store';
+
+  @override
+  String get roleBusinessSubtitle =>
+      'Branded storefront, custom banner/logo & store features.';
+
+  @override
+  String get roleBadgeBusiness => 'BUSINESS TIER';
+
+  @override
+  String get roleContinueFree => 'Get Started (Free)';
+
+  @override
+  String get roleContinuePaid => 'Continue to Subscription Plan';
+
+  @override
+  String get sellerDashTitle => 'My Seller Hub';
+
+  @override
+  String get sellerDashHomeTooltip => 'Go to Home Feed';
+
+  @override
+  String get sellerDashSellItem => 'Sell Item';
+
+  @override
+  String get sellerDashActiveItems => 'Active Items';
+
+  @override
+  String get sellerDashTotalEarned => 'Total Earned';
+
+  @override
+  String get sellerDashTotalViews => 'Total Views';
+
+  @override
+  String get sellerDashInquiries => 'Inquiries';
+
+  @override
+  String sellerDashActiveTab(Object count) {
+    return 'Active Listings ($count)';
+  }
+
+  @override
+  String sellerDashSoldTab(Object count) {
+    return 'Sold ($count)';
+  }
+
+  @override
+  String get sellerDashAccountName => 'Personal Seller Account';
+
+  @override
+  String get sellerDashAccountTier => 'Individual Tier • Member since 2026';
+
+  @override
+  String get sellerDashIndividualBadge => 'INDIVIDUAL';
+
+  @override
+  String get sellerDashGoToMarketplace => 'Go to Home Marketplace';
+
+  @override
+  String get sellerDashTryAgain => 'Try again';
+
+  @override
+  String get sellerDashNoActiveItems => 'No active items listed yet.';
+
+  @override
+  String sellerDashImgsCount(Object count) {
+    return '$count imgs';
+  }
+
+  @override
+  String sellerDashViewsCount(Object count) {
+    return '$count views';
+  }
+
+  @override
+  String sellerDashChatsCount(Object count) {
+    return '$count chats';
+  }
+
+  @override
+  String get sellerDashMarkAsSold => 'Mark as Sold';
+
+  @override
+  String get sellerDashEdit => 'Edit';
+
+  @override
+  String get sellerDashDelete => 'Delete';
+
+  @override
+  String get sellerDashNoSoldItems => 'No sold items yet.';
+
+  @override
+  String sellerDashSoldTo(Object buyer, Object date) {
+    return 'Sold to $buyer on $date';
+  }
+
+  @override
+  String get sellerDashDeleteTitle => 'Delete Listing?';
+
+  @override
+  String sellerDashDeleteConfirm(Object title) {
+    return 'Are you sure you want to delete \"$title\"?';
+  }
+
+  @override
+  String get sellerDashCancel => 'Cancel';
+
+  @override
+  String get sellerDashListingDeleted => 'Listing deleted.';
+
+  @override
+  String get sellerDashListedSuccess => 'Item listed for sale successfully!';
+
+  @override
+  String sellerDashMarkedSold(Object title) {
+    return '\"$title\" marked as sold!';
+  }
+
+  @override
+  String get sellerDashSignInPrompt => 'Sign in to view your seller hub.';
+
+  @override
+  String get sellerDashLoadError =>
+      'Could not load your listings. Check your connection.';
+
+  @override
+  String get subSelectPlan => 'Select Plan';
+
+  @override
+  String get subBusinessStorePlans => 'Business Store Plans';
+
+  @override
+  String get subSellerSubscriptions => 'Seller Subscriptions';
+
+  @override
+  String get subChoosePlanSubtitle =>
+      'Choose the plan that fits your growth goals.';
+
+  @override
+  String get subBillingMonthly => 'Monthly';
+
+  @override
+  String get subBillingYearly => 'Yearly (Save 20%)';
+
+  @override
+  String get subTermsOfUse => 'Terms of Use';
+
+  @override
+  String get subPrivacyPolicy => 'Privacy Policy';
+
+  @override
+  String get subRestorePurchases => 'Restore Purchases';
+
+  @override
+  String subSubscribeTo(Object name) {
+    return 'Subscribe to $name';
+  }
+
+  @override
+  String get subPerMonth => '/ month';
+
+  @override
+  String get subBilledAnnually => 'Billed annually';
+
+  @override
+  String get subPlanClassic => 'Classic';
+
+  @override
+  String get subPlanProBusiness => 'Pro Business';
+
+  @override
+  String get subPlanVipEnterprise => 'VIP Enterprise';
+
+  @override
+  String get subPlanProSeller => 'Pro Seller';
+
+  @override
+  String get subPlanVipSeller => 'VIP Seller';
+
+  @override
+  String get subBadgeMostPopular => 'MOST POPULAR';
+
+  @override
+  String get subBadgeExclusive => 'EXCLUSIVE';
+
+  @override
+  String get subBadgeBestValue => 'BEST VALUE';
+
+  @override
+  String get subBadgeTopSeller => 'TOP SELLER';
+
+  @override
+  String get subFeatBasicStorefront => 'Basic Storefront Page';
+
+  @override
+  String get subFeatUpTo25Listings => 'Up to 25 Active Listings';
+
+  @override
+  String get subFeatStandardSearchRanking => 'Standard Search Ranking';
+
+  @override
+  String get subFeatBasicCustomerAnalytics => 'Basic Customer Analytics';
+
+  @override
+  String get subFeatCustomBrandedStorefront =>
+      'Fully Custom Branded Storefront';
+
+  @override
+  String get subFeatUnlimitedActiveListings => 'Unlimited Active Listings';
+
+  @override
+  String get subFeatPrioritySearchRanking => 'Priority Search Ranking';
+
+  @override
+  String get subFeatCustomLogoBanner => 'Custom Logo & Shop Banner';
+
+  @override
+  String get subFeatAdvancedSalesAnalytics => 'Advanced Sales Analytics';
+
+  @override
+  String get subFeatAllProFeatures => 'All Pro Features Included';
+
+  @override
+  String get subFeatTopTierHomepage => 'Top Tier Homepage Placement';
+
+  @override
+  String get subFeatDedicatedAccountManager => 'Dedicated Account Manager';
+
+  @override
+  String get subFeatZeroTransactionFees => 'Zero Marketplace Transaction Fees';
+
+  @override
+  String get subFeatVerifiedBusinessBadge => 'Verified Business Badge';
+
+  @override
+  String get subFeatPostUpTo5Items => 'Post Up to 5 Items';
+
+  @override
+  String get subFeatPersonalSellerDashboard => 'Personal Seller Dashboard';
+
+  @override
+  String get subFeatStandardSupport => 'Standard Support';
+
+  @override
+  String get subFeatUnlimitedItemListings => 'Unlimited Item Listings';
+
+  @override
+  String get subFeatDirectBuyerMessaging => 'Direct Buyer Messaging';
+
+  @override
+  String get subFeatFeaturedListingBadges => 'Featured Listing Badges';
+
+  @override
+  String get subFeatTopPlacementSearch => 'Top Placement in Search Results';
+
+  @override
+  String get subFeatInstantPushNotifications =>
+      'Instant Push Notifications to Buyers';
+
+  @override
+  String get subFeat247PrioritySupport => '24/7 Priority Support';
 }

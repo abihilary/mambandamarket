@@ -5,6 +5,7 @@ import '../DashBoards/SellerDashboardScreen.dart';
 import '../api/auth_service.dart';
 import '../api/config.dart';
 import '../api/repositories.dart';
+import '../l10n/l10n.dart';
 
 class IndividualSellerOnboardingScreen extends StatefulWidget {
   const IndividualSellerOnboardingScreen({super.key});
@@ -49,7 +50,7 @@ class _IndividualSellerOnboardingScreenState
             children: [
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: const Text('Choose from Gallery'),
+                title: Text(context.l10n.onbIndChooseFromGallery),
                 onTap: () {
                   Navigator.of(context).pop();
                   _getImage(ImageSource.gallery);
@@ -57,7 +58,7 @@ class _IndividualSellerOnboardingScreenState
               ),
               ListTile(
                 leading: const Icon(Icons.photo_camera),
-                title: const Text('Take a Photo'),
+                title: Text(context.l10n.onbIndTakePhoto),
                 onTap: () {
                   Navigator.of(context).pop();
                   _getImage(ImageSource.camera);
@@ -66,9 +67,9 @@ class _IndividualSellerOnboardingScreenState
               if (_profileImage != null)
                 ListTile(
                   leading: const Icon(Icons.delete, color: Colors.red),
-                  title: const Text(
-                    'Remove Photo',
-                    style: TextStyle(color: Colors.red),
+                  title: Text(
+                    context.l10n.onbIndRemovePhoto,
+                    style: const TextStyle(color: Colors.red),
                   ),
                   onTap: () {
                     Navigator.of(context).pop();
@@ -86,6 +87,7 @@ class _IndividualSellerOnboardingScreenState
 
   // Helper method to execute ImagePicker logic
   Future<void> _getImage(ImageSource source) async {
+    final l10n = context.l10n;
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: source,
@@ -102,13 +104,14 @@ class _IndividualSellerOnboardingScreenState
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to pick image: $e')),
+        SnackBar(content: Text(l10n.onbIndImagePickFailed(e.toString()))),
       );
     }
   }
 
   void _submitOnboarding() async {
     if (_formKey.currentState!.validate()) {
+      final l10n = context.l10n;
       setState(() {
         _isSubmitting = true;
       });
@@ -158,7 +161,7 @@ class _IndividualSellerOnboardingScreenState
           _isSubmitting = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Submission failed: $e')),
+          SnackBar(content: Text(l10n.onbIndSubmissionFailed(e.toString()))),
         );
       }
     }
@@ -170,7 +173,7 @@ class _IndividualSellerOnboardingScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Setup Seller Profile'),
+        title: Text(context.l10n.onbIndAppBarTitle),
         elevation: 0,
       ),
       body: SafeArea(
@@ -183,14 +186,14 @@ class _IndividualSellerOnboardingScreenState
               children: [
                 // HEADER SECTION
                 Text(
-                  'Become an Individual Seller',
+                  context.l10n.onbIndHeaderTitle,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Set up your personal seller profile to start listing pre-loved items and connecting with local buyers.',
+                  context.l10n.onbIndHeaderSubtitle,
                   style: TextStyle(
                     color: Colors.grey.shade600,
                     fontSize: 14,
@@ -252,8 +255,8 @@ class _IndividualSellerOnboardingScreenState
                   controller: _nameController,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
-                    labelText: 'Full Name / Display Name *',
-                    hintText: 'e.g., Jane Doe',
+                    labelText: context.l10n.onbIndNameLabel,
+                    hintText: context.l10n.onbIndNameHint,
                     prefixIcon: const Icon(Icons.person_outline),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -261,10 +264,10 @@ class _IndividualSellerOnboardingScreenState
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your name';
+                      return context.l10n.onbIndNameRequired;
                     }
                     if (value.trim().length < 2) {
-                      return 'Name must be at least 2 characters';
+                      return context.l10n.onbIndNameTooShort;
                     }
                     return null;
                   },
@@ -276,20 +279,20 @@ class _IndividualSellerOnboardingScreenState
                   keyboardType: TextInputType.phone,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
-                    labelText: 'Phone Number *',
-                    hintText: '+1 234 567 8900',
+                    labelText: context.l10n.onbIndPhoneLabel,
+                    hintText: context.l10n.onbIndPhoneHint,
                     prefixIcon: const Icon(Icons.phone_outlined),
-                    helperText: 'For buyer communication and verification',
+                    helperText: context.l10n.onbIndPhoneHelper,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your phone number';
+                      return context.l10n.onbIndPhoneRequired;
                     }
                     if (value.trim().length < 8) {
-                      return 'Please enter a valid phone number';
+                      return context.l10n.onbIndPhoneInvalid;
                     }
                     return null;
                   },
@@ -302,9 +305,8 @@ class _IndividualSellerOnboardingScreenState
                   maxLength: 200,
                   textInputAction: TextInputAction.done,
                   decoration: InputDecoration(
-                    labelText: 'Short Bio (Optional)',
-                    hintText:
-                    'Tell buyers a bit about what you sell (e.g., "Clearing out tech gadgets & outdoor gear in good condition!")',
+                    labelText: context.l10n.onbIndBioLabel,
+                    hintText: context.l10n.onbIndBioHint,
                     alignLabelWithHint: true,
                     prefixIcon: const Padding(
                       padding: EdgeInsets.only(bottom: 40),
@@ -333,7 +335,7 @@ class _IndividualSellerOnboardingScreenState
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Individual seller accounts are meant for private, non-commercial sales. You can upgrade to a business tier anytime later.',
+                          context.l10n.onbIndInfoBanner,
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.blue.shade900,
@@ -367,9 +369,9 @@ class _IndividualSellerOnboardingScreenState
                         strokeWidth: 2.5,
                       ),
                     )
-                        : const Text(
-                      'Complete Profile & Open Hub',
-                      style: TextStyle(
+                        : Text(
+                      context.l10n.onbIndSubmitButton,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),

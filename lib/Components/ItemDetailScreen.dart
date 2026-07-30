@@ -5,6 +5,7 @@ import '../api/api_client.dart';
 import '../api/auth_service.dart';
 import '../api/models.dart' as api;
 import '../api/repositories.dart';
+import '../l10n/l10n.dart';
 import 'ItemCard.dart';
 
 class ItemDetailScreen extends StatefulWidget {
@@ -75,9 +76,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     final at = _listing?.createdAt;
     if (at == null) return '';
     final d = DateTime.now().difference(at);
-    if (d.inMinutes < 60) return 'Il y a ${d.inMinutes} min';
-    if (d.inHours < 24) return 'Il y a ${d.inHours} h';
-    return 'Il y a ${d.inDays} j';
+    if (d.inMinutes < 60) return context.l10n.detailPostedMinutes(d.inMinutes);
+    if (d.inHours < 24) return context.l10n.detailPostedHours(d.inHours);
+    return context.l10n.detailPostedDays(d.inDays);
   }
 
   Future<void> _loadRelated() async {
@@ -94,6 +95,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   Future<void> _toggleFavorite() async {
     final id = widget.listingId;
     if (id == null) return;
+    final l10n = context.l10n;
     try {
       await FavoritesRepository.instance.toggle(id);
       if (mounted) {
@@ -104,7 +106,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(
-            e.isUnauthorized ? 'Sign in to save items.' : e.message)),
+            e.isUnauthorized ? l10n.detailSignInToSave : e.message)),
       );
     }
   }
@@ -113,9 +115,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   Future<void> _contactSeller() async {
     final id = widget.listingId;
     if (id == null) return;
+    final l10n = context.l10n;
     if (AuthService.instance.session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sign in to message the seller.')),
+        SnackBar(content: Text(l10n.detailSignInToMessage)),
       );
       return;
     }
@@ -135,7 +138,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         SnackBar(
           // The API rejects messaging yourself with a specific code.
           content: Text(e.code == 'own_listing'
-              ? 'This is your own listing.'
+              ? l10n.detailOwnListing
               : e.message),
           backgroundColor: Colors.red.shade700,
         ),
@@ -302,7 +305,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          _listing?.condition ?? 'Retrait sur place',
+                          _listing?.condition ?? context.l10n.detailConditionFallback,
                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                         ),
                       ),
@@ -319,27 +322,27 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       const SizedBox(width: 16),
                       const Icon(Icons.remove_red_eye_outlined, size: 16, color: Colors.grey),
                       const SizedBox(width: 4),
-                      Text('${_listing?.viewCount ?? 0} vues',
+                      Text(context.l10n.detailViews(_listing?.viewCount ?? 0),
                           style: const TextStyle(color: Colors.grey, fontSize: 12)),
                     ],
                   ),
                   const Divider(height: 32),
 
                   // Description
-                  const Text("Details", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(context.l10n.detailDetails, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   Text(
                     (_listing?.description?.isNotEmpty ?? false)
                         ? _listing!.description!
-                        : 'Aucune description fournie.',
+                        : context.l10n.detailNoDescription,
                     style: const TextStyle(height: 1.4, color: Colors.black87, fontSize: 14),
                   ),
                   const Divider(height: 40),
 
                   // 3. Related / Other Shop Items Section Header
-                  const Text(
-                    "Annonces similaires",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Text(
+                    context.l10n.detailRelated,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
                 ],
@@ -411,9 +414,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.chat_bubble_outline),
-            label: const Text(
-              "Message",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            label: Text(
+              context.l10n.detailMessageSeller,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
         ),

@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../api/api_client.dart';
 import '../api/config.dart';
 import '../api/repositories.dart';
+import '../l10n/l10n.dart';
 
 class BusinessOnboardingScreen extends StatefulWidget {
   const BusinessOnboardingScreen({super.key});
@@ -29,6 +30,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
 
   // Helper method to present source picker modal (Camera or Gallery)
   Future<XFile?> _showImageSourceSheet(BuildContext context, String title) async {
+    final l10n = context.l10n;
     return await showModalBottomSheet<XFile?>(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -47,7 +49,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.camera_alt, color: Colors.indigo),
-                title: const Text('Take Photo with Camera'),
+                title: Text(l10n.onbBizTakePhoto),
                 onTap: () async {
                   final image = await _picker.pickImage(
                     source: ImageSource.camera,
@@ -59,7 +61,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library, color: Colors.indigo),
-                title: const Text('Choose from Gallery'),
+                title: Text(l10n.onbBizChooseFromGallery),
                 onTap: () async {
                   final image = await _picker.pickImage(
                     source: ImageSource.gallery,
@@ -78,29 +80,31 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
 
   // Pick Banner Image
   Future<void> _pickBannerImage() async {
+    final l10n = context.l10n;
     try {
-      final image = await _showImageSourceSheet(context, 'Select Store Banner');
+      final image = await _showImageSourceSheet(context, l10n.onbBizSelectBanner);
       if (image != null) {
         setState(() {
           _bannerImage = image;
         });
       }
     } catch (e) {
-      _showErrorSnackBar('Failed to select banner image: $e');
+      _showErrorSnackBar(l10n.onbBizBannerPickFailed(e.toString()));
     }
   }
 
   // Pick Avatar / Logo Image
   Future<void> _pickAvatarImage() async {
+    final l10n = context.l10n;
     try {
-      final image = await _showImageSourceSheet(context, 'Select Store Logo');
+      final image = await _showImageSourceSheet(context, l10n.onbBizSelectLogo);
       if (image != null) {
         setState(() {
           _avatarImage = image;
         });
       }
     } catch (e) {
-      _showErrorSnackBar('Failed to select avatar image: $e');
+      _showErrorSnackBar(l10n.onbBizAvatarPickFailed(e.toString()));
     }
   }
 
@@ -123,6 +127,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
 
   Future<void> _saveStoreProfile() async {
     if (!_formKey.currentState!.validate() || _isSaving) return;
+    final l10n = context.l10n;
     setState(() => _isSaving = true);
 
     try {
@@ -153,8 +158,8 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Storefront saved.'), backgroundColor: Colors.green),
+        SnackBar(
+            content: Text(l10n.onbBizSaved), backgroundColor: Colors.green),
       );
       if (Navigator.canPop(context)) {
         Navigator.pop(context, true);
@@ -165,7 +170,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
     } on ApiException catch (e) {
       _showErrorSnackBar(e.message);
     } catch (_) {
-      _showErrorSnackBar('Could not save your storefront. Please try again.');
+      _showErrorSnackBar(l10n.onbBizSaveFailed);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -183,10 +188,11 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Store Profile Setup'),
+        title: Text(l10n.onbBizTitle),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -220,7 +226,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                           const Icon(Icons.add_a_photo, color: Colors.indigo, size: 28),
                           const SizedBox(height: 6),
                           Text(
-                            'Upload Store Banner',
+                            l10n.onbBizUploadBanner,
                             style: TextStyle(
                               color: Colors.indigo.shade800,
                               fontWeight: FontWeight.bold,
@@ -240,13 +246,13 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                               color: Colors.black.withOpacity(0.6),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Row(
+                            child: Row(
                               children: [
-                                Icon(Icons.edit, color: Colors.white, size: 14),
-                                SizedBox(width: 4),
+                                const Icon(Icons.edit, color: Colors.white, size: 14),
+                                const SizedBox(width: 4),
                                 Text(
-                                  'Change Banner',
-                                  style: TextStyle(color: Colors.white, fontSize: 12),
+                                  l10n.onbBizChangeBanner,
+                                  style: const TextStyle(color: Colors.white, fontSize: 12),
                                 ),
                               ],
                             ),
@@ -302,47 +308,47 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                   children: [
                     TextFormField(
                       controller: _shopNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Shop Name*',
-                        prefixIcon: Icon(Icons.storefront),
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: l10n.onbBizShopNameLabel,
+                        prefixIcon: const Icon(Icons.storefront),
+                        border: const OutlineInputBorder(),
                       ),
-                      validator: (val) => val == null || val.isEmpty ? 'Shop name required' : null,
+                      validator: (val) => val == null || val.isEmpty ? l10n.onbBizShopNameRequired : null,
                     ),
                     const SizedBox(height: 16),
 
                     TextFormField(
                       controller: _shopLocationController,
-                      decoration: const InputDecoration(
-                        labelText: 'Shop Location*',
-                        prefixIcon: Icon(Icons.location_on_outlined),
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: l10n.onbBizShopLocationLabel,
+                        prefixIcon: const Icon(Icons.location_on_outlined),
+                        border: const OutlineInputBorder(),
                       ),
-                      validator: (val) => val == null || val.isEmpty ? 'Shop location required' : null,
+                      validator: (val) => val == null || val.isEmpty ? l10n.onbBizShopLocationRequired : null,
                     ),
                     const SizedBox(height: 16),
 
                     TextFormField(
                       controller: _shopDescriptionController,
                       maxLines: 3,
-                      decoration: const InputDecoration(
-                        labelText: 'Shop Description*',
-                        hintText: 'Tell customers about your products and services...',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: l10n.onbBizShopDescriptionLabel,
+                        hintText: l10n.onbBizShopDescriptionHint,
+                        border: const OutlineInputBorder(),
                       ),
-                      validator: (val) => val == null || val.isEmpty ? 'Description required' : null,
+                      validator: (val) => val == null || val.isEmpty ? l10n.onbBizDescriptionRequired : null,
                     ),
                     const SizedBox(height: 16),
 
                     TextFormField(
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(
-                        labelText: 'Business Support Phone*',
-                        prefixIcon: Icon(Icons.phone),
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: l10n.onbBizSupportPhoneLabel,
+                        prefixIcon: const Icon(Icons.phone),
+                        border: const OutlineInputBorder(),
                       ),
-                      validator: (val) => val == null || val.isEmpty ? 'Phone required' : null,
+                      validator: (val) => val == null || val.isEmpty ? l10n.onbBizPhoneRequired : null,
                     ),
                     const SizedBox(height: 32),
 
@@ -356,9 +362,9 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: const Text(
-                          'Save & Continue to Dashboard',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        child: Text(
+                          l10n.onbBizSaveContinue,
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),

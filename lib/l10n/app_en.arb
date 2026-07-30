@@ -1,45 +1,59 @@
 {
   "@@locale": "en",
-
   "language": "Language",
   "chooseLanguage": "Choose language",
   "languageEnglish": "English",
   "languageFrench": "Français",
   "languageSystem": "System default",
   "languageSystemSubtitle": "Follow your device language",
-
   "navSearch": "Search",
   "navFavorites": "Favorites",
   "navPublish": "Publish",
   "navMessages": "Messages",
   "navAccount": "Account",
-
   "accountTitle": "My account",
   "emailNotConfirmed": "Email not confirmed",
   "emailNotConfirmedBody": "Confirm your address to secure your account.",
   "resend": "Resend",
   "confirmationEmailSent": "Confirmation email sent.",
   "planLabel": "Plan: {plan}",
-  "@planLabel": { "placeholders": { "plan": {} } },
+  "@planLabel": {
+    "placeholders": {
+      "plan": {}
+    }
+  },
   "freePlan": "Free plan",
   "listingsUnlimited": "{count} active · unlimited listings",
-  "@listingsUnlimited": { "placeholders": { "count": { "type": "int" } } },
+  "@listingsUnlimited": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "listingsUsed": "{count} of {limit} listings used",
-  "@listingsUsed": { "placeholders": { "count": { "type": "int" }, "limit": { "type": "int" } } },
+  "@listingsUsed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
   "changePlan": "Change plan",
   "businessDashboard": "Business dashboard",
   "sellerSpace": "Seller area",
   "changePassword": "Change password",
   "settingsPrivacy": "Settings & privacy",
   "logOut": "Log out",
-
   "welcomeTitle": "Find Everything You Need",
   "welcomeSubtitle": "Join thousands of local buyers and sellers in your community today.",
   "continueWithGoogle": "Continue with Google",
   "createAccount": "Create Account",
   "alreadyHaveAccount": "Already have an account?",
   "logIn": "Log In",
-
   "loginTitle": "Welcome back",
   "loginSubtitle": "Sign in to manage your listings and messages",
   "emailLabel": "Email address",
@@ -53,7 +67,6 @@
   "passwordMin6": "At least 6 characters",
   "signInFailed": "Sign-in failed. Please try again.",
   "googleSignInFailed": "Could not start Google sign-in.",
-
   "signUpTitle": "Create an account",
   "joinMambanda": "Join Mambanda Market",
   "fullName": "Full name",
@@ -61,7 +74,11 @@
   "passwordMin8": "At least 8 characters",
   "confirmEmailTitle": "Confirm your email",
   "confirmEmailBody": "We sent a confirmation link to {email}. Open it, then log in to finish setting up your account.",
-  "@confirmEmailBody": { "placeholders": { "email": {} } },
+  "@confirmEmailBody": {
+    "placeholders": {
+      "email": {}
+    }
+  },
   "resendEmail": "Resend email",
   "sending": "Sending…",
   "goToLogin": "Go to login",
@@ -69,19 +86,21 @@
   "signUpFailed": "Could not create the account. Please try again.",
   "confirmationResent": "Confirmation email resent.",
   "resendRateLimited": "Please wait a moment before requesting another email.",
-
   "resetPasswordTitle": "Reset password",
   "forgotPasswordHeading": "Forgot password?",
   "forgotPasswordBody": "Enter your email address and we will send you a link to set a new one.",
   "sendLink": "Send link",
   "checkEmailTitle": "Check your email",
   "checkEmailBody": "If an account exists for {email}, we sent a link to reset your password. The link expires after a short while.",
-  "@checkEmailBody": { "placeholders": { "email": {} } },
+  "@checkEmailBody": {
+    "placeholders": {
+      "email": {}
+    }
+  },
   "backToLogin": "Back to login",
   "useAnotherEmail": "Use another address",
   "sendFailed": "Could not send. Please try again.",
   "tooManyAttempts": "Too many attempts right now. Please try again shortly.",
-
   "newPasswordTitle": "New password",
   "chooseNewPassword": "Choose a new password",
   "newPasswordLabel": "New password",
@@ -91,31 +110,405 @@
   "passwordUpdated": "Password updated.",
   "updateFailed": "Update failed.",
   "resetLinkExpired": "That reset link has expired. Request a new one.",
-
   "searchHintRegion": "Search in {location}",
-  "@searchHintRegion": { "placeholders": { "location": {} } },
+  "@searchHintRegion": {
+    "placeholders": {
+      "location": {}
+    }
+  },
   "forYou": "For you",
   "galleryTitle": "Gallery ({category})",
-  "@galleryTitle": { "placeholders": { "category": {} } },
+  "@galleryTitle": {
+    "placeholders": {
+      "category": {}
+    }
+  },
   "recommendedForYou": "Recommended for you",
   "wholeRegion": "your area",
   "regionWithRadius": "{city} (+{radius} km)",
-  "@regionWithRadius": { "placeholders": { "city": {}, "radius": { "type": "int" } } },
+  "@regionWithRadius": {
+    "placeholders": {
+      "city": {},
+      "radius": {
+        "type": "int"
+      }
+    }
+  },
   "nothingFoundFor": "Nothing found for \"{query}\"",
-  "@nothingFoundFor": { "placeholders": { "query": {} } },
+  "@nothingFoundFor": {
+    "placeholders": {
+      "query": {}
+    }
+  },
   "noListingsIn": "No listings in \"{category}\"",
-  "@noListingsIn": { "placeholders": { "category": {} } },
+  "@noListingsIn": {
+    "placeholders": {
+      "category": {}
+    }
+  },
   "retry": "Try again",
   "connectionError": "Couldn't reach the marketplace. Check your connection.",
   "favoriteSignInRequired": "Sign in to save listings.",
   "favoriteUpdateFailed": "Couldn't update your favorites.",
-
   "favoritesTitle": "My favorites",
   "signInToSeeFavorites": "Sign in to see your favorites.",
   "noFavoritesYet": "No favorites yet.",
-
   "messagesTitle": "Messages & Chats",
   "noChatsYet": "No active chats yet.",
   "signInToSeeMessages": "Sign in to see your messages.",
-  "couldNotLoadMessages": "Could not load your messages."
+  "couldNotLoadMessages": "Could not load your messages.",
+  "bizDashTitle": "Store Dashboard",
+  "bizDashGoToHomeFeed": "Go to Home Feed",
+  "bizDashAddNewItem": "Add New Item",
+  "bizDashPerformanceOverview": "Performance Overview",
+  "bizDashActiveListings": "Active Listings ({count})",
+  "@bizDashActiveListings": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "bizDashFilterAll": "All",
+  "bizDashFilterInStock": "In Stock",
+  "bizDashFilterOutOfStock": "Out of Stock",
+  "bizDashTryAgain": "Try again",
+  "bizDashSignInPrompt": "Sign in to manage your store.",
+  "bizDashLoadError": "Could not load your inventory. Check your connection.",
+  "bizDashNoItems": "No items in your inventory yet.",
+  "bizDashNoMatch": "Nothing matches \"{filter}\".",
+  "@bizDashNoMatch": {
+    "placeholders": {
+      "filter": {}
+    }
+  },
+  "bizDashYourStore": "Your store",
+  "bizDashSetupStorefront": "Set up your storefront",
+  "bizDashVerifiedMerchant": "Verified Merchant • ",
+  "bizDashReviewsCount": "{count, plural, =1{{count} review} other{{count} reviews}}",
+  "@bizDashReviewsCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "bizDashGoToHomeMarketplace": "Go to Home Marketplace",
+  "bizDashEditStore": "Edit Store",
+  "bizDashTotalRevenue": "Total Revenue",
+  "bizDashItemsSold": "Items Sold",
+  "bizDashUnitsCount": "{count} Units",
+  "@bizDashUnitsCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "bizDashStoreVisits": "Store Visits",
+  "bizDashInquiries": "Inquiries",
+  "bizDashImagesCount": "{count} imgs",
+  "@bizDashImagesCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "bizDashGeneralCategory": "General",
+  "bizDashQty": "• Qty: {count}",
+  "@bizDashQty": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "bizDashGuarantee": "Guarantee",
+  "bizDashEditItem": "Edit Item",
+  "bizDashDeleteItem": "Delete Item",
+  "bizDashDeleteTitle": "Delete Listing",
+  "bizDashDeleteConfirm": "Are you sure you want to delete \"{title}\"?",
+  "@bizDashDeleteConfirm": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "bizDashCancel": "Cancel",
+  "bizDashDelete": "Delete",
+  "bizDashListingCreated": "Listing created successfully!",
+  "bizDashItemUpdated": "Item updated successfully!",
+  "bizDashItemDeleted": "Item deleted successfully",
+  "chatDefaultUser": "User",
+  "chatDefaultListing": "Listing",
+  "chatLoadError": "Could not load this conversation.",
+  "chatTryAgain": "Try again",
+  "chatEmpty": "Say hello to start the conversation.",
+  "chatInputHint": "Write a message…",
+  "createEditItem": "Edit Item",
+  "createAddNewItem": "Add New Item",
+  "createProductImages": "Product Images",
+  "createAddMedia": "Add Media",
+  "createTakePhotoWithCamera": "Take Photo with Camera",
+  "createChooseFromGallery": "Choose from Gallery",
+  "createSelectCategory": "Select Category",
+  "createLoading": "Loading…",
+  "createPleaseChooseCategory": "Please choose a category",
+  "createPleaseChooseACategory": "Please choose a category.",
+  "createListingTitle": "Listing Title",
+  "createPleaseEnterTitle": "Please enter a title",
+  "createPriceLabel": "Price (€)",
+  "createEnterPrice": "Enter price",
+  "createInvalidPrice": "Invalid price",
+  "createQuantity": "Quantity",
+  "createEnterQuantity": "Enter quantity",
+  "createMinQuantity": "Min 1",
+  "createCondition": "Condition",
+  "createConditionNew": "New",
+  "createConditionLikeNew": "Like New",
+  "createConditionUsed": "Used",
+  "createConditionRefurbished": "Refurbished",
+  "createIncludesGuarantee": "Includes Guarantee / Warranty",
+  "createSaveChanges": "Save Changes",
+  "createPublishItem": "Publish Item",
+  "createListingLimitReached": "Listing limit reached",
+  "createNotNow": "Not now",
+  "createUpgradePlan": "Upgrade plan",
+  "createSelectAtLeastOneImage": "Please select at least one image.",
+  "createListingPublished": "Listing published.",
+  "createSignInToPublish": "Please sign in to publish a listing.",
+  "createCouldNotPublish": "Could not publish. Check your connection.",
+  "createCouldNotLoadCategories": "Could not load categories.",
+  "createFailedToCapturePhoto": "Failed to capture photo: {error}",
+  "@createFailedToCapturePhoto": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "createFailedToPickImages": "Failed to pick images: {error}",
+  "@createFailedToPickImages": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "detailSignInToSave": "Sign in to save items.",
+  "detailSignInToMessage": "Sign in to message the seller.",
+  "detailOwnListing": "This is your own listing.",
+  "detailConditionFallback": "Local pickup only",
+  "detailViews": "{count} views",
+  "@detailViews": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "detailDetails": "Details",
+  "detailNoDescription": "No description provided.",
+  "detailRelated": "Similar listings",
+  "detailMessageSeller": "Message",
+  "detailPostedMinutes": "{count} min ago",
+  "@detailPostedMinutes": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "detailPostedHours": "{count} h ago",
+  "@detailPostedHours": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "detailPostedDays": "{count} d ago",
+  "@detailPostedDays": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "onbBizTitle": "Store Profile Setup",
+  "onbBizTakePhoto": "Take Photo with Camera",
+  "onbBizChooseFromGallery": "Choose from Gallery",
+  "onbBizSelectBanner": "Select Store Banner",
+  "onbBizSelectLogo": "Select Store Logo",
+  "onbBizBannerPickFailed": "Failed to select banner image: {error}",
+  "@onbBizBannerPickFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "onbBizAvatarPickFailed": "Failed to select avatar image: {error}",
+  "@onbBizAvatarPickFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "onbBizUploadBanner": "Upload Store Banner",
+  "onbBizChangeBanner": "Change Banner",
+  "onbBizShopNameLabel": "Shop Name*",
+  "onbBizShopNameRequired": "Shop name required",
+  "onbBizShopLocationLabel": "Shop Location*",
+  "onbBizShopLocationRequired": "Shop location required",
+  "onbBizShopDescriptionLabel": "Shop Description*",
+  "onbBizShopDescriptionHint": "Tell customers about your products and services...",
+  "onbBizDescriptionRequired": "Description required",
+  "onbBizSupportPhoneLabel": "Business Support Phone*",
+  "onbBizPhoneRequired": "Phone required",
+  "onbBizSaved": "Storefront saved.",
+  "onbBizSaveFailed": "Could not save your storefront. Please try again.",
+  "onbBizSaveContinue": "Save & Continue to Dashboard",
+  "onbIndChooseFromGallery": "Choose from Gallery",
+  "onbIndTakePhoto": "Take a Photo",
+  "onbIndRemovePhoto": "Remove Photo",
+  "onbIndImagePickFailed": "Failed to pick image: {error}",
+  "@onbIndImagePickFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "onbIndSubmissionFailed": "Submission failed: {error}",
+  "@onbIndSubmissionFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "onbIndAppBarTitle": "Setup Seller Profile",
+  "onbIndHeaderTitle": "Become an Individual Seller",
+  "onbIndHeaderSubtitle": "Set up your personal seller profile to start listing pre-loved items and connecting with local buyers.",
+  "onbIndNameLabel": "Full Name / Display Name *",
+  "onbIndNameHint": "e.g., Jane Doe",
+  "onbIndNameRequired": "Please enter your name",
+  "onbIndNameTooShort": "Name must be at least 2 characters",
+  "onbIndPhoneLabel": "Phone Number *",
+  "onbIndPhoneHint": "+1 234 567 8900",
+  "onbIndPhoneHelper": "For buyer communication and verification",
+  "onbIndPhoneRequired": "Please enter your phone number",
+  "onbIndPhoneInvalid": "Please enter a valid phone number",
+  "onbIndBioLabel": "Short Bio (Optional)",
+  "onbIndBioHint": "Tell buyers a bit about what you sell (e.g., \"Clearing out tech gadgets & outdoor gear in good condition!\")",
+  "onbIndInfoBanner": "Individual seller accounts are meant for private, non-commercial sales. You can upgrade to a business tier anytime later.",
+  "onbIndSubmitButton": "Complete Profile & Open Hub",
+  "roleUpdateError": "Could not update your account type.",
+  "roleAppBarTitle": "Choose Account Type",
+  "roleHeading": "How will you use the platform?",
+  "roleSubheading": "You can update your tier or subscribe anytime later in settings.",
+  "roleBuyerTitle": "Buyer (Individual)",
+  "roleBuyerSubtitle": "Browse items, chat with sellers, save favorites.",
+  "roleBadgeFree": "FREE",
+  "roleBuyerSellerTitle": "Buyer + Seller (Individual)",
+  "roleBuyerSellerSubtitle": "Post & manage items in your personal seller dashboard.",
+  "roleBadgeSubscription": "SUBSCRIPTION",
+  "roleBusinessTitle": "Business Store",
+  "roleBusinessSubtitle": "Branded storefront, custom banner/logo & store features.",
+  "roleBadgeBusiness": "BUSINESS TIER",
+  "roleContinueFree": "Get Started (Free)",
+  "roleContinuePaid": "Continue to Subscription Plan",
+  "sellerDashTitle": "My Seller Hub",
+  "sellerDashHomeTooltip": "Go to Home Feed",
+  "sellerDashSellItem": "Sell Item",
+  "sellerDashActiveItems": "Active Items",
+  "sellerDashTotalEarned": "Total Earned",
+  "sellerDashTotalViews": "Total Views",
+  "sellerDashInquiries": "Inquiries",
+  "sellerDashActiveTab": "Active Listings ({count})",
+  "@sellerDashActiveTab": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "sellerDashSoldTab": "Sold ({count})",
+  "@sellerDashSoldTab": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "sellerDashAccountName": "Personal Seller Account",
+  "sellerDashAccountTier": "Individual Tier • Member since 2026",
+  "sellerDashIndividualBadge": "INDIVIDUAL",
+  "sellerDashGoToMarketplace": "Go to Home Marketplace",
+  "sellerDashTryAgain": "Try again",
+  "sellerDashNoActiveItems": "No active items listed yet.",
+  "sellerDashImgsCount": "{count} imgs",
+  "@sellerDashImgsCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "sellerDashViewsCount": "{count} views",
+  "@sellerDashViewsCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "sellerDashChatsCount": "{count} chats",
+  "@sellerDashChatsCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "sellerDashMarkAsSold": "Mark as Sold",
+  "sellerDashEdit": "Edit",
+  "sellerDashDelete": "Delete",
+  "sellerDashNoSoldItems": "No sold items yet.",
+  "sellerDashSoldTo": "Sold to {buyer} on {date}",
+  "@sellerDashSoldTo": {
+    "placeholders": {
+      "buyer": {},
+      "date": {}
+    }
+  },
+  "sellerDashDeleteTitle": "Delete Listing?",
+  "sellerDashDeleteConfirm": "Are you sure you want to delete \"{title}\"?",
+  "@sellerDashDeleteConfirm": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "sellerDashCancel": "Cancel",
+  "sellerDashListingDeleted": "Listing deleted.",
+  "sellerDashListedSuccess": "Item listed for sale successfully!",
+  "sellerDashMarkedSold": "\"{title}\" marked as sold!",
+  "@sellerDashMarkedSold": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "sellerDashSignInPrompt": "Sign in to view your seller hub.",
+  "sellerDashLoadError": "Could not load your listings. Check your connection.",
+  "subSelectPlan": "Select Plan",
+  "subBusinessStorePlans": "Business Store Plans",
+  "subSellerSubscriptions": "Seller Subscriptions",
+  "subChoosePlanSubtitle": "Choose the plan that fits your growth goals.",
+  "subBillingMonthly": "Monthly",
+  "subBillingYearly": "Yearly (Save 20%)",
+  "subTermsOfUse": "Terms of Use",
+  "subPrivacyPolicy": "Privacy Policy",
+  "subRestorePurchases": "Restore Purchases",
+  "subSubscribeTo": "Subscribe to {name}",
+  "@subSubscribeTo": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "subPerMonth": "/ month",
+  "subBilledAnnually": "Billed annually",
+  "subPlanClassic": "Classic",
+  "subPlanProBusiness": "Pro Business",
+  "subPlanVipEnterprise": "VIP Enterprise",
+  "subPlanProSeller": "Pro Seller",
+  "subPlanVipSeller": "VIP Seller",
+  "subBadgeMostPopular": "MOST POPULAR",
+  "subBadgeExclusive": "EXCLUSIVE",
+  "subBadgeBestValue": "BEST VALUE",
+  "subBadgeTopSeller": "TOP SELLER",
+  "subFeatBasicStorefront": "Basic Storefront Page",
+  "subFeatUpTo25Listings": "Up to 25 Active Listings",
+  "subFeatStandardSearchRanking": "Standard Search Ranking",
+  "subFeatBasicCustomerAnalytics": "Basic Customer Analytics",
+  "subFeatCustomBrandedStorefront": "Fully Custom Branded Storefront",
+  "subFeatUnlimitedActiveListings": "Unlimited Active Listings",
+  "subFeatPrioritySearchRanking": "Priority Search Ranking",
+  "subFeatCustomLogoBanner": "Custom Logo & Shop Banner",
+  "subFeatAdvancedSalesAnalytics": "Advanced Sales Analytics",
+  "subFeatAllProFeatures": "All Pro Features Included",
+  "subFeatTopTierHomepage": "Top Tier Homepage Placement",
+  "subFeatDedicatedAccountManager": "Dedicated Account Manager",
+  "subFeatZeroTransactionFees": "Zero Marketplace Transaction Fees",
+  "subFeatVerifiedBusinessBadge": "Verified Business Badge",
+  "subFeatPostUpTo5Items": "Post Up to 5 Items",
+  "subFeatPersonalSellerDashboard": "Personal Seller Dashboard",
+  "subFeatStandardSupport": "Standard Support",
+  "subFeatUnlimitedItemListings": "Unlimited Item Listings",
+  "subFeatDirectBuyerMessaging": "Direct Buyer Messaging",
+  "subFeatFeaturedListingBadges": "Featured Listing Badges",
+  "subFeatTopPlacementSearch": "Top Placement in Search Results",
+  "subFeatInstantPushNotifications": "Instant Push Notifications to Buyers",
+  "subFeat247PrioritySupport": "24/7 Priority Support"
 }

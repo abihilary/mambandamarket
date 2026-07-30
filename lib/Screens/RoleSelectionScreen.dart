@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api/auth_service.dart';
+import '../l10n/l10n.dart';
 import 'SignUpScreen.dart';
 import 'SubscriptionScreen.dart';
 
@@ -22,6 +23,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
       };
 
   Future<void> _handleRoleSubmission() async {
+    final l10n = context.l10n;
     final auth = AuthService.instance;
 
     // No account yet → create one carrying the chosen role.
@@ -40,7 +42,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not update your account type.')),
+        SnackBar(content: Text(l10n.roleUpdateError)),
       );
       return;
     }
@@ -71,7 +73,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Choose Account Type'),
+        title: Text(context.l10n.roleAppBarTitle),
         elevation: 0,
       ),
       body: SafeArea(
@@ -81,14 +83,14 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'How will you use the platform?',
+                context.l10n.roleHeading,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'You can update your tier or subscribe anytime later in settings.',
+                context.l10n.roleSubheading,
                 style: TextStyle(color: Colors.grey.shade600),
               ),
               const SizedBox(height: 24),
@@ -96,9 +98,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               // Option 1: Buyer Only
               _buildRoleOptionCard(
                 id: 'buyer',
-                title: 'Buyer (Individual)',
-                subtitle: 'Browse items, chat with sellers, save favorites.',
-                badgeText: 'FREE',
+                title: context.l10n.roleBuyerTitle,
+                subtitle: context.l10n.roleBuyerSubtitle,
+                badgeText: context.l10n.roleBadgeFree,
                 badgeColor: Colors.green,
                 icon: Icons.shopping_bag_outlined,
               ),
@@ -107,9 +109,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               // Option 2: Individual Seller
               _buildRoleOptionCard(
                 id: 'buyer_seller',
-                title: 'Buyer + Seller (Individual)',
-                subtitle: 'Post & manage items in your personal seller dashboard.',
-                badgeText: 'SUBSCRIPTION',
+                title: context.l10n.roleBuyerSellerTitle,
+                subtitle: context.l10n.roleBuyerSellerSubtitle,
+                badgeText: context.l10n.roleBadgeSubscription,
                 badgeColor: Colors.amber.shade800,
                 icon: Icons.storefront_outlined,
               ),
@@ -118,9 +120,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               // Option 3: Business Store
               _buildRoleOptionCard(
                 id: 'business',
-                title: 'Business Store',
-                subtitle: 'Branded storefront, custom banner/logo & store features.',
-                badgeText: 'BUSINESS TIER',
+                title: context.l10n.roleBusinessTitle,
+                subtitle: context.l10n.roleBusinessSubtitle,
+                badgeText: context.l10n.roleBadgeBusiness,
                 badgeColor: Colors.indigo,
                 icon: Icons.business_outlined,
               ),
@@ -142,8 +144,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   ),
                   child: Text(
                     _selectedRole == 'buyer'
-                        ? 'Get Started (Free)'
-                        : 'Continue to Subscription Plan',
+                        ? context.l10n.roleContinueFree
+                        : context.l10n.roleContinuePaid,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,

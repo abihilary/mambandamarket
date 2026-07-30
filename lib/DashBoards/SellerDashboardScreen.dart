@@ -6,6 +6,7 @@ import '../api/api_client.dart';
 import '../api/auth_service.dart';
 import '../api/models.dart' as api;
 import '../api/repositories.dart';
+import '../l10n/l10n.dart';
 import 'CreateListingScreen.dart';
 
 
@@ -31,6 +32,12 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   String? _error;
   int _earnedCents = 0;
   api.SellerDashboard? _stats;
+
+  // `_load` runs from initState, where a BuildContext isn't safe to localize.
+  // It records these sentinels instead, which `_gate()` translates at build
+  // time. Real API errors are stored verbatim and shown as-is.
+  static const String _kSignInError = '__seller_dash_sign_in__';
+  static const String _kLoadError = '__seller_dash_load__';
 
   @override
   void initState() {
@@ -78,7 +85,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     if (uid == null) {
       setState(() {
         _isLoading = false;
-        _error = 'Sign in to view your seller hub.';
+        _error = _kSignInError;
       });
       return;
     }
@@ -115,7 +122,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     } catch (_) {
       if (mounted) {
         setState(() {
-          _error = 'Could not load your listings. Check your connection.';
+          _error = _kLoadError;
           _isLoading = false;
         });
       }
@@ -162,6 +169,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   // Open CreateListingScreen; it publishes through the API itself, so we just
   // reload to pick the new item up with its server-assigned fields.
   void _openCreateListingModal() async {
+    final l10n = context.l10n;
     final created = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const CreateListingScreen()),
@@ -171,19 +179,20 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
       await _load();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Item listed for sale successfully!')),
+        SnackBar(content: Text(l10n.sellerDashListedSuccess)),
       );
     }
   }
 
   Future<void> _markItemAsSold(Map<String, dynamic> item) async {
+    final l10n = context.l10n;
     try {
       await ListingsRepository.instance
           .markSold(item['id'] as String, soldPriceCents: item['priceCents'] as int?);
       await _load();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('"${item['title']}" marked as sold!')),
+        SnackBar(content: Text(l10n.sellerDashMarkedSold(item['title'] as String))),
       );
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -207,15 +216,16 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
 
   // Handle Delete Action
   void _deleteItem(Map<String, dynamic> item, bool isActive) {
+    final l10n = context.l10n;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Listing?'),
-        content: Text('Are you sure you want to delete "${item['title']}"?'),
+        title: Text(l10n.sellerDashDeleteTitle),
+        content: Text(l10n.sellerDashDeleteConfirm(item['title'] as String)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(l10n.sellerDashCancel),
           ),
           TextButton(
             onPressed: () async {
@@ -227,7 +237,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                 await _load();
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Listing deleted.')),
+                  SnackBar(content: Text(l10n.sellerDashListingDeleted)),
                 );
               } on ApiException catch (e) {
                 if (!mounted) return;
@@ -238,7 +248,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                 );
               }
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(l10n.sellerDashDelete,
+                style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -251,13 +262,13 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'My Seller Hub',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          context.l10n.sellerDashTitle,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
-            tooltip: 'Go to Home Feed',
+            tooltip: context.l10n.sellerDashHomeTooltip,
             icon: const Icon(Icons.home_outlined),
             onPressed: () {
               Navigator.pushNamedAndRemoveUntil(
@@ -278,9 +289,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
         backgroundColor: theme.primaryColor,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_a_photo_outlined),
-        label: const Text(
-          'Sell Item',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        label: Text(
+          context.l10n.sellerDashSellItem,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: SafeArea(
@@ -299,7 +310,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                 children: [
                   Expanded(
                     child: _buildStatTile(
-                      title: 'Active Items',
+                      title: context.l10n.sellerDashActiveItems,
                       value: '${_activeItems.length}',
                       icon: Icons.sell_outlined,
                       color: Colors.amber.shade800,
@@ -308,7 +319,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildStatTile(
-                      title: 'Total Earned',
+                      title: context.l10n.sellerDashTotalEarned,
                       value: _totalEarnedLabel,
                       icon: Icons.account_balance_wallet_outlined,
                       color: Colors.green,
@@ -326,7 +337,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                 children: [
                   Expanded(
                     child: _buildStatTile(
-                      title: 'Total Views',
+                      title: context.l10n.sellerDashTotalViews,
                       value: '${_stats?.totalViews ?? 0}',
                       icon: Icons.visibility_outlined,
                       color: Colors.blue,
@@ -335,7 +346,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildStatTile(
-                      title: 'Inquiries',
+                      title: context.l10n.sellerDashInquiries,
                       value: '${_stats?.inquiries ?? 0}',
                       icon: Icons.chat_bubble_outline,
                       color: Colors.deepPurple,
@@ -354,8 +365,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
               indicatorColor: theme.primaryColor,
               indicatorWeight: 3,
               tabs: [
-                Tab(text: 'Active Listings (${_activeItems.length})'),
-                Tab(text: 'Sold (${_soldItems.length})'),
+                Tab(text: context.l10n.sellerDashActiveTab(_activeItems.length)),
+                Tab(text: context.l10n.sellerDashSoldTab(_soldItems.length)),
               ],
             ),
 
@@ -406,25 +417,25 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Personal Seller Account',
-                      style: TextStyle(
+                    Text(
+                      context.l10n.sellerDashAccountName,
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Individual Tier • Member since 2026',
+                      context.l10n.sellerDashAccountTier,
                       style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                     ),
                   ],
                 ),
               ),
               Chip(
-                label: const Text(
-                  'INDIVIDUAL',
-                  style: TextStyle(
+                label: Text(
+                  context.l10n.sellerDashIndividualBadge,
+                  style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                     color: Colors.amber,
@@ -449,7 +460,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                 );
               },
               icon: const Icon(Icons.storefront_outlined, size: 18),
-              label: const Text('Go to Home Marketplace'),
+              label: Text(context.l10n.sellerDashGoToMarketplace),
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.primaryColor,
                 foregroundColor: Colors.white,
@@ -512,6 +523,12 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   Widget? _gate() {
     if (_isLoading) return const Center(child: CircularProgressIndicator());
     if (_error != null) {
+      final l10n = context.l10n;
+      final message = _error == _kSignInError
+          ? l10n.sellerDashSignInPrompt
+          : _error == _kLoadError
+              ? l10n.sellerDashLoadError
+              : _error!;
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -520,11 +537,12 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             children: [
               const Icon(Icons.cloud_off, size: 44, color: Colors.grey),
               const SizedBox(height: 12),
-              Text(_error!,
+              Text(message,
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Colors.grey)),
               const SizedBox(height: 16),
-              OutlinedButton(onPressed: _load, child: const Text('Try again')),
+              OutlinedButton(
+                  onPressed: _load, child: Text(l10n.sellerDashTryAgain)),
             ],
           ),
         ),
@@ -539,7 +557,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     if (_activeItems.isEmpty) {
       return Center(
         child: Text(
-          'No active items listed yet.',
+          context.l10n.sellerDashNoActiveItems,
           style: TextStyle(color: Colors.grey.shade600),
         ),
       );
@@ -584,7 +602,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            '${images.length} imgs',
+                            context.l10n.sellerDashImgsCount(images.length),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 9,
@@ -634,7 +652,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                               size: 14, color: Colors.grey.shade600),
                           const SizedBox(width: 4),
                           Text(
-                            '${item['views'] ?? 0} views',
+                            context.l10n
+                                .sellerDashViewsCount(item['views'] as int? ?? 0),
                             style: TextStyle(
                                 fontSize: 11, color: Colors.grey.shade600),
                           ),
@@ -643,7 +662,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                               size: 14, color: Colors.grey.shade600),
                           const SizedBox(width: 4),
                           Text(
-                            '${item['inquiries'] ?? 0} chats',
+                            context.l10n.sellerDashChatsCount(
+                                item['inquiries'] as int? ?? 0),
                             style: TextStyle(
                                 fontSize: 11, color: Colors.grey.shade600),
                           ),
@@ -664,19 +684,19 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                     }
                   },
                   itemBuilder: (context) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'mark_sold',
-                      child: Text('Mark as Sold'),
+                      child: Text(context.l10n.sellerDashMarkAsSold),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'edit',
-                      child: Text('Edit'),
+                      child: Text(context.l10n.sellerDashEdit),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'delete',
                       child: Text(
-                        'Delete',
-                        style: TextStyle(color: Colors.red),
+                        context.l10n.sellerDashDelete,
+                        style: const TextStyle(color: Colors.red),
                       ),
                     ),
                   ],
@@ -695,7 +715,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     if (_soldItems.isEmpty) {
       return Center(
         child: Text(
-          'No sold items yet.',
+          context.l10n.sellerDashNoSoldItems,
           style: TextStyle(color: Colors.grey.shade600),
         ),
       );
@@ -760,7 +780,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Sold to ${item['buyerName']} on ${item['soldDate']}',
+                        context.l10n.sellerDashSoldTo(
+                            item['buyerName'] as String,
+                            item['soldDate'] as String),
                         style: TextStyle(
                             fontSize: 11, color: Colors.grey.shade600),
                       ),
@@ -775,9 +797,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                     }
                   },
                   itemBuilder: (context) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'delete',
-                      child: Text('Delete', style: TextStyle(color: Colors.red)),
+                      child: Text(context.l10n.sellerDashDelete,
+                          style: const TextStyle(color: Colors.red)),
                     ),
                   ],
                 ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
+
 class SubscriptionScreen extends StatefulWidget {
   final String roleType; // 'buyer_seller' or 'business'
 
@@ -22,79 +24,79 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     if (isBusiness) {
       return {
         'classic': {
-          'name': 'Classic',
+          'name': context.l10n.subPlanClassic,
           'monthlyPrice': '€14.99',
           'annualPrice': '€11.99',
           'badge': null,
           'features': [
-            'Basic Storefront Page',
-            'Up to 25 Active Listings',
-            'Standard Search Ranking',
-            'Basic Customer Analytics',
+            context.l10n.subFeatBasicStorefront,
+            context.l10n.subFeatUpTo25Listings,
+            context.l10n.subFeatStandardSearchRanking,
+            context.l10n.subFeatBasicCustomerAnalytics,
           ],
         },
         'pro': {
-          'name': 'Pro Business',
+          'name': context.l10n.subPlanProBusiness,
           'monthlyPrice': '€29.99',
           'annualPrice': '€23.99',
-          'badge': 'MOST POPULAR',
+          'badge': context.l10n.subBadgeMostPopular,
           'features': [
-            'Fully Custom Branded Storefront',
-            'Unlimited Active Listings',
-            'Priority Search Ranking',
-            'Custom Logo & Shop Banner',
-            'Advanced Sales Analytics',
+            context.l10n.subFeatCustomBrandedStorefront,
+            context.l10n.subFeatUnlimitedActiveListings,
+            context.l10n.subFeatPrioritySearchRanking,
+            context.l10n.subFeatCustomLogoBanner,
+            context.l10n.subFeatAdvancedSalesAnalytics,
           ],
         },
         'vip': {
-          'name': 'VIP Enterprise',
+          'name': context.l10n.subPlanVipEnterprise,
           'monthlyPrice': '€59.99',
           'annualPrice': '€47.99',
-          'badge': 'EXCLUSIVE',
+          'badge': context.l10n.subBadgeExclusive,
           'features': [
-            'All Pro Features Included',
-            'Top Tier Homepage Placement',
-            'Dedicated Account Manager',
-            'Zero Marketplace Transaction Fees',
-            'Verified Business Badge',
+            context.l10n.subFeatAllProFeatures,
+            context.l10n.subFeatTopTierHomepage,
+            context.l10n.subFeatDedicatedAccountManager,
+            context.l10n.subFeatZeroTransactionFees,
+            context.l10n.subFeatVerifiedBusinessBadge,
           ],
         },
       };
     } else {
       return {
         'classic': {
-          'name': 'Classic',
+          'name': context.l10n.subPlanClassic,
           'monthlyPrice': '€2.99',
           'annualPrice': '€1.99',
           'badge': null,
           'features': [
-            'Post Up to 5 Items',
-            'Personal Seller Dashboard',
-            'Standard Support',
+            context.l10n.subFeatPostUpTo5Items,
+            context.l10n.subFeatPersonalSellerDashboard,
+            context.l10n.subFeatStandardSupport,
           ],
         },
         'pro': {
-          'name': 'Pro Seller',
+          'name': context.l10n.subPlanProSeller,
           'monthlyPrice': '€5.99',
           'annualPrice': '€4.49',
-          'badge': 'BEST VALUE',
+          'badge': context.l10n.subBadgeBestValue,
           'features': [
-            'Unlimited Item Listings',
-            'Personal Seller Dashboard',
-            'Direct Buyer Messaging',
-            'Featured Listing Badges',
+            context.l10n.subFeatUnlimitedItemListings,
+            context.l10n.subFeatPersonalSellerDashboard,
+            context.l10n.subFeatDirectBuyerMessaging,
+            context.l10n.subFeatFeaturedListingBadges,
           ],
         },
         'vip': {
-          'name': 'VIP Seller',
+          'name': context.l10n.subPlanVipSeller,
           'monthlyPrice': '€11.99',
           'annualPrice': '€8.99',
-          'badge': 'TOP SELLER',
+          'badge': context.l10n.subBadgeTopSeller,
           'features': [
-            'All Pro Features Included',
-            'Top Placement in Search Results',
-            'Instant Push Notifications to Buyers',
-            '24/7 Priority Support',
+            context.l10n.subFeatAllProFeatures,
+            context.l10n.subFeatTopPlacementSearch,
+            context.l10n.subFeatInstantPushNotifications,
+            context.l10n.subFeat247PrioritySupport,
           ],
         },
       };
@@ -108,7 +110,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Select Plan'),
+        title: Text(context.l10n.subSelectPlan),
         elevation: 0,
       ),
       body: SafeArea(
@@ -121,12 +123,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isBusiness ? 'Business Store Plans' : 'Seller Subscriptions',
+                      isBusiness ? context.l10n.subBusinessStorePlans : context.l10n.subSellerSubscriptions,
                       style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Choose the plan that fits your growth goals.',
+                      context.l10n.subChoosePlanSubtitle,
                       style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
                     ),
                     const SizedBox(height: 20),
@@ -152,10 +154,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                                       ? [const BoxShadow(color: Colors.black12, blurRadius: 4)]
                                       : [],
                                 ),
-                                child: const Center(
+                                child: Center(
                                   child: Text(
-                                    'Monthly',
-                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                    context.l10n.subBillingMonthly,
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
                                   ),
                                 ),
                               ),
@@ -173,10 +175,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                                       ? [const BoxShadow(color: Colors.black12, blurRadius: 4)]
                                       : [],
                                 ),
-                                child: const Center(
+                                child: Center(
                                   child: Text(
-                                    'Yearly (Save 20%)',
-                                    style: TextStyle(
+                                    context.l10n.subBillingYearly,
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: Colors.indigo,
                                     ),
@@ -219,17 +221,17 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                       children: [
                         TextButton(
                           onPressed: () {},
-                          child: const Text('Terms of Use', style: TextStyle(fontSize: 12)),
+                          child: Text(context.l10n.subTermsOfUse, style: const TextStyle(fontSize: 12)),
                         ),
                         const Text('•', style: TextStyle(color: Colors.grey)),
                         TextButton(
                           onPressed: () {},
-                          child: const Text('Privacy Policy', style: TextStyle(fontSize: 12)),
+                          child: Text(context.l10n.subPrivacyPolicy, style: const TextStyle(fontSize: 12)),
                         ),
                         const Text('•', style: TextStyle(color: Colors.grey)),
                         TextButton(
                           onPressed: () {},
-                          child: const Text('Restore Purchases', style: TextStyle(fontSize: 12)),
+                          child: Text(context.l10n.subRestorePurchases, style: const TextStyle(fontSize: 12)),
                         ),
                       ],
                     ),
@@ -270,7 +272,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                   )
                       : Text(
-                    'Subscribe to ${tierData[_selectedTier]!['name']}',
+                    context.l10n.subSubscribeTo(tierData[_selectedTier]!['name']),
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -348,15 +350,15 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '/ month',
+                      context.l10n.subPerMonth,
                       style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                     ),
                   ],
                 ),
                 if (_isAnnual)
-                  const Text(
-                    'Billed annually',
-                    style: TextStyle(fontSize: 11, color: Colors.grey),
+                  Text(
+                    context.l10n.subBilledAnnually,
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
                   ),
                 const Divider(height: 24),
                 ...features.map((feature) => _buildFeatureRow(feature)),

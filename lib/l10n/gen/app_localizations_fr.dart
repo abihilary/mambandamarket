@@ -328,4 +328,769 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get couldNotLoadMessages => 'Impossible de charger vos messages.';
+
+  @override
+  String get bizDashTitle => 'Tableau de bord de la boutique';
+
+  @override
+  String get bizDashGoToHomeFeed => 'Aller au fil d\'accueil';
+
+  @override
+  String get bizDashAddNewItem => 'Ajouter un article';
+
+  @override
+  String get bizDashPerformanceOverview => 'Aperçu des performances';
+
+  @override
+  String bizDashActiveListings(Object count) {
+    return 'Annonces actives ($count)';
+  }
+
+  @override
+  String get bizDashFilterAll => 'Tous';
+
+  @override
+  String get bizDashFilterInStock => 'En stock';
+
+  @override
+  String get bizDashFilterOutOfStock => 'En rupture de stock';
+
+  @override
+  String get bizDashTryAgain => 'Réessayer';
+
+  @override
+  String get bizDashSignInPrompt => 'Connectez-vous pour gérer votre boutique.';
+
+  @override
+  String get bizDashLoadError =>
+      'Impossible de charger votre inventaire. Vérifiez votre connexion.';
+
+  @override
+  String get bizDashNoItems =>
+      'Aucun article dans votre inventaire pour le moment.';
+
+  @override
+  String bizDashNoMatch(Object filter) {
+    return 'Rien ne correspond à « $filter ».';
+  }
+
+  @override
+  String get bizDashYourStore => 'Votre boutique';
+
+  @override
+  String get bizDashSetupStorefront => 'Configurez votre vitrine';
+
+  @override
+  String get bizDashVerifiedMerchant => 'Marchand vérifié • ';
+
+  @override
+  String bizDashReviewsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count avis',
+      one: '$count avis',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get bizDashGoToHomeMarketplace => 'Aller à la place de marché';
+
+  @override
+  String get bizDashEditStore => 'Modifier la boutique';
+
+  @override
+  String get bizDashTotalRevenue => 'Revenu total';
+
+  @override
+  String get bizDashItemsSold => 'Articles vendus';
+
+  @override
+  String bizDashUnitsCount(Object count) {
+    return '$count unités';
+  }
+
+  @override
+  String get bizDashStoreVisits => 'Visites de la boutique';
+
+  @override
+  String get bizDashInquiries => 'Demandes';
+
+  @override
+  String bizDashImagesCount(Object count) {
+    return '$count imgs';
+  }
+
+  @override
+  String get bizDashGeneralCategory => 'Général';
+
+  @override
+  String bizDashQty(Object count) {
+    return '• Qté : $count';
+  }
+
+  @override
+  String get bizDashGuarantee => 'Garantie';
+
+  @override
+  String get bizDashEditItem => 'Modifier l\'article';
+
+  @override
+  String get bizDashDeleteItem => 'Supprimer l\'article';
+
+  @override
+  String get bizDashDeleteTitle => 'Supprimer l\'annonce';
+
+  @override
+  String bizDashDeleteConfirm(Object title) {
+    return 'Voulez-vous vraiment supprimer « $title » ?';
+  }
+
+  @override
+  String get bizDashCancel => 'Annuler';
+
+  @override
+  String get bizDashDelete => 'Supprimer';
+
+  @override
+  String get bizDashListingCreated => 'Annonce créée avec succès !';
+
+  @override
+  String get bizDashItemUpdated => 'Article mis à jour avec succès !';
+
+  @override
+  String get bizDashItemDeleted => 'Article supprimé avec succès';
+
+  @override
+  String get chatDefaultUser => 'Utilisateur';
+
+  @override
+  String get chatDefaultListing => 'Annonce';
+
+  @override
+  String get chatLoadError => 'Impossible de charger cette conversation.';
+
+  @override
+  String get chatTryAgain => 'Réessayer';
+
+  @override
+  String get chatEmpty => 'Dites bonjour pour démarrer la conversation.';
+
+  @override
+  String get chatInputHint => 'Écrire un message…';
+
+  @override
+  String get createEditItem => 'Modifier l\'article';
+
+  @override
+  String get createAddNewItem => 'Ajouter un article';
+
+  @override
+  String get createProductImages => 'Images du produit';
+
+  @override
+  String get createAddMedia => 'Ajouter un média';
+
+  @override
+  String get createTakePhotoWithCamera => 'Prendre une photo';
+
+  @override
+  String get createChooseFromGallery => 'Choisir dans la galerie';
+
+  @override
+  String get createSelectCategory => 'Sélectionner une catégorie';
+
+  @override
+  String get createLoading => 'Chargement…';
+
+  @override
+  String get createPleaseChooseCategory => 'Veuillez choisir une catégorie';
+
+  @override
+  String get createPleaseChooseACategory => 'Veuillez choisir une catégorie.';
+
+  @override
+  String get createListingTitle => 'Titre de l\'annonce';
+
+  @override
+  String get createPleaseEnterTitle => 'Veuillez saisir un titre';
+
+  @override
+  String get createPriceLabel => 'Prix (€)';
+
+  @override
+  String get createEnterPrice => 'Saisir le prix';
+
+  @override
+  String get createInvalidPrice => 'Prix invalide';
+
+  @override
+  String get createQuantity => 'Quantité';
+
+  @override
+  String get createEnterQuantity => 'Saisir la quantité';
+
+  @override
+  String get createMinQuantity => 'Min 1';
+
+  @override
+  String get createCondition => 'État';
+
+  @override
+  String get createConditionNew => 'Neuf';
+
+  @override
+  String get createConditionLikeNew => 'Comme neuf';
+
+  @override
+  String get createConditionUsed => 'Occasion';
+
+  @override
+  String get createConditionRefurbished => 'Reconditionné';
+
+  @override
+  String get createIncludesGuarantee => 'Inclut une garantie';
+
+  @override
+  String get createSaveChanges => 'Enregistrer les modifications';
+
+  @override
+  String get createPublishItem => 'Publier l\'article';
+
+  @override
+  String get createListingLimitReached => 'Limite d\'annonces atteinte';
+
+  @override
+  String get createNotNow => 'Pas maintenant';
+
+  @override
+  String get createUpgradePlan => 'Améliorer l\'offre';
+
+  @override
+  String get createSelectAtLeastOneImage =>
+      'Veuillez sélectionner au moins une image.';
+
+  @override
+  String get createListingPublished => 'Annonce publiée.';
+
+  @override
+  String get createSignInToPublish =>
+      'Veuillez vous connecter pour publier une annonce.';
+
+  @override
+  String get createCouldNotPublish =>
+      'Publication impossible. Vérifiez votre connexion.';
+
+  @override
+  String get createCouldNotLoadCategories =>
+      'Impossible de charger les catégories.';
+
+  @override
+  String createFailedToCapturePhoto(Object error) {
+    return 'Échec de la capture de la photo : $error';
+  }
+
+  @override
+  String createFailedToPickImages(Object error) {
+    return 'Échec de la sélection des images : $error';
+  }
+
+  @override
+  String get detailSignInToSave =>
+      'Connectez-vous pour enregistrer des articles.';
+
+  @override
+  String get detailSignInToMessage =>
+      'Connectez-vous pour contacter le vendeur.';
+
+  @override
+  String get detailOwnListing => 'Il s\'agit de votre propre annonce.';
+
+  @override
+  String get detailConditionFallback => 'Retrait sur place';
+
+  @override
+  String detailViews(Object count) {
+    return '$count vues';
+  }
+
+  @override
+  String get detailDetails => 'Détails';
+
+  @override
+  String get detailNoDescription => 'Aucune description fournie.';
+
+  @override
+  String get detailRelated => 'Annonces similaires';
+
+  @override
+  String get detailMessageSeller => 'Message';
+
+  @override
+  String detailPostedMinutes(Object count) {
+    return 'Il y a $count min';
+  }
+
+  @override
+  String detailPostedHours(Object count) {
+    return 'Il y a $count h';
+  }
+
+  @override
+  String detailPostedDays(Object count) {
+    return 'Il y a $count j';
+  }
+
+  @override
+  String get onbBizTitle => 'Configuration du profil de la boutique';
+
+  @override
+  String get onbBizTakePhoto => 'Prendre une photo avec l\'appareil';
+
+  @override
+  String get onbBizChooseFromGallery => 'Choisir dans la galerie';
+
+  @override
+  String get onbBizSelectBanner => 'Sélectionner la bannière de la boutique';
+
+  @override
+  String get onbBizSelectLogo => 'Sélectionner le logo de la boutique';
+
+  @override
+  String onbBizBannerPickFailed(Object error) {
+    return 'Échec de la sélection de l\'image de bannière : $error';
+  }
+
+  @override
+  String onbBizAvatarPickFailed(Object error) {
+    return 'Échec de la sélection de l\'image d\'avatar : $error';
+  }
+
+  @override
+  String get onbBizUploadBanner => 'Télécharger la bannière de la boutique';
+
+  @override
+  String get onbBizChangeBanner => 'Changer la bannière';
+
+  @override
+  String get onbBizShopNameLabel => 'Nom de la boutique*';
+
+  @override
+  String get onbBizShopNameRequired => 'Le nom de la boutique est requis';
+
+  @override
+  String get onbBizShopLocationLabel => 'Emplacement de la boutique*';
+
+  @override
+  String get onbBizShopLocationRequired =>
+      'L\'emplacement de la boutique est requis';
+
+  @override
+  String get onbBizShopDescriptionLabel => 'Description de la boutique*';
+
+  @override
+  String get onbBizShopDescriptionHint =>
+      'Parlez à vos clients de vos produits et services...';
+
+  @override
+  String get onbBizDescriptionRequired => 'La description est requise';
+
+  @override
+  String get onbBizSupportPhoneLabel =>
+      'Téléphone d\'assistance de l\'entreprise*';
+
+  @override
+  String get onbBizPhoneRequired => 'Le téléphone est requis';
+
+  @override
+  String get onbBizSaved => 'Boutique enregistrée.';
+
+  @override
+  String get onbBizSaveFailed =>
+      'Impossible d\'enregistrer votre boutique. Veuillez réessayer.';
+
+  @override
+  String get onbBizSaveContinue =>
+      'Enregistrer et continuer vers le tableau de bord';
+
+  @override
+  String get onbIndChooseFromGallery => 'Choisir dans la galerie';
+
+  @override
+  String get onbIndTakePhoto => 'Prendre une photo';
+
+  @override
+  String get onbIndRemovePhoto => 'Supprimer la photo';
+
+  @override
+  String onbIndImagePickFailed(Object error) {
+    return 'Échec de la sélection de l\'image : $error';
+  }
+
+  @override
+  String onbIndSubmissionFailed(Object error) {
+    return 'Échec de l\'envoi : $error';
+  }
+
+  @override
+  String get onbIndAppBarTitle => 'Configurer le profil vendeur';
+
+  @override
+  String get onbIndHeaderTitle => 'Devenez vendeur particulier';
+
+  @override
+  String get onbIndHeaderSubtitle =>
+      'Configurez votre profil de vendeur personnel pour commencer à publier des articles d\'occasion et échanger avec les acheteurs locaux.';
+
+  @override
+  String get onbIndNameLabel => 'Nom complet / Nom affiché *';
+
+  @override
+  String get onbIndNameHint => 'ex. : Jeanne Dupont';
+
+  @override
+  String get onbIndNameRequired => 'Veuillez saisir votre nom';
+
+  @override
+  String get onbIndNameTooShort =>
+      'Le nom doit comporter au moins 2 caractères';
+
+  @override
+  String get onbIndPhoneLabel => 'Numéro de téléphone *';
+
+  @override
+  String get onbIndPhoneHint => '+1 234 567 8900';
+
+  @override
+  String get onbIndPhoneHelper =>
+      'Pour la communication avec les acheteurs et la vérification';
+
+  @override
+  String get onbIndPhoneRequired => 'Veuillez saisir votre numéro de téléphone';
+
+  @override
+  String get onbIndPhoneInvalid =>
+      'Veuillez saisir un numéro de téléphone valide';
+
+  @override
+  String get onbIndBioLabel => 'Courte biographie (facultatif)';
+
+  @override
+  String get onbIndBioHint =>
+      'Parlez un peu aux acheteurs de ce que vous vendez (ex. : « Je liquide des gadgets tech et du matériel de plein air en bon état ! »)';
+
+  @override
+  String get onbIndInfoBanner =>
+      'Les comptes de vendeur particulier sont destinés aux ventes privées et non commerciales. Vous pouvez passer à une formule professionnelle à tout moment par la suite.';
+
+  @override
+  String get onbIndSubmitButton => 'Terminer le profil et ouvrir l\'espace';
+
+  @override
+  String get roleUpdateError =>
+      'Impossible de mettre à jour votre type de compte.';
+
+  @override
+  String get roleAppBarTitle => 'Choisir le type de compte';
+
+  @override
+  String get roleHeading => 'Comment allez-vous utiliser la plateforme ?';
+
+  @override
+  String get roleSubheading =>
+      'Vous pouvez modifier votre offre ou vous abonner à tout moment dans les paramètres.';
+
+  @override
+  String get roleBuyerTitle => 'Acheteur (Particulier)';
+
+  @override
+  String get roleBuyerSubtitle =>
+      'Parcourez les articles, discutez avec les vendeurs, enregistrez vos favoris.';
+
+  @override
+  String get roleBadgeFree => 'GRATUIT';
+
+  @override
+  String get roleBuyerSellerTitle => 'Acheteur + Vendeur (Particulier)';
+
+  @override
+  String get roleBuyerSellerSubtitle =>
+      'Publiez et gérez vos articles depuis votre tableau de bord vendeur personnel.';
+
+  @override
+  String get roleBadgeSubscription => 'ABONNEMENT';
+
+  @override
+  String get roleBusinessTitle => 'Boutique professionnelle';
+
+  @override
+  String get roleBusinessSubtitle =>
+      'Vitrine personnalisée, bannière/logo sur mesure et fonctionnalités de boutique.';
+
+  @override
+  String get roleBadgeBusiness => 'OFFRE PRO';
+
+  @override
+  String get roleContinueFree => 'Commencer (Gratuit)';
+
+  @override
+  String get roleContinuePaid => 'Continuer vers l\'offre d\'abonnement';
+
+  @override
+  String get sellerDashTitle => 'Mon espace vendeur';
+
+  @override
+  String get sellerDashHomeTooltip => 'Aller à l\'accueil';
+
+  @override
+  String get sellerDashSellItem => 'Vendre un article';
+
+  @override
+  String get sellerDashActiveItems => 'Articles actifs';
+
+  @override
+  String get sellerDashTotalEarned => 'Total gagné';
+
+  @override
+  String get sellerDashTotalViews => 'Vues totales';
+
+  @override
+  String get sellerDashInquiries => 'Demandes';
+
+  @override
+  String sellerDashActiveTab(Object count) {
+    return 'Annonces actives ($count)';
+  }
+
+  @override
+  String sellerDashSoldTab(Object count) {
+    return 'Vendus ($count)';
+  }
+
+  @override
+  String get sellerDashAccountName => 'Compte vendeur personnel';
+
+  @override
+  String get sellerDashAccountTier =>
+      'Formule individuelle • Membre depuis 2026';
+
+  @override
+  String get sellerDashIndividualBadge => 'INDIVIDUEL';
+
+  @override
+  String get sellerDashGoToMarketplace => 'Aller à la place de marché';
+
+  @override
+  String get sellerDashTryAgain => 'Réessayer';
+
+  @override
+  String get sellerDashNoActiveItems => 'Aucun article actif pour le moment.';
+
+  @override
+  String sellerDashImgsCount(Object count) {
+    return '$count images';
+  }
+
+  @override
+  String sellerDashViewsCount(Object count) {
+    return '$count vues';
+  }
+
+  @override
+  String sellerDashChatsCount(Object count) {
+    return '$count discussions';
+  }
+
+  @override
+  String get sellerDashMarkAsSold => 'Marquer comme vendu';
+
+  @override
+  String get sellerDashEdit => 'Modifier';
+
+  @override
+  String get sellerDashDelete => 'Supprimer';
+
+  @override
+  String get sellerDashNoSoldItems => 'Aucun article vendu pour le moment.';
+
+  @override
+  String sellerDashSoldTo(Object buyer, Object date) {
+    return 'Vendu à $buyer le $date';
+  }
+
+  @override
+  String get sellerDashDeleteTitle => 'Supprimer l\'annonce ?';
+
+  @override
+  String sellerDashDeleteConfirm(Object title) {
+    return 'Voulez-vous vraiment supprimer « $title » ?';
+  }
+
+  @override
+  String get sellerDashCancel => 'Annuler';
+
+  @override
+  String get sellerDashListingDeleted => 'Annonce supprimée.';
+
+  @override
+  String get sellerDashListedSuccess => 'Article mis en vente avec succès !';
+
+  @override
+  String sellerDashMarkedSold(Object title) {
+    return '« $title » marqué comme vendu !';
+  }
+
+  @override
+  String get sellerDashSignInPrompt =>
+      'Connectez-vous pour voir votre espace vendeur.';
+
+  @override
+  String get sellerDashLoadError =>
+      'Impossible de charger vos annonces. Vérifiez votre connexion.';
+
+  @override
+  String get subSelectPlan => 'Choisir un forfait';
+
+  @override
+  String get subBusinessStorePlans => 'Forfaits boutique professionnelle';
+
+  @override
+  String get subSellerSubscriptions => 'Abonnements vendeur';
+
+  @override
+  String get subChoosePlanSubtitle =>
+      'Choisissez le forfait adapté à vos objectifs de croissance.';
+
+  @override
+  String get subBillingMonthly => 'Mensuel';
+
+  @override
+  String get subBillingYearly => 'Annuel (Économisez 20 %)';
+
+  @override
+  String get subTermsOfUse => 'Conditions d\'utilisation';
+
+  @override
+  String get subPrivacyPolicy => 'Politique de confidentialité';
+
+  @override
+  String get subRestorePurchases => 'Restaurer les achats';
+
+  @override
+  String subSubscribeTo(Object name) {
+    return 'S\'abonner à $name';
+  }
+
+  @override
+  String get subPerMonth => '/ mois';
+
+  @override
+  String get subBilledAnnually => 'Facturé annuellement';
+
+  @override
+  String get subPlanClassic => 'Classic';
+
+  @override
+  String get subPlanProBusiness => 'Pro Entreprise';
+
+  @override
+  String get subPlanVipEnterprise => 'VIP Entreprise';
+
+  @override
+  String get subPlanProSeller => 'Vendeur Pro';
+
+  @override
+  String get subPlanVipSeller => 'Vendeur VIP';
+
+  @override
+  String get subBadgeMostPopular => 'LE PLUS POPULAIRE';
+
+  @override
+  String get subBadgeExclusive => 'EXCLUSIF';
+
+  @override
+  String get subBadgeBestValue => 'MEILLEUR RAPPORT QUALITÉ-PRIX';
+
+  @override
+  String get subBadgeTopSeller => 'MEILLEUR VENDEUR';
+
+  @override
+  String get subFeatBasicStorefront => 'Page vitrine de base';
+
+  @override
+  String get subFeatUpTo25Listings => 'Jusqu\'à 25 annonces actives';
+
+  @override
+  String get subFeatStandardSearchRanking => 'Classement de recherche standard';
+
+  @override
+  String get subFeatBasicCustomerAnalytics => 'Analyses clients de base';
+
+  @override
+  String get subFeatCustomBrandedStorefront =>
+      'Vitrine entièrement personnalisée à votre marque';
+
+  @override
+  String get subFeatUnlimitedActiveListings => 'Annonces actives illimitées';
+
+  @override
+  String get subFeatPrioritySearchRanking =>
+      'Classement de recherche prioritaire';
+
+  @override
+  String get subFeatCustomLogoBanner =>
+      'Logo et bannière de boutique personnalisés';
+
+  @override
+  String get subFeatAdvancedSalesAnalytics => 'Analyses de ventes avancées';
+
+  @override
+  String get subFeatAllProFeatures => 'Toutes les fonctionnalités Pro incluses';
+
+  @override
+  String get subFeatTopTierHomepage =>
+      'Placement de premier plan sur la page d\'accueil';
+
+  @override
+  String get subFeatDedicatedAccountManager => 'Gestionnaire de compte dédié';
+
+  @override
+  String get subFeatZeroTransactionFees =>
+      'Aucuns frais de transaction sur la marketplace';
+
+  @override
+  String get subFeatVerifiedBusinessBadge => 'Badge entreprise vérifiée';
+
+  @override
+  String get subFeatPostUpTo5Items => 'Publiez jusqu\'à 5 articles';
+
+  @override
+  String get subFeatPersonalSellerDashboard =>
+      'Tableau de bord vendeur personnel';
+
+  @override
+  String get subFeatStandardSupport => 'Support standard';
+
+  @override
+  String get subFeatUnlimitedItemListings => 'Annonces d\'articles illimitées';
+
+  @override
+  String get subFeatDirectBuyerMessaging =>
+      'Messagerie directe avec les acheteurs';
+
+  @override
+  String get subFeatFeaturedListingBadges =>
+      'Badges d\'annonces mises en avant';
+
+  @override
+  String get subFeatTopPlacementSearch =>
+      'Placement en tête des résultats de recherche';
+
+  @override
+  String get subFeatInstantPushNotifications =>
+      'Notifications push instantanées aux acheteurs';
+
+  @override
+  String get subFeat247PrioritySupport => 'Support prioritaire 24/7';
 }

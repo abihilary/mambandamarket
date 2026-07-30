@@ -5,6 +5,7 @@ import '../api/api_client.dart';
 import '../api/auth_service.dart';
 import '../api/models.dart' as api;
 import '../api/repositories.dart';
+import '../l10n/l10n.dart';
 import 'CreateListingScreen.dart';
 
 class BusinessDashboardScreen extends StatefulWidget {
@@ -15,7 +16,19 @@ class BusinessDashboardScreen extends StatefulWidget {
 }
 
 class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
-  String _selectedFilter = 'All';
+  // Stable, non-localized filter keys. These drive the filtering logic and the
+  // DropdownButton's `value`; only their display labels are localized, so the
+  // state stays language-independent.
+  static const String _filterAll = 'All';
+  static const String _filterInStock = 'In Stock';
+  static const String _filterOutOfStock = 'Out of Stock';
+
+  // Sentinels stored in [_error] for failures raised from initState's _load(),
+  // where context.l10n isn't available; build() translates them for display.
+  static const String _signInSentinel = '__signin__';
+  static const String _networkErrorSentinel = '__network__';
+
+  String _selectedFilter = _filterAll;
 
   // Inventory comes from the seller's own feed, which unlike public browse
   // includes sold and hidden items and carries per-listing inquiry counts.
@@ -60,7 +73,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
   Future<void> _load() async {
     final uid = AuthService.instance.userId;
     if (uid == null) {
-      setState(() { _isLoading = false; _error = 'Sign in to manage your store.'; });
+      setState(() { _isLoading = false; _error = _signInSentinel; });
       return;
     }
     setState(() { _isLoading = true; _error = null; });
@@ -87,7 +100,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
     } catch (_) {
       if (mounted) {
         setState(() {
-          _error = 'Could not load your inventory. Check your connection.';
+          _error = _networkErrorSentinel;
           _isLoading = false;
         });
       }
@@ -96,6 +109,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
 
   // Open Create Modal
   void _openCreateListingModal() async {
+    final l10n = context.l10n;
     final newItem = await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(builder: (context) => const CreateListingScreen()),
@@ -103,12 +117,13 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
 
     if (newItem != null) {
       await _load();
-      _showSnackBar('Listing created successfully!');
+      _showSnackBar(l10n.bizDashListingCreated);
     }
   }
 
   // Open Edit Modal
   void _openEditListingModal(Map<String, dynamic> item, int index) async {
+    final l10n = context.l10n;
     final updatedItem = await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(
@@ -118,21 +133,22 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
 
     if (updatedItem != null) {
       await _load();
-      _showSnackBar('Item updated successfully!');
+      _showSnackBar(l10n.bizDashItemUpdated);
     }
   }
 
   // Delete Item Confirmation Dialog
   void _confirmDeleteItem(String id, String title) {
+    final l10n = context.l10n;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Listing'),
-        content: Text('Are you sure you want to delete "$title"?'),
+        title: Text(l10n.bizDashDeleteTitle),
+        content: Text(l10n.bizDashDeleteConfirm(title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(l10n.bizDashCancel),
           ),
           TextButton(
             onPressed: () async {
@@ -140,13 +156,13 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
               try {
                 await ListingsRepository.instance.delete(id);
                 await _load();
-                _showSnackBar('Item deleted successfully');
+                _showSnackBar(l10n.bizDashItemDeleted);
               } on ApiException catch (e) {
                 _showSnackBar(e.message);
               }
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(l10n.bizDashDelete),
           ),
         ],
       ),
@@ -164,12 +180,24 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
   }
 
   List<Map<String, dynamic>> get _filteredInventory {
-    if (_selectedFilter == 'In Stock') {
+    if (_selectedFilter == _filterInStock) {
       return _mockInventory.where((i) => i['inStock'] == true).toList();
-    } else if (_selectedFilter == 'Out of Stock') {
+    } else if (_selectedFilter == _filterOutOfStock) {
       return _mockInventory.where((i) => i['inStock'] == false).toList();
     }
     return _mockInventory;
+  }
+
+  /// Localized display label for a stable filter key.
+  String _filterLabel(BuildContext context, String filter) {
+    switch (filter) {
+      case _filterInStock:
+        return context.l10n.bizDashFilterInStock;
+      case _filterOutOfStock:
+        return context.l10n.bizDashFilterOutOfStock;
+      default:
+        return context.l10n.bizDashFilterAll;
+    }
   }
 
   Widget _buildImageWidget(String path) {
@@ -209,13 +237,13 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Store Dashboard',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          context.l10n.bizDashTitle,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
-            tooltip: 'Go to Home Feed',
+            tooltip: context.l10n.bizDashGoToHomeFeed,
             icon: const Icon(Icons.home_outlined),
             onPressed: () {
               Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
@@ -232,9 +260,9 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
         backgroundColor: theme.primaryColor,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_a_photo_outlined),
-        label: const Text(
-          'Add New Item',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        label: Text(
+          context.l10n.bizDashAddNewItem,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: SingleChildScrollView(
@@ -245,7 +273,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
             _buildStoreHeaderCard(theme, context),
             const SizedBox(height: 20),
             Text(
-              'Performance Overview',
+              context.l10n.bizDashPerformanceOverview,
               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
@@ -255,17 +283,18 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Active Listings (${displayedList.length})',
+                  context.l10n.bizDashActiveListings(displayedList.length),
                   style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 DropdownButton<String>(
                   value: _selectedFilter,
                   underline: const SizedBox(),
                   icon: const Icon(Icons.filter_list),
-                  items: ['All', 'In Stock', 'Out of Stock']
+                  items: [_filterAll, _filterInStock, _filterOutOfStock]
                       .map((filter) => DropdownMenuItem(
                     value: filter,
-                    child: Text(filter, style: const TextStyle(fontSize: 14)),
+                    child: Text(_filterLabel(context, filter),
+                        style: const TextStyle(fontSize: 14)),
                   ))
                       .toList(),
                   onChanged: (val) {
@@ -287,11 +316,16 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                   children: [
                     const Icon(Icons.cloud_off, size: 44, color: Colors.grey),
                     const SizedBox(height: 12),
-                    Text(_error!,
+                    Text(
+                        _error == _signInSentinel
+                            ? context.l10n.bizDashSignInPrompt
+                            : _error == _networkErrorSentinel
+                                ? context.l10n.bizDashLoadError
+                                : _error!,
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: Colors.grey)),
                     const SizedBox(height: 16),
-                    OutlinedButton(onPressed: _load, child: const Text('Try again')),
+                    OutlinedButton(onPressed: _load, child: Text(context.l10n.bizDashTryAgain)),
                   ],
                 ),
               )
@@ -300,9 +334,10 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 40),
                 child: Center(
                   child: Text(
-                    _selectedFilter == 'All'
-                        ? 'No items in your inventory yet.'
-                        : 'Nothing matches "$_selectedFilter".',
+                    _selectedFilter == _filterAll
+                        ? context.l10n.bizDashNoItems
+                        : context.l10n.bizDashNoMatch(
+                            _filterLabel(context, _selectedFilter)),
                     style: TextStyle(color: Colors.grey.shade600),
                   ),
                 ),
@@ -369,7 +404,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                           Row(
                             children: [
                               Text(
-                                _store?.shopName ?? 'Your store',
+                                _store?.shopName ?? context.l10n.bizDashYourStore,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
@@ -384,11 +419,10 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                           const SizedBox(height: 2),
                           Text(
                             _store == null
-                                ? 'Set up your storefront'
-                                : '${_store!.isVerified ? "Verified Merchant • " : ""}'
+                                ? context.l10n.bizDashSetupStorefront
+                                : '${_store!.isVerified ? context.l10n.bizDashVerifiedMerchant : ""}'
                                     '${_store!.ratingAvg.toStringAsFixed(1)} ★ '
-                                    '(${_store!.ratingCount} '
-                                    '${_store!.ratingCount == 1 ? "review" : "reviews"})',
+                                    '(${context.l10n.bizDashReviewsCount(_store!.ratingCount)})',
                             style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                           ),
                         ],
@@ -407,7 +441,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                           Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
                         },
                         icon: const Icon(Icons.storefront_outlined, size: 18),
-                        label: const Text('Go to Home Marketplace'),
+                        label: Text(context.l10n.bizDashGoToHomeMarketplace),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: theme.primaryColor,
                           foregroundColor: Colors.white,
@@ -424,7 +458,8 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: const Text('Edit Store', style: TextStyle(fontSize: 12)),
+                      child: Text(context.l10n.bizDashEditStore,
+                          style: const TextStyle(fontSize: 12)),
                     ),
                   ],
                 ),
@@ -442,25 +477,25 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
       child: Row(
         children: [
           _buildStatCard(
-              title: 'Total Revenue',
+              title: context.l10n.bizDashTotalRevenue,
               value: api.formatPrice(_stats?.earningsCents ?? 0, currency: _storeCurrency),
               icon: Icons.payments_outlined,
               color: Colors.green),
           const SizedBox(width: 12),
           _buildStatCard(
-              title: 'Items Sold',
-              value: '${_stats?.soldListings ?? 0} Units',
+              title: context.l10n.bizDashItemsSold,
+              value: context.l10n.bizDashUnitsCount(_stats?.soldListings ?? 0),
               icon: Icons.shopping_bag_outlined,
               color: Colors.blue),
           const SizedBox(width: 12),
           _buildStatCard(
-              title: 'Store Visits',
+              title: context.l10n.bizDashStoreVisits,
               value: '${_stats?.totalViews ?? 0}',
               icon: Icons.visibility_outlined,
               color: Colors.orange),
           const SizedBox(width: 12),
           _buildStatCard(
-              title: 'Inquiries',
+              title: context.l10n.bizDashInquiries,
               value: '${_stats?.inquiries ?? 0}',
               icon: Icons.chat_bubble_outline,
               color: Colors.deepPurple),
@@ -528,7 +563,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        '${images.length} imgs',
+                        context.l10n.bizDashImagesCount(images.length),
                         style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -550,12 +585,12 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                   Row(
                     children: [
                       Text(
-                        item['category'] ?? 'General',
+                        item['category'] ?? context.l10n.bizDashGeneralCategory,
                         style: TextStyle(fontSize: 11, color: Colors.indigo.shade600, fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '• Qty: $quantity',
+                        context.l10n.bizDashQty(quantity),
                         style: TextStyle(fontSize: 11, color: Colors.grey.shade700, fontWeight: FontWeight.bold),
                       ),
                     ],
@@ -584,9 +619,9 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                             color: Colors.green.shade50,
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: const Text(
-                            'Guarantee',
-                            style: TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold),
+                          child: Text(
+                            context.l10n.bizDashGuarantee,
+                            style: const TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold),
                           ),
                         ),
                     ],
@@ -604,10 +639,11 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                 }
               },
               itemBuilder: (context) => [
-                const PopupMenuItem(value: 'edit', child: Text('Edit Item')),
-                const PopupMenuItem(
+                PopupMenuItem(value: 'edit', child: Text(context.l10n.bizDashEditItem)),
+                PopupMenuItem(
                   value: 'delete',
-                  child: Text('Delete Item', style: TextStyle(color: Colors.red)),
+                  child: Text(context.l10n.bizDashDeleteItem,
+                      style: const TextStyle(color: Colors.red)),
                 ),
               ],
             ),

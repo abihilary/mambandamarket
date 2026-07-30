@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../api/api_client.dart';
 import '../api/models.dart' as api;
 import '../api/repositories.dart';
+import '../l10n/l10n.dart';
 
 class CreateListingScreen extends StatefulWidget {
   final Map<String, dynamic>? initialListing;
@@ -56,6 +57,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   }
 
   Future<void> _loadCategories() async {
+    final l10n = context.l10n;
     try {
       final cats = await ListingsRepository.instance.categories();
       if (!mounted) return;
@@ -67,11 +69,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         }
       });
     } catch (_) {
-      if (mounted) _showErrorSnackBar('Could not load categories.');
+      if (mounted) _showErrorSnackBar(l10n.createCouldNotLoadCategories);
     }
   }
 
   Future<void> _pickImageFromCamera() async {
+    final l10n = context.l10n;
     try {
       final XFile? photo = await _picker.pickImage(
         source: ImageSource.camera,
@@ -85,11 +88,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         });
       }
     } catch (e) {
-      _showErrorSnackBar('Failed to capture photo: $e');
+      _showErrorSnackBar(l10n.createFailedToCapturePhoto(e.toString()));
     }
   }
 
   Future<void> _pickImagesFromGallery() async {
+    final l10n = context.l10n;
     try {
       final List<XFile> images = await _picker.pickMultiImage(
         imageQuality: 85,
@@ -102,11 +106,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         });
       }
     } catch (e) {
-      _showErrorSnackBar('Failed to pick images: $e');
+      _showErrorSnackBar(l10n.createFailedToPickImages(e.toString()));
     }
   }
 
   void _showImagePickerModal() {
+    final l10n = context.l10n;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -118,7 +123,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt, color: Colors.indigo),
-                title: const Text('Take Photo with Camera'),
+                title: Text(l10n.createTakePhotoWithCamera),
                 onTap: () {
                   Navigator.pop(ctx);
                   _pickImageFromCamera();
@@ -126,7 +131,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library, color: Colors.indigo),
-                title: const Text('Choose from Gallery'),
+                title: Text(l10n.createChooseFromGallery),
                 onTap: () {
                   Navigator.pop(ctx);
                   _pickImagesFromGallery();
@@ -159,22 +164,23 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
 
   /// Prompt the user to upgrade when their plan's active-listing quota is full.
   void _showLimitDialog(String message) {
+    final l10n = context.l10n;
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Listing limit reached'),
+        title: Text(l10n.createListingLimitReached),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Not now'),
+            child: Text(l10n.createNotNow),
           ),
           FilledButton(
             onPressed: () {
               Navigator.pop(ctx);
               Navigator.pushNamed(context, '/subscription');
             },
-            child: const Text('Upgrade plan'),
+            child: Text(l10n.createUpgradePlan),
           ),
         ],
       ),
@@ -182,14 +188,15 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   }
 
   Future<void> _submitForm() async {
+    final l10n = context.l10n;
     if (!_formKey.currentState!.validate() || _isSubmitting) return;
 
     if (_selectedCategory == null) {
-      _showErrorSnackBar('Please choose a category.');
+      _showErrorSnackBar(l10n.createPleaseChooseACategory);
       return;
     }
     if (_existingImages.isEmpty && _newImageFiles.isEmpty) {
-      _showErrorSnackBar('Please select at least one image.');
+      _showErrorSnackBar(l10n.createSelectAtLeastOneImage);
       return;
     }
 
@@ -223,8 +230,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Listing published.'),
+        SnackBar(
+          content: Text(l10n.createListingPublished),
           backgroundColor: Colors.green,
         ),
       );
@@ -234,12 +241,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       if (e.isListingLimit) {
         _showLimitDialog(e.message);
       } else if (e.isUnauthorized) {
-        _showErrorSnackBar('Please sign in to publish a listing.');
+        _showErrorSnackBar(l10n.createSignInToPublish);
       } else {
         _showErrorSnackBar(e.message);
       }
     } catch (_) {
-      if (mounted) _showErrorSnackBar('Could not publish. Check your connection.');
+      if (mounted) _showErrorSnackBar(l10n.createCouldNotPublish);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -287,14 +294,32 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     super.dispose();
   }
 
+  /// Localized display label for a condition. The stable value ([cond]) is
+  /// still what gets sent to the API; only what the user sees is translated.
+  String _conditionLabel(String cond) {
+    final l10n = context.l10n;
+    switch (cond) {
+      case 'Like New':
+        return l10n.createConditionLikeNew;
+      case 'Used':
+        return l10n.createConditionUsed;
+      case 'Refurbished':
+        return l10n.createConditionRefurbished;
+      case 'New':
+      default:
+        return l10n.createConditionNew;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final isEditing = widget.initialListing != null;
     final totalImagesCount = _existingImages.length + _newImageFiles.length;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'Edit Item' : 'Add New Item'),
+        title: Text(isEditing ? l10n.createEditItem : l10n.createAddNewItem),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -303,8 +328,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Product Images',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              Text(l10n.createProductImages,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 8),
               SizedBox(
                 height: 100,
@@ -323,13 +348,13 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: Colors.grey.shade300),
                           ),
-                          child: const Column(
+                          child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.add_a_photo_outlined, color: Colors.indigo),
-                              SizedBox(height: 4),
-                              Text('Add Media',
-                                  style: TextStyle(fontSize: 12, color: Colors.indigo)),
+                              const Icon(Icons.add_a_photo_outlined, color: Colors.indigo),
+                              const SizedBox(height: 4),
+                              Text(l10n.createAddMedia,
+                                  style: const TextStyle(fontSize: 12, color: Colors.indigo)),
                             ],
                           ),
                         ),
@@ -358,9 +383,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               DropdownButtonFormField<String>(
                 initialValue: _selectedCategory,
                 decoration: InputDecoration(
-                  labelText: 'Select Category',
+                  labelText: l10n.createSelectCategory,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  hintText: _categories.isEmpty ? 'Loading…' : null,
+                  hintText: _categories.isEmpty ? l10n.createLoading : null,
                 ),
                 items: _categories
                     .map((c) => DropdownMenuItem(
@@ -372,7 +397,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   if (val != null) setState(() => _selectedCategory = val);
                 },
                 validator: (val) =>
-                    val == null ? 'Please choose a category' : null,
+                    val == null ? l10n.createPleaseChooseCategory : null,
               ),
               const SizedBox(height: 16),
 
@@ -380,11 +405,11 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               TextFormField(
                 controller: _titleController,
                 decoration: InputDecoration(
-                  labelText: 'Listing Title',
+                  labelText: l10n.createListingTitle,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 validator: (val) =>
-                val == null || val.isEmpty ? 'Please enter a title' : null,
+                val == null || val.isEmpty ? l10n.createPleaseEnterTitle : null,
               ),
               const SizedBox(height: 16),
 
@@ -397,12 +422,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                       controller: _priceController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       decoration: InputDecoration(
-                        labelText: 'Price (€)',
+                        labelText: l10n.createPriceLabel,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       validator: (val) {
-                        if (val == null || val.isEmpty) return 'Enter price';
-                        if (double.tryParse(val) == null) return 'Invalid price';
+                        if (val == null || val.isEmpty) return l10n.createEnterPrice;
+                        if (double.tryParse(val) == null) return l10n.createInvalidPrice;
                         return null;
                       },
                     ),
@@ -414,13 +439,13 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                       controller: _quantityController,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
-                        labelText: 'Quantity',
+                        labelText: l10n.createQuantity,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       validator: (val) {
-                        if (val == null || val.isEmpty) return 'Enter quantity';
+                        if (val == null || val.isEmpty) return l10n.createEnterQuantity;
                         final qty = int.tryParse(val);
-                        if (qty == null || qty < 1) return 'Min 1';
+                        if (qty == null || qty < 1) return l10n.createMinQuantity;
                         return null;
                       },
                     ),
@@ -433,11 +458,11 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               DropdownButtonFormField<String>(
                 value: _selectedCondition,
                 decoration: InputDecoration(
-                  labelText: 'Condition',
+                  labelText: l10n.createCondition,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 items: ['New', 'Like New', 'Used', 'Refurbished'].map((cond) {
-                  return DropdownMenuItem(value: cond, child: Text(cond));
+                  return DropdownMenuItem(value: cond, child: Text(_conditionLabel(cond)));
                 }).toList(),
                 onChanged: (val) {
                   if (val != null) setState(() => _selectedCondition = val);
@@ -448,7 +473,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               // GUARANTEE CHECKBOX
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Includes Guarantee / Warranty'),
+                title: Text(l10n.createIncludesGuarantee),
                 value: _hasGuarantee,
                 onChanged: (val) => setState(() => _hasGuarantee = val ?? false),
               ),
@@ -470,7 +495,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white),
                       )
-                    : Text(isEditing ? 'Save Changes' : 'Publish Item',
+                    : Text(isEditing ? l10n.createSaveChanges : l10n.createPublishItem,
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold)),
               ),

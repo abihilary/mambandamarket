@@ -679,6 +679,1344 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not load your messages.'**
   String get couldNotLoadMessages;
+
+  /// No description provided for @bizDashTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Store Dashboard'**
+  String get bizDashTitle;
+
+  /// No description provided for @bizDashGoToHomeFeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Home Feed'**
+  String get bizDashGoToHomeFeed;
+
+  /// No description provided for @bizDashAddNewItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Add New Item'**
+  String get bizDashAddNewItem;
+
+  /// No description provided for @bizDashPerformanceOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Performance Overview'**
+  String get bizDashPerformanceOverview;
+
+  /// No description provided for @bizDashActiveListings.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Listings ({count})'**
+  String bizDashActiveListings(Object count);
+
+  /// No description provided for @bizDashFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get bizDashFilterAll;
+
+  /// No description provided for @bizDashFilterInStock.
+  ///
+  /// In en, this message translates to:
+  /// **'In Stock'**
+  String get bizDashFilterInStock;
+
+  /// No description provided for @bizDashFilterOutOfStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Out of Stock'**
+  String get bizDashFilterOutOfStock;
+
+  /// No description provided for @bizDashTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get bizDashTryAgain;
+
+  /// No description provided for @bizDashSignInPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to manage your store.'**
+  String get bizDashSignInPrompt;
+
+  /// No description provided for @bizDashLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your inventory. Check your connection.'**
+  String get bizDashLoadError;
+
+  /// No description provided for @bizDashNoItems.
+  ///
+  /// In en, this message translates to:
+  /// **'No items in your inventory yet.'**
+  String get bizDashNoItems;
+
+  /// No description provided for @bizDashNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing matches \"{filter}\".'**
+  String bizDashNoMatch(Object filter);
+
+  /// No description provided for @bizDashYourStore.
+  ///
+  /// In en, this message translates to:
+  /// **'Your store'**
+  String get bizDashYourStore;
+
+  /// No description provided for @bizDashSetupStorefront.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up your storefront'**
+  String get bizDashSetupStorefront;
+
+  /// No description provided for @bizDashVerifiedMerchant.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified Merchant • '**
+  String get bizDashVerifiedMerchant;
+
+  /// No description provided for @bizDashReviewsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{{count} review} other{{count} reviews}}'**
+  String bizDashReviewsCount(num count);
+
+  /// No description provided for @bizDashGoToHomeMarketplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Home Marketplace'**
+  String get bizDashGoToHomeMarketplace;
+
+  /// No description provided for @bizDashEditStore.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Store'**
+  String get bizDashEditStore;
+
+  /// No description provided for @bizDashTotalRevenue.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Revenue'**
+  String get bizDashTotalRevenue;
+
+  /// No description provided for @bizDashItemsSold.
+  ///
+  /// In en, this message translates to:
+  /// **'Items Sold'**
+  String get bizDashItemsSold;
+
+  /// No description provided for @bizDashUnitsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Units'**
+  String bizDashUnitsCount(Object count);
+
+  /// No description provided for @bizDashStoreVisits.
+  ///
+  /// In en, this message translates to:
+  /// **'Store Visits'**
+  String get bizDashStoreVisits;
+
+  /// No description provided for @bizDashInquiries.
+  ///
+  /// In en, this message translates to:
+  /// **'Inquiries'**
+  String get bizDashInquiries;
+
+  /// No description provided for @bizDashImagesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} imgs'**
+  String bizDashImagesCount(Object count);
+
+  /// No description provided for @bizDashGeneralCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get bizDashGeneralCategory;
+
+  /// No description provided for @bizDashQty.
+  ///
+  /// In en, this message translates to:
+  /// **'• Qty: {count}'**
+  String bizDashQty(Object count);
+
+  /// No description provided for @bizDashGuarantee.
+  ///
+  /// In en, this message translates to:
+  /// **'Guarantee'**
+  String get bizDashGuarantee;
+
+  /// No description provided for @bizDashEditItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Item'**
+  String get bizDashEditItem;
+
+  /// No description provided for @bizDashDeleteItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Item'**
+  String get bizDashDeleteItem;
+
+  /// No description provided for @bizDashDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Listing'**
+  String get bizDashDeleteTitle;
+
+  /// No description provided for @bizDashDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete \"{title}\"?'**
+  String bizDashDeleteConfirm(Object title);
+
+  /// No description provided for @bizDashCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get bizDashCancel;
+
+  /// No description provided for @bizDashDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get bizDashDelete;
+
+  /// No description provided for @bizDashListingCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Listing created successfully!'**
+  String get bizDashListingCreated;
+
+  /// No description provided for @bizDashItemUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Item updated successfully!'**
+  String get bizDashItemUpdated;
+
+  /// No description provided for @bizDashItemDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Item deleted successfully'**
+  String get bizDashItemDeleted;
+
+  /// No description provided for @chatDefaultUser.
+  ///
+  /// In en, this message translates to:
+  /// **'User'**
+  String get chatDefaultUser;
+
+  /// No description provided for @chatDefaultListing.
+  ///
+  /// In en, this message translates to:
+  /// **'Listing'**
+  String get chatDefaultListing;
+
+  /// No description provided for @chatLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this conversation.'**
+  String get chatLoadError;
+
+  /// No description provided for @chatTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get chatTryAgain;
+
+  /// No description provided for @chatEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Say hello to start the conversation.'**
+  String get chatEmpty;
+
+  /// No description provided for @chatInputHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a message…'**
+  String get chatInputHint;
+
+  /// No description provided for @createEditItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Item'**
+  String get createEditItem;
+
+  /// No description provided for @createAddNewItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Add New Item'**
+  String get createAddNewItem;
+
+  /// No description provided for @createProductImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Product Images'**
+  String get createProductImages;
+
+  /// No description provided for @createAddMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Media'**
+  String get createAddMedia;
+
+  /// No description provided for @createTakePhotoWithCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Take Photo with Camera'**
+  String get createTakePhotoWithCamera;
+
+  /// No description provided for @createChooseFromGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from Gallery'**
+  String get createChooseFromGallery;
+
+  /// No description provided for @createSelectCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Category'**
+  String get createSelectCategory;
+
+  /// No description provided for @createLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading…'**
+  String get createLoading;
+
+  /// No description provided for @createPleaseChooseCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Please choose a category'**
+  String get createPleaseChooseCategory;
+
+  /// No description provided for @createPleaseChooseACategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Please choose a category.'**
+  String get createPleaseChooseACategory;
+
+  /// No description provided for @createListingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Listing Title'**
+  String get createListingTitle;
+
+  /// No description provided for @createPleaseEnterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a title'**
+  String get createPleaseEnterTitle;
+
+  /// No description provided for @createPriceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Price (€)'**
+  String get createPriceLabel;
+
+  /// No description provided for @createEnterPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter price'**
+  String get createEnterPrice;
+
+  /// No description provided for @createInvalidPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid price'**
+  String get createInvalidPrice;
+
+  /// No description provided for @createQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get createQuantity;
+
+  /// No description provided for @createEnterQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter quantity'**
+  String get createEnterQuantity;
+
+  /// No description provided for @createMinQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Min 1'**
+  String get createMinQuantity;
+
+  /// No description provided for @createCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'Condition'**
+  String get createCondition;
+
+  /// No description provided for @createConditionNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get createConditionNew;
+
+  /// No description provided for @createConditionLikeNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Like New'**
+  String get createConditionLikeNew;
+
+  /// No description provided for @createConditionUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Used'**
+  String get createConditionUsed;
+
+  /// No description provided for @createConditionRefurbished.
+  ///
+  /// In en, this message translates to:
+  /// **'Refurbished'**
+  String get createConditionRefurbished;
+
+  /// No description provided for @createIncludesGuarantee.
+  ///
+  /// In en, this message translates to:
+  /// **'Includes Guarantee / Warranty'**
+  String get createIncludesGuarantee;
+
+  /// No description provided for @createSaveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get createSaveChanges;
+
+  /// No description provided for @createPublishItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish Item'**
+  String get createPublishItem;
+
+  /// No description provided for @createListingLimitReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Listing limit reached'**
+  String get createListingLimitReached;
+
+  /// No description provided for @createNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get createNotNow;
+
+  /// No description provided for @createUpgradePlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade plan'**
+  String get createUpgradePlan;
+
+  /// No description provided for @createSelectAtLeastOneImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select at least one image.'**
+  String get createSelectAtLeastOneImage;
+
+  /// No description provided for @createListingPublished.
+  ///
+  /// In en, this message translates to:
+  /// **'Listing published.'**
+  String get createListingPublished;
+
+  /// No description provided for @createSignInToPublish.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in to publish a listing.'**
+  String get createSignInToPublish;
+
+  /// No description provided for @createCouldNotPublish.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not publish. Check your connection.'**
+  String get createCouldNotPublish;
+
+  /// No description provided for @createCouldNotLoadCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load categories.'**
+  String get createCouldNotLoadCategories;
+
+  /// No description provided for @createFailedToCapturePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to capture photo: {error}'**
+  String createFailedToCapturePhoto(Object error);
+
+  /// No description provided for @createFailedToPickImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to pick images: {error}'**
+  String createFailedToPickImages(Object error);
+
+  /// No description provided for @detailSignInToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to save items.'**
+  String get detailSignInToSave;
+
+  /// No description provided for @detailSignInToMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to message the seller.'**
+  String get detailSignInToMessage;
+
+  /// No description provided for @detailOwnListing.
+  ///
+  /// In en, this message translates to:
+  /// **'This is your own listing.'**
+  String get detailOwnListing;
+
+  /// No description provided for @detailConditionFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Local pickup only'**
+  String get detailConditionFallback;
+
+  /// No description provided for @detailViews.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} views'**
+  String detailViews(Object count);
+
+  /// No description provided for @detailDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get detailDetails;
+
+  /// No description provided for @detailNoDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'No description provided.'**
+  String get detailNoDescription;
+
+  /// No description provided for @detailRelated.
+  ///
+  /// In en, this message translates to:
+  /// **'Similar listings'**
+  String get detailRelated;
+
+  /// No description provided for @detailMessageSeller.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get detailMessageSeller;
+
+  /// No description provided for @detailPostedMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} min ago'**
+  String detailPostedMinutes(Object count);
+
+  /// No description provided for @detailPostedHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} h ago'**
+  String detailPostedHours(Object count);
+
+  /// No description provided for @detailPostedDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} d ago'**
+  String detailPostedDays(Object count);
+
+  /// No description provided for @onbBizTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Store Profile Setup'**
+  String get onbBizTitle;
+
+  /// No description provided for @onbBizTakePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Take Photo with Camera'**
+  String get onbBizTakePhoto;
+
+  /// No description provided for @onbBizChooseFromGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from Gallery'**
+  String get onbBizChooseFromGallery;
+
+  /// No description provided for @onbBizSelectBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Store Banner'**
+  String get onbBizSelectBanner;
+
+  /// No description provided for @onbBizSelectLogo.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Store Logo'**
+  String get onbBizSelectLogo;
+
+  /// No description provided for @onbBizBannerPickFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to select banner image: {error}'**
+  String onbBizBannerPickFailed(Object error);
+
+  /// No description provided for @onbBizAvatarPickFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to select avatar image: {error}'**
+  String onbBizAvatarPickFailed(Object error);
+
+  /// No description provided for @onbBizUploadBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload Store Banner'**
+  String get onbBizUploadBanner;
+
+  /// No description provided for @onbBizChangeBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Banner'**
+  String get onbBizChangeBanner;
+
+  /// No description provided for @onbBizShopNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop Name*'**
+  String get onbBizShopNameLabel;
+
+  /// No description provided for @onbBizShopNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop name required'**
+  String get onbBizShopNameRequired;
+
+  /// No description provided for @onbBizShopLocationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop Location*'**
+  String get onbBizShopLocationLabel;
+
+  /// No description provided for @onbBizShopLocationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop location required'**
+  String get onbBizShopLocationRequired;
+
+  /// No description provided for @onbBizShopDescriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop Description*'**
+  String get onbBizShopDescriptionLabel;
+
+  /// No description provided for @onbBizShopDescriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell customers about your products and services...'**
+  String get onbBizShopDescriptionHint;
+
+  /// No description provided for @onbBizDescriptionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Description required'**
+  String get onbBizDescriptionRequired;
+
+  /// No description provided for @onbBizSupportPhoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Business Support Phone*'**
+  String get onbBizSupportPhoneLabel;
+
+  /// No description provided for @onbBizPhoneRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone required'**
+  String get onbBizPhoneRequired;
+
+  /// No description provided for @onbBizSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Storefront saved.'**
+  String get onbBizSaved;
+
+  /// No description provided for @onbBizSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save your storefront. Please try again.'**
+  String get onbBizSaveFailed;
+
+  /// No description provided for @onbBizSaveContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Save & Continue to Dashboard'**
+  String get onbBizSaveContinue;
+
+  /// No description provided for @onbIndChooseFromGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from Gallery'**
+  String get onbIndChooseFromGallery;
+
+  /// No description provided for @onbIndTakePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a Photo'**
+  String get onbIndTakePhoto;
+
+  /// No description provided for @onbIndRemovePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Photo'**
+  String get onbIndRemovePhoto;
+
+  /// No description provided for @onbIndImagePickFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to pick image: {error}'**
+  String onbIndImagePickFailed(Object error);
+
+  /// No description provided for @onbIndSubmissionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Submission failed: {error}'**
+  String onbIndSubmissionFailed(Object error);
+
+  /// No description provided for @onbIndAppBarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Setup Seller Profile'**
+  String get onbIndAppBarTitle;
+
+  /// No description provided for @onbIndHeaderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Become an Individual Seller'**
+  String get onbIndHeaderTitle;
+
+  /// No description provided for @onbIndHeaderSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up your personal seller profile to start listing pre-loved items and connecting with local buyers.'**
+  String get onbIndHeaderSubtitle;
+
+  /// No description provided for @onbIndNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Name / Display Name *'**
+  String get onbIndNameLabel;
+
+  /// No description provided for @onbIndNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., Jane Doe'**
+  String get onbIndNameHint;
+
+  /// No description provided for @onbIndNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your name'**
+  String get onbIndNameRequired;
+
+  /// No description provided for @onbIndNameTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Name must be at least 2 characters'**
+  String get onbIndNameTooShort;
+
+  /// No description provided for @onbIndPhoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone Number *'**
+  String get onbIndPhoneLabel;
+
+  /// No description provided for @onbIndPhoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'+1 234 567 8900'**
+  String get onbIndPhoneHint;
+
+  /// No description provided for @onbIndPhoneHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'For buyer communication and verification'**
+  String get onbIndPhoneHelper;
+
+  /// No description provided for @onbIndPhoneRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your phone number'**
+  String get onbIndPhoneRequired;
+
+  /// No description provided for @onbIndPhoneInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid phone number'**
+  String get onbIndPhoneInvalid;
+
+  /// No description provided for @onbIndBioLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Short Bio (Optional)'**
+  String get onbIndBioLabel;
+
+  /// No description provided for @onbIndBioHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell buyers a bit about what you sell (e.g., \"Clearing out tech gadgets & outdoor gear in good condition!\")'**
+  String get onbIndBioHint;
+
+  /// No description provided for @onbIndInfoBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Individual seller accounts are meant for private, non-commercial sales. You can upgrade to a business tier anytime later.'**
+  String get onbIndInfoBanner;
+
+  /// No description provided for @onbIndSubmitButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete Profile & Open Hub'**
+  String get onbIndSubmitButton;
+
+  /// No description provided for @roleUpdateError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update your account type.'**
+  String get roleUpdateError;
+
+  /// No description provided for @roleAppBarTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Account Type'**
+  String get roleAppBarTitle;
+
+  /// No description provided for @roleHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'How will you use the platform?'**
+  String get roleHeading;
+
+  /// No description provided for @roleSubheading.
+  ///
+  /// In en, this message translates to:
+  /// **'You can update your tier or subscribe anytime later in settings.'**
+  String get roleSubheading;
+
+  /// No description provided for @roleBuyerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Buyer (Individual)'**
+  String get roleBuyerTitle;
+
+  /// No description provided for @roleBuyerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse items, chat with sellers, save favorites.'**
+  String get roleBuyerSubtitle;
+
+  /// No description provided for @roleBadgeFree.
+  ///
+  /// In en, this message translates to:
+  /// **'FREE'**
+  String get roleBadgeFree;
+
+  /// No description provided for @roleBuyerSellerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Buyer + Seller (Individual)'**
+  String get roleBuyerSellerTitle;
+
+  /// No description provided for @roleBuyerSellerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Post & manage items in your personal seller dashboard.'**
+  String get roleBuyerSellerSubtitle;
+
+  /// No description provided for @roleBadgeSubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'SUBSCRIPTION'**
+  String get roleBadgeSubscription;
+
+  /// No description provided for @roleBusinessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Business Store'**
+  String get roleBusinessTitle;
+
+  /// No description provided for @roleBusinessSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Branded storefront, custom banner/logo & store features.'**
+  String get roleBusinessSubtitle;
+
+  /// No description provided for @roleBadgeBusiness.
+  ///
+  /// In en, this message translates to:
+  /// **'BUSINESS TIER'**
+  String get roleBadgeBusiness;
+
+  /// No description provided for @roleContinueFree.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started (Free)'**
+  String get roleContinueFree;
+
+  /// No description provided for @roleContinuePaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue to Subscription Plan'**
+  String get roleContinuePaid;
+
+  /// No description provided for @sellerDashTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My Seller Hub'**
+  String get sellerDashTitle;
+
+  /// No description provided for @sellerDashHomeTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Home Feed'**
+  String get sellerDashHomeTooltip;
+
+  /// No description provided for @sellerDashSellItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Sell Item'**
+  String get sellerDashSellItem;
+
+  /// No description provided for @sellerDashActiveItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Items'**
+  String get sellerDashActiveItems;
+
+  /// No description provided for @sellerDashTotalEarned.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Earned'**
+  String get sellerDashTotalEarned;
+
+  /// No description provided for @sellerDashTotalViews.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Views'**
+  String get sellerDashTotalViews;
+
+  /// No description provided for @sellerDashInquiries.
+  ///
+  /// In en, this message translates to:
+  /// **'Inquiries'**
+  String get sellerDashInquiries;
+
+  /// No description provided for @sellerDashActiveTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Listings ({count})'**
+  String sellerDashActiveTab(Object count);
+
+  /// No description provided for @sellerDashSoldTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold ({count})'**
+  String sellerDashSoldTab(Object count);
+
+  /// No description provided for @sellerDashAccountName.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Seller Account'**
+  String get sellerDashAccountName;
+
+  /// No description provided for @sellerDashAccountTier.
+  ///
+  /// In en, this message translates to:
+  /// **'Individual Tier • Member since 2026'**
+  String get sellerDashAccountTier;
+
+  /// No description provided for @sellerDashIndividualBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'INDIVIDUAL'**
+  String get sellerDashIndividualBadge;
+
+  /// No description provided for @sellerDashGoToMarketplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Home Marketplace'**
+  String get sellerDashGoToMarketplace;
+
+  /// No description provided for @sellerDashTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get sellerDashTryAgain;
+
+  /// No description provided for @sellerDashNoActiveItems.
+  ///
+  /// In en, this message translates to:
+  /// **'No active items listed yet.'**
+  String get sellerDashNoActiveItems;
+
+  /// No description provided for @sellerDashImgsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} imgs'**
+  String sellerDashImgsCount(Object count);
+
+  /// No description provided for @sellerDashViewsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} views'**
+  String sellerDashViewsCount(Object count);
+
+  /// No description provided for @sellerDashChatsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} chats'**
+  String sellerDashChatsCount(Object count);
+
+  /// No description provided for @sellerDashMarkAsSold.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as Sold'**
+  String get sellerDashMarkAsSold;
+
+  /// No description provided for @sellerDashEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get sellerDashEdit;
+
+  /// No description provided for @sellerDashDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get sellerDashDelete;
+
+  /// No description provided for @sellerDashNoSoldItems.
+  ///
+  /// In en, this message translates to:
+  /// **'No sold items yet.'**
+  String get sellerDashNoSoldItems;
+
+  /// No description provided for @sellerDashSoldTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold to {buyer} on {date}'**
+  String sellerDashSoldTo(Object buyer, Object date);
+
+  /// No description provided for @sellerDashDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Listing?'**
+  String get sellerDashDeleteTitle;
+
+  /// No description provided for @sellerDashDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete \"{title}\"?'**
+  String sellerDashDeleteConfirm(Object title);
+
+  /// No description provided for @sellerDashCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get sellerDashCancel;
+
+  /// No description provided for @sellerDashListingDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Listing deleted.'**
+  String get sellerDashListingDeleted;
+
+  /// No description provided for @sellerDashListedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Item listed for sale successfully!'**
+  String get sellerDashListedSuccess;
+
+  /// No description provided for @sellerDashMarkedSold.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{title}\" marked as sold!'**
+  String sellerDashMarkedSold(Object title);
+
+  /// No description provided for @sellerDashSignInPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to view your seller hub.'**
+  String get sellerDashSignInPrompt;
+
+  /// No description provided for @sellerDashLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your listings. Check your connection.'**
+  String get sellerDashLoadError;
+
+  /// No description provided for @subSelectPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Plan'**
+  String get subSelectPlan;
+
+  /// No description provided for @subBusinessStorePlans.
+  ///
+  /// In en, this message translates to:
+  /// **'Business Store Plans'**
+  String get subBusinessStorePlans;
+
+  /// No description provided for @subSellerSubscriptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Seller Subscriptions'**
+  String get subSellerSubscriptions;
+
+  /// No description provided for @subChoosePlanSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the plan that fits your growth goals.'**
+  String get subChoosePlanSubtitle;
+
+  /// No description provided for @subBillingMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get subBillingMonthly;
+
+  /// No description provided for @subBillingYearly.
+  ///
+  /// In en, this message translates to:
+  /// **'Yearly (Save 20%)'**
+  String get subBillingYearly;
+
+  /// No description provided for @subTermsOfUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Use'**
+  String get subTermsOfUse;
+
+  /// No description provided for @subPrivacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get subPrivacyPolicy;
+
+  /// No description provided for @subRestorePurchases.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Purchases'**
+  String get subRestorePurchases;
+
+  /// No description provided for @subSubscribeTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribe to {name}'**
+  String subSubscribeTo(Object name);
+
+  /// No description provided for @subPerMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'/ month'**
+  String get subPerMonth;
+
+  /// No description provided for @subBilledAnnually.
+  ///
+  /// In en, this message translates to:
+  /// **'Billed annually'**
+  String get subBilledAnnually;
+
+  /// No description provided for @subPlanClassic.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic'**
+  String get subPlanClassic;
+
+  /// No description provided for @subPlanProBusiness.
+  ///
+  /// In en, this message translates to:
+  /// **'Pro Business'**
+  String get subPlanProBusiness;
+
+  /// No description provided for @subPlanVipEnterprise.
+  ///
+  /// In en, this message translates to:
+  /// **'VIP Enterprise'**
+  String get subPlanVipEnterprise;
+
+  /// No description provided for @subPlanProSeller.
+  ///
+  /// In en, this message translates to:
+  /// **'Pro Seller'**
+  String get subPlanProSeller;
+
+  /// No description provided for @subPlanVipSeller.
+  ///
+  /// In en, this message translates to:
+  /// **'VIP Seller'**
+  String get subPlanVipSeller;
+
+  /// No description provided for @subBadgeMostPopular.
+  ///
+  /// In en, this message translates to:
+  /// **'MOST POPULAR'**
+  String get subBadgeMostPopular;
+
+  /// No description provided for @subBadgeExclusive.
+  ///
+  /// In en, this message translates to:
+  /// **'EXCLUSIVE'**
+  String get subBadgeExclusive;
+
+  /// No description provided for @subBadgeBestValue.
+  ///
+  /// In en, this message translates to:
+  /// **'BEST VALUE'**
+  String get subBadgeBestValue;
+
+  /// No description provided for @subBadgeTopSeller.
+  ///
+  /// In en, this message translates to:
+  /// **'TOP SELLER'**
+  String get subBadgeTopSeller;
+
+  /// No description provided for @subFeatBasicStorefront.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic Storefront Page'**
+  String get subFeatBasicStorefront;
+
+  /// No description provided for @subFeatUpTo25Listings.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to 25 Active Listings'**
+  String get subFeatUpTo25Listings;
+
+  /// No description provided for @subFeatStandardSearchRanking.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard Search Ranking'**
+  String get subFeatStandardSearchRanking;
+
+  /// No description provided for @subFeatBasicCustomerAnalytics.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic Customer Analytics'**
+  String get subFeatBasicCustomerAnalytics;
+
+  /// No description provided for @subFeatCustomBrandedStorefront.
+  ///
+  /// In en, this message translates to:
+  /// **'Fully Custom Branded Storefront'**
+  String get subFeatCustomBrandedStorefront;
+
+  /// No description provided for @subFeatUnlimitedActiveListings.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited Active Listings'**
+  String get subFeatUnlimitedActiveListings;
+
+  /// No description provided for @subFeatPrioritySearchRanking.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority Search Ranking'**
+  String get subFeatPrioritySearchRanking;
+
+  /// No description provided for @subFeatCustomLogoBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Logo & Shop Banner'**
+  String get subFeatCustomLogoBanner;
+
+  /// No description provided for @subFeatAdvancedSalesAnalytics.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced Sales Analytics'**
+  String get subFeatAdvancedSalesAnalytics;
+
+  /// No description provided for @subFeatAllProFeatures.
+  ///
+  /// In en, this message translates to:
+  /// **'All Pro Features Included'**
+  String get subFeatAllProFeatures;
+
+  /// No description provided for @subFeatTopTierHomepage.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Tier Homepage Placement'**
+  String get subFeatTopTierHomepage;
+
+  /// No description provided for @subFeatDedicatedAccountManager.
+  ///
+  /// In en, this message translates to:
+  /// **'Dedicated Account Manager'**
+  String get subFeatDedicatedAccountManager;
+
+  /// No description provided for @subFeatZeroTransactionFees.
+  ///
+  /// In en, this message translates to:
+  /// **'Zero Marketplace Transaction Fees'**
+  String get subFeatZeroTransactionFees;
+
+  /// No description provided for @subFeatVerifiedBusinessBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified Business Badge'**
+  String get subFeatVerifiedBusinessBadge;
+
+  /// No description provided for @subFeatPostUpTo5Items.
+  ///
+  /// In en, this message translates to:
+  /// **'Post Up to 5 Items'**
+  String get subFeatPostUpTo5Items;
+
+  /// No description provided for @subFeatPersonalSellerDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Seller Dashboard'**
+  String get subFeatPersonalSellerDashboard;
+
+  /// No description provided for @subFeatStandardSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard Support'**
+  String get subFeatStandardSupport;
+
+  /// No description provided for @subFeatUnlimitedItemListings.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited Item Listings'**
+  String get subFeatUnlimitedItemListings;
+
+  /// No description provided for @subFeatDirectBuyerMessaging.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct Buyer Messaging'**
+  String get subFeatDirectBuyerMessaging;
+
+  /// No description provided for @subFeatFeaturedListingBadges.
+  ///
+  /// In en, this message translates to:
+  /// **'Featured Listing Badges'**
+  String get subFeatFeaturedListingBadges;
+
+  /// No description provided for @subFeatTopPlacementSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Placement in Search Results'**
+  String get subFeatTopPlacementSearch;
+
+  /// No description provided for @subFeatInstantPushNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Instant Push Notifications to Buyers'**
+  String get subFeatInstantPushNotifications;
+
+  /// No description provided for @subFeat247PrioritySupport.
+  ///
+  /// In en, this message translates to:
+  /// **'24/7 Priority Support'**
+  String get subFeat247PrioritySupport;
 }
 
 class _AppLocalizationsDelegate
