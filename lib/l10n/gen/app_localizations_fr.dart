@@ -1093,4 +1093,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get subFeat247PrioritySupport => 'Support prioritaire 24/7';
+
+  @override
+  String get sellerDashSoldItemFallback => 'Article vendu';
+
+  @override
+  String get sellerDashBuyerFallback => 'Acheteur';
+
+  @override
+  String get sellerDashGeneralCategory => 'Général';
 }

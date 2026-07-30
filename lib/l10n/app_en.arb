@@ -510,5 +510,8 @@
   "subFeatFeaturedListingBadges": "Featured Listing Badges",
   "subFeatTopPlacementSearch": "Top Placement in Search Results",
   "subFeatInstantPushNotifications": "Instant Push Notifications to Buyers",
-  "subFeat247PrioritySupport": "24/7 Priority Support"
+  "subFeat247PrioritySupport": "24/7 Priority Support",
+  "sellerDashSoldItemFallback": "Sold item",
+  "sellerDashBuyerFallback": "Buyer",
+  "sellerDashGeneralCategory": "General"
 }

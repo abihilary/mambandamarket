@@ -69,14 +69,17 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   Map<String, dynamic> _fromSale(api.Sale s) => {
         'id': s.listing?.id ?? s.id,
         'saleId': s.id,
-        'title': s.listing?.title ?? 'Article vendu',
+        // Kept nullable-ish (empty) here because this adapter runs from the
+        // initState load path where there's no BuildContext; the localized
+        // fallback is applied at render time in the sold tab.
+        'title': s.listing?.title ?? '',
         'priceLabel': s.displayPrice,
         'category': s.listing?.categorySlug ?? '',
         'condition': '',
         'soldDate': s.soldAt == null
             ? ''
             : '${s.soldAt!.day}/${s.soldAt!.month}/${s.soldAt!.year}',
-        'buyerName': s.buyer?.displayName ?? 'Acheteur',
+        'buyerName': s.buyer?.displayName ?? '',
         'images': s.listing?.imageUrls ?? const <String>[],
       };
 
@@ -629,7 +632,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        item['category'] ?? 'General',
+                        item['category'] ?? context.l10n.sellerDashGeneralCategory,
                         style: TextStyle(
                           fontSize: 11,
                           color: Colors.indigo.shade600,
@@ -752,7 +755,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item['title'],
+                        (item['title'] as String).isEmpty
+                            ? context.l10n.sellerDashSoldItemFallback
+                            : item['title'] as String,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -762,7 +767,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        item['category'] ?? 'General',
+                        item['category'] ?? context.l10n.sellerDashGeneralCategory,
                         style: TextStyle(
                           fontSize: 11,
                           color: Colors.indigo.shade600,
@@ -781,7 +786,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                       const SizedBox(height: 6),
                       Text(
                         context.l10n.sellerDashSoldTo(
-                            item['buyerName'] as String,
+                            (item['buyerName'] as String).isEmpty
+                                ? context.l10n.sellerDashBuyerFallback
+                                : item['buyerName'] as String,
                             item['soldDate'] as String),
                         style: TextStyle(
                             fontSize: 11, color: Colors.grey.shade600),

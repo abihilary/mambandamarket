@@ -2017,6 +2017,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'24/7 Priority Support'**
   String get subFeat247PrioritySupport;
+
+  /// No description provided for @sellerDashSoldItemFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold item'**
+  String get sellerDashSoldItemFallback;
+
+  /// No description provided for @sellerDashBuyerFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Buyer'**
+  String get sellerDashBuyerFallback;
+
+  /// No description provided for @sellerDashGeneralCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get sellerDashGeneralCategory;
 }
 
 class _AppLocalizationsDelegate
