@@ -247,7 +247,7 @@
   "createPleaseChooseACategory": "Please choose a category.",
   "createListingTitle": "Listing Title",
   "createPleaseEnterTitle": "Please enter a title",
-  "createPriceLabel": "Price (€)",
+  "createPriceLabel": "Price (FCFA)",
   "createEnterPrice": "Enter price",
   "createInvalidPrice": "Invalid price",
   "createQuantity": "Quantity",

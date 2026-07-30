@@ -153,7 +153,7 @@ class ListingsRepository {
     required String title,
     String? description,
     required int priceCents,
-    String currency = 'EUR',
+    String currency = 'XAF',
     int quantity = 1,
     required String categorySlug,
     String? condition,

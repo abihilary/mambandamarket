@@ -25,8 +25,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       return {
         'classic': {
           'name': context.l10n.subPlanClassic,
-          'monthlyPrice': '€14.99',
-          'annualPrice': '€11.99',
+          'monthlyPrice': '5.000 FCFA',
+          'annualPrice': '4.000 FCFA',
           'badge': null,
           'features': [
             context.l10n.subFeatBasicStorefront,
@@ -37,8 +37,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         },
         'pro': {
           'name': context.l10n.subPlanProBusiness,
-          'monthlyPrice': '€29.99',
-          'annualPrice': '€23.99',
+          'monthlyPrice': '10.000 FCFA',
+          'annualPrice': '8.000 FCFA',
           'badge': context.l10n.subBadgeMostPopular,
           'features': [
             context.l10n.subFeatCustomBrandedStorefront,
@@ -50,8 +50,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         },
         'vip': {
           'name': context.l10n.subPlanVipEnterprise,
-          'monthlyPrice': '€59.99',
-          'annualPrice': '€47.99',
+          'monthlyPrice': '20.000 FCFA',
+          'annualPrice': '16.000 FCFA',
           'badge': context.l10n.subBadgeExclusive,
           'features': [
             context.l10n.subFeatAllProFeatures,
@@ -66,8 +66,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       return {
         'classic': {
           'name': context.l10n.subPlanClassic,
-          'monthlyPrice': '€2.99',
-          'annualPrice': '€1.99',
+          'monthlyPrice': '1.000 FCFA',
+          'annualPrice': '800 FCFA',
           'badge': null,
           'features': [
             context.l10n.subFeatPostUpTo5Items,
@@ -77,8 +77,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         },
         'pro': {
           'name': context.l10n.subPlanProSeller,
-          'monthlyPrice': '€5.99',
-          'annualPrice': '€4.49',
+          'monthlyPrice': '2.000 FCFA',
+          'annualPrice': '1.600 FCFA',
           'badge': context.l10n.subBadgeBestValue,
           'features': [
             context.l10n.subFeatUnlimitedItemListings,
@@ -89,8 +89,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         },
         'vip': {
           'name': context.l10n.subPlanVipSeller,
-          'monthlyPrice': '€11.99',
-          'annualPrice': '€8.99',
+          'monthlyPrice': '4.000 FCFA',
+          'annualPrice': '3.200 FCFA',
           'badge': context.l10n.subBadgeTopSeller,
           'features': [
             context.l10n.subFeatAllProFeatures,

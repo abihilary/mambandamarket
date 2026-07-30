@@ -517,7 +517,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get createPleaseEnterTitle => 'Veuillez saisir un titre';
 
   @override
-  String get createPriceLabel => 'Prix (€)';
+  String get createPriceLabel => 'Prix (FCFA)';
 
   @override
   String get createEnterPrice => 'Saisir le prix';

@@ -1013,7 +1013,7 @@ abstract class AppLocalizations {
   /// No description provided for @createPriceLabel.
   ///
   /// In en, this message translates to:
-  /// **'Price (€)'**
+  /// **'Price (FCFA)'**
   String get createPriceLabel;
 
   /// No description provided for @createEnterPrice.

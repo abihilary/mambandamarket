@@ -212,7 +212,7 @@
   "createPleaseChooseACategory": "Veuillez choisir une catégorie.",
   "createListingTitle": "Titre de l'annonce",
   "createPleaseEnterTitle": "Veuillez saisir un titre",
-  "createPriceLabel": "Prix (€)",
+  "createPriceLabel": "Prix (FCFA)",
   "createEnterPrice": "Saisir le prix",
   "createInvalidPrice": "Prix invalide",
   "createQuantity": "Quantité",

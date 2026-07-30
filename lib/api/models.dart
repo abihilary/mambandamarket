@@ -21,7 +21,7 @@ const Set<String> _zeroDecimalCurrencies = {
 ///
 /// [amountMinor] is whatever the API stores in `price_cents`: hundredths for
 /// euro-style currencies, whole units for zero-decimal ones.
-String formatPrice(int amountMinor, {String currency = 'EUR'}) {
+String formatPrice(int amountMinor, {String currency = 'XAF'}) {
   final symbols = {'EUR': '€', 'XAF': 'FCFA', 'XOF': 'FCFA', 'USD': '\$'};
   final isZeroDecimal = _zeroDecimalCurrencies.contains(currency.toUpperCase());
   final amount = isZeroDecimal ? amountMinor.toDouble() : amountMinor / 100;
@@ -64,7 +64,7 @@ class Listing {
     required this.title,
     this.description,
     required this.priceCents,
-    this.currency = 'EUR',
+    this.currency = 'XAF',
     this.quantity = 1,
     required this.categorySlug,
     this.condition,
@@ -123,7 +123,7 @@ class Listing {
       title: json['title']?.toString() ?? '',
       description: json['description']?.toString(),
       priceCents: _asInt(json['price_cents']),
-      currency: json['currency']?.toString() ?? 'EUR',
+      currency: json['currency']?.toString() ?? 'XAF',
       quantity: _asInt(json['quantity'], 1),
       categorySlug: json['category_slug']?.toString() ?? '',
       condition: json['condition']?.toString(),
