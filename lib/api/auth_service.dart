@@ -48,36 +48,42 @@ class AuthService {
       // successful sign-in passes through.
       if (state.event == AuthChangeEvent.signedIn) {
         final user = state.session!.user;
-        final provider = user.appMetadata['provider'];
-        final isOAuth = provider != null && provider != 'email';
-        final oauthName = user.userMetadata?['full_name'] as String? ??
-            user.userMetadata?['name'] as String?;
+        final meta = user.userMetadata;
+        final signupName =
+            meta?['full_name'] as String? ?? meta?['name'] as String?;
+        // Role chosen at sign-up. The email flow stashes it in user_metadata so
+        // it survives the confirmation gap (no session there to sync it);
+        // Google sign-ups carry no role yet.
+        final metaRole = meta?['role'] as String?;
         try {
-          if (isOAuth) {
-            // Never assume an account type for a social sign-up. Load the
-            // profile first: no row means this is a brand-new account, so the
-            // app must ask which kind to create (buyer / seller / business)
-            // before entering — rather than silently defaulting to buyer.
-            final loaded = await refreshMe();
-            if (loaded?.profile == null) {
-              pendingOAuthDisplayName = oauthName;
-              needsRoleSelection.value = true;
-            } else {
+          // Load the profile first — its absence means this is a brand-new
+          // account whose type hasn't been recorded yet.
+          final loaded = await refreshMe();
+          if (loaded?.profile == null) {
+            if (metaRole != null && metaRole.isNotEmpty) {
+              // Email sign-up: materialize the profile with the chosen role +
+              // name, then send seller/business on to the subscription step.
+              await syncProfile(role: metaRole, displayName: signupName);
+              await refreshMe();
               needsRoleSelection.value = false;
+              if (metaRole == 'individual_seller' || metaRole == 'business') {
+                pendingSubscriptionRole = metaRole;
+              }
+            } else {
+              // Social sign-up with no role yet → must pick one before entering,
+              // rather than silently defaulting to buyer.
+              pendingOAuthDisplayName = signupName;
+              needsRoleSelection.value = true;
             }
           } else {
-            // Email/password: the role was already chosen at sign-up, so just
-            // make sure the profile exists and entitlements are loaded.
-            await syncProfile(displayName: oauthName);
-            await refreshMe();
             needsRoleSelection.value = false;
           }
         } catch (_) {
           // Non-fatal: the app still works, /me just retries later.
         } finally {
-          // Signal screens that routing can now proceed (profile loaded and,
-          // for social sign-ups, needsRoleSelection decided) — so they never
-          // navigate on a half-resolved session.
+          // Signal screens that routing can now proceed (profile loaded and the
+          // new-account decision made) — so they never navigate on a
+          // half-resolved session.
           signInResolved.value++;
         }
       }
@@ -112,6 +118,12 @@ class AuthService {
   /// alongside the chosen role when it finally creates the profile.
   String? pendingOAuthDisplayName;
 
+  /// Set when a brand-new seller/business account is first established (the
+  /// email flow after confirmation, or an immediate signup), so the sign-in
+  /// resolver sends them to the subscription step once — mirroring the Google
+  /// role-selection flow. Consumed (cleared) by the resolver.
+  String? pendingSubscriptionRole;
+
   Session? get session => _client.auth.currentSession;
   User? get user => _client.auth.currentUser;
   String? get userId => user?.id;
@@ -130,8 +142,10 @@ class AuthService {
 
   Future<void> signIn({required String email, required String password}) async {
     await _client.auth.signInWithPassword(email: email, password: password);
-    await syncProfile();
-    await refreshMe();
+    // Profile materialization + entitlements happen in the onAuthStateChange
+    // handler (the single path every sign-in takes), which also applies the
+    // role chosen at sign-up. Syncing here too would race that and could create
+    // the profile as a plain buyer before the chosen role is read back.
   }
 
   Future<void> signUp({
@@ -140,12 +154,27 @@ class AuthService {
     String? displayName,
     String role = 'buyer',
   }) async {
-    await _client.auth.signUp(email: email, password: password);
-    // With email confirmation enabled there is no session yet; the profile is
-    // synced on the first successful sign-in instead.
+    // Carry the chosen role + name in user_metadata so they survive the email
+    // confirmation gap (with confirmations on there's no session yet, hence
+    // nothing to sync). onAuthStateChange reads them back and materializes the
+    // profile on the first successful sign-in.
+    await _client.auth.signUp(
+      email: email,
+      password: password,
+      data: {
+        if (displayName != null && displayName.trim().isNotEmpty)
+          'full_name': displayName.trim(),
+        'role': role,
+      },
+    );
+    // Confirmations disabled ⇒ signed in immediately; sync now and flag the
+    // subscription step for paid roles.
     if (session != null) {
       await syncProfile(displayName: displayName, role: role);
       await refreshMe();
+      if (role == 'individual_seller' || role == 'business') {
+        pendingSubscriptionRole = role;
+      }
     }
   }
 
@@ -193,6 +222,7 @@ class AuthService {
     me.value = null;
     needsRoleSelection.value = false;
     pendingOAuthDisplayName = null;
+    pendingSubscriptionRole = null;
   }
 
   /// Create/update the caller's profile row. Idempotent — safe on every login.

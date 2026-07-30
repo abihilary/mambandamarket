@@ -46,6 +46,10 @@ class _LoginScreenState extends State<LoginScreen> {
       route = '/account-status';
     } else if (auth.needsRoleSelection.value) {
       route = '/role-selection';
+    } else if (auth.pendingSubscriptionRole != null) {
+      // Fresh seller/business sign-up → the subscription step (one-shot).
+      auth.pendingSubscriptionRole = null;
+      route = '/subscription';
     } else {
       route = '/home';
     }

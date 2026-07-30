@@ -88,8 +88,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
       if (!mounted) return;
 
       if (auth.session != null) {
-        // Signed in immediately — profile was synced by signUp().
-        Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
+        // Confirmations disabled ⇒ signed in immediately. Routing (home, or the
+        // subscription step for seller/business) is handled by the sign-in
+        // resolver on the Welcome/Login screen beneath this one, so we don't
+        // navigate here.
       } else {
         // Email confirmation required before the account can be used.
         setState(() => _awaitingConfirmation = true);
