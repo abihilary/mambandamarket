@@ -7,6 +7,7 @@ import '../api/models.dart' as api;
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import 'ItemCard.dart';
+import 'report_sheet.dart';
 
 class ItemDetailScreen extends StatefulWidget {
   final String title;
@@ -209,6 +210,40 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 child: IconButton(
                   icon: const Icon(Icons.share, color: Colors.white, size: 20),
                   onPressed: () {},
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Report the listing or its seller.
+              CircleAvatar(
+                backgroundColor: Colors.black.withOpacity(0.4),
+                child: PopupMenuButton<String>(
+                  icon: const Icon(Icons.flag_outlined,
+                      color: Colors.white, size: 20),
+                  onSelected: (value) {
+                    final l10n = context.l10n;
+                    final listing = _listing;
+                    if (value == 'listing' && widget.listingId != null) {
+                      showReportSheet(context,
+                          targetType: 'listing',
+                          targetId: widget.listingId!,
+                          title: l10n.reportListing);
+                    } else if (value == 'seller' && listing != null) {
+                      showReportSheet(context,
+                          targetType: 'user',
+                          targetId: listing.sellerId,
+                          title: l10n.reportSeller);
+                    }
+                  },
+                  itemBuilder: (context) {
+                    final l10n = context.l10n;
+                    return [
+                      PopupMenuItem(
+                          value: 'listing',
+                          child: Text(l10n.reportListing)),
+                      PopupMenuItem(
+                          value: 'seller', child: Text(l10n.reportSeller)),
+                    ];
+                  },
                 ),
               ),
               const SizedBox(width: 12),

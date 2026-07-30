@@ -1077,4 +1077,84 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sellerDashGeneralCategory => 'General';
+
+  @override
+  String get blockedTitle => 'Account blocked';
+
+  @override
+  String get blockedBodyDefault =>
+      'Your account has been blocked and can no longer be used on Mambanda Market.';
+
+  @override
+  String get suspendedTitle => 'Account suspended';
+
+  @override
+  String get suspendedBodyDefault =>
+      'Your account has been temporarily suspended.';
+
+  @override
+  String suspendedUntil(Object date) {
+    return 'Suspension ends on $date';
+  }
+
+  @override
+  String get suspendedIndefinite => 'This suspension has no set end date.';
+
+  @override
+  String get moderationContactSupport =>
+      'If you believe this is a mistake, please contact support.';
+
+  @override
+  String get moderationCheckAgain => 'Check again';
+
+  @override
+  String get moderationSignOut => 'Sign out';
+
+  @override
+  String get moderationStillRestricted => 'Your account is still restricted.';
+
+  @override
+  String get reportListing => 'Report listing';
+
+  @override
+  String get reportSeller => 'Report seller';
+
+  @override
+  String get reportReasonLabel => 'Reason';
+
+  @override
+  String get reportReasonSpam => 'Spam or scam';
+
+  @override
+  String get reportReasonProhibited => 'Prohibited or illegal item';
+
+  @override
+  String get reportReasonOffensive => 'Offensive or inappropriate';
+
+  @override
+  String get reportReasonCounterfeit => 'Counterfeit or misleading';
+
+  @override
+  String get reportReasonOther => 'Other';
+
+  @override
+  String get reportDetailsLabel => 'Details (optional)';
+
+  @override
+  String get reportDetailsHint => 'Add anything that helps us review this.';
+
+  @override
+  String get reportSubmit => 'Submit report';
+
+  @override
+  String get reportSuccess => 'Thanks — your report has been sent.';
+
+  @override
+  String get reportError => 'Couldn\'t send the report. Please try again.';
+
+  @override
+  String get reportSignInRequired => 'Sign in to report.';
+
+  @override
+  String get reportSelectReason => 'Please choose a reason.';
 }

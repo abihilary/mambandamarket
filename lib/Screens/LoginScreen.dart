@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -21,26 +19,37 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
-  StreamSubscription<AuthState>? _authSub;
 
   @override
   void initState() {
     super.initState();
     // Google sign-in finishes outside this screen (the user comes back via the
-    // deep link), so navigate when the session actually arrives.
-    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((state) {
-      if (state.session != null && mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
-      }
-    });
+    // deep link). Route only once AuthService has resolved the session — a
+    // brand-new Google account is sent to pick its type instead of straight in.
+    AuthService.instance.signInResolved.addListener(_onSignInResolved);
   }
 
   @override
   void dispose() {
-    _authSub?.cancel();
+    AuthService.instance.signInResolved.removeListener(_onSignInResolved);
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _onSignInResolved() {
+    if (!mounted) return;
+    final auth = AuthService.instance;
+    if (auth.session == null) return;
+    final String route;
+    if (auth.isAccountRestricted) {
+      route = '/account-status';
+    } else if (auth.needsRoleSelection.value) {
+      route = '/role-selection';
+    } else {
+      route = '/home';
+    }
+    Navigator.pushNamedAndRemoveUntil(context, route, (_) => false);
   }
 
   void _showError(String message) {
@@ -59,8 +68,8 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-      if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/home');
+      // Navigation happens in _onSignInResolved once the session is fully
+      // resolved — no need to route here.
     } on AuthException catch (e) {
       _showError(e.message);
     } catch (e) {
@@ -75,7 +84,8 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       // Opens the Google consent screen. On success the session arrives via
-      // onAuthStateChange (see initState), which also syncs the profile.
+      // onAuthStateChange; _onSignInResolved (see initState) then routes to the
+      // app, or to role selection if it's a brand-new account.
       await AuthService.instance.signInWithGoogle();
     } on AuthException catch (e) {
       _showError(e.message);

@@ -382,5 +382,35 @@
   "subFeat247PrioritySupport": "Support prioritaire 24/7",
   "sellerDashSoldItemFallback": "Article vendu",
   "sellerDashBuyerFallback": "Acheteur",
-  "sellerDashGeneralCategory": "Général"
+  "sellerDashGeneralCategory": "Général",
+  "blockedTitle": "Compte bloqué",
+  "blockedBodyDefault": "Votre compte a été bloqué et ne peut plus être utilisé sur Mambanda Market.",
+  "suspendedTitle": "Compte suspendu",
+  "suspendedBodyDefault": "Votre compte a été temporairement suspendu.",
+  "suspendedUntil": "La suspension prend fin le {date}",
+  "@suspendedUntil": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "suspendedIndefinite": "Cette suspension n'a pas de date de fin définie.",
+  "moderationContactSupport": "Si vous pensez qu'il s'agit d'une erreur, veuillez contacter le support.",
+  "moderationCheckAgain": "Vérifier à nouveau",
+  "moderationSignOut": "Se déconnecter",
+  "moderationStillRestricted": "Votre compte est toujours restreint.",
+  "reportListing": "Signaler l'annonce",
+  "reportSeller": "Signaler le vendeur",
+  "reportReasonLabel": "Motif",
+  "reportReasonSpam": "Spam ou arnaque",
+  "reportReasonProhibited": "Article interdit ou illégal",
+  "reportReasonOffensive": "Offensant ou inapproprié",
+  "reportReasonCounterfeit": "Contrefaçon ou trompeur",
+  "reportReasonOther": "Autre",
+  "reportDetailsLabel": "Détails (facultatif)",
+  "reportDetailsHint": "Ajoutez tout ce qui peut nous aider à examiner ce signalement.",
+  "reportSubmit": "Envoyer le signalement",
+  "reportSuccess": "Merci — votre signalement a été envoyé.",
+  "reportError": "Impossible d'envoyer le signalement. Veuillez réessayer.",
+  "reportSignInRequired": "Connectez-vous pour signaler.",
+  "reportSelectReason": "Veuillez choisir un motif."
 }

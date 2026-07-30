@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api/auth_service.dart';
+import '../api/models.dart';
 import '../api/repositories.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -20,17 +21,23 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _handleNavigation() async {
     final auth = AuthService.instance;
 
+    // A session with no profile row means onboarding never finished (e.g. a
+    // Google sign-in that was abandoned before choosing an account type), so
+    // the user must be sent back to role selection rather than into the app.
+    var profileMissing = false;
+
     // Supabase restores any persisted session during initialize(); warm the
     // profile and saved items so the first screen renders with real data.
     if (auth.session != null) {
       try {
-        await Future.wait([
+        final results = await Future.wait([
           auth.refreshMe(),
           FavoritesRepository.instance.refresh(),
         ]);
+        profileMissing = (results[0] as Me?)?.profile == null;
       } catch (_) {
-        // Offline or an expired token — fall through to the signed-out flow
-        // rather than blocking startup.
+        // Offline or an expired token — don't assume onboarding is incomplete;
+        // fall through to /home (or the signed-out flow) rather than blocking.
       }
     }
 
@@ -38,10 +45,12 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(const Duration(milliseconds: 800));
     if (!mounted) return;
 
-    Navigator.pushReplacementNamed(
-      context,
-      auth.session != null ? '/home' : '/welcome',
-    );
+    final target = auth.session == null
+        ? '/welcome'
+        : auth.isAccountRestricted
+            ? '/account-status'
+            : (profileMissing ? '/role-selection' : '/home');
+    Navigator.pushReplacementNamed(context, target);
   }
 
   @override

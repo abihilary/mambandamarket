@@ -513,5 +513,35 @@
   "subFeat247PrioritySupport": "24/7 Priority Support",
   "sellerDashSoldItemFallback": "Sold item",
   "sellerDashBuyerFallback": "Buyer",
-  "sellerDashGeneralCategory": "General"
+  "sellerDashGeneralCategory": "General",
+  "blockedTitle": "Account blocked",
+  "blockedBodyDefault": "Your account has been blocked and can no longer be used on Mambanda Market.",
+  "suspendedTitle": "Account suspended",
+  "suspendedBodyDefault": "Your account has been temporarily suspended.",
+  "suspendedUntil": "Suspension ends on {date}",
+  "@suspendedUntil": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "suspendedIndefinite": "This suspension has no set end date.",
+  "moderationContactSupport": "If you believe this is a mistake, please contact support.",
+  "moderationCheckAgain": "Check again",
+  "moderationSignOut": "Sign out",
+  "moderationStillRestricted": "Your account is still restricted.",
+  "reportListing": "Report listing",
+  "reportSeller": "Report seller",
+  "reportReasonLabel": "Reason",
+  "reportReasonSpam": "Spam or scam",
+  "reportReasonProhibited": "Prohibited or illegal item",
+  "reportReasonOffensive": "Offensive or inappropriate",
+  "reportReasonCounterfeit": "Counterfeit or misleading",
+  "reportReasonOther": "Other",
+  "reportDetailsLabel": "Details (optional)",
+  "reportDetailsHint": "Add anything that helps us review this.",
+  "reportSubmit": "Submit report",
+  "reportSuccess": "Thanks — your report has been sent.",
+  "reportError": "Couldn't send the report. Please try again.",
+  "reportSignInRequired": "Sign in to report.",
+  "reportSelectReason": "Please choose a reason."
 }

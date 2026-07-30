@@ -444,3 +444,26 @@ class ChatRepository {
     totalUnread.value = threads.value.fold(0, (s, t) => s + t.unread);
   }
 }
+
+/// User-submitted reports (an account, store, or listing). Lands in the admin
+/// moderation queue. The API rejects reports from restricted accounts (they
+/// can't write), which surfaces as an [ApiException].
+class ReportsRepository {
+  ReportsRepository._();
+  static final ReportsRepository instance = ReportsRepository._();
+
+  final _api = ApiClient.instance;
+
+  Future<void> report({
+    required String targetType, // 'user' | 'store' | 'listing'
+    required String targetId,
+    required String reason,
+    String? detail,
+  }) =>
+      _api.post('/reports', {
+        'targetType': targetType,
+        'targetId': targetId,
+        'reason': reason,
+        if (detail != null && detail.trim().isNotEmpty) 'detail': detail.trim(),
+      });
+}

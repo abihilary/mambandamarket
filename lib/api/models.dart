@@ -215,6 +215,34 @@ class Profile {
       );
 }
 
+/// Account moderation state, as computed by `/me` (an expired suspension
+/// already reads as `active` there, so the client can trust [status]).
+class Moderation {
+  /// 'active' | 'suspended' | 'blocked'.
+  final String status;
+
+  /// Admin-written message shown to the user on the blocker screen.
+  final String? reason;
+
+  /// When a suspension lifts (null = indefinite). Only set while suspended.
+  final DateTime? suspendedUntil;
+
+  const Moderation({this.status = 'active', this.reason, this.suspendedUntil});
+
+  bool get isBlocked => status == 'blocked';
+  bool get isSuspended => status == 'suspended';
+  bool get isRestricted => isBlocked || isSuspended;
+
+  factory Moderation.fromJson(Map<String, dynamic> json) => Moderation(
+        status: json['status']?.toString() ?? 'active',
+        reason: (json['reason']?.toString().isEmpty ?? true)
+            ? null
+            : json['reason'].toString(),
+        suspendedUntil:
+            DateTime.tryParse(json['suspended_until']?.toString() ?? ''),
+      );
+}
+
 /// `/me` — profile plus the entitlements that gate publishing.
 class Me {
   final Profile? profile;
@@ -224,11 +252,15 @@ class Me {
   final int? listingLimit;
   final int activeListings;
 
+  /// Block/suspend state. Defaults to active when the field is absent.
+  final Moderation moderation;
+
   const Me({
     this.profile,
     this.subscription,
     this.listingLimit,
     this.activeListings = 0,
+    this.moderation = const Moderation(),
   });
 
   bool get canPublish => listingLimit == null || activeListings < listingLimit!;
@@ -238,6 +270,7 @@ class Me {
   factory Me.fromJson(Map<String, dynamic> json) {
     final ent = (json['entitlements'] as Map?)?.cast<String, dynamic>() ?? {};
     final prof = (json['profile'] as Map?)?.cast<String, dynamic>();
+    final mod = (json['moderation'] as Map?)?.cast<String, dynamic>();
     return Me(
       profile: prof == null ? null : Profile.fromJson(prof),
       subscription: (json['subscription'] as Map?)?.cast<String, dynamic>(),
@@ -245,6 +278,7 @@ class Me {
           ? null
           : Listing._asInt(ent['listing_limit']),
       activeListings: Listing._asInt(ent['active_listings']),
+      moderation: mod == null ? const Moderation() : Moderation.fromJson(mod),
     );
   }
 }

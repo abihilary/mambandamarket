@@ -40,21 +40,45 @@ class AuthService {
 
       if (!signedIn) {
         me.value = null;
+        needsRoleSelection.value = false;
         return;
       }
       // OAuth completes outside our sign-in methods (the user returns via the
-      // deep link), so materialize the profile here — this is the one place
-      // every successful sign-in passes through. Idempotent.
+      // deep link), so finish the job here — this is the one place every
+      // successful sign-in passes through.
       if (state.event == AuthChangeEvent.signedIn) {
+        final user = state.session!.user;
+        final provider = user.appMetadata['provider'];
+        final isOAuth = provider != null && provider != 'email';
+        final oauthName = user.userMetadata?['full_name'] as String? ??
+            user.userMetadata?['name'] as String?;
         try {
-          await syncProfile(
-            displayName: state.session?.user.userMetadata?['full_name']
-                    as String? ??
-                state.session?.user.userMetadata?['name'] as String?,
-          );
-          await refreshMe();
+          if (isOAuth) {
+            // Never assume an account type for a social sign-up. Load the
+            // profile first: no row means this is a brand-new account, so the
+            // app must ask which kind to create (buyer / seller / business)
+            // before entering — rather than silently defaulting to buyer.
+            final loaded = await refreshMe();
+            if (loaded?.profile == null) {
+              pendingOAuthDisplayName = oauthName;
+              needsRoleSelection.value = true;
+            } else {
+              needsRoleSelection.value = false;
+            }
+          } else {
+            // Email/password: the role was already chosen at sign-up, so just
+            // make sure the profile exists and entitlements are loaded.
+            await syncProfile(displayName: oauthName);
+            await refreshMe();
+            needsRoleSelection.value = false;
+          }
         } catch (_) {
           // Non-fatal: the app still works, /me just retries later.
+        } finally {
+          // Signal screens that routing can now proceed (profile loaded and,
+          // for social sign-ups, needsRoleSelection decided) — so they never
+          // navigate on a half-resolved session.
+          signInResolved.value++;
         }
       }
     });
@@ -74,6 +98,20 @@ class AuthService {
   /// show the "set a new password" screen.
   final ValueNotifier<bool> passwordRecoveryRequested = ValueNotifier(false);
 
+  /// True after a social (Google) sign-in for an account that has no profile
+  /// yet — the app must ask which kind of account to create before entering.
+  /// Cleared once a role is chosen (or on sign-out).
+  final ValueNotifier<bool> needsRoleSelection = ValueNotifier(false);
+
+  /// Bumped once a sign-in has been fully processed (profile loaded and, for
+  /// social sign-ups, [needsRoleSelection] decided). Auth screens wait on this
+  /// before routing so they don't navigate on a half-resolved session.
+  final ValueNotifier<int> signInResolved = ValueNotifier(0);
+
+  /// The name Google gave us, kept so the role-selection step can persist it
+  /// alongside the chosen role when it finally creates the profile.
+  String? pendingOAuthDisplayName;
+
   Session? get session => _client.auth.currentSession;
   User? get user => _client.auth.currentUser;
   String? get userId => user?.id;
@@ -82,6 +120,13 @@ class AuthService {
   /// (and even hold a session) when confirmations are enabled, so screens use
   /// this to nudge rather than assume.
   bool get isEmailConfirmed => user?.emailConfirmedAt != null;
+
+  /// Effective moderation state from the last `/me` load (active by default).
+  Moderation get moderation => me.value?.moderation ?? const Moderation();
+
+  /// A blocked or actively-suspended account must be sent to the blocker screen
+  /// instead of into the app.
+  bool get isAccountRestricted => moderation.isRestricted;
 
   Future<void> signIn({required String email, required String password}) async {
     await _client.auth.signInWithPassword(email: email, password: password);
@@ -146,6 +191,8 @@ class AuthService {
   Future<void> signOut() async {
     await _client.auth.signOut();
     me.value = null;
+    needsRoleSelection.value = false;
+    pendingOAuthDisplayName = null;
   }
 
   /// Create/update the caller's profile row. Idempotent — safe on every login.

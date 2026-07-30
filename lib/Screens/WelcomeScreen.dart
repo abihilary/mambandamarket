@@ -1,7 +1,4 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../api/auth_service.dart';
 import '../l10n/l10n.dart';
@@ -14,23 +11,36 @@ class WelcomeScreen extends StatefulWidget {
 }
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
-  StreamSubscription<AuthState>? _authSub;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((state) {
-      if (state.session != null && mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
-      }
-    });
+    // Google sign-in finishes outside this screen (the user returns via the
+    // deep link). Wait for AuthService to fully resolve the session before
+    // routing: brand-new social accounts still need to pick an account type.
+    AuthService.instance.signInResolved.addListener(_onSignInResolved);
   }
 
   @override
   void dispose() {
-    _authSub?.cancel();
+    AuthService.instance.signInResolved.removeListener(_onSignInResolved);
     super.dispose();
+  }
+
+  void _onSignInResolved() {
+    if (!mounted) return;
+    final auth = AuthService.instance;
+    if (auth.session == null) return;
+    final String route;
+    if (auth.isAccountRestricted) {
+      route = '/account-status';
+    } else if (auth.needsRoleSelection.value) {
+      route = '/role-selection';
+    } else {
+      route = '/home';
+    }
+    Navigator.pushNamedAndRemoveUntil(context, route, (_) => false);
   }
 
   Future<void> _handleGoogleSignIn() async {

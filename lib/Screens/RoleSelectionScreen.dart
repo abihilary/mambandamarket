@@ -35,9 +35,16 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
       return;
     }
 
-    // Already signed in (e.g. upgrading from buyer) → persist the new role.
+    // Already signed in → persist the chosen role. This covers both a Google
+    // sign-up finishing onboarding (creating its profile row with the picked
+    // role + Google name) and an existing user upgrading from buyer.
     try {
-      await auth.syncProfile(role: _apiRole);
+      await auth.syncProfile(
+        role: _apiRole,
+        displayName: auth.pendingOAuthDisplayName,
+      );
+      auth.pendingOAuthDisplayName = null;
+      auth.needsRoleSelection.value = false;
       await auth.refreshMe();
     } catch (_) {
       if (!mounted) return;

@@ -15,6 +15,7 @@ import 'package:mambandamarket/DashBoards/SellerDashboardScreen.dart';
 import 'package:mambandamarket/Screens/BusinessOnboardingScreen.dart';
 import 'package:mambandamarket/Screens/LoginScreen.dart';
 import 'DashBoards/BusinessDashboardScreen.dart';
+import 'Screens/AccountStatusScreen.dart';
 import 'Screens/ForgotPasswordScreen.dart';
 import 'Screens/IndividualSellerOnboardingScreen.dart';
 import 'Screens/ResetPasswordScreen.dart';
@@ -103,6 +104,7 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
         '/': (context) => const SplashScreen(),
         '/welcome': (context) => const WelcomeScreen(),
         '/role-selection': (context) => const RoleSelectionScreen(),
+        '/account-status': (context) => const AccountStatusScreen(),
         '/home': (context) => const MainNavigationShell(), // Updated to MainNavigationShell
         '/login': (context) => const LoginScreen(),
         '/forgot-password': (context) => const ForgotPasswordScreen(),

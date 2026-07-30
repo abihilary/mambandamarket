@@ -2035,6 +2035,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'General'**
   String get sellerDashGeneralCategory;
+
+  /// No description provided for @blockedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account blocked'**
+  String get blockedTitle;
+
+  /// No description provided for @blockedBodyDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account has been blocked and can no longer be used on Mambanda Market.'**
+  String get blockedBodyDefault;
+
+  /// No description provided for @suspendedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account suspended'**
+  String get suspendedTitle;
+
+  /// No description provided for @suspendedBodyDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account has been temporarily suspended.'**
+  String get suspendedBodyDefault;
+
+  /// No description provided for @suspendedUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Suspension ends on {date}'**
+  String suspendedUntil(Object date);
+
+  /// No description provided for @suspendedIndefinite.
+  ///
+  /// In en, this message translates to:
+  /// **'This suspension has no set end date.'**
+  String get suspendedIndefinite;
+
+  /// No description provided for @moderationContactSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'If you believe this is a mistake, please contact support.'**
+  String get moderationContactSupport;
+
+  /// No description provided for @moderationCheckAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Check again'**
+  String get moderationCheckAgain;
+
+  /// No description provided for @moderationSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get moderationSignOut;
+
+  /// No description provided for @moderationStillRestricted.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account is still restricted.'**
+  String get moderationStillRestricted;
+
+  /// No description provided for @reportListing.
+  ///
+  /// In en, this message translates to:
+  /// **'Report listing'**
+  String get reportListing;
+
+  /// No description provided for @reportSeller.
+  ///
+  /// In en, this message translates to:
+  /// **'Report seller'**
+  String get reportSeller;
+
+  /// No description provided for @reportReasonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get reportReasonLabel;
+
+  /// No description provided for @reportReasonSpam.
+  ///
+  /// In en, this message translates to:
+  /// **'Spam or scam'**
+  String get reportReasonSpam;
+
+  /// No description provided for @reportReasonProhibited.
+  ///
+  /// In en, this message translates to:
+  /// **'Prohibited or illegal item'**
+  String get reportReasonProhibited;
+
+  /// No description provided for @reportReasonOffensive.
+  ///
+  /// In en, this message translates to:
+  /// **'Offensive or inappropriate'**
+  String get reportReasonOffensive;
+
+  /// No description provided for @reportReasonCounterfeit.
+  ///
+  /// In en, this message translates to:
+  /// **'Counterfeit or misleading'**
+  String get reportReasonCounterfeit;
+
+  /// No description provided for @reportReasonOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get reportReasonOther;
+
+  /// No description provided for @reportDetailsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Details (optional)'**
+  String get reportDetailsLabel;
+
+  /// No description provided for @reportDetailsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add anything that helps us review this.'**
+  String get reportDetailsHint;
+
+  /// No description provided for @reportSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit report'**
+  String get reportSubmit;
+
+  /// No description provided for @reportSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks — your report has been sent.'**
+  String get reportSuccess;
+
+  /// No description provided for @reportError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t send the report. Please try again.'**
+  String get reportError;
+
+  /// No description provided for @reportSignInRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to report.'**
+  String get reportSignInRequired;
+
+  /// No description provided for @reportSelectReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Please choose a reason.'**
+  String get reportSelectReason;
 }
 
 class _AppLocalizationsDelegate

@@ -1102,4 +1102,88 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get sellerDashGeneralCategory => 'Général';
+
+  @override
+  String get blockedTitle => 'Compte bloqué';
+
+  @override
+  String get blockedBodyDefault =>
+      'Votre compte a été bloqué et ne peut plus être utilisé sur Mambanda Market.';
+
+  @override
+  String get suspendedTitle => 'Compte suspendu';
+
+  @override
+  String get suspendedBodyDefault =>
+      'Votre compte a été temporairement suspendu.';
+
+  @override
+  String suspendedUntil(Object date) {
+    return 'La suspension prend fin le $date';
+  }
+
+  @override
+  String get suspendedIndefinite =>
+      'Cette suspension n\'a pas de date de fin définie.';
+
+  @override
+  String get moderationContactSupport =>
+      'Si vous pensez qu\'il s\'agit d\'une erreur, veuillez contacter le support.';
+
+  @override
+  String get moderationCheckAgain => 'Vérifier à nouveau';
+
+  @override
+  String get moderationSignOut => 'Se déconnecter';
+
+  @override
+  String get moderationStillRestricted =>
+      'Votre compte est toujours restreint.';
+
+  @override
+  String get reportListing => 'Signaler l\'annonce';
+
+  @override
+  String get reportSeller => 'Signaler le vendeur';
+
+  @override
+  String get reportReasonLabel => 'Motif';
+
+  @override
+  String get reportReasonSpam => 'Spam ou arnaque';
+
+  @override
+  String get reportReasonProhibited => 'Article interdit ou illégal';
+
+  @override
+  String get reportReasonOffensive => 'Offensant ou inapproprié';
+
+  @override
+  String get reportReasonCounterfeit => 'Contrefaçon ou trompeur';
+
+  @override
+  String get reportReasonOther => 'Autre';
+
+  @override
+  String get reportDetailsLabel => 'Détails (facultatif)';
+
+  @override
+  String get reportDetailsHint =>
+      'Ajoutez tout ce qui peut nous aider à examiner ce signalement.';
+
+  @override
+  String get reportSubmit => 'Envoyer le signalement';
+
+  @override
+  String get reportSuccess => 'Merci — votre signalement a été envoyé.';
+
+  @override
+  String get reportError =>
+      'Impossible d\'envoyer le signalement. Veuillez réessayer.';
+
+  @override
+  String get reportSignInRequired => 'Connectez-vous pour signaler.';
+
+  @override
+  String get reportSelectReason => 'Veuillez choisir un motif.';
 }
