@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../api/auth_service.dart';
+import '../l10n/l10n.dart';
 
 /// Set a new password.
 ///
@@ -32,13 +33,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate() || _isLoading) return;
+    final l10n = context.l10n;
     setState(() => _isLoading = true);
     try {
       await AuthService.instance.updatePassword(_passwordController.text);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Mot de passe mis à jour.'),
+        SnackBar(
+          content: Text(l10n.passwordUpdated),
           backgroundColor: Colors.green,
         ),
       );
@@ -51,16 +53,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           e.message.toLowerCase().contains('invalid');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(expired
-              ? 'That reset link has expired. Request a new one.'
-              : e.message),
+          content: Text(expired ? l10n.resetLinkExpired : e.message),
           backgroundColor: Colors.red.shade700,
         ),
       );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mise à jour impossible.')),
+        SnackBar(content: Text(l10n.updateFailed)),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -70,9 +70,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Nouveau mot de passe'), elevation: 0),
+      appBar: AppBar(title: Text(l10n.newPasswordTitle), elevation: 0),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -84,7 +85,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 const SizedBox(height: 16),
                 Icon(Icons.password, size: 64, color: theme.primaryColor),
                 const SizedBox(height: 20),
-                Text('Choisissez un nouveau mot de passe',
+                Text(l10n.chooseNewPassword,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.headlineSmall
                         ?.copyWith(fontWeight: FontWeight.bold)),
@@ -94,8 +95,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   controller: _passwordController,
                   obscureText: _obscure,
                   decoration: InputDecoration(
-                    labelText: 'Nouveau mot de passe',
-                    helperText: '8 caractères minimum',
+                    labelText: l10n.newPasswordLabel,
+                    helperText: l10n.passwordMin8,
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -106,7 +107,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         borderRadius: BorderRadius.circular(12)),
                   ),
                   validator: (val) => val == null || val.length < 8
-                      ? '8 caractères minimum'
+                      ? l10n.passwordMin8
                       : null,
                 ),
                 const SizedBox(height: 16),
@@ -115,13 +116,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   controller: _confirmController,
                   obscureText: _obscure,
                   decoration: InputDecoration(
-                    labelText: 'Confirmez le mot de passe',
+                    labelText: l10n.confirmPasswordLabel,
                     prefixIcon: const Icon(Icons.lock_outline),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
                   validator: (val) => val != _passwordController.text
-                      ? 'Les mots de passe ne correspondent pas'
+                      ? l10n.passwordsDontMatch
                       : null,
                 ),
                 const SizedBox(height: 28),
@@ -143,8 +144,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white),
                         )
-                      : const Text('Mettre à jour',
-                          style: TextStyle(
+                      : Text(l10n.updateButton,
+                          style: const TextStyle(
                               fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ],
