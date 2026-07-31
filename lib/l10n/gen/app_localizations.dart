@@ -938,6 +938,66 @@ abstract class AppLocalizations {
   /// **'Write a message…'**
   String get chatInputHint;
 
+  /// No description provided for @chatAttach.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach'**
+  String get chatAttach;
+
+  /// No description provided for @chatAttachPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo library'**
+  String get chatAttachPhoto;
+
+  /// No description provided for @chatAttachCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a photo'**
+  String get chatAttachCamera;
+
+  /// No description provided for @chatAttachDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Document'**
+  String get chatAttachDocument;
+
+  /// No description provided for @chatAttachCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get chatAttachCancel;
+
+  /// No description provided for @chatSendFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sent. Tap to retry.'**
+  String get chatSendFailed;
+
+  /// No description provided for @chatUploadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not send that file.'**
+  String get chatUploadFailed;
+
+  /// No description provided for @chatFileTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Files must be under {limit} MB.'**
+  String chatFileTooLarge(int limit);
+
+  /// No description provided for @chatOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open this file.'**
+  String get chatOpenFailed;
+
+  /// No description provided for @chatAttachmentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachment'**
+  String get chatAttachmentLabel;
+
   /// No description provided for @createEditItem.
   ///
   /// In en, this message translates to:

@@ -412,14 +412,27 @@ class Conversation {
   }
 }
 
+/// Delivery state of a chat message.
+///
+/// Rows that came from the server are always [sent]. [pending] and [failed]
+/// exist only for messages this device just composed, so the bubble can appear
+/// the instant Send is tapped instead of after the round-trip.
+enum MessageSendState { sent, pending, failed }
+
 class Message {
   final String id;
   final String conversationId;
   final String senderId;
   final String? body;
   final String? attachmentPath;
+
+  /// Temporary download URL minted by the API. `chat-attachments` is a private
+  /// bucket, so there is no public URL to build — the server signs it for
+  /// whichever participant asked.
+  final String? attachmentUrl;
   final DateTime? createdAt;
   final DateTime? readAt;
+  final MessageSendState sendState;
 
   const Message({
     required this.id,
@@ -427,14 +440,55 @@ class Message {
     required this.senderId,
     this.body,
     this.attachmentPath,
+    this.attachmentUrl,
     this.createdAt,
     this.readAt,
+    this.sendState = MessageSendState.sent,
   });
 
   bool get isRead => readAt != null;
-  String? get attachmentUrl => attachmentPath == null
-      ? null
-      : AppConfig.storagePublicUrl('chat-attachments', attachmentPath!);
+  bool get isPending => sendState == MessageSendState.pending;
+  bool get hasFailed => sendState == MessageSendState.failed;
+  bool get hasAttachment => attachmentPath != null || attachmentUrl != null;
+
+  static const _imageExt = {'jpg', 'jpeg', 'png', 'webp', 'gif', 'heic'};
+
+  /// The sender's original file name — stored as the last segment of the
+  /// attachment path (`<uid>/<uuid>/contrat.pdf`).
+  String? get attachmentName {
+    final p = attachmentPath;
+    if (p == null || p.isEmpty) return null;
+    final name = p.split('/').last;
+    return name.isEmpty ? null : name;
+  }
+
+  /// Images render inline; everything else gets a document chip.
+  bool get attachmentIsImage {
+    final name = attachmentName;
+    if (name == null) return attachmentPath != null;
+    final dot = name.lastIndexOf('.');
+    if (dot < 0) return false;
+    return _imageExt.contains(name.substring(dot + 1).toLowerCase());
+  }
+
+  Message copyWith({
+    String? id,
+    String? attachmentUrl,
+    DateTime? createdAt,
+    DateTime? readAt,
+    MessageSendState? sendState,
+  }) =>
+      Message(
+        id: id ?? this.id,
+        conversationId: conversationId,
+        senderId: senderId,
+        body: body,
+        attachmentPath: attachmentPath,
+        attachmentUrl: attachmentUrl ?? this.attachmentUrl,
+        createdAt: createdAt ?? this.createdAt,
+        readAt: readAt ?? this.readAt,
+        sendState: sendState ?? this.sendState,
+      );
 
   factory Message.fromJson(Map<String, dynamic> json) => Message(
         id: json['id'].toString(),
@@ -442,6 +496,7 @@ class Message {
         senderId: json['sender_id']?.toString() ?? '',
         body: json['body']?.toString(),
         attachmentPath: json['attachment_path']?.toString(),
+        attachmentUrl: json['attachment_url']?.toString(),
         createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
         readAt: DateTime.tryParse(json['read_at']?.toString() ?? ''),
       );

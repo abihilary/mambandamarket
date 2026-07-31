@@ -478,6 +478,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatInputHint => 'Write a message…';
 
   @override
+  String get chatAttach => 'Attach';
+
+  @override
+  String get chatAttachPhoto => 'Photo library';
+
+  @override
+  String get chatAttachCamera => 'Take a photo';
+
+  @override
+  String get chatAttachDocument => 'Document';
+
+  @override
+  String get chatAttachCancel => 'Cancel';
+
+  @override
+  String get chatSendFailed => 'Not sent. Tap to retry.';
+
+  @override
+  String get chatUploadFailed => 'Could not send that file.';
+
+  @override
+  String chatFileTooLarge(int limit) {
+    return 'Files must be under $limit MB.';
+  }
+
+  @override
+  String get chatOpenFailed => 'Could not open this file.';
+
+  @override
+  String get chatAttachmentLabel => 'Attachment';
+
+  @override
   String get createEditItem => 'Edit Item';
 
   @override

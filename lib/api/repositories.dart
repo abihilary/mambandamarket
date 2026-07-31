@@ -229,6 +229,29 @@ class ListingsRepository {
         .uploadToSignedUrl(path, signed['token'].toString(), file);
     return path;
   }
+
+  /// Upload a chat attachment — a photo *or* a document — and return its
+  /// storage path, ready to hand to `ChatRepository.send(attachmentPath:)`.
+  ///
+  /// Unlike [uploadImage] this keeps the original file name, which the API
+  /// stores as the last path segment so the recipient sees "contrat.pdf".
+  Future<String> uploadChatFile(File file) async {
+    final name = file.path.split('/').last;
+    final dot = name.lastIndexOf('.');
+    final ext = dot < 0 ? 'jpg' : name.substring(dot + 1).toLowerCase();
+
+    final signed = await _api.post('/uploads/sign', {
+      'bucket': 'chat-attachments',
+      'ext': ext,
+      'filename': name,
+    }) as Map<String, dynamic>;
+
+    final path = signed['path'].toString();
+    await Supabase.instance.client.storage
+        .from('chat-attachments')
+        .uploadToSignedUrl(path, signed['token'].toString(), file);
+    return path;
+  }
 }
 
 /// Saved items. Keeps a local set of ids so cards can render instantly while
