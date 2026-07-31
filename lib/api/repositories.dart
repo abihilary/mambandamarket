@@ -468,6 +468,166 @@ class ChatRepository {
   }
 }
 
+/// On-platform buying, settled through escrow.
+///
+/// Only a verified company's listing can be ordered — the API rejects anything
+/// else — because escrow needs a merchant it can hold accountable. The money
+/// flow is: buyer pays → platform holds → buyer confirms delivery (or the
+/// auto-release window passes) → company is credited.
+class OrdersRepository {
+  OrdersRepository._();
+  static final OrdersRepository instance = OrdersRepository._();
+
+  final _api = ApiClient.instance;
+
+  /// Places an order. Every line must belong to [companyId]; the server prices
+  /// the order itself from the listings, so the client never sends amounts.
+  Future<Order> create({
+    required String companyId,
+    required List<({String listingId, int quantity})> items,
+    required String deliveryName,
+    required String deliveryPhone,
+    required String deliveryAddress,
+    required String deliveryCity,
+    String? note,
+  }) async {
+    final json = await _api.post('/orders', {
+      'company_id': companyId,
+      'items': [
+        for (final i in items)
+          {'listing_id': i.listingId, 'quantity': i.quantity}
+      ],
+      'delivery': {
+        'name': deliveryName,
+        'phone': deliveryPhone,
+        'address': deliveryAddress,
+        'city': deliveryCity,
+      },
+      if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+    }) as Map<String, dynamic>;
+    return Order.fromJson((json['order'] as Map).cast<String, dynamic>());
+  }
+
+  /// [role] picks the side of the table: `buyer` for "my purchases", `company`
+  /// for the merchant's incoming orders. Pass [before] to page further back.
+  Future<({List<Order> items, String? nextBefore})> list({
+    String role = 'buyer',
+    String? status,
+    int limit = 20,
+    String? before,
+  }) async {
+    final json = await _api.get('/orders', query: {
+      'role': role,
+      'status': status,
+      'limit': limit,
+      'before': before,
+    }) as Map<String, dynamic>;
+    return (
+      items: (json['items'] as List? ?? [])
+          .whereType<Map>()
+          .map((m) => Order.fromJson(m.cast<String, dynamic>()))
+          .toList(),
+      nextBefore: ((json['page'] as Map?)?['next_before'])?.toString(),
+    );
+  }
+
+  Future<Order> detail(String id) async {
+    final json = await _api.get('/orders/$id') as Map<String, dynamic>;
+    return Order.fromJson((json['order'] as Map).cast<String, dynamic>());
+  }
+
+  /// Starts payment. [provider] is the payment processor (`campay`) and
+  /// [method] the wallet (`mtn_momo` | `orange_money`).
+  ///
+  /// A non-null `redirectUrl` means the user finishes the payment in a browser;
+  /// without one the processor pushes a prompt to [phone] and the order stays
+  /// pending until the webhook confirms it. Either way the client must not
+  /// treat "started" as "paid".
+  Future<({String status, String? redirectUrl})> pay(
+    String id, {
+    required String provider,
+    String? method,
+    String? phone,
+  }) async {
+    final json = await _api.post('/orders/$id/pay', {
+      'provider': provider,
+      if (method != null) 'method': method,
+      if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
+    }) as Map<String, dynamic>;
+    final payment = (json['payment'] as Map?)?.cast<String, dynamic>();
+    return (
+      status: payment?['status']?.toString() ?? 'pending',
+      redirectUrl: json['redirect_url']?.toString(),
+    );
+  }
+
+  /// Buyer confirms delivery — this is what releases the escrowed money to the
+  /// company, so callers must confirm intent before calling it.
+  Future<void> confirm(String id) => _api.post('/orders/$id/confirm');
+
+  /// Buyer cancels, only while the order is still `pending_payment`.
+  Future<void> cancel(String id) => _api.post('/orders/$id/cancel');
+
+  /// Company marks the order sent/handed over.
+  Future<void> fulfil(String id) => _api.post('/orders/$id/fulfil');
+}
+
+/// The company's money: available balance, escrow, ledger and payouts.
+class WalletRepository {
+  WalletRepository._();
+  static final WalletRepository instance = WalletRepository._();
+
+  final _api = ApiClient.instance;
+
+  Future<WalletSummary> summary() async {
+    final json = await _api.get('/wallet') as Map<String, dynamic>;
+    return WalletSummary.fromJson(json);
+  }
+
+  Future<({List<WalletEntry> items, String? nextBefore})> entries({
+    int limit = 30,
+    String? before,
+  }) async {
+    final json = await _api.get('/wallet/entries',
+        query: {'limit': limit, 'before': before}) as Map<String, dynamic>;
+    return (
+      items: (json['items'] as List? ?? [])
+          .whereType<Map>()
+          .map((m) => WalletEntry.fromJson(m.cast<String, dynamic>()))
+          .toList(),
+      nextBefore: ((json['page'] as Map?)?['next_before'])?.toString(),
+    );
+  }
+
+  Future<List<Payout>> payouts({int limit = 30}) async {
+    final json =
+        await _api.get('/payouts', query: {'limit': limit}) as Map<String, dynamic>;
+    return (json['items'] as List? ?? [])
+        .whereType<Map>()
+        .map((m) => Payout.fromJson(m.cast<String, dynamic>()))
+        .toList();
+  }
+
+  /// Requests a withdrawal. The server re-checks the balance — the client-side
+  /// cap is only there to fail fast with a clear message.
+  Future<Payout> requestPayout({
+    required int amountCents,
+    required String method,
+    required String destination,
+    String? destinationName,
+  }) async {
+    final json = await _api.post('/payouts', {
+      'amount_cents': amountCents,
+      'method': method,
+      'destination': destination,
+      if (destinationName != null && destinationName.trim().isNotEmpty)
+        'destination_name': destinationName.trim(),
+    }) as Map<String, dynamic>;
+    final p = (json['payout'] as Map?)?.cast<String, dynamic>() ?? json;
+    return Payout.fromJson(p);
+  }
+}
+
 /// User-submitted reports (an account, store, or listing). Lands in the admin
 /// moderation queue. The API rejects reports from restricted accounts (they
 /// can't write), which surfaces as an [ApiException].

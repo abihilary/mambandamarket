@@ -556,5 +556,205 @@
   "reportSuccess": "Thanks — your report has been sent.",
   "reportError": "Couldn't send the report. Please try again.",
   "reportSignInRequired": "Sign in to report.",
-  "reportSelectReason": "Please choose a reason."
+  "reportSelectReason": "Please choose a reason.",
+  "orderStatusPendingPayment": "Awaiting payment",
+  "orderStatusPaid": "Paid",
+  "orderStatusFulfilled": "Sent",
+  "orderStatusCompleted": "Completed",
+  "orderStatusCancelled": "Cancelled",
+  "orderStatusRefunded": "Refunded",
+  "payoutStatusPending": "Pending",
+  "payoutStatusProcessing": "Processing",
+  "payoutStatusPaid": "Paid",
+  "payoutStatusFailed": "Failed",
+  "payoutStatusCancelled": "Cancelled",
+  "detailBuyNow": "Buy now",
+  "detailVerifiedCompany": "Verified company",
+  "detailBuyerProtected": "Protected purchase — we hold your payment until you confirm delivery.",
+  "checkoutTitle": "Checkout",
+  "checkoutQuantity": "Quantity",
+  "checkoutEscrowTitle": "Your money is protected",
+  "checkoutEscrowBody": "We hold your payment safely. The seller is only paid once you confirm you received your order.",
+  "checkoutDeliveryTitle": "Delivery details",
+  "checkoutNameLabel": "Full name",
+  "checkoutNameRequired": "Please enter the recipient's name",
+  "checkoutPhoneLabel": "Phone number",
+  "checkoutPhoneRequired": "Please enter a phone number",
+  "checkoutAddressLabel": "Address",
+  "checkoutAddressRequired": "Please enter a delivery address",
+  "checkoutCityLabel": "City",
+  "checkoutCityRequired": "Please enter a city",
+  "checkoutNoteLabel": "Note for the seller (optional)",
+  "checkoutNoteHint": "Landmark, delivery time, size…",
+  "checkoutSummaryTitle": "Order summary",
+  "checkoutUnitPrice": "{price} × {count}",
+  "@checkoutUnitPrice": {
+    "placeholders": {
+      "price": {},
+      "count": {}
+    }
+  },
+  "checkoutSubtotal": "Subtotal",
+  "checkoutTotal": "Total",
+  "checkoutPaymentTitle": "Payment method",
+  "checkoutMethodMtn": "MTN Mobile Money",
+  "checkoutMethodOrange": "Orange Money",
+  "checkoutMomoLabel": "Mobile Money number",
+  "checkoutMomoHelper": "You'll get a prompt on this number to approve the payment.",
+  "checkoutMomoRequired": "Please enter the number to charge",
+  "checkoutPayNow": "Pay {amount} securely",
+  "@checkoutPayNow": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "checkoutSignInRequired": "Sign in to buy this item.",
+  "checkoutOrderFailed": "Could not place your order. Please try again.",
+  "checkoutPaymentPending": "Payment started. Approve the prompt on your phone to finish.",
+  "checkoutPaymentOpenFailed": "Could not open the payment page. You can pay again from the order.",
+  "checkoutPaymentFailed": "Order placed, but payment could not start. You can pay from the order.",
+  "myOrders": "My orders",
+  "ordersTitle": "My orders",
+  "ordersEmpty": "You haven't bought anything yet.",
+  "ordersSignInRequired": "Sign in to see your orders.",
+  "ordersLoadError": "Could not load your orders. Check your connection.",
+  "ordersTryAgain": "Try again",
+  "ordersLoadMore": "Load more",
+  "ordersItemCount": "{count, plural, =1{1 item} other{{count} items}}",
+  "@ordersItemCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "ordersPlacedOn": "Placed on {date}",
+  "@ordersPlacedOn": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "orderDetailTitle": "Order",
+  "orderDetailLoadError": "Could not load this order.",
+  "orderDetailItems": "Items",
+  "orderDetailDelivery": "Delivery",
+  "orderDetailNote": "Your note",
+  "orderDetailSubtotal": "Subtotal",
+  "orderDetailTotal": "Total",
+  "orderDetailQuantity": "Qty {count}",
+  "@orderDetailQuantity": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "orderEscrowPendingTitle": "Payment not started",
+  "orderEscrowPendingBody": "Nothing has been charged yet. Your money is only taken when you pay, and even then we hold it until you confirm delivery.",
+  "orderEscrowHeldTitle": "We're holding your payment",
+  "orderEscrowHeldBody": "{amount} is held safely by Mambanda Market. The seller cannot touch it until you confirm you received your order.",
+  "@orderEscrowHeldBody": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "orderEscrowAutoRelease": "If you don't confirm, the payment is released automatically on {date}.",
+  "@orderEscrowAutoRelease": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "orderEscrowReleasedTitle": "Payment released",
+  "orderEscrowReleasedBody": "You confirmed delivery, so the seller has been paid. Thank you.",
+  "orderEscrowRefundedTitle": "Payment refunded",
+  "orderEscrowRefundedBody": "Your payment has been returned to you.",
+  "orderConfirmDelivery": "Confirm delivery",
+  "orderConfirmTitle": "Confirm delivery?",
+  "orderConfirmBody": "This releases {amount} to the seller. Only confirm once you have received your order — this cannot be undone.",
+  "@orderConfirmBody": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "orderConfirmKeep": "Not yet",
+  "orderConfirmRelease": "Yes, release payment",
+  "orderConfirmedSuccess": "Delivery confirmed. The seller has been paid.",
+  "orderCancel": "Cancel order",
+  "orderCancelTitle": "Cancel this order?",
+  "orderCancelBody": "The order will be cancelled and nothing will be charged.",
+  "orderCancelKeep": "Keep order",
+  "orderCancelConfirm": "Cancel order",
+  "orderCancelledSuccess": "Order cancelled.",
+  "orderPayNow": "Pay now",
+  "orderActionFailed": "Something went wrong. Please try again.",
+  "companyDashboard": "Company dashboard",
+  "companyDashOrdersTab": "Orders",
+  "companyDashWalletTab": "Wallet",
+  "companyDashPayoutsTab": "Payouts",
+  "companyDashSignInRequired": "Sign in to open your company dashboard.",
+  "companyDashNoOrders": "No orders yet.",
+  "companyDashOrdersLoadError": "Could not load your orders. Check your connection.",
+  "companyDashDeliverTo": "Deliver to {name}",
+  "@companyDashDeliverTo": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "companyDashMarkFulfilled": "Mark fulfilled",
+  "companyDashFulfilTitle": "Mark as fulfilled?",
+  "companyDashFulfilBody": "Confirm you have handed over or shipped this order. The buyer is then asked to confirm delivery, which releases your payment.",
+  "companyDashFulfilCancel": "Not yet",
+  "companyDashFulfilConfirm": "Mark fulfilled",
+  "companyDashFulfilledSuccess": "Order marked as fulfilled.",
+  "walletAvailableTitle": "Available balance",
+  "walletAvailableHint": "Ready to withdraw",
+  "walletEscrowTitle": "Held in escrow",
+  "walletEscrowHint": "Not yours yet — released when buyers confirm delivery",
+  "walletLedgerTitle": "Wallet activity",
+  "walletNoEntries": "No wallet activity yet.",
+  "walletLoadError": "Could not load your wallet. Check your connection.",
+  "walletKindEscrowHold": "Held in escrow",
+  "walletKindEscrowRelease": "Escrow released",
+  "walletKindCommission": "Platform commission",
+  "walletKindPayout": "Payout",
+  "walletKindRefund": "Refund",
+  "walletKindSale": "Sale",
+  "walletKindOther": "Adjustment",
+  "walletOrderRef": "Order {reference}",
+  "@walletOrderRef": {
+    "placeholders": {
+      "reference": {}
+    }
+  },
+  "payoutRequestCta": "Request payout",
+  "payoutRequestTitle": "Request a payout",
+  "payoutAvailableNote": "You can withdraw up to {amount}.",
+  "@payoutAvailableNote": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "payoutAmountLabel": "Amount (FCFA)",
+  "payoutAmountRequired": "Enter an amount",
+  "payoutAmountInvalid": "Enter a valid amount",
+  "payoutAmountTooHigh": "That is more than your available balance of {amount}.",
+  "@payoutAmountTooHigh": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "payoutMethodLabel": "Payout method",
+  "payoutMethodMtn": "MTN Mobile Money",
+  "payoutMethodOrange": "Orange Money",
+  "payoutMethodBank": "Bank transfer",
+  "payoutDestinationLabel": "Number or account",
+  "payoutDestinationRequired": "Enter where to send the money",
+  "payoutDestinationNameLabel": "Account name (optional)",
+  "payoutSubmit": "Request payout",
+  "payoutRequested": "Payout requested.",
+  "payoutError": "Could not request the payout. Please try again.",
+  "payoutsEmpty": "No payouts yet.",
+  "payoutsLoadError": "Could not load your payouts. Check your connection.",
+  "payoutRequestedOn": "Requested on {date}",
+  "@payoutRequestedOn": {
+    "placeholders": {
+      "date": {}
+    }
+  }
 }

@@ -2245,6 +2245,810 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please choose a reason.'**
   String get reportSelectReason;
+
+  /// No description provided for @orderStatusPendingPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting payment'**
+  String get orderStatusPendingPayment;
+
+  /// No description provided for @orderStatusPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get orderStatusPaid;
+
+  /// No description provided for @orderStatusFulfilled.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent'**
+  String get orderStatusFulfilled;
+
+  /// No description provided for @orderStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get orderStatusCompleted;
+
+  /// No description provided for @orderStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get orderStatusCancelled;
+
+  /// No description provided for @orderStatusRefunded.
+  ///
+  /// In en, this message translates to:
+  /// **'Refunded'**
+  String get orderStatusRefunded;
+
+  /// No description provided for @payoutStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get payoutStatusPending;
+
+  /// No description provided for @payoutStatusProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing'**
+  String get payoutStatusProcessing;
+
+  /// No description provided for @payoutStatusPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get payoutStatusPaid;
+
+  /// No description provided for @payoutStatusFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get payoutStatusFailed;
+
+  /// No description provided for @payoutStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get payoutStatusCancelled;
+
+  /// No description provided for @detailBuyNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy now'**
+  String get detailBuyNow;
+
+  /// No description provided for @detailVerifiedCompany.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified company'**
+  String get detailVerifiedCompany;
+
+  /// No description provided for @detailBuyerProtected.
+  ///
+  /// In en, this message translates to:
+  /// **'Protected purchase — we hold your payment until you confirm delivery.'**
+  String get detailBuyerProtected;
+
+  /// No description provided for @checkoutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkout'**
+  String get checkoutTitle;
+
+  /// No description provided for @checkoutQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get checkoutQuantity;
+
+  /// No description provided for @checkoutEscrowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your money is protected'**
+  String get checkoutEscrowTitle;
+
+  /// No description provided for @checkoutEscrowBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We hold your payment safely. The seller is only paid once you confirm you received your order.'**
+  String get checkoutEscrowBody;
+
+  /// No description provided for @checkoutDeliveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery details'**
+  String get checkoutDeliveryTitle;
+
+  /// No description provided for @checkoutNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Full name'**
+  String get checkoutNameLabel;
+
+  /// No description provided for @checkoutNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter the recipient\'s name'**
+  String get checkoutNameRequired;
+
+  /// No description provided for @checkoutPhoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number'**
+  String get checkoutPhoneLabel;
+
+  /// No description provided for @checkoutPhoneRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a phone number'**
+  String get checkoutPhoneRequired;
+
+  /// No description provided for @checkoutAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get checkoutAddressLabel;
+
+  /// No description provided for @checkoutAddressRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a delivery address'**
+  String get checkoutAddressRequired;
+
+  /// No description provided for @checkoutCityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'City'**
+  String get checkoutCityLabel;
+
+  /// No description provided for @checkoutCityRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a city'**
+  String get checkoutCityRequired;
+
+  /// No description provided for @checkoutNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note for the seller (optional)'**
+  String get checkoutNoteLabel;
+
+  /// No description provided for @checkoutNoteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Landmark, delivery time, size…'**
+  String get checkoutNoteHint;
+
+  /// No description provided for @checkoutSummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Order summary'**
+  String get checkoutSummaryTitle;
+
+  /// No description provided for @checkoutUnitPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'{price} × {count}'**
+  String checkoutUnitPrice(Object price, Object count);
+
+  /// No description provided for @checkoutSubtotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtotal'**
+  String get checkoutSubtotal;
+
+  /// No description provided for @checkoutTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get checkoutTotal;
+
+  /// No description provided for @checkoutPaymentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment method'**
+  String get checkoutPaymentTitle;
+
+  /// No description provided for @checkoutMethodMtn.
+  ///
+  /// In en, this message translates to:
+  /// **'MTN Mobile Money'**
+  String get checkoutMethodMtn;
+
+  /// No description provided for @checkoutMethodOrange.
+  ///
+  /// In en, this message translates to:
+  /// **'Orange Money'**
+  String get checkoutMethodOrange;
+
+  /// No description provided for @checkoutMomoLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile Money number'**
+  String get checkoutMomoLabel;
+
+  /// No description provided for @checkoutMomoHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll get a prompt on this number to approve the payment.'**
+  String get checkoutMomoHelper;
+
+  /// No description provided for @checkoutMomoRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter the number to charge'**
+  String get checkoutMomoRequired;
+
+  /// No description provided for @checkoutPayNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay {amount} securely'**
+  String checkoutPayNow(Object amount);
+
+  /// No description provided for @checkoutSignInRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to buy this item.'**
+  String get checkoutSignInRequired;
+
+  /// No description provided for @checkoutOrderFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not place your order. Please try again.'**
+  String get checkoutOrderFailed;
+
+  /// No description provided for @checkoutPaymentPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment started. Approve the prompt on your phone to finish.'**
+  String get checkoutPaymentPending;
+
+  /// No description provided for @checkoutPaymentOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the payment page. You can pay again from the order.'**
+  String get checkoutPaymentOpenFailed;
+
+  /// No description provided for @checkoutPaymentFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Order placed, but payment could not start. You can pay from the order.'**
+  String get checkoutPaymentFailed;
+
+  /// No description provided for @myOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'My orders'**
+  String get myOrders;
+
+  /// No description provided for @ordersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My orders'**
+  String get ordersTitle;
+
+  /// No description provided for @ordersEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'You haven\'t bought anything yet.'**
+  String get ordersEmpty;
+
+  /// No description provided for @ordersSignInRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to see your orders.'**
+  String get ordersSignInRequired;
+
+  /// No description provided for @ordersLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your orders. Check your connection.'**
+  String get ordersLoadError;
+
+  /// No description provided for @ordersTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get ordersTryAgain;
+
+  /// No description provided for @ordersLoadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get ordersLoadMore;
+
+  /// No description provided for @ordersItemCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item} other{{count} items}}'**
+  String ordersItemCount(num count);
+
+  /// No description provided for @ordersPlacedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Placed on {date}'**
+  String ordersPlacedOn(Object date);
+
+  /// No description provided for @orderDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Order'**
+  String get orderDetailTitle;
+
+  /// No description provided for @orderDetailLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this order.'**
+  String get orderDetailLoadError;
+
+  /// No description provided for @orderDetailItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Items'**
+  String get orderDetailItems;
+
+  /// No description provided for @orderDetailDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery'**
+  String get orderDetailDelivery;
+
+  /// No description provided for @orderDetailNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Your note'**
+  String get orderDetailNote;
+
+  /// No description provided for @orderDetailSubtotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtotal'**
+  String get orderDetailSubtotal;
+
+  /// No description provided for @orderDetailTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get orderDetailTotal;
+
+  /// No description provided for @orderDetailQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Qty {count}'**
+  String orderDetailQuantity(Object count);
+
+  /// No description provided for @orderEscrowPendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment not started'**
+  String get orderEscrowPendingTitle;
+
+  /// No description provided for @orderEscrowPendingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing has been charged yet. Your money is only taken when you pay, and even then we hold it until you confirm delivery.'**
+  String get orderEscrowPendingBody;
+
+  /// No description provided for @orderEscrowHeldTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'re holding your payment'**
+  String get orderEscrowHeldTitle;
+
+  /// No description provided for @orderEscrowHeldBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} is held safely by Mambanda Market. The seller cannot touch it until you confirm you received your order.'**
+  String orderEscrowHeldBody(Object amount);
+
+  /// No description provided for @orderEscrowAutoRelease.
+  ///
+  /// In en, this message translates to:
+  /// **'If you don\'t confirm, the payment is released automatically on {date}.'**
+  String orderEscrowAutoRelease(Object date);
+
+  /// No description provided for @orderEscrowReleasedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment released'**
+  String get orderEscrowReleasedTitle;
+
+  /// No description provided for @orderEscrowReleasedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You confirmed delivery, so the seller has been paid. Thank you.'**
+  String get orderEscrowReleasedBody;
+
+  /// No description provided for @orderEscrowRefundedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment refunded'**
+  String get orderEscrowRefundedTitle;
+
+  /// No description provided for @orderEscrowRefundedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your payment has been returned to you.'**
+  String get orderEscrowRefundedBody;
+
+  /// No description provided for @orderConfirmDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm delivery'**
+  String get orderConfirmDelivery;
+
+  /// No description provided for @orderConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm delivery?'**
+  String get orderConfirmTitle;
+
+  /// No description provided for @orderConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This releases {amount} to the seller. Only confirm once you have received your order — this cannot be undone.'**
+  String orderConfirmBody(Object amount);
+
+  /// No description provided for @orderConfirmKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Not yet'**
+  String get orderConfirmKeep;
+
+  /// No description provided for @orderConfirmRelease.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, release payment'**
+  String get orderConfirmRelease;
+
+  /// No description provided for @orderConfirmedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery confirmed. The seller has been paid.'**
+  String get orderConfirmedSuccess;
+
+  /// No description provided for @orderCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel order'**
+  String get orderCancel;
+
+  /// No description provided for @orderCancelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel this order?'**
+  String get orderCancelTitle;
+
+  /// No description provided for @orderCancelBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The order will be cancelled and nothing will be charged.'**
+  String get orderCancelBody;
+
+  /// No description provided for @orderCancelKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep order'**
+  String get orderCancelKeep;
+
+  /// No description provided for @orderCancelConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel order'**
+  String get orderCancelConfirm;
+
+  /// No description provided for @orderCancelledSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Order cancelled.'**
+  String get orderCancelledSuccess;
+
+  /// No description provided for @orderPayNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay now'**
+  String get orderPayNow;
+
+  /// No description provided for @orderActionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get orderActionFailed;
+
+  /// No description provided for @companyDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Company dashboard'**
+  String get companyDashboard;
+
+  /// No description provided for @companyDashOrdersTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders'**
+  String get companyDashOrdersTab;
+
+  /// No description provided for @companyDashWalletTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet'**
+  String get companyDashWalletTab;
+
+  /// No description provided for @companyDashPayoutsTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Payouts'**
+  String get companyDashPayoutsTab;
+
+  /// No description provided for @companyDashSignInRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to open your company dashboard.'**
+  String get companyDashSignInRequired;
+
+  /// No description provided for @companyDashNoOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'No orders yet.'**
+  String get companyDashNoOrders;
+
+  /// No description provided for @companyDashOrdersLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your orders. Check your connection.'**
+  String get companyDashOrdersLoadError;
+
+  /// No description provided for @companyDashDeliverTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Deliver to {name}'**
+  String companyDashDeliverTo(Object name);
+
+  /// No description provided for @companyDashMarkFulfilled.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark fulfilled'**
+  String get companyDashMarkFulfilled;
+
+  /// No description provided for @companyDashFulfilTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as fulfilled?'**
+  String get companyDashFulfilTitle;
+
+  /// No description provided for @companyDashFulfilBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm you have handed over or shipped this order. The buyer is then asked to confirm delivery, which releases your payment.'**
+  String get companyDashFulfilBody;
+
+  /// No description provided for @companyDashFulfilCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Not yet'**
+  String get companyDashFulfilCancel;
+
+  /// No description provided for @companyDashFulfilConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark fulfilled'**
+  String get companyDashFulfilConfirm;
+
+  /// No description provided for @companyDashFulfilledSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Order marked as fulfilled.'**
+  String get companyDashFulfilledSuccess;
+
+  /// No description provided for @walletAvailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Available balance'**
+  String get walletAvailableTitle;
+
+  /// No description provided for @walletAvailableHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to withdraw'**
+  String get walletAvailableHint;
+
+  /// No description provided for @walletEscrowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Held in escrow'**
+  String get walletEscrowTitle;
+
+  /// No description provided for @walletEscrowHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Not yours yet — released when buyers confirm delivery'**
+  String get walletEscrowHint;
+
+  /// No description provided for @walletLedgerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet activity'**
+  String get walletLedgerTitle;
+
+  /// No description provided for @walletNoEntries.
+  ///
+  /// In en, this message translates to:
+  /// **'No wallet activity yet.'**
+  String get walletNoEntries;
+
+  /// No description provided for @walletLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your wallet. Check your connection.'**
+  String get walletLoadError;
+
+  /// No description provided for @walletKindEscrowHold.
+  ///
+  /// In en, this message translates to:
+  /// **'Held in escrow'**
+  String get walletKindEscrowHold;
+
+  /// No description provided for @walletKindEscrowRelease.
+  ///
+  /// In en, this message translates to:
+  /// **'Escrow released'**
+  String get walletKindEscrowRelease;
+
+  /// No description provided for @walletKindCommission.
+  ///
+  /// In en, this message translates to:
+  /// **'Platform commission'**
+  String get walletKindCommission;
+
+  /// No description provided for @walletKindPayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout'**
+  String get walletKindPayout;
+
+  /// No description provided for @walletKindRefund.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund'**
+  String get walletKindRefund;
+
+  /// No description provided for @walletKindSale.
+  ///
+  /// In en, this message translates to:
+  /// **'Sale'**
+  String get walletKindSale;
+
+  /// No description provided for @walletKindOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjustment'**
+  String get walletKindOther;
+
+  /// No description provided for @walletOrderRef.
+  ///
+  /// In en, this message translates to:
+  /// **'Order {reference}'**
+  String walletOrderRef(Object reference);
+
+  /// No description provided for @payoutRequestCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Request payout'**
+  String get payoutRequestCta;
+
+  /// No description provided for @payoutRequestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Request a payout'**
+  String get payoutRequestTitle;
+
+  /// No description provided for @payoutAvailableNote.
+  ///
+  /// In en, this message translates to:
+  /// **'You can withdraw up to {amount}.'**
+  String payoutAvailableNote(Object amount);
+
+  /// No description provided for @payoutAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount (FCFA)'**
+  String get payoutAmountLabel;
+
+  /// No description provided for @payoutAmountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount'**
+  String get payoutAmountRequired;
+
+  /// No description provided for @payoutAmountInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid amount'**
+  String get payoutAmountInvalid;
+
+  /// No description provided for @payoutAmountTooHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'That is more than your available balance of {amount}.'**
+  String payoutAmountTooHigh(Object amount);
+
+  /// No description provided for @payoutMethodLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout method'**
+  String get payoutMethodLabel;
+
+  /// No description provided for @payoutMethodMtn.
+  ///
+  /// In en, this message translates to:
+  /// **'MTN Mobile Money'**
+  String get payoutMethodMtn;
+
+  /// No description provided for @payoutMethodOrange.
+  ///
+  /// In en, this message translates to:
+  /// **'Orange Money'**
+  String get payoutMethodOrange;
+
+  /// No description provided for @payoutMethodBank.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank transfer'**
+  String get payoutMethodBank;
+
+  /// No description provided for @payoutDestinationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Number or account'**
+  String get payoutDestinationLabel;
+
+  /// No description provided for @payoutDestinationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter where to send the money'**
+  String get payoutDestinationRequired;
+
+  /// No description provided for @payoutDestinationNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Account name (optional)'**
+  String get payoutDestinationNameLabel;
+
+  /// No description provided for @payoutSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Request payout'**
+  String get payoutSubmit;
+
+  /// No description provided for @payoutRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout requested.'**
+  String get payoutRequested;
+
+  /// No description provided for @payoutError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not request the payout. Please try again.'**
+  String get payoutError;
+
+  /// No description provided for @payoutsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No payouts yet.'**
+  String get payoutsEmpty;
+
+  /// No description provided for @payoutsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your payouts. Check your connection.'**
+  String get payoutsLoadError;
+
+  /// No description provided for @payoutRequestedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Requested on {date}'**
+  String payoutRequestedOn(Object date);
 }
 
 class _AppLocalizationsDelegate

@@ -211,11 +211,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         );
       }
 
-      // Money is sent as integer cents; never as a float.
-      final priceCents =
-          ((double.tryParse(_priceController.text.replaceAll(',', '.')) ?? 0) *
-                  100)
-              .round();
+      // Money is sent as integer minor units; never as a float. FCFA has no
+      // minor unit, so the conversion is currency-aware — scaling by 100 here
+      // published every listing at 100x its price.
+      final priceCents = api.toMinorUnits(
+        double.tryParse(_priceController.text.replaceAll(',', '.')) ?? 0,
+      );
       final quantity = int.tryParse(_quantityController.text) ?? 1;
 
       final listing = await ListingsRepository.instance.create(

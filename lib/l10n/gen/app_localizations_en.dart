@@ -1189,4 +1189,457 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportSelectReason => 'Please choose a reason.';
+
+  @override
+  String get orderStatusPendingPayment => 'Awaiting payment';
+
+  @override
+  String get orderStatusPaid => 'Paid';
+
+  @override
+  String get orderStatusFulfilled => 'Sent';
+
+  @override
+  String get orderStatusCompleted => 'Completed';
+
+  @override
+  String get orderStatusCancelled => 'Cancelled';
+
+  @override
+  String get orderStatusRefunded => 'Refunded';
+
+  @override
+  String get payoutStatusPending => 'Pending';
+
+  @override
+  String get payoutStatusProcessing => 'Processing';
+
+  @override
+  String get payoutStatusPaid => 'Paid';
+
+  @override
+  String get payoutStatusFailed => 'Failed';
+
+  @override
+  String get payoutStatusCancelled => 'Cancelled';
+
+  @override
+  String get detailBuyNow => 'Buy now';
+
+  @override
+  String get detailVerifiedCompany => 'Verified company';
+
+  @override
+  String get detailBuyerProtected =>
+      'Protected purchase — we hold your payment until you confirm delivery.';
+
+  @override
+  String get checkoutTitle => 'Checkout';
+
+  @override
+  String get checkoutQuantity => 'Quantity';
+
+  @override
+  String get checkoutEscrowTitle => 'Your money is protected';
+
+  @override
+  String get checkoutEscrowBody =>
+      'We hold your payment safely. The seller is only paid once you confirm you received your order.';
+
+  @override
+  String get checkoutDeliveryTitle => 'Delivery details';
+
+  @override
+  String get checkoutNameLabel => 'Full name';
+
+  @override
+  String get checkoutNameRequired => 'Please enter the recipient\'s name';
+
+  @override
+  String get checkoutPhoneLabel => 'Phone number';
+
+  @override
+  String get checkoutPhoneRequired => 'Please enter a phone number';
+
+  @override
+  String get checkoutAddressLabel => 'Address';
+
+  @override
+  String get checkoutAddressRequired => 'Please enter a delivery address';
+
+  @override
+  String get checkoutCityLabel => 'City';
+
+  @override
+  String get checkoutCityRequired => 'Please enter a city';
+
+  @override
+  String get checkoutNoteLabel => 'Note for the seller (optional)';
+
+  @override
+  String get checkoutNoteHint => 'Landmark, delivery time, size…';
+
+  @override
+  String get checkoutSummaryTitle => 'Order summary';
+
+  @override
+  String checkoutUnitPrice(Object price, Object count) {
+    return '$price × $count';
+  }
+
+  @override
+  String get checkoutSubtotal => 'Subtotal';
+
+  @override
+  String get checkoutTotal => 'Total';
+
+  @override
+  String get checkoutPaymentTitle => 'Payment method';
+
+  @override
+  String get checkoutMethodMtn => 'MTN Mobile Money';
+
+  @override
+  String get checkoutMethodOrange => 'Orange Money';
+
+  @override
+  String get checkoutMomoLabel => 'Mobile Money number';
+
+  @override
+  String get checkoutMomoHelper =>
+      'You\'ll get a prompt on this number to approve the payment.';
+
+  @override
+  String get checkoutMomoRequired => 'Please enter the number to charge';
+
+  @override
+  String checkoutPayNow(Object amount) {
+    return 'Pay $amount securely';
+  }
+
+  @override
+  String get checkoutSignInRequired => 'Sign in to buy this item.';
+
+  @override
+  String get checkoutOrderFailed =>
+      'Could not place your order. Please try again.';
+
+  @override
+  String get checkoutPaymentPending =>
+      'Payment started. Approve the prompt on your phone to finish.';
+
+  @override
+  String get checkoutPaymentOpenFailed =>
+      'Could not open the payment page. You can pay again from the order.';
+
+  @override
+  String get checkoutPaymentFailed =>
+      'Order placed, but payment could not start. You can pay from the order.';
+
+  @override
+  String get myOrders => 'My orders';
+
+  @override
+  String get ordersTitle => 'My orders';
+
+  @override
+  String get ordersEmpty => 'You haven\'t bought anything yet.';
+
+  @override
+  String get ordersSignInRequired => 'Sign in to see your orders.';
+
+  @override
+  String get ordersLoadError =>
+      'Could not load your orders. Check your connection.';
+
+  @override
+  String get ordersTryAgain => 'Try again';
+
+  @override
+  String get ordersLoadMore => 'Load more';
+
+  @override
+  String ordersItemCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ordersPlacedOn(Object date) {
+    return 'Placed on $date';
+  }
+
+  @override
+  String get orderDetailTitle => 'Order';
+
+  @override
+  String get orderDetailLoadError => 'Could not load this order.';
+
+  @override
+  String get orderDetailItems => 'Items';
+
+  @override
+  String get orderDetailDelivery => 'Delivery';
+
+  @override
+  String get orderDetailNote => 'Your note';
+
+  @override
+  String get orderDetailSubtotal => 'Subtotal';
+
+  @override
+  String get orderDetailTotal => 'Total';
+
+  @override
+  String orderDetailQuantity(Object count) {
+    return 'Qty $count';
+  }
+
+  @override
+  String get orderEscrowPendingTitle => 'Payment not started';
+
+  @override
+  String get orderEscrowPendingBody =>
+      'Nothing has been charged yet. Your money is only taken when you pay, and even then we hold it until you confirm delivery.';
+
+  @override
+  String get orderEscrowHeldTitle => 'We\'re holding your payment';
+
+  @override
+  String orderEscrowHeldBody(Object amount) {
+    return '$amount is held safely by Mambanda Market. The seller cannot touch it until you confirm you received your order.';
+  }
+
+  @override
+  String orderEscrowAutoRelease(Object date) {
+    return 'If you don\'t confirm, the payment is released automatically on $date.';
+  }
+
+  @override
+  String get orderEscrowReleasedTitle => 'Payment released';
+
+  @override
+  String get orderEscrowReleasedBody =>
+      'You confirmed delivery, so the seller has been paid. Thank you.';
+
+  @override
+  String get orderEscrowRefundedTitle => 'Payment refunded';
+
+  @override
+  String get orderEscrowRefundedBody =>
+      'Your payment has been returned to you.';
+
+  @override
+  String get orderConfirmDelivery => 'Confirm delivery';
+
+  @override
+  String get orderConfirmTitle => 'Confirm delivery?';
+
+  @override
+  String orderConfirmBody(Object amount) {
+    return 'This releases $amount to the seller. Only confirm once you have received your order — this cannot be undone.';
+  }
+
+  @override
+  String get orderConfirmKeep => 'Not yet';
+
+  @override
+  String get orderConfirmRelease => 'Yes, release payment';
+
+  @override
+  String get orderConfirmedSuccess =>
+      'Delivery confirmed. The seller has been paid.';
+
+  @override
+  String get orderCancel => 'Cancel order';
+
+  @override
+  String get orderCancelTitle => 'Cancel this order?';
+
+  @override
+  String get orderCancelBody =>
+      'The order will be cancelled and nothing will be charged.';
+
+  @override
+  String get orderCancelKeep => 'Keep order';
+
+  @override
+  String get orderCancelConfirm => 'Cancel order';
+
+  @override
+  String get orderCancelledSuccess => 'Order cancelled.';
+
+  @override
+  String get orderPayNow => 'Pay now';
+
+  @override
+  String get orderActionFailed => 'Something went wrong. Please try again.';
+
+  @override
+  String get companyDashboard => 'Company dashboard';
+
+  @override
+  String get companyDashOrdersTab => 'Orders';
+
+  @override
+  String get companyDashWalletTab => 'Wallet';
+
+  @override
+  String get companyDashPayoutsTab => 'Payouts';
+
+  @override
+  String get companyDashSignInRequired =>
+      'Sign in to open your company dashboard.';
+
+  @override
+  String get companyDashNoOrders => 'No orders yet.';
+
+  @override
+  String get companyDashOrdersLoadError =>
+      'Could not load your orders. Check your connection.';
+
+  @override
+  String companyDashDeliverTo(Object name) {
+    return 'Deliver to $name';
+  }
+
+  @override
+  String get companyDashMarkFulfilled => 'Mark fulfilled';
+
+  @override
+  String get companyDashFulfilTitle => 'Mark as fulfilled?';
+
+  @override
+  String get companyDashFulfilBody =>
+      'Confirm you have handed over or shipped this order. The buyer is then asked to confirm delivery, which releases your payment.';
+
+  @override
+  String get companyDashFulfilCancel => 'Not yet';
+
+  @override
+  String get companyDashFulfilConfirm => 'Mark fulfilled';
+
+  @override
+  String get companyDashFulfilledSuccess => 'Order marked as fulfilled.';
+
+  @override
+  String get walletAvailableTitle => 'Available balance';
+
+  @override
+  String get walletAvailableHint => 'Ready to withdraw';
+
+  @override
+  String get walletEscrowTitle => 'Held in escrow';
+
+  @override
+  String get walletEscrowHint =>
+      'Not yours yet — released when buyers confirm delivery';
+
+  @override
+  String get walletLedgerTitle => 'Wallet activity';
+
+  @override
+  String get walletNoEntries => 'No wallet activity yet.';
+
+  @override
+  String get walletLoadError =>
+      'Could not load your wallet. Check your connection.';
+
+  @override
+  String get walletKindEscrowHold => 'Held in escrow';
+
+  @override
+  String get walletKindEscrowRelease => 'Escrow released';
+
+  @override
+  String get walletKindCommission => 'Platform commission';
+
+  @override
+  String get walletKindPayout => 'Payout';
+
+  @override
+  String get walletKindRefund => 'Refund';
+
+  @override
+  String get walletKindSale => 'Sale';
+
+  @override
+  String get walletKindOther => 'Adjustment';
+
+  @override
+  String walletOrderRef(Object reference) {
+    return 'Order $reference';
+  }
+
+  @override
+  String get payoutRequestCta => 'Request payout';
+
+  @override
+  String get payoutRequestTitle => 'Request a payout';
+
+  @override
+  String payoutAvailableNote(Object amount) {
+    return 'You can withdraw up to $amount.';
+  }
+
+  @override
+  String get payoutAmountLabel => 'Amount (FCFA)';
+
+  @override
+  String get payoutAmountRequired => 'Enter an amount';
+
+  @override
+  String get payoutAmountInvalid => 'Enter a valid amount';
+
+  @override
+  String payoutAmountTooHigh(Object amount) {
+    return 'That is more than your available balance of $amount.';
+  }
+
+  @override
+  String get payoutMethodLabel => 'Payout method';
+
+  @override
+  String get payoutMethodMtn => 'MTN Mobile Money';
+
+  @override
+  String get payoutMethodOrange => 'Orange Money';
+
+  @override
+  String get payoutMethodBank => 'Bank transfer';
+
+  @override
+  String get payoutDestinationLabel => 'Number or account';
+
+  @override
+  String get payoutDestinationRequired => 'Enter where to send the money';
+
+  @override
+  String get payoutDestinationNameLabel => 'Account name (optional)';
+
+  @override
+  String get payoutSubmit => 'Request payout';
+
+  @override
+  String get payoutRequested => 'Payout requested.';
+
+  @override
+  String get payoutError => 'Could not request the payout. Please try again.';
+
+  @override
+  String get payoutsEmpty => 'No payouts yet.';
+
+  @override
+  String get payoutsLoadError =>
+      'Could not load your payouts. Check your connection.';
+
+  @override
+  String payoutRequestedOn(Object date) {
+    return 'Requested on $date';
+  }
 }

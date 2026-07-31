@@ -425,5 +425,205 @@
   "reportSuccess": "Merci — votre signalement a été envoyé.",
   "reportError": "Impossible d'envoyer le signalement. Veuillez réessayer.",
   "reportSignInRequired": "Connectez-vous pour signaler.",
-  "reportSelectReason": "Veuillez choisir un motif."
+  "reportSelectReason": "Veuillez choisir un motif.",
+  "orderStatusPendingPayment": "En attente de paiement",
+  "orderStatusPaid": "Payée",
+  "orderStatusFulfilled": "Expédiée",
+  "orderStatusCompleted": "Terminée",
+  "orderStatusCancelled": "Annulée",
+  "orderStatusRefunded": "Remboursée",
+  "payoutStatusPending": "En attente",
+  "payoutStatusProcessing": "En cours",
+  "payoutStatusPaid": "Versé",
+  "payoutStatusFailed": "Échoué",
+  "payoutStatusCancelled": "Annulé",
+  "detailBuyNow": "Acheter",
+  "detailVerifiedCompany": "Entreprise vérifiée",
+  "detailBuyerProtected": "Achat protégé — nous conservons votre paiement jusqu'à ce que vous confirmiez la livraison.",
+  "checkoutTitle": "Commande",
+  "checkoutQuantity": "Quantité",
+  "checkoutEscrowTitle": "Votre argent est protégé",
+  "checkoutEscrowBody": "Nous conservons votre paiement en sécurité. Le vendeur n'est payé qu'une fois que vous confirmez avoir reçu votre commande.",
+  "checkoutDeliveryTitle": "Informations de livraison",
+  "checkoutNameLabel": "Nom complet",
+  "checkoutNameRequired": "Veuillez saisir le nom du destinataire",
+  "checkoutPhoneLabel": "Numéro de téléphone",
+  "checkoutPhoneRequired": "Veuillez saisir un numéro de téléphone",
+  "checkoutAddressLabel": "Adresse",
+  "checkoutAddressRequired": "Veuillez saisir une adresse de livraison",
+  "checkoutCityLabel": "Ville",
+  "checkoutCityRequired": "Veuillez saisir une ville",
+  "checkoutNoteLabel": "Note pour le vendeur (facultatif)",
+  "checkoutNoteHint": "Point de repère, heure de livraison, taille…",
+  "checkoutSummaryTitle": "Récapitulatif de la commande",
+  "checkoutUnitPrice": "{price} × {count}",
+  "@checkoutUnitPrice": {
+    "placeholders": {
+      "price": {},
+      "count": {}
+    }
+  },
+  "checkoutSubtotal": "Sous-total",
+  "checkoutTotal": "Total",
+  "checkoutPaymentTitle": "Moyen de paiement",
+  "checkoutMethodMtn": "MTN Mobile Money",
+  "checkoutMethodOrange": "Orange Money",
+  "checkoutMomoLabel": "Numéro Mobile Money",
+  "checkoutMomoHelper": "Vous recevrez une demande sur ce numéro pour valider le paiement.",
+  "checkoutMomoRequired": "Veuillez saisir le numéro à débiter",
+  "checkoutPayNow": "Payer {amount} en toute sécurité",
+  "@checkoutPayNow": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "checkoutSignInRequired": "Connectez-vous pour acheter cet article.",
+  "checkoutOrderFailed": "Impossible de passer votre commande. Veuillez réessayer.",
+  "checkoutPaymentPending": "Paiement lancé. Validez la demande sur votre téléphone pour terminer.",
+  "checkoutPaymentOpenFailed": "Impossible d'ouvrir la page de paiement. Vous pouvez repayer depuis la commande.",
+  "checkoutPaymentFailed": "Commande enregistrée, mais le paiement n'a pas pu démarrer. Vous pouvez payer depuis la commande.",
+  "myOrders": "Mes commandes",
+  "ordersTitle": "Mes commandes",
+  "ordersEmpty": "Vous n'avez encore rien acheté.",
+  "ordersSignInRequired": "Connectez-vous pour voir vos commandes.",
+  "ordersLoadError": "Impossible de charger vos commandes. Vérifiez votre connexion.",
+  "ordersTryAgain": "Réessayer",
+  "ordersLoadMore": "Afficher plus",
+  "ordersItemCount": "{count, plural, =1{1 article} other{{count} articles}}",
+  "@ordersItemCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "ordersPlacedOn": "Passée le {date}",
+  "@ordersPlacedOn": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "orderDetailTitle": "Commande",
+  "orderDetailLoadError": "Impossible de charger cette commande.",
+  "orderDetailItems": "Articles",
+  "orderDetailDelivery": "Livraison",
+  "orderDetailNote": "Votre note",
+  "orderDetailSubtotal": "Sous-total",
+  "orderDetailTotal": "Total",
+  "orderDetailQuantity": "Qté {count}",
+  "@orderDetailQuantity": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "orderEscrowPendingTitle": "Paiement non démarré",
+  "orderEscrowPendingBody": "Rien n'a encore été débité. Votre argent n'est prélevé qu'au paiement, et nous le conservons jusqu'à ce que vous confirmiez la livraison.",
+  "orderEscrowHeldTitle": "Nous conservons votre paiement",
+  "orderEscrowHeldBody": "{amount} sont conservés en sécurité par Mambanda Market. Le vendeur ne peut pas y toucher tant que vous n'avez pas confirmé la réception de votre commande.",
+  "@orderEscrowHeldBody": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "orderEscrowAutoRelease": "Sans confirmation de votre part, le paiement sera libéré automatiquement le {date}.",
+  "@orderEscrowAutoRelease": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "orderEscrowReleasedTitle": "Paiement libéré",
+  "orderEscrowReleasedBody": "Vous avez confirmé la livraison, le vendeur a donc été payé. Merci.",
+  "orderEscrowRefundedTitle": "Paiement remboursé",
+  "orderEscrowRefundedBody": "Votre paiement vous a été restitué.",
+  "orderConfirmDelivery": "Confirmer la livraison",
+  "orderConfirmTitle": "Confirmer la livraison ?",
+  "orderConfirmBody": "Cela libère {amount} au profit du vendeur. Ne confirmez qu'une fois votre commande reçue — cette action est irréversible.",
+  "@orderConfirmBody": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "orderConfirmKeep": "Pas encore",
+  "orderConfirmRelease": "Oui, libérer le paiement",
+  "orderConfirmedSuccess": "Livraison confirmée. Le vendeur a été payé.",
+  "orderCancel": "Annuler la commande",
+  "orderCancelTitle": "Annuler cette commande ?",
+  "orderCancelBody": "La commande sera annulée et rien ne sera débité.",
+  "orderCancelKeep": "Conserver la commande",
+  "orderCancelConfirm": "Annuler la commande",
+  "orderCancelledSuccess": "Commande annulée.",
+  "orderPayNow": "Payer maintenant",
+  "orderActionFailed": "Une erreur est survenue. Veuillez réessayer.",
+  "companyDashboard": "Tableau de bord entreprise vérifiée",
+  "companyDashOrdersTab": "Commandes",
+  "companyDashWalletTab": "Portefeuille",
+  "companyDashPayoutsTab": "Retraits",
+  "companyDashSignInRequired": "Connectez-vous pour ouvrir votre tableau de bord.",
+  "companyDashNoOrders": "Aucune commande pour le moment.",
+  "companyDashOrdersLoadError": "Impossible de charger vos commandes. Vérifiez votre connexion.",
+  "companyDashDeliverTo": "Livrer à {name}",
+  "@companyDashDeliverTo": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "companyDashMarkFulfilled": "Marquer comme expédiée",
+  "companyDashFulfilTitle": "Marquer comme expédiée ?",
+  "companyDashFulfilBody": "Confirmez que vous avez remis ou expédié cette commande. L'acheteur est ensuite invité à confirmer la livraison, ce qui libère votre paiement.",
+  "companyDashFulfilCancel": "Pas encore",
+  "companyDashFulfilConfirm": "Marquer comme expédiée",
+  "companyDashFulfilledSuccess": "Commande marquée comme expédiée.",
+  "walletAvailableTitle": "Solde disponible",
+  "walletAvailableHint": "Prêt à être retiré",
+  "walletEscrowTitle": "Sous séquestre",
+  "walletEscrowHint": "Pas encore à vous — libéré quand les acheteurs confirment la livraison",
+  "walletLedgerTitle": "Activité du portefeuille",
+  "walletNoEntries": "Aucune activité pour le moment.",
+  "walletLoadError": "Impossible de charger votre portefeuille. Vérifiez votre connexion.",
+  "walletKindEscrowHold": "Mis sous séquestre",
+  "walletKindEscrowRelease": "Séquestre libéré",
+  "walletKindCommission": "Commission de la plateforme",
+  "walletKindPayout": "Retrait",
+  "walletKindRefund": "Remboursement",
+  "walletKindSale": "Vente",
+  "walletKindOther": "Ajustement",
+  "walletOrderRef": "Commande {reference}",
+  "@walletOrderRef": {
+    "placeholders": {
+      "reference": {}
+    }
+  },
+  "payoutRequestCta": "Demander un retrait",
+  "payoutRequestTitle": "Demander un retrait",
+  "payoutAvailableNote": "Vous pouvez retirer jusqu'à {amount}.",
+  "@payoutAvailableNote": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "payoutAmountLabel": "Montant (FCFA)",
+  "payoutAmountRequired": "Saisissez un montant",
+  "payoutAmountInvalid": "Saisissez un montant valide",
+  "payoutAmountTooHigh": "C'est supérieur à votre solde disponible de {amount}.",
+  "@payoutAmountTooHigh": {
+    "placeholders": {
+      "amount": {}
+    }
+  },
+  "payoutMethodLabel": "Mode de retrait",
+  "payoutMethodMtn": "MTN Mobile Money",
+  "payoutMethodOrange": "Orange Money",
+  "payoutMethodBank": "Virement bancaire",
+  "payoutDestinationLabel": "Numéro ou compte",
+  "payoutDestinationRequired": "Indiquez où envoyer l'argent",
+  "payoutDestinationNameLabel": "Nom du titulaire (facultatif)",
+  "payoutSubmit": "Demander le retrait",
+  "payoutRequested": "Retrait demandé.",
+  "payoutError": "Impossible de demander le retrait. Veuillez réessayer.",
+  "payoutsEmpty": "Aucun retrait pour le moment.",
+  "payoutsLoadError": "Impossible de charger vos retraits. Vérifiez votre connexion.",
+  "payoutRequestedOn": "Demandé le {date}",
+  "@payoutRequestedOn": {
+    "placeholders": {
+      "date": {}
+    }
+  }
 }

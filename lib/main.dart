@@ -15,9 +15,11 @@ import 'package:mambandamarket/DashBoards/SellerDashboardScreen.dart';
 import 'package:mambandamarket/Screens/BusinessOnboardingScreen.dart';
 import 'package:mambandamarket/Screens/LoginScreen.dart';
 import 'DashBoards/BusinessDashboardScreen.dart';
+import 'DashBoards/CompanyDashboardScreen.dart';
 import 'Screens/AccountStatusScreen.dart';
 import 'Screens/ForgotPasswordScreen.dart';
 import 'Screens/IndividualSellerOnboardingScreen.dart';
+import 'Screens/MyOrdersScreen.dart';
 import 'Screens/ResetPasswordScreen.dart';
 import 'Screens/RoleSelectionScreen.dart';
 import 'Screens/SplashScreen.dart';
@@ -113,6 +115,10 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
         '/create-listing': (context) => const CreateListingScreen(),
         '/business-dashboard': (context) => BusinessDashboardScreen(),
         '/seller-dashboard': (context) => SellerDashboardScreen(),
+        // On-platform buying: the buyer's purchases, and the verified
+        // company's order/wallet/payout hub.
+        '/my-orders': (context) => const MyOrdersScreen(),
+        '/company-dashboard': (context) => const CompanyDashboardScreen(),
         '/seller-onboard': (context) => IndividualSellerOnboardingScreen(),
         // Tier pricing differs for business vs. individual sellers, so pick the
         // plan set from the signed-in profile's role.

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../Screens/CheckoutScreen.dart';
 import '../Service/ChatRoomScreen.dart';
 import '../api/api_client.dart';
 import '../api/auth_service.dart';
@@ -55,6 +56,27 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   /// shown, which keeps the screen populated instead of flashing empty.
   api.Listing? _full;
   api.Listing? get _listing => _full ?? widget.listing;
+
+  /// Only a verified company's listing can be bought and escrowed in-app;
+  /// everything else is a classified ad settled over chat.
+  bool get _isBuyable => _listing?.isBuyable ?? false;
+
+  /// Opens checkout. The listing is passed whole so the checkout screen can
+  /// price and picture the item without a second fetch.
+  void _buyNow() {
+    final listing = _listing;
+    if (listing == null || !listing.isBuyable) return;
+    if (AuthService.instance.session == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.checkoutSignInRequired)),
+      );
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => CheckoutScreen(listing: listing)),
+    );
+  }
 
   Future<void> _loadDetail() async {
     final id = widget.listingId;
@@ -346,6 +368,27 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       ),
                     ],
                   ),
+
+                  // Buyable items come from an admin-verified company — say so,
+                  // because that badge is what makes paying in-app safe.
+                  if (_isBuyable) ...[
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Icon(Icons.verified,
+                            size: 16, color: Colors.green.shade700),
+                        const SizedBox(width: 6),
+                        Text(
+                          context.l10n.detailVerifiedCompany,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   const Divider(height: 32),
 
                   // Meta details
@@ -428,34 +471,116 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         ],
       ),
 
-      // Floating Bottom Message Action Bar
+      // Floating Bottom Action Bar. A company's item gets "Buy now" as the
+      // primary action, but chat stays available on every listing — plenty of
+      // buyers want to ask before they pay.
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(12.0),
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.indigo,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 50),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-              elevation: 2,
-            ),
-            onPressed:
-                (widget.listingId == null || _startingChat) ? null : _contactSeller,
-            icon: _startingChat
-                ? const SizedBox(
-                    height: 18,
-                    width: 18,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white))
-                : const Icon(Icons.chat_bubble_outline),
-            label: Text(
-              context.l10n.detailMessageSeller,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_isBuyable) ...[
+                Row(
+                  children: [
+                    Icon(Icons.lock_outline,
+                        size: 14, color: Colors.green.shade700),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        context.l10n.detailBuyerProtected,
+                        style: TextStyle(
+                          fontSize: 11,
+                          height: 1.3,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.green.shade700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+              ],
+              Row(
+                children: [
+                  if (_isBuyable) ...[
+                    Expanded(flex: 3, child: _buyButton()),
+                    const SizedBox(width: 10),
+                    Expanded(flex: 2, child: _chatButton(primary: false)),
+                  ] else
+                    Expanded(child: _chatButton(primary: true)),
+                ],
+              ),
+            ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buyButton() => ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.indigo,
+          foregroundColor: Colors.white,
+          minimumSize: const Size(0, 50),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+          elevation: 2,
+        ),
+        onPressed: _buyNow,
+        icon: const Icon(Icons.shopping_bag_outlined),
+        label: Text(
+          context.l10n.detailBuyNow,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+        ),
+      );
+
+  /// [primary] fills the button when it's the only action on the bar, and
+  /// outlines it when it sits next to "Buy now".
+  Widget _chatButton({required bool primary}) {
+    final disabled = widget.listingId == null || _startingChat;
+    final icon = _startingChat
+        ? SizedBox(
+            height: 18,
+            width: 18,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: primary ? Colors.white : Colors.indigo,
+            ),
+          )
+        : const Icon(Icons.chat_bubble_outline);
+    final label = Text(
+      context.l10n.detailMessageSeller,
+      style: TextStyle(
+          fontSize: primary ? 16 : 14, fontWeight: FontWeight.bold),
+    );
+
+    if (!primary) {
+      return OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.indigo,
+          minimumSize: const Size(0, 50),
+          side: const BorderSide(color: Colors.indigo),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+        ),
+        onPressed: disabled ? null : _contactSeller,
+        icon: icon,
+        label: label,
+      );
+    }
+
+    return ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.indigo,
+        foregroundColor: Colors.white,
+        minimumSize: const Size(double.infinity, 50),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+        elevation: 2,
+      ),
+      onPressed: disabled ? null : _contactSeller,
+      icon: icon,
+      label: label,
     );
   }
 }

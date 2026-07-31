@@ -201,6 +201,28 @@ class AccountScreen extends StatelessWidget {
 
                 const Divider(height: 32),
 
+                // Purchases made in-app (escrow orders). Everyone can buy, so
+                // this is not gated on a role.
+                ListTile(
+                  leading: const Icon(Icons.receipt_long_outlined,
+                      color: Colors.indigo),
+                  title: Text(l10n.myOrders),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => Navigator.pushNamed(context, '/my-orders'),
+                ),
+
+                // Verified merchants only — companies are provisioned by an
+                // admin, so there is nothing to show anyone else.
+                if (profile?.isCompany == true)
+                  ListTile(
+                    leading: const Icon(Icons.verified_outlined,
+                        color: Colors.indigo),
+                    title: Text(l10n.companyDashboard),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () =>
+                        Navigator.pushNamed(context, '/company-dashboard'),
+                  ),
+
                 ListTile(
                   leading: const Icon(Icons.storefront_outlined,
                       color: Colors.indigo),

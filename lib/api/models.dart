@@ -21,6 +21,16 @@ const Set<String> _zeroDecimalCurrencies = {
 ///
 /// [amountMinor] is whatever the API stores in `price_cents`: hundredths for
 /// euro-style currencies, whole units for zero-decimal ones.
+/// Converts a price a human typed into the integer the API stores.
+///
+/// The exact inverse of [formatPrice], and it must stay that way: multiplying
+/// by 100 unconditionally is what made a 50 000 FCFA listing publish as
+/// 5 000 000 FCFA, because the CFA franc has no minor unit to scale into.
+int toMinorUnits(num amount, {String currency = 'XAF'}) =>
+    _zeroDecimalCurrencies.contains(currency.toUpperCase())
+        ? amount.round()
+        : (amount * 100).round();
+
 String formatPrice(int amountMinor, {String currency = 'XAF'}) {
   final symbols = {'EUR': '€', 'XAF': 'FCFA', 'XOF': 'FCFA', 'USD': '\$'};
   final isZeroDecimal = _zeroDecimalCurrencies.contains(currency.toUpperCase());
@@ -35,6 +45,11 @@ class Listing {
   final String id;
   final String sellerId;
   final String? storeId;
+
+  /// Set when the listing belongs to an admin-verified company. That is the
+  /// single condition that makes an item buyable in-app: everything else is a
+  /// classified ad the buyer arranges over chat.
+  final String? companyId;
   final String title;
   final String? description;
   final int priceCents;
@@ -61,6 +76,7 @@ class Listing {
     required this.id,
     required this.sellerId,
     this.storeId,
+    this.companyId,
     required this.title,
     this.description,
     required this.priceCents,
@@ -81,6 +97,11 @@ class Listing {
 
   bool get isSold => status == 'sold';
   bool get inStock => quantity > 0;
+
+  /// Can this be ordered and paid for inside the app? Only a verified
+  /// company's listing can, because only a company can be held to escrow.
+  bool get isBuyable =>
+      companyId != null && companyId!.isNotEmpty && !isSold && inStock;
 
   String get displayPrice => formatPrice(priceCents, currency: currency);
 
@@ -120,6 +141,7 @@ class Listing {
       id: json['id'].toString(),
       sellerId: json['seller_id']?.toString() ?? '',
       storeId: json['store_id']?.toString(),
+      companyId: json['company_id']?.toString(),
       title: json['title']?.toString() ?? '',
       description: json['description']?.toString(),
       priceCents: _asInt(json['price_cents']),
@@ -203,6 +225,11 @@ class Profile {
 
   bool get isBusiness => role == 'business';
   bool get isSeller => role == 'business' || role == 'individual_seller';
+
+  /// An admin-verified merchant. Companies are provisioned by an admin — never
+  /// self-selected at sign-up — and are the only sellers whose listings can be
+  /// bought (and escrowed) inside the app.
+  bool get isCompany => role == 'company';
 
   factory Profile.fromJson(Map<String, dynamic> json) => Profile(
         id: json['id'].toString(),
@@ -576,4 +603,298 @@ class Sale {
       listing: l == null ? null : Listing.fromJson(l),
     );
   }
+}
+
+/// One line of an [Order].
+///
+/// The title and unit price are snapshots taken when the order was placed, so
+/// editing or deleting the listing afterwards never rewrites what was bought.
+class OrderItem {
+  final String id;
+  final String listingId;
+  final String titleSnapshot;
+  final int unitPriceCents;
+  final int quantity;
+  final int lineTotalCents;
+
+  /// Inherited from the parent order — the API prices a whole order in one
+  /// currency, so lines don't carry their own.
+  final String currency;
+
+  const OrderItem({
+    this.id = '',
+    required this.listingId,
+    required this.titleSnapshot,
+    required this.unitPriceCents,
+    this.quantity = 1,
+    required this.lineTotalCents,
+    this.currency = 'XAF',
+  });
+
+  String get displayUnitPrice =>
+      formatPrice(unitPriceCents, currency: currency);
+  String get displayLineTotal =>
+      formatPrice(lineTotalCents, currency: currency);
+
+  factory OrderItem.fromJson(
+    Map<String, dynamic> json, {
+    String currency = 'XAF',
+  }) =>
+      OrderItem(
+        id: json['id']?.toString() ?? '',
+        listingId: json['listing_id']?.toString() ?? '',
+        titleSnapshot: json['title_snapshot']?.toString() ?? '',
+        unitPriceCents: Listing._asInt(json['unit_price_cents']),
+        quantity: Listing._asInt(json['quantity'], 1),
+        lineTotalCents: Listing._asInt(json['line_total_cents']),
+        currency: json['currency']?.toString() ?? currency,
+      );
+}
+
+/// An on-platform purchase from a verified company, settled through escrow.
+///
+/// Two states matter and they move independently: [status] tracks the order
+/// itself (paid, sent, done), while [escrowStatus] tracks *the money*. The
+/// platform holds the buyer's payment from `held` until the buyer confirms
+/// delivery (or [autoReleaseAt] passes), at which point it becomes `released`
+/// and the company can be paid out. That gap is the whole trust promise, so
+/// the UI must never blur the two.
+class Order {
+  final String id;
+  final String buyerId;
+  final String companyId;
+
+  /// pending_payment | paid | fulfilled | completed | cancelled | refunded
+  final String status;
+
+  /// none | held | released | refunded
+  final String escrowStatus;
+  final String currency;
+  final int subtotalCents;
+
+  /// The platform's cut, taken from the company's side — never added on top of
+  /// what the buyer pays.
+  final int commissionCents;
+  final int totalCents;
+  final String? deliveryName;
+  final String? deliveryPhone;
+  final String? deliveryAddress;
+  final String? deliveryCity;
+  final String? note;
+  final DateTime? paidAt;
+
+  /// When the held money is released without the buyer acting. Shown to the
+  /// buyer so the wait never feels open-ended.
+  final DateTime? autoReleaseAt;
+  final DateTime? confirmedAt;
+  final DateTime? createdAt;
+  final List<OrderItem> items;
+
+  const Order({
+    required this.id,
+    required this.buyerId,
+    required this.companyId,
+    this.status = 'pending_payment',
+    this.escrowStatus = 'none',
+    this.currency = 'XAF',
+    this.subtotalCents = 0,
+    this.commissionCents = 0,
+    this.totalCents = 0,
+    this.deliveryName,
+    this.deliveryPhone,
+    this.deliveryAddress,
+    this.deliveryCity,
+    this.note,
+    this.paidAt,
+    this.autoReleaseAt,
+    this.confirmedAt,
+    this.createdAt,
+    this.items = const [],
+  });
+
+  bool get isPendingPayment => status == 'pending_payment';
+  bool get isPaid => status == 'paid';
+  bool get isFulfilled => status == 'fulfilled';
+  bool get isCompleted => status == 'completed';
+  bool get isCancelled => status == 'cancelled';
+
+  bool get isEscrowHeld => escrowStatus == 'held';
+  bool get isEscrowReleased => escrowStatus == 'released';
+  bool get isEscrowRefunded => escrowStatus == 'refunded';
+
+  /// The buyer releases the money by confirming delivery — only possible while
+  /// it is actually being held.
+  bool get canConfirm => isEscrowHeld;
+
+  /// Cancelling is only free before any money has moved.
+  bool get canCancel => isPendingPayment;
+
+  /// The company marks an order it has already been paid for.
+  bool get canFulfil => isPaid;
+
+  String get displaySubtotal => formatPrice(subtotalCents, currency: currency);
+  String get displayCommission =>
+      formatPrice(commissionCents, currency: currency);
+  String get displayTotal => formatPrice(totalCents, currency: currency);
+
+  int get itemCount => items.fold(0, (sum, i) => sum + i.quantity);
+
+  /// Short reference the buyer can quote to support, e.g. "#3F5A9C2B".
+  String get reference {
+    final compact = id.replaceAll('-', '').toUpperCase();
+    return '#${compact.length <= 8 ? compact : compact.substring(0, 8)}';
+  }
+
+  factory Order.fromJson(Map<String, dynamic> json) {
+    final currency = json['currency']?.toString() ?? 'XAF';
+    // Delivery details arrive flattened (`delivery_name`) but a nested
+    // `delivery` object is accepted too, so one model serves the create
+    // response and the list/detail responses alike.
+    final delivery = (json['delivery'] as Map?)?.cast<String, dynamic>();
+    String? field(String flat, String nested) =>
+        json[flat]?.toString() ?? delivery?[nested]?.toString();
+
+    return Order(
+      id: json['id'].toString(),
+      buyerId: json['buyer_id']?.toString() ?? '',
+      companyId: json['company_id']?.toString() ?? '',
+      status: json['status']?.toString() ?? 'pending_payment',
+      escrowStatus: json['escrow_status']?.toString() ?? 'none',
+      currency: currency,
+      subtotalCents: Listing._asInt(json['subtotal_cents']),
+      commissionCents: Listing._asInt(json['commission_cents']),
+      totalCents: Listing._asInt(json['total_cents']),
+      deliveryName: field('delivery_name', 'name'),
+      deliveryPhone: field('delivery_phone', 'phone'),
+      deliveryAddress: field('delivery_address', 'address'),
+      deliveryCity: field('delivery_city', 'city'),
+      note: json['note']?.toString(),
+      paidAt: DateTime.tryParse(json['paid_at']?.toString() ?? ''),
+      autoReleaseAt:
+          DateTime.tryParse(json['auto_release_at']?.toString() ?? ''),
+      confirmedAt: DateTime.tryParse(json['confirmed_at']?.toString() ?? ''),
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
+      items: (json['items'] as List? ?? [])
+          .whereType<Map>()
+          .map((m) =>
+              OrderItem.fromJson(m.cast<String, dynamic>(), currency: currency))
+          .toList(),
+    );
+  }
+}
+
+/// A company's money, split into what it can actually take out and what is
+/// still sitting in escrow.
+///
+/// [escrowHeldCents] is *not* spendable — it belongs to buyers until they
+/// confirm delivery. The two figures must always be shown apart.
+class WalletSummary {
+  final int balanceCents;
+  final int escrowHeldCents;
+  final String currency;
+
+  const WalletSummary({
+    this.balanceCents = 0,
+    this.escrowHeldCents = 0,
+    this.currency = 'XAF',
+  });
+
+  String get displayBalance => formatPrice(balanceCents, currency: currency);
+  String get displayEscrowHeld =>
+      formatPrice(escrowHeldCents, currency: currency);
+
+  factory WalletSummary.fromJson(Map<String, dynamic> json) => WalletSummary(
+        balanceCents: Listing._asInt(json['balance_cents']),
+        escrowHeldCents: Listing._asInt(json['escrow_held_cents']),
+        currency: json['currency']?.toString() ?? 'XAF',
+      );
+}
+
+/// One line of the company's wallet ledger. Credits are positive, debits
+/// (payouts, refunds, commission) negative.
+class WalletEntry {
+  final String id;
+
+  /// Machine-readable movement type, e.g. `escrow_release`, `commission`,
+  /// `payout`, `refund`.
+  final String kind;
+  final int amountCents;
+  final String currency;
+  final String? description;
+  final String? orderId;
+  final DateTime? createdAt;
+
+  const WalletEntry({
+    required this.id,
+    this.kind = '',
+    this.amountCents = 0,
+    this.currency = 'XAF',
+    this.description,
+    this.orderId,
+    this.createdAt,
+  });
+
+  bool get isCredit => amountCents >= 0;
+
+  /// Signed for the ledger, so a credit reads "+12.000 FCFA".
+  String get displayAmount {
+    final formatted = formatPrice(amountCents, currency: currency);
+    return amountCents > 0 ? '+$formatted' : formatted;
+  }
+
+  factory WalletEntry.fromJson(Map<String, dynamic> json) => WalletEntry(
+        id: json['id'].toString(),
+        kind: (json['kind'] ?? json['type'] ?? json['entry_type'])?.toString() ??
+            '',
+        amountCents: Listing._asInt(json['amount_cents']),
+        currency: json['currency']?.toString() ?? 'XAF',
+        description:
+            (json['description'] ?? json['note'] ?? json['memo'])?.toString(),
+        orderId: json['order_id']?.toString(),
+        createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
+      );
+}
+
+/// A withdrawal request from the company's available balance.
+class Payout {
+  final String id;
+  final int amountCents;
+  final String currency;
+
+  /// pending | processing | paid | failed | cancelled
+  final String status;
+
+  /// mtn_momo | orange_money | bank
+  final String method;
+  final String destination;
+  final String? destinationName;
+  final DateTime? createdAt;
+  final DateTime? processedAt;
+
+  const Payout({
+    required this.id,
+    this.amountCents = 0,
+    this.currency = 'XAF',
+    this.status = 'pending',
+    this.method = '',
+    this.destination = '',
+    this.destinationName,
+    this.createdAt,
+    this.processedAt,
+  });
+
+  String get displayAmount => formatPrice(amountCents, currency: currency);
+
+  factory Payout.fromJson(Map<String, dynamic> json) => Payout(
+        id: json['id'].toString(),
+        amountCents: Listing._asInt(json['amount_cents']),
+        currency: json['currency']?.toString() ?? 'XAF',
+        status: json['status']?.toString() ?? 'pending',
+        method: json['method']?.toString() ?? '',
+        destination: json['destination']?.toString() ?? '',
+        destinationName: json['destination_name']?.toString(),
+        createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
+        processedAt:
+            DateTime.tryParse(json['processed_at']?.toString() ?? ''),
+      );
 }

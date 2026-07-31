@@ -1218,4 +1218,460 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get reportSelectReason => 'Veuillez choisir un motif.';
+
+  @override
+  String get orderStatusPendingPayment => 'En attente de paiement';
+
+  @override
+  String get orderStatusPaid => 'Payée';
+
+  @override
+  String get orderStatusFulfilled => 'Expédiée';
+
+  @override
+  String get orderStatusCompleted => 'Terminée';
+
+  @override
+  String get orderStatusCancelled => 'Annulée';
+
+  @override
+  String get orderStatusRefunded => 'Remboursée';
+
+  @override
+  String get payoutStatusPending => 'En attente';
+
+  @override
+  String get payoutStatusProcessing => 'En cours';
+
+  @override
+  String get payoutStatusPaid => 'Versé';
+
+  @override
+  String get payoutStatusFailed => 'Échoué';
+
+  @override
+  String get payoutStatusCancelled => 'Annulé';
+
+  @override
+  String get detailBuyNow => 'Acheter';
+
+  @override
+  String get detailVerifiedCompany => 'Entreprise vérifiée';
+
+  @override
+  String get detailBuyerProtected =>
+      'Achat protégé — nous conservons votre paiement jusqu\'à ce que vous confirmiez la livraison.';
+
+  @override
+  String get checkoutTitle => 'Commande';
+
+  @override
+  String get checkoutQuantity => 'Quantité';
+
+  @override
+  String get checkoutEscrowTitle => 'Votre argent est protégé';
+
+  @override
+  String get checkoutEscrowBody =>
+      'Nous conservons votre paiement en sécurité. Le vendeur n\'est payé qu\'une fois que vous confirmez avoir reçu votre commande.';
+
+  @override
+  String get checkoutDeliveryTitle => 'Informations de livraison';
+
+  @override
+  String get checkoutNameLabel => 'Nom complet';
+
+  @override
+  String get checkoutNameRequired => 'Veuillez saisir le nom du destinataire';
+
+  @override
+  String get checkoutPhoneLabel => 'Numéro de téléphone';
+
+  @override
+  String get checkoutPhoneRequired => 'Veuillez saisir un numéro de téléphone';
+
+  @override
+  String get checkoutAddressLabel => 'Adresse';
+
+  @override
+  String get checkoutAddressRequired =>
+      'Veuillez saisir une adresse de livraison';
+
+  @override
+  String get checkoutCityLabel => 'Ville';
+
+  @override
+  String get checkoutCityRequired => 'Veuillez saisir une ville';
+
+  @override
+  String get checkoutNoteLabel => 'Note pour le vendeur (facultatif)';
+
+  @override
+  String get checkoutNoteHint => 'Point de repère, heure de livraison, taille…';
+
+  @override
+  String get checkoutSummaryTitle => 'Récapitulatif de la commande';
+
+  @override
+  String checkoutUnitPrice(Object price, Object count) {
+    return '$price × $count';
+  }
+
+  @override
+  String get checkoutSubtotal => 'Sous-total';
+
+  @override
+  String get checkoutTotal => 'Total';
+
+  @override
+  String get checkoutPaymentTitle => 'Moyen de paiement';
+
+  @override
+  String get checkoutMethodMtn => 'MTN Mobile Money';
+
+  @override
+  String get checkoutMethodOrange => 'Orange Money';
+
+  @override
+  String get checkoutMomoLabel => 'Numéro Mobile Money';
+
+  @override
+  String get checkoutMomoHelper =>
+      'Vous recevrez une demande sur ce numéro pour valider le paiement.';
+
+  @override
+  String get checkoutMomoRequired => 'Veuillez saisir le numéro à débiter';
+
+  @override
+  String checkoutPayNow(Object amount) {
+    return 'Payer $amount en toute sécurité';
+  }
+
+  @override
+  String get checkoutSignInRequired =>
+      'Connectez-vous pour acheter cet article.';
+
+  @override
+  String get checkoutOrderFailed =>
+      'Impossible de passer votre commande. Veuillez réessayer.';
+
+  @override
+  String get checkoutPaymentPending =>
+      'Paiement lancé. Validez la demande sur votre téléphone pour terminer.';
+
+  @override
+  String get checkoutPaymentOpenFailed =>
+      'Impossible d\'ouvrir la page de paiement. Vous pouvez repayer depuis la commande.';
+
+  @override
+  String get checkoutPaymentFailed =>
+      'Commande enregistrée, mais le paiement n\'a pas pu démarrer. Vous pouvez payer depuis la commande.';
+
+  @override
+  String get myOrders => 'Mes commandes';
+
+  @override
+  String get ordersTitle => 'Mes commandes';
+
+  @override
+  String get ordersEmpty => 'Vous n\'avez encore rien acheté.';
+
+  @override
+  String get ordersSignInRequired => 'Connectez-vous pour voir vos commandes.';
+
+  @override
+  String get ordersLoadError =>
+      'Impossible de charger vos commandes. Vérifiez votre connexion.';
+
+  @override
+  String get ordersTryAgain => 'Réessayer';
+
+  @override
+  String get ordersLoadMore => 'Afficher plus';
+
+  @override
+  String ordersItemCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count articles',
+      one: '1 article',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String ordersPlacedOn(Object date) {
+    return 'Passée le $date';
+  }
+
+  @override
+  String get orderDetailTitle => 'Commande';
+
+  @override
+  String get orderDetailLoadError => 'Impossible de charger cette commande.';
+
+  @override
+  String get orderDetailItems => 'Articles';
+
+  @override
+  String get orderDetailDelivery => 'Livraison';
+
+  @override
+  String get orderDetailNote => 'Votre note';
+
+  @override
+  String get orderDetailSubtotal => 'Sous-total';
+
+  @override
+  String get orderDetailTotal => 'Total';
+
+  @override
+  String orderDetailQuantity(Object count) {
+    return 'Qté $count';
+  }
+
+  @override
+  String get orderEscrowPendingTitle => 'Paiement non démarré';
+
+  @override
+  String get orderEscrowPendingBody =>
+      'Rien n\'a encore été débité. Votre argent n\'est prélevé qu\'au paiement, et nous le conservons jusqu\'à ce que vous confirmiez la livraison.';
+
+  @override
+  String get orderEscrowHeldTitle => 'Nous conservons votre paiement';
+
+  @override
+  String orderEscrowHeldBody(Object amount) {
+    return '$amount sont conservés en sécurité par Mambanda Market. Le vendeur ne peut pas y toucher tant que vous n\'avez pas confirmé la réception de votre commande.';
+  }
+
+  @override
+  String orderEscrowAutoRelease(Object date) {
+    return 'Sans confirmation de votre part, le paiement sera libéré automatiquement le $date.';
+  }
+
+  @override
+  String get orderEscrowReleasedTitle => 'Paiement libéré';
+
+  @override
+  String get orderEscrowReleasedBody =>
+      'Vous avez confirmé la livraison, le vendeur a donc été payé. Merci.';
+
+  @override
+  String get orderEscrowRefundedTitle => 'Paiement remboursé';
+
+  @override
+  String get orderEscrowRefundedBody => 'Votre paiement vous a été restitué.';
+
+  @override
+  String get orderConfirmDelivery => 'Confirmer la livraison';
+
+  @override
+  String get orderConfirmTitle => 'Confirmer la livraison ?';
+
+  @override
+  String orderConfirmBody(Object amount) {
+    return 'Cela libère $amount au profit du vendeur. Ne confirmez qu\'une fois votre commande reçue — cette action est irréversible.';
+  }
+
+  @override
+  String get orderConfirmKeep => 'Pas encore';
+
+  @override
+  String get orderConfirmRelease => 'Oui, libérer le paiement';
+
+  @override
+  String get orderConfirmedSuccess =>
+      'Livraison confirmée. Le vendeur a été payé.';
+
+  @override
+  String get orderCancel => 'Annuler la commande';
+
+  @override
+  String get orderCancelTitle => 'Annuler cette commande ?';
+
+  @override
+  String get orderCancelBody =>
+      'La commande sera annulée et rien ne sera débité.';
+
+  @override
+  String get orderCancelKeep => 'Conserver la commande';
+
+  @override
+  String get orderCancelConfirm => 'Annuler la commande';
+
+  @override
+  String get orderCancelledSuccess => 'Commande annulée.';
+
+  @override
+  String get orderPayNow => 'Payer maintenant';
+
+  @override
+  String get orderActionFailed =>
+      'Une erreur est survenue. Veuillez réessayer.';
+
+  @override
+  String get companyDashboard => 'Tableau de bord entreprise vérifiée';
+
+  @override
+  String get companyDashOrdersTab => 'Commandes';
+
+  @override
+  String get companyDashWalletTab => 'Portefeuille';
+
+  @override
+  String get companyDashPayoutsTab => 'Retraits';
+
+  @override
+  String get companyDashSignInRequired =>
+      'Connectez-vous pour ouvrir votre tableau de bord.';
+
+  @override
+  String get companyDashNoOrders => 'Aucune commande pour le moment.';
+
+  @override
+  String get companyDashOrdersLoadError =>
+      'Impossible de charger vos commandes. Vérifiez votre connexion.';
+
+  @override
+  String companyDashDeliverTo(Object name) {
+    return 'Livrer à $name';
+  }
+
+  @override
+  String get companyDashMarkFulfilled => 'Marquer comme expédiée';
+
+  @override
+  String get companyDashFulfilTitle => 'Marquer comme expédiée ?';
+
+  @override
+  String get companyDashFulfilBody =>
+      'Confirmez que vous avez remis ou expédié cette commande. L\'acheteur est ensuite invité à confirmer la livraison, ce qui libère votre paiement.';
+
+  @override
+  String get companyDashFulfilCancel => 'Pas encore';
+
+  @override
+  String get companyDashFulfilConfirm => 'Marquer comme expédiée';
+
+  @override
+  String get companyDashFulfilledSuccess => 'Commande marquée comme expédiée.';
+
+  @override
+  String get walletAvailableTitle => 'Solde disponible';
+
+  @override
+  String get walletAvailableHint => 'Prêt à être retiré';
+
+  @override
+  String get walletEscrowTitle => 'Sous séquestre';
+
+  @override
+  String get walletEscrowHint =>
+      'Pas encore à vous — libéré quand les acheteurs confirment la livraison';
+
+  @override
+  String get walletLedgerTitle => 'Activité du portefeuille';
+
+  @override
+  String get walletNoEntries => 'Aucune activité pour le moment.';
+
+  @override
+  String get walletLoadError =>
+      'Impossible de charger votre portefeuille. Vérifiez votre connexion.';
+
+  @override
+  String get walletKindEscrowHold => 'Mis sous séquestre';
+
+  @override
+  String get walletKindEscrowRelease => 'Séquestre libéré';
+
+  @override
+  String get walletKindCommission => 'Commission de la plateforme';
+
+  @override
+  String get walletKindPayout => 'Retrait';
+
+  @override
+  String get walletKindRefund => 'Remboursement';
+
+  @override
+  String get walletKindSale => 'Vente';
+
+  @override
+  String get walletKindOther => 'Ajustement';
+
+  @override
+  String walletOrderRef(Object reference) {
+    return 'Commande $reference';
+  }
+
+  @override
+  String get payoutRequestCta => 'Demander un retrait';
+
+  @override
+  String get payoutRequestTitle => 'Demander un retrait';
+
+  @override
+  String payoutAvailableNote(Object amount) {
+    return 'Vous pouvez retirer jusqu\'à $amount.';
+  }
+
+  @override
+  String get payoutAmountLabel => 'Montant (FCFA)';
+
+  @override
+  String get payoutAmountRequired => 'Saisissez un montant';
+
+  @override
+  String get payoutAmountInvalid => 'Saisissez un montant valide';
+
+  @override
+  String payoutAmountTooHigh(Object amount) {
+    return 'C\'est supérieur à votre solde disponible de $amount.';
+  }
+
+  @override
+  String get payoutMethodLabel => 'Mode de retrait';
+
+  @override
+  String get payoutMethodMtn => 'MTN Mobile Money';
+
+  @override
+  String get payoutMethodOrange => 'Orange Money';
+
+  @override
+  String get payoutMethodBank => 'Virement bancaire';
+
+  @override
+  String get payoutDestinationLabel => 'Numéro ou compte';
+
+  @override
+  String get payoutDestinationRequired => 'Indiquez où envoyer l\'argent';
+
+  @override
+  String get payoutDestinationNameLabel => 'Nom du titulaire (facultatif)';
+
+  @override
+  String get payoutSubmit => 'Demander le retrait';
+
+  @override
+  String get payoutRequested => 'Retrait demandé.';
+
+  @override
+  String get payoutError =>
+      'Impossible de demander le retrait. Veuillez réessayer.';
+
+  @override
+  String get payoutsEmpty => 'Aucun retrait pour le moment.';
+
+  @override
+  String get payoutsLoadError =>
+      'Impossible de charger vos retraits. Vérifiez votre connexion.';
+
+  @override
+  String payoutRequestedOn(Object date) {
+    return 'Demandé le $date';
+  }
 }
