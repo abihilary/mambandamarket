@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../api/auth_service.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 import 'ForgotPasswordScreen.dart';
 import 'SignUpScreen.dart';
 
@@ -59,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red.shade700),
+      SnackBar(content: Text(message), backgroundColor: AppColors.danger),
     );
   }
 
@@ -115,7 +116,8 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 32),
-                Icon(Icons.storefront, size: 72, color: theme.primaryColor),
+                Icon(Icons.storefront,
+                    size: 72, color: theme.colorScheme.primary),
                 const SizedBox(height: 16),
                 Text(
                   l10n.loginTitle,
@@ -128,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   l10n.loginSubtitle,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey.shade600),
+                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 32),
 
@@ -186,17 +188,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: _isLoading ? null : _handleLogin,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: theme.primaryColor,
-                    foregroundColor: Colors.white,
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     elevation: 0,
                   ),
                   child: _isLoading
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
+                              strokeWidth: 2,
+                              color: theme.colorScheme.onPrimary),
                         )
                       : Text(l10n.signIn, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
@@ -206,13 +209,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Divider ("OR")
                 Row(
                   children: [
-                    Expanded(child: Divider(color: Colors.grey.shade300)),
+                    Expanded(child: Divider(color: theme.dividerColor)),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
 
-                      child: Text(l10n.orDivider,style: TextStyle(color: Colors.grey[600], fontSize: 13),),
+                      child: Text(l10n.orDivider,style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13),),
                     ),
-                    Expanded(child: Divider(color: Colors.grey.shade300)),
+                    Expanded(child: Divider(color: theme.dividerColor)),
                   ],
                 ),
 
@@ -223,13 +226,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: _isLoading ? null : _handleGoogleSignIn,
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    side: BorderSide(color: Colors.grey.shade300),
+                    side: BorderSide(color: theme.dividerColor),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Google 'G' Icon built with custom styling
+                      // Google 'G' Icon built with custom styling. Google's own
+                      // mark keeps its brand colours in both themes.
                       Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
@@ -248,10 +252,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(width: 12),
                       Text(
                         l10n.continueWithGoogle,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
                     ],

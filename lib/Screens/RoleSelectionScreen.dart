@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api/auth_service.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 import 'SignUpScreen.dart';
 import 'SubscriptionScreen.dart';
 
@@ -98,7 +99,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               const SizedBox(height: 8),
               Text(
                 context.l10n.roleSubheading,
-                style: TextStyle(color: Colors.grey.shade600),
+                style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 24),
 
@@ -108,7 +109,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 title: context.l10n.roleBuyerTitle,
                 subtitle: context.l10n.roleBuyerSubtitle,
                 badgeText: context.l10n.roleBadgeFree,
-                badgeColor: Colors.green,
+                badgeColor: AppColors.success,
                 icon: Icons.shopping_bag_outlined,
               ),
               const SizedBox(height: 12),
@@ -119,7 +120,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 title: context.l10n.roleBuyerSellerTitle,
                 subtitle: context.l10n.roleBuyerSellerSubtitle,
                 badgeText: context.l10n.roleBadgeSubscription,
-                badgeColor: Colors.amber.shade800,
+                badgeColor: AppColors.warning,
                 icon: Icons.storefront_outlined,
               ),
               const SizedBox(height: 12),
@@ -130,7 +131,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 title: context.l10n.roleBusinessTitle,
                 subtitle: context.l10n.roleBusinessSubtitle,
                 badgeText: context.l10n.roleBadgeBusiness,
-                badgeColor: Colors.indigo,
+                badgeColor: theme.colorScheme.primary,
                 icon: Icons.business_outlined,
               ),
 
@@ -142,8 +143,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 child: ElevatedButton(
                   onPressed: _handleRoleSubmission,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.primaryColor,
-                    foregroundColor: Colors.white,
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -176,6 +177,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     required IconData icon,
   }) {
     final isSelected = _selectedRole == id;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
 
     return GestureDetector(
       onTap: () {
@@ -186,17 +189,21 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.indigo.withOpacity(0.05) : Colors.white,
+          color: isSelected
+              ? scheme.primary.withValues(alpha: 0.08)
+              : scheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? Colors.indigo : Colors.grey.shade300,
+            color: isSelected ? scheme.primary : theme.dividerColor,
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 28, color: isSelected ? Colors.indigo : Colors.grey.shade600),
+            Icon(icon,
+                size: 28,
+                color: isSelected ? scheme.primary : scheme.onSurfaceVariant),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -216,7 +223,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: badgeColor.withOpacity(0.1),
+                          color: badgeColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -235,7 +242,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     subtitle,
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.grey.shade600,
+                      color: scheme.onSurfaceVariant,
                     ),
                   ),
                 ],

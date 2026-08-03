@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api/auth_service.dart';
 import '../api/models.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 
 /// Shown after sign-in when the account is blocked or suspended. A restricted
 /// account keeps a valid session (so it can be told *why*), but the app never
@@ -70,7 +71,9 @@ class _AccountStatusScreenState extends State<AccountStatusScreen> {
           builder: (context, me, _) {
             final mod = me?.moderation ?? const Moderation();
             final blocked = mod.isBlocked;
-            final color = blocked ? Colors.red.shade700 : Colors.orange.shade800;
+            // Semantic tokens: these read the same way on a light or dark
+            // ground, which a Material swatch shade would not.
+            final color = blocked ? AppColors.danger : AppColors.warning;
             final icon = blocked ? Icons.block : Icons.pause_circle_outline;
             final title =
                 blocked ? l10n.blockedTitle : l10n.suspendedTitle;
@@ -101,9 +104,9 @@ class _AccountStatusScreenState extends State<AccountStatusScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.06),
+                      color: color.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: color.withOpacity(0.25)),
+                      border: Border.all(color: color.withValues(alpha: 0.35)),
                     ),
                     child: Text(
                       body,
@@ -117,7 +120,7 @@ class _AccountStatusScreenState extends State<AccountStatusScreen> {
                       l10n.suspendedUntil(untilStr),
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Colors.grey.shade700,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -126,14 +129,17 @@ class _AccountStatusScreenState extends State<AccountStatusScreen> {
                     Text(
                       l10n.suspendedIndefinite,
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey.shade700),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],
                   const SizedBox(height: 20),
                   Text(
                     l10n.moderationContactSupport,
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 13),
                   ),
                   const SizedBox(height: 32),
 
@@ -146,13 +152,15 @@ class _AccountStatusScreenState extends State<AccountStatusScreen> {
                           ? const SizedBox(
                               height: 18,
                               width: 18,
-                              child:
-                                  CircularProgressIndicator(strokeWidth: 2))
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: AppColors.ink))
                           : const Icon(Icons.refresh),
                       label: Text(l10n.moderationCheckAgain),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: color,
-                        foregroundColor: Colors.white,
+                        // The fill here is always the amber warning token, and
+                        // amber cannot carry white in either theme.
+                        foregroundColor: AppColors.ink,
                         minimumSize: const Size(double.infinity, 50),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),

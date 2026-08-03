@@ -253,6 +253,23 @@ class AuthService {
     return value;
   }
 
+  /// Best-effort top-up of [me] when it is missing.
+  ///
+  /// The splash screen warms the profile at launch, but it swallows failures —
+  /// so one offline moment or a token refresh landing mid-flight leaves `me`
+  /// null for the whole session. Everything gated on a role then quietly
+  /// disappears, and a verified company loses its dashboard until it happens to
+  /// pull-to-refresh. Screens that depend on the profile call this on entry so
+  /// the state repairs itself; it is a no-op once the profile is loaded.
+  Future<void> ensureMe() async {
+    if (session == null || me.value != null) return;
+    try {
+      await refreshMe();
+    } catch (_) {
+      // Still offline — leave `me` as-is; the next screen entry retries.
+    }
+  }
+
   Future<Profile?> updateProfile(Map<String, dynamic> fields) async {
     final json =
         await ApiClient.instance.patch('/me', fields) as Map<String, dynamic>;

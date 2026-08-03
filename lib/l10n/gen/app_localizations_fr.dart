@@ -1343,6 +1343,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String get checkoutMomoRequired => 'Veuillez saisir le numéro à débiter';
 
   @override
+  String get checkoutFixFields =>
+      'Veuillez remplir les champs en surbrillance.';
+
+  @override
+  String get appearance => 'Apparence';
+
+  @override
+  String get appearanceSystem => 'Par défaut du système';
+
+  @override
+  String get appearanceLight => 'Clair';
+
+  @override
+  String get appearanceDark => 'Sombre';
+
+  @override
   String checkoutPayNow(Object amount) {
     return 'Payer $amount en toute sécurité';
   }

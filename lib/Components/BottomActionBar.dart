@@ -7,13 +7,15 @@ class BottomActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: scheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -22,8 +24,10 @@ class BottomActionBar extends StatelessWidget {
       child: SafeArea(
         child: ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFA2E03A), // Light bright lime green
-            foregroundColor: Colors.black87,
+            // The old hand-rolled lime is now the brand accent: near-black in
+            // light, lime in dark — with the label keyed to onPrimary either way.
+            backgroundColor: scheme.primary,
+            foregroundColor: scheme.onPrimary,
             elevation: 0,
             minimumSize: const Size(double.infinity, 48),
             shape: RoundedRectangleBorder(

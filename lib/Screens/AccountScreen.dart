@@ -5,10 +5,26 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../api/auth_service.dart';
 import '../api/models.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
+import '../theme/theme_controller.dart';
 import 'ResetPasswordScreen.dart';
 
-class AccountScreen extends StatelessWidget {
+class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
+
+  @override
+  State<AccountScreen> createState() => _AccountScreenState();
+}
+
+class _AccountScreenState extends State<AccountScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Repair the profile if launch failed to load it. Without this, a single
+    // failed refresh at startup hides every role-gated entry below — a verified
+    // company would open this screen and find no Company dashboard at all.
+    AuthService.instance.ensureMe();
+  }
 
   Future<void> _resendConfirmation(BuildContext context, String email) async {
     final l10n = context.l10n;
@@ -32,6 +48,47 @@ class AccountScreen extends StatelessWidget {
     Navigator.pushNamedAndRemoveUntil(context, '/welcome', (_) => false);
   }
 
+  String _themeLabel(BuildContext context, ThemeMode mode) {
+    final l10n = context.l10n;
+    return switch (mode) {
+      ThemeMode.light => l10n.appearanceLight,
+      ThemeMode.dark => l10n.appearanceDark,
+      ThemeMode.system => l10n.appearanceSystem,
+    };
+  }
+
+  /// Bottom sheet to pick light / dark / follow-the-device.
+  void _pickTheme(BuildContext context) {
+    final l10n = context.l10n;
+    final controller = ThemeController.instance;
+    showModalBottomSheet(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final entry in <(ThemeMode, String, IconData)>[
+              (ThemeMode.system, l10n.appearanceSystem, Icons.brightness_auto_outlined),
+              (ThemeMode.light, l10n.appearanceLight, Icons.light_mode_outlined),
+              (ThemeMode.dark, l10n.appearanceDark, Icons.dark_mode_outlined),
+            ])
+              ListTile(
+                leading: Icon(entry.$3),
+                title: Text(entry.$2),
+                trailing: controller.mode.value == entry.$1
+                    ? const Icon(Icons.check)
+                    : null,
+                onTap: () {
+                  controller.setMode(entry.$1);
+                  Navigator.pop(sheetContext);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// Bottom sheet to pick the app language. "System default" clears the
   /// override so the app follows the device again.
   void _pickLanguage(BuildContext context) {
@@ -51,7 +108,8 @@ class AccountScreen extends StatelessWidget {
             title: Text(label),
             subtitle: subtitle == null ? null : Text(subtitle),
             trailing: selected
-                ? const Icon(Icons.check, color: Colors.indigo)
+                ? Icon(Icons.check,
+                    color: Theme.of(sheetContext).colorScheme.primary)
                 : null,
             onTap: () {
               controller.setLocale(code == null ? null : Locale(code));
@@ -68,7 +126,8 @@ class AccountScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Row(
                   children: [
-                    const Icon(Icons.language, color: Colors.indigo),
+                    Icon(Icons.language,
+                        color: Theme.of(sheetContext).colorScheme.primary),
                     const SizedBox(width: 12),
                     Text(l10n.chooseLanguage,
                         style: const TextStyle(
@@ -105,6 +164,7 @@ class AccountScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = AuthService.instance;
     final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -129,17 +189,17 @@ class AccountScreen extends StatelessWidget {
                 ListTile(
                   leading: CircleAvatar(
                     radius: 28,
-                    backgroundColor: Colors.indigo.shade50,
+                    backgroundColor: scheme.primary.withValues(alpha: 0.12),
                     backgroundImage: (avatar != null && avatar.isNotEmpty)
                         ? NetworkImage(avatar)
                         : null,
                     child: (avatar == null || avatar.isEmpty)
                         ? Text(
                             name.characters.first.toUpperCase(),
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.indigo),
+                                color: scheme.primary),
                           )
                         : null,
                   ),
@@ -154,10 +214,10 @@ class AccountScreen extends StatelessWidget {
                 if (!auth.isEmailConfirmed && email.isNotEmpty)
                   Card(
                     elevation: 0,
-                    color: Colors.orange.shade50,
+                    color: AppColors.warning.withValues(alpha: 0.12),
                     child: ListTile(
-                      leading: Icon(Icons.warning_amber_rounded,
-                          color: Colors.orange.shade800),
+                      leading: const Icon(Icons.warning_amber_rounded,
+                          color: AppColors.warning),
                       title: Text(l10n.emailNotConfirmed,
                           style: const TextStyle(fontWeight: FontWeight.w600)),
                       subtitle: Text(l10n.emailNotConfirmedBody),
@@ -174,10 +234,10 @@ class AccountScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Card(
                       elevation: 0,
-                      color: Colors.indigo.shade50,
+                      color: scheme.primary.withValues(alpha: 0.10),
                       child: ListTile(
-                        leading: const Icon(Icons.workspace_premium_outlined,
-                            color: Colors.indigo),
+                        leading: Icon(Icons.workspace_premium_outlined,
+                            color: scheme.primary),
                         title: Text(
                           me.subscription?['plan'] != null
                               ? l10n.planLabel(me.subscription!['plan'].toString())
@@ -204,8 +264,9 @@ class AccountScreen extends StatelessWidget {
                 // Purchases made in-app (escrow orders). Everyone can buy, so
                 // this is not gated on a role.
                 ListTile(
-                  leading: const Icon(Icons.receipt_long_outlined,
-                      color: Colors.indigo),
+                  // Leading icons take their colour from listTileTheme, which
+                  // is the brand accent in light and lime in dark.
+                  leading: const Icon(Icons.receipt_long_outlined),
                   title: Text(l10n.myOrders),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () => Navigator.pushNamed(context, '/my-orders'),
@@ -215,8 +276,7 @@ class AccountScreen extends StatelessWidget {
                 // admin, so there is nothing to show anyone else.
                 if (profile?.isCompany == true)
                   ListTile(
-                    leading: const Icon(Icons.verified_outlined,
-                        color: Colors.indigo),
+                    leading: const Icon(Icons.verified_outlined),
                     title: Text(l10n.companyDashboard),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () =>
@@ -224,16 +284,14 @@ class AccountScreen extends StatelessWidget {
                   ),
 
                 ListTile(
-                  leading: const Icon(Icons.storefront_outlined,
-                      color: Colors.indigo),
+                  leading: const Icon(Icons.storefront_outlined),
                   title: Text(l10n.businessDashboard),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () =>
                       Navigator.pushNamed(context, '/business-dashboard'),
                 ),
                 ListTile(
-                  leading:
-                      const Icon(Icons.person_outline, color: Colors.indigo),
+                  leading: const Icon(Icons.person_outline),
                   title: Text(l10n.sellerSpace),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () => Navigator.pushNamed(context, '/seller-dashboard'),
@@ -247,6 +305,22 @@ class AccountScreen extends StatelessWidget {
                   subtitle: Text(_currentLanguageLabel(context)),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () => _pickLanguage(context),
+                ),
+                // Appearance sits beside language: both are "how the app looks
+                // to me", and both persist across launches.
+                ValueListenableBuilder<ThemeMode>(
+                  valueListenable: ThemeController.instance.mode,
+                  builder: (context, mode, _) => ListTile(
+                    leading: Icon(switch (mode) {
+                      ThemeMode.dark => Icons.dark_mode_outlined,
+                      ThemeMode.light => Icons.light_mode_outlined,
+                      ThemeMode.system => Icons.brightness_auto_outlined,
+                    }),
+                    title: Text(l10n.appearance),
+                    subtitle: Text(_themeLabel(context, mode)),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () => _pickTheme(context),
+                  ),
                 ),
                 ListTile(
                   leading: const Icon(Icons.lock_outline),
@@ -264,9 +338,9 @@ class AccountScreen extends StatelessWidget {
                   onTap: () {},
                 ),
                 ListTile(
-                  leading: const Icon(Icons.logout, color: Colors.red),
+                  leading: const Icon(Icons.logout, color: AppColors.danger),
                   title: Text(l10n.logOut,
-                      style: const TextStyle(color: Colors.red)),
+                      style: const TextStyle(color: AppColors.danger)),
                   onTap: () => _logOut(context),
                 ),
               ],

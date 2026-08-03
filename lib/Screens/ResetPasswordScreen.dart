@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../api/auth_service.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 
 /// Set a new password.
 ///
@@ -41,7 +42,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(l10n.passwordUpdated),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.success,
         ),
       );
       // The recovery session is now a full session, so go straight in.
@@ -54,7 +55,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(expired ? l10n.resetLinkExpired : e.message),
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: AppColors.danger,
         ),
       );
     } catch (_) {
@@ -83,7 +84,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 16),
-                Icon(Icons.password, size: 64, color: theme.primaryColor),
+                Icon(Icons.password,
+                    size: 64, color: theme.colorScheme.primary),
                 const SizedBox(height: 20),
                 Text(l10n.chooseNewPassword,
                     textAlign: TextAlign.center,
@@ -131,18 +133,19 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   onPressed: _isLoading ? null : _submit,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: theme.primaryColor,
-                    foregroundColor: Colors.white,
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                     elevation: 0,
                   ),
                   child: _isLoading
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
+                              strokeWidth: 2,
+                              color: theme.colorScheme.onPrimary),
                         )
                       : Text(l10n.updateButton,
                           style: const TextStyle(

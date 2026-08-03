@@ -6,6 +6,7 @@ import '../api/api_client.dart';
 import '../api/models.dart' as api;
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 
 /// One purchase, from the buyer's side.
 ///
@@ -81,20 +82,20 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(successMessage),
-          backgroundColor: Colors.green.shade700,
+          backgroundColor: AppColors.success,
         ),
       );
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message), backgroundColor: Colors.red.shade700),
+        SnackBar(content: Text(e.message), backgroundColor: AppColors.danger),
       );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(l10n.orderActionFailed),
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: AppColors.danger,
         ),
       );
     } finally {
@@ -143,7 +144,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(l10n.orderCancelConfirm,
-                style: const TextStyle(color: Colors.red)),
+                style: const TextStyle(color: AppColors.danger)),
           ),
         ],
       ),
@@ -240,6 +241,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   // --- WIDGET BUILDERS ---
 
   Widget _errorState(AppLocalizations l10n) {
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     final message =
         _error == _kLoadError ? l10n.orderDetailLoadError : (_error ?? l10n.orderDetailLoadError);
     return Center(
@@ -248,11 +250,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cloud_off, size: 44, color: Colors.grey),
+            Icon(Icons.cloud_off, size: 44, color: muted),
             const SizedBox(height: 12),
             Text(message,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.grey)),
+                style: TextStyle(color: muted)),
             const SizedBox(height: 16),
             OutlinedButton(onPressed: _load, child: Text(l10n.ordersTryAgain)),
           ],
@@ -264,9 +266,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   Widget _card({required Widget child}) => Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: Theme.of(context).dividerColor),
         ),
         child: child,
       );
@@ -284,7 +286,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   const SizedBox(height: 4),
                   Text(
                     l10n.ordersPlacedOn(_formatDate(order.createdAt)),
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -301,23 +305,27 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     late final String title;
     late final String body;
 
+    final scheme = Theme.of(context).colorScheme;
+
     if (order.isEscrowHeld) {
-      color = Colors.green.shade700;
+      // Money is in, and protected — the same promise the checkout banner makes.
+      color = AppColors.success;
       icon = Icons.lock_outline;
       title = l10n.orderEscrowHeldTitle;
       body = l10n.orderEscrowHeldBody(order.displayTotal);
     } else if (order.isEscrowReleased) {
-      color = Colors.indigo;
+      color = scheme.primary;
       icon = Icons.task_alt;
       title = l10n.orderEscrowReleasedTitle;
       body = l10n.orderEscrowReleasedBody;
     } else if (order.isEscrowRefunded) {
-      color = Colors.blueGrey;
+      color = scheme.onSurfaceVariant;
       icon = Icons.undo;
       title = l10n.orderEscrowRefundedTitle;
       body = l10n.orderEscrowRefundedBody;
     } else {
-      color = Colors.orange.shade800;
+      // Nothing charged yet: an amber "waiting on you", never a green all-clear.
+      color = AppColors.warning;
       icon = Icons.hourglass_empty;
       title = l10n.orderEscrowPendingTitle;
       body = l10n.orderEscrowPendingBody;
@@ -326,9 +334,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.06),
+        // A 6% wash vanishes on the dark ground; 12% reads on both.
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -354,7 +363,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               l10n.orderEscrowAutoRelease(_formatDate(order.autoReleaseAt)),
               style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey.shade700,
+                  color: scheme.onSurfaceVariant,
                   fontStyle: FontStyle.italic),
             ),
           ],
@@ -385,7 +394,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         Text(
                           '${l10n.orderDetailQuantity(item.quantity)} · ${item.displayUnitPrice}',
                           style: TextStyle(
-                              fontSize: 12, color: Colors.grey.shade600),
+                              fontSize: 12,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -423,7 +435,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: Colors.grey.shade600),
+          Icon(icon,
+              size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
           const SizedBox(width: 8),
           Expanded(child: Text(value, style: const TextStyle(fontSize: 13))),
         ],
@@ -451,7 +464,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(l10n.orderDetailSubtotal,
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
+                    style: TextStyle(
+                        fontSize: 13,
+                        color:
+                            Theme.of(context).colorScheme.onSurfaceVariant)),
                 Text(order.displaySubtotal,
                     style: const TextStyle(fontSize: 13)),
               ],
@@ -465,10 +481,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         fontSize: 15, fontWeight: FontWeight.bold)),
                 Text(
                   order.displayTotal,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.indigo),
+                      color: Theme.of(context).colorScheme.primary),
                 ),
               ],
             ),
@@ -479,14 +495,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   /// Only ever one primary action: release the money, or pay/cancel before any
   /// has moved.
   Widget? _actions(AppLocalizations l10n, api.Order order) {
+    final scheme = Theme.of(context).colorScheme;
     final buttons = <Widget>[];
 
     if (order.canConfirm) {
       buttons.add(
         ElevatedButton.icon(
+          // Releasing the money is a success action, so it keeps the green even
+          // where the brand CTA would otherwise be lime/black.
           onPressed: _busy ? null : () => _confirmDelivery(order),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green.shade700,
+            backgroundColor: AppColors.success,
             foregroundColor: Colors.white,
             minimumSize: const Size(double.infinity, 52),
             shape:
@@ -512,8 +531,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         ElevatedButton.icon(
           onPressed: _busy ? null : () => _pay(order),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.indigo,
-            foregroundColor: Colors.white,
+            backgroundColor: scheme.primary,
+            foregroundColor: scheme.onPrimary,
             minimumSize: const Size(double.infinity, 52),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
@@ -528,7 +547,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         OutlinedButton.icon(
           onPressed: _busy ? null : () => _cancelOrder(order),
           style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.red.shade700,
+            foregroundColor: AppColors.danger,
             minimumSize: const Size(double.infinity, 48),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
@@ -638,8 +657,8 @@ class _PaySheetState extends State<_PaySheet> {
                 Navigator.pop(context, (method: _method, phone: phone));
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.indigo,
-                foregroundColor: Colors.white,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),

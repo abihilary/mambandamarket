@@ -84,14 +84,14 @@ flutter_launcher_icons:
   android: "ic_launcher"
   ios: true
   remove_alpha_ios: true
-  # Android adaptive icon: brand indigo plate + transparent storefront mark
-  adaptive_icon_background: "#3F51B5"
+  # Android adaptive icon: black plate + the lime/white M monogram.
+  adaptive_icon_background: "#000000"
   adaptive_icon_foreground: "assets/icon/icon-foreground.png"
   web:
     generate: true
     image_path: "assets/icon/icon.png"
-    background_color: "#3F51B5"
-    theme_color: "#3F51B5"
+    background_color: "#000000"
+    theme_color: "#000000"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

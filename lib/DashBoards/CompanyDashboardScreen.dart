@@ -6,6 +6,7 @@ import '../api/auth_service.dart';
 import '../api/models.dart' as api;
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 
 /// Label for a ledger movement. Unknown kinds fall back to a neutral
 /// "Adjustment" rather than leaking a raw database enum at the merchant.
@@ -234,20 +235,20 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(l10n.companyDashFulfilledSuccess),
-          backgroundColor: Colors.green.shade700,
+          backgroundColor: AppColors.success,
         ),
       );
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message), backgroundColor: Colors.red.shade700),
+        SnackBar(content: Text(e.message), backgroundColor: AppColors.danger),
       );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(l10n.orderActionFailed),
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: AppColors.danger,
         ),
       );
     } finally {
@@ -281,20 +282,20 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(l10n.payoutRequested),
-          backgroundColor: Colors.green.shade700,
+          backgroundColor: AppColors.success,
         ),
       );
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message), backgroundColor: Colors.red.shade700),
+        SnackBar(content: Text(e.message), backgroundColor: AppColors.danger),
       );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(l10n.payoutError),
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: AppColors.danger,
         ),
       );
     } finally {
@@ -305,7 +306,7 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final theme = Theme.of(context);
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -321,9 +322,9 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
         ],
         bottom: TabBar(
           controller: _tabController,
-          labelColor: theme.primaryColor,
-          unselectedLabelColor: Colors.grey.shade600,
-          indicatorColor: theme.primaryColor,
+          labelColor: scheme.primary,
+          unselectedLabelColor: scheme.onSurfaceVariant,
+          indicatorColor: scheme.primary,
           indicatorWeight: 3,
           tabs: [
             Tab(text: l10n.companyDashOrdersTab),
@@ -354,11 +355,14 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.cloud_off, size: 44, color: Colors.grey),
+              Icon(Icons.cloud_off,
+                  size: 44,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(height: 12),
               Text(message,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey)),
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant)),
               const SizedBox(height: 16),
               OutlinedButton(onPressed: retry, child: Text(retryLabel)),
             ],
@@ -396,7 +400,8 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
             const SizedBox(height: 120),
             Center(
               child: Text(l10n.companyDashNoOrders,
-                  style: TextStyle(color: Colors.grey.shade600)),
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant)),
             ),
           ],
         ),
@@ -430,14 +435,16 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
 
   Widget _orderCard(AppLocalizations l10n, api.Order order) {
     final ml = MaterialLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -467,18 +474,18 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
           if (order.deliveryName != null && order.deliveryName!.isNotEmpty)
             Text(
               l10n.companyDashDeliverTo(order.deliveryName!),
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+              style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
             ),
           if (order.deliveryAddress != null &&
               order.deliveryAddress!.isNotEmpty)
             Text(
               '${order.deliveryAddress}${order.deliveryCity == null ? '' : ', ${order.deliveryCity}'}',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
             ),
           if (order.createdAt != null)
             Text(
               l10n.ordersPlacedOn(ml.formatMediumDate(order.createdAt!.toLocal())),
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
             ),
           const SizedBox(height: 10),
           Row(
@@ -489,18 +496,18 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
                 Expanded(
                   child: Row(
                     children: [
-                      Icon(Icons.lock_outline,
-                          size: 14, color: Colors.amber.shade800),
+                      const Icon(Icons.lock_outline,
+                          size: 14, color: AppColors.warning),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           l10n.walletEscrowTitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: Colors.amber.shade800,
+                            color: AppColors.warning,
                           ),
                         ),
                       ),
@@ -511,10 +518,10 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
                 const Spacer(),
               Text(
                 order.displayTotal,
-                style: const TextStyle(
+                style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
-                    color: Colors.indigo),
+                    color: scheme.primary),
               ),
             ],
           ),
@@ -525,8 +532,8 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
               child: ElevatedButton.icon(
                 onPressed: _busy ? null : () => _markFulfilled(order),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo,
-                  foregroundColor: Colors.white,
+                  backgroundColor: scheme.primary,
+                  foregroundColor: scheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8)),
@@ -565,7 +572,7 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
             title: l10n.walletAvailableTitle,
             hint: l10n.walletAvailableHint,
             amount: wallet.displayBalance,
-            color: Colors.green.shade700,
+            color: AppColors.success,
             icon: Icons.account_balance_wallet_outlined,
             filled: true,
           ),
@@ -574,7 +581,7 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
             title: l10n.walletEscrowTitle,
             hint: l10n.walletEscrowHint,
             amount: wallet.displayEscrowHeld,
-            color: Colors.amber.shade800,
+            color: AppColors.warning,
             icon: Icons.lock_outline,
             filled: false,
           ),
@@ -585,8 +592,8 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
               onPressed:
                   (_busy || wallet.balanceCents <= 0) ? null : _requestPayout,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.indigo,
-                foregroundColor: Colors.white,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -606,7 +613,8 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Center(
                 child: Text(l10n.walletNoEntries,
-                    style: TextStyle(color: Colors.grey.shade600)),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant)),
               ),
             )
           else
@@ -626,61 +634,66 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
     required Color color,
     required IconData icon,
     required bool filled,
-  }) =>
-      Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: filled ? color.withOpacity(0.1) : Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: filled ? color.withOpacity(0.35) : color.withOpacity(0.5),
-            width: filled ? 1 : 1.5,
-          ),
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: filled ? color.withValues(alpha: 0.1) : scheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: filled
+              ? color.withValues(alpha: 0.35)
+              : color.withValues(alpha: 0.5),
+          width: filled ? 1 : 1.5,
         ),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 28),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: color)),
-                  const SizedBox(height: 2),
-                  Text(
-                    amount,
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 28),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
                     style: TextStyle(
-                      fontSize: filled ? 24 : 20,
-                      fontWeight: FontWeight.bold,
-                      color: filled ? Colors.black87 : color,
-                    ),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: color)),
+                const SizedBox(height: 2),
+                Text(
+                  amount,
+                  style: TextStyle(
+                    fontSize: filled ? 24 : 20,
+                    fontWeight: FontWeight.bold,
+                    color: filled ? scheme.onSurface : color,
                   ),
-                  const SizedBox(height: 2),
-                  Text(hint,
-                      style: TextStyle(
-                          fontSize: 11, color: Colors.grey.shade700)),
-                ],
-              ),
+                ),
+                const SizedBox(height: 2),
+                Text(hint,
+                    style: TextStyle(
+                        fontSize: 11, color: scheme.onSurfaceVariant)),
+              ],
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _entryTile(AppLocalizations l10n, api.WalletEntry entry) {
     final ml = MaterialLocalizations.of(context);
-    final color = entry.isCredit ? Colors.green.shade700 : Colors.red.shade700;
+    final theme = Theme.of(context);
+    final color = entry.isCredit ? AppColors.success : AppColors.danger;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Row(
         children: [
@@ -699,7 +712,8 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
                     if (entry.orderId != null && entry.orderId!.isNotEmpty)
                       l10n.walletOrderRef(_shortRef(entry.orderId!)),
                   ].join(' · '),
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                  style: TextStyle(
+                      fontSize: 11, color: theme.colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -742,7 +756,9 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
                 const SizedBox(height: 120),
                 Center(
                   child: Text(l10n.payoutsEmpty,
-                      style: TextStyle(color: Colors.grey.shade600)),
+                      style: TextStyle(
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant)),
                 ),
               ],
             )
@@ -757,14 +773,15 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
 
   Widget _payoutTile(AppLocalizations l10n, api.Payout payout) {
     final ml = MaterialLocalizations.of(context);
+    final theme = Theme.of(context);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Row(
         children: [
@@ -778,14 +795,17 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
                 const SizedBox(height: 4),
                 Text(
                   '${_payoutMethodLabel(l10n, payout.method)} · ${payout.destination}',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                  style: TextStyle(
+                      fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
                 ),
                 if (payout.createdAt != null) ...[
                   const SizedBox(height: 2),
                   Text(
                     l10n.payoutRequestedOn(
                         ml.formatMediumDate(payout.createdAt!.toLocal())),
-                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurfaceVariant),
                   ),
                 ],
               ],
@@ -849,6 +869,7 @@ class _PayoutSheetState extends State<_PayoutSheet> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final wallet = widget.wallet;
+    final scheme = Theme.of(context).colorScheme;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -870,7 +891,7 @@ class _PayoutSheetState extends State<_PayoutSheet> {
               const SizedBox(height: 4),
               Text(
                 l10n.payoutAvailableNote(wallet.displayBalance),
-                style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -960,8 +981,8 @@ class _PayoutSheetState extends State<_PayoutSheet> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.indigo,
-                    foregroundColor: Colors.white,
+                    backgroundColor: scheme.primary,
+                    foregroundColor: scheme.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),

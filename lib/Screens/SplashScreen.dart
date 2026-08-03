@@ -55,29 +55,33 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // The splash is a full-bleed brand plate, so everything on it is keyed to
+    // onPrimary — the lime ground in dark mode cannot carry white.
+    final scheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Theme.of(context).primaryColor,
+      backgroundColor: scheme.primary,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: scheme.onPrimary,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.storefront_rounded,
                 size: 64,
-                color: Theme.of(context).primaryColor,
+                color: scheme.primary,
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'Mambanda Market',
               style: TextStyle(
-                color: Colors.white,
+                color: scheme.onPrimary,
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.2,
@@ -87,13 +91,13 @@ class _SplashScreenState extends State<SplashScreen> {
             Text(
               'Buy, Sell & Connect',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.8),
+                color: scheme.onPrimary.withValues(alpha: 0.8),
                 fontSize: 16,
               ),
             ),
             const SizedBox(height: 48),
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(scheme.onPrimary),
             ),
           ],
         ),

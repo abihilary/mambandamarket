@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../api/auth_service.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 
 /// Create an account with email + password.
 ///
@@ -43,7 +44,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red.shade700),
+      SnackBar(content: Text(message), backgroundColor: AppColors.danger),
     );
   }
 
@@ -57,7 +58,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(l10n.confirmationResent),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.success,
         ),
       );
     } on AuthException catch (e) {
@@ -124,7 +125,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.mark_email_unread_outlined,
-                  size: 72, color: theme.primaryColor),
+                  size: 72, color: theme.colorScheme.primary),
               const SizedBox(height: 24),
               Text(l10n.confirmEmailTitle,
                   textAlign: TextAlign.center,
@@ -134,7 +135,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
               Text(
                 l10n.confirmEmailBody(_emailController.text.trim()),
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey.shade600, height: 1.4),
+                style: TextStyle(
+                    color: theme.colorScheme.onSurfaceVariant, height: 1.4),
               ),
               const SizedBox(height: 24),
               // Without this, a lost or rate-limited confirmation email leaves
@@ -159,8 +161,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 onPressed: () => Navigator.pushNamedAndRemoveUntil(
                     context, '/login', (_) => false),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.primaryColor,
-                  foregroundColor: Colors.white,
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
                   minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
@@ -186,7 +188,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 8),
-                Icon(Icons.storefront, size: 64, color: theme.primaryColor),
+                Icon(Icons.storefront,
+                    size: 64, color: theme.colorScheme.primary),
                 const SizedBox(height: 16),
                 Text(
                   l10n.joinMambanda,
@@ -255,18 +258,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   onPressed: _isLoading ? null : _handleSignUp,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: theme.primaryColor,
-                    foregroundColor: Colors.white,
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                     elevation: 0,
                   ),
                   child: _isLoading
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
+                              strokeWidth: 2,
+                              color: theme.colorScheme.onPrimary),
                         )
                       : Text(l10n.createAccount,
                           style: const TextStyle(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
+
 class ItemCard extends StatelessWidget {
   final String imageUrl;
   final String title;
@@ -24,6 +26,8 @@ class ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -44,7 +48,7 @@ class ItemCard extends StatelessWidget {
                       imageUrl,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) =>
-                          Container(color: Colors.grey[300]),
+                          Container(color: scheme.surfaceContainerHighest),
                     ),
                   ),
                 ),
@@ -56,14 +60,15 @@ class ItemCard extends StatelessWidget {
                       onTap: onFavoriteToggle,
                       child: Container(
                         padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
+                        decoration: BoxDecoration(
+                          color: scheme.surface,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           isFavorite ? Icons.favorite : Icons.favorite_border,
                           size: 18,
-                          color: isFavorite ? Colors.red : Colors.black87,
+                          color:
+                              isFavorite ? AppColors.danger : scheme.onSurface,
                         ),
                       ),
                     ),
@@ -81,9 +86,9 @@ class ItemCard extends StatelessWidget {
                     title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12, // Reduced slightly for compact fitting
-                      color: Colors.black87,
+                      color: scheme.onSurface,
                       height: 1.15,
                     ),
                   ),
@@ -96,7 +101,9 @@ class ItemCard extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E7200),
+                          // Routed through the token so the price stays legible
+                          // on a dark ground as well as a light one.
+                          color: AppColors.success,
                         ),
                       ),
                       if (priceAddon != null) ...[
@@ -106,7 +113,7 @@ class ItemCard extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E7200),
+                            color: AppColors.success,
                           ),
                         ),
                       ]

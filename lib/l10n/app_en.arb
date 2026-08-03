@@ -602,6 +602,11 @@
   "checkoutMomoLabel": "Mobile Money number",
   "checkoutMomoHelper": "You'll get a prompt on this number to approve the payment.",
   "checkoutMomoRequired": "Please enter the number to charge",
+  "checkoutFixFields": "Please complete the highlighted fields.",
+  "appearance": "Appearance",
+  "appearanceSystem": "System default",
+  "appearanceLight": "Light",
+  "appearanceDark": "Dark",
   "checkoutPayNow": "Pay {amount} securely",
   "@checkoutPayNow": {
     "placeholders": {

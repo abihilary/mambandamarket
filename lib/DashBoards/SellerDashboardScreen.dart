@@ -7,6 +7,7 @@ import '../api/auth_service.dart';
 import '../api/models.dart' as api;
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 import 'CreateListingScreen.dart';
 
 
@@ -140,6 +141,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
 
   // Helper method to display either Network or File images seamlessly
   Widget _buildImageWidget(String path) {
+    final scheme = Theme.of(context).colorScheme;
     if (path.startsWith('http://') || path.startsWith('https://')) {
       return Image.network(
         path,
@@ -149,8 +151,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
         errorBuilder: (context, error, stackTrace) => Container(
           width: 75,
           height: 75,
-          color: Colors.grey.shade200,
-          child: const Icon(Icons.broken_image, color: Colors.grey),
+          color: scheme.surfaceContainerHighest,
+          child: Icon(Icons.broken_image, color: scheme.onSurfaceVariant),
         ),
       );
     } else {
@@ -162,8 +164,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
         errorBuilder: (context, error, stackTrace) => Container(
           width: 75,
           height: 75,
-          color: Colors.grey.shade200,
-          child: const Icon(Icons.broken_image, color: Colors.grey),
+          color: scheme.surfaceContainerHighest,
+          child: Icon(Icons.broken_image, color: scheme.onSurfaceVariant),
         ),
       );
     }
@@ -200,7 +202,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message), backgroundColor: Colors.red.shade700),
+        SnackBar(content: Text(e.message), backgroundColor: AppColors.danger),
       );
     }
   }
@@ -247,12 +249,12 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                       content: Text(e.message),
-                      backgroundColor: Colors.red.shade700),
+                      backgroundColor: AppColors.danger),
                 );
               }
             },
             child: Text(l10n.sellerDashDelete,
-                style: const TextStyle(color: Colors.red)),
+                style: const TextStyle(color: AppColors.danger)),
           ),
         ],
       ),
@@ -262,6 +264,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -289,8 +292,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openCreateListingModal,
-        backgroundColor: theme.primaryColor,
-        foregroundColor: Colors.white,
+        backgroundColor: scheme.primary,
+        foregroundColor: scheme.onPrimary,
         icon: const Icon(Icons.add_a_photo_outlined),
         label: Text(
           context.l10n.sellerDashSellItem,
@@ -316,7 +319,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                       title: context.l10n.sellerDashActiveItems,
                       value: '${_activeItems.length}',
                       icon: Icons.sell_outlined,
-                      color: Colors.amber.shade800,
+                      color: AppColors.warning,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -325,7 +328,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                       title: context.l10n.sellerDashTotalEarned,
                       value: _totalEarnedLabel,
                       icon: Icons.account_balance_wallet_outlined,
-                      color: Colors.green,
+                      color: AppColors.success,
                     ),
                   ),
                 ],
@@ -343,7 +346,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                       title: context.l10n.sellerDashTotalViews,
                       value: '${_stats?.totalViews ?? 0}',
                       icon: Icons.visibility_outlined,
-                      color: Colors.blue,
+                      color: scheme.primary,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -352,7 +355,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                       title: context.l10n.sellerDashInquiries,
                       value: '${_stats?.inquiries ?? 0}',
                       icon: Icons.chat_bubble_outline,
-                      color: Colors.deepPurple,
+                      // Ambient brand violet, used here purely as a decorative
+                      // tint so the four stat tiles stay distinguishable.
+                      color: AppColors.glow,
                     ),
                   ),
                 ],
@@ -363,9 +368,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             // TAB BAR
             TabBar(
               controller: _tabController,
-              labelColor: theme.primaryColor,
-              unselectedLabelColor: Colors.grey.shade600,
-              indicatorColor: theme.primaryColor,
+              labelColor: scheme.primary,
+              unselectedLabelColor: scheme.onSurfaceVariant,
+              indicatorColor: scheme.primary,
               indicatorWeight: 3,
               tabs: [
                 Tab(text: context.l10n.sellerDashActiveTab(_activeItems.length)),
@@ -392,15 +397,18 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   // --- WIDGET BUILDERS ---
 
   Widget _buildSellerHeaderCard(ThemeData theme, BuildContext context) {
+    final scheme = theme.colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: theme.dividerColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            // Drop shadows stay black in both themes; on a dark ground it
+            // simply reads as nothing.
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -412,8 +420,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             children: [
               const CircleAvatar(
                 radius: 24,
-                backgroundColor: Colors.amber,
-                child: Icon(Icons.person, color: Colors.white, size: 28),
+                // The individual-seller tier is amber throughout this screen.
+                backgroundColor: AppColors.warning,
+                child: Icon(Icons.person, color: AppColors.ink, size: 28),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -430,7 +439,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                     const SizedBox(height: 2),
                     Text(
                       context.l10n.sellerDashAccountTier,
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      style: TextStyle(
+                          fontSize: 12, color: scheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -441,10 +451,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Colors.amber,
+                    color: AppColors.warning,
                   ),
                 ),
-                backgroundColor: Colors.amber.shade50,
+                backgroundColor: AppColors.warning.withValues(alpha: 0.12),
                 side: BorderSide.none,
               ),
             ],
@@ -465,8 +475,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
               icon: const Icon(Icons.storefront_outlined, size: 18),
               label: Text(context.l10n.sellerDashGoToMarketplace),
               style: ElevatedButton.styleFrom(
-                backgroundColor: theme.primaryColor,
-                foregroundColor: Colors.white,
+                backgroundColor: scheme.primary,
+                foregroundColor: scheme.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -485,19 +495,20 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     required IconData icon,
     required Color color,
   }) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 20),
@@ -512,7 +523,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
               ),
               Text(
                 title,
-                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                style: TextStyle(
+                    fontSize: 11, color: theme.colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -532,17 +544,18 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
           : _error == _kLoadError
               ? l10n.sellerDashLoadError
               : _error!;
+      final muted = Theme.of(context).colorScheme.onSurfaceVariant;
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.cloud_off, size: 44, color: Colors.grey),
+              Icon(Icons.cloud_off, size: 44, color: muted),
               const SizedBox(height: 12),
               Text(message,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey)),
+                  style: TextStyle(color: muted)),
               const SizedBox(height: 16),
               OutlinedButton(
                   onPressed: _load, child: Text(l10n.sellerDashTryAgain)),
@@ -555,13 +568,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   }
 
   Widget _buildActiveListingsTab(ThemeData theme) {
+    final scheme = theme.colorScheme;
     final gate = _gate();
     if (gate != null) return gate;
     if (_activeItems.isEmpty) {
       return Center(
         child: Text(
           context.l10n.sellerDashNoActiveItems,
-          style: TextStyle(color: Colors.grey.shade600),
+          style: TextStyle(color: scheme.onSurfaceVariant),
         ),
       );
     }
@@ -579,9 +593,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: scheme.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(color: theme.dividerColor),
           ),
           child: Padding(
             padding: const EdgeInsets.all(10.0),
@@ -601,7 +615,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 4, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.7),
+                            // Scrim over a photo: stays black + white in both
+                            // themes so it survives whatever the image is.
+                            color: Colors.black.withValues(alpha: 0.7),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -635,7 +651,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                         item['category'] ?? context.l10n.sellerDashGeneralCategory,
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.indigo.shade600,
+                          color: scheme.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -645,30 +661,30 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
-                          color: theme.primaryColor,
+                          color: scheme.primary,
                         ),
                       ),
                       const SizedBox(height: 6),
                       Row(
                         children: [
                           Icon(Icons.visibility_outlined,
-                              size: 14, color: Colors.grey.shade600),
+                              size: 14, color: scheme.onSurfaceVariant),
                           const SizedBox(width: 4),
                           Text(
                             context.l10n
                                 .sellerDashViewsCount(item['views'] as int? ?? 0),
                             style: TextStyle(
-                                fontSize: 11, color: Colors.grey.shade600),
+                                fontSize: 11, color: scheme.onSurfaceVariant),
                           ),
                           const SizedBox(width: 12),
                           Icon(Icons.chat_bubble_outline,
-                              size: 14, color: Colors.grey.shade600),
+                              size: 14, color: scheme.onSurfaceVariant),
                           const SizedBox(width: 4),
                           Text(
                             context.l10n.sellerDashChatsCount(
                                 item['inquiries'] as int? ?? 0),
                             style: TextStyle(
-                                fontSize: 11, color: Colors.grey.shade600),
+                                fontSize: 11, color: scheme.onSurfaceVariant),
                           ),
                         ],
                       ),
@@ -676,7 +692,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                   ),
                 ),
                 PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert, color: Colors.grey),
+                  icon: Icon(Icons.more_vert, color: scheme.onSurfaceVariant),
                   onSelected: (value) {
                     if (value == 'mark_sold') {
                       _markItemAsSold(item);
@@ -699,7 +715,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                       value: 'delete',
                       child: Text(
                         context.l10n.sellerDashDelete,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(color: AppColors.danger),
                       ),
                     ),
                   ],
@@ -713,13 +729,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   }
 
   Widget _buildSoldListingsTab(ThemeData theme) {
+    final scheme = theme.colorScheme;
     final gate = _gate();
     if (gate != null) return gate;
     if (_soldItems.isEmpty) {
       return Center(
         child: Text(
           context.l10n.sellerDashNoSoldItems,
-          style: TextStyle(color: Colors.grey.shade600),
+          style: TextStyle(color: scheme.onSurfaceVariant),
         ),
       );
     }
@@ -737,9 +754,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: scheme.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(color: theme.dividerColor),
           ),
           child: Padding(
             padding: const EdgeInsets.all(10.0),
@@ -770,7 +787,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                         item['category'] ?? context.l10n.sellerDashGeneralCategory,
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.indigo.shade600,
+                          color: scheme.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -780,7 +797,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
-                          color: Colors.green,
+                          // Money already received.
+                          color: AppColors.success,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -791,13 +809,13 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                                 : item['buyerName'] as String,
                             item['soldDate'] as String),
                         style: TextStyle(
-                            fontSize: 11, color: Colors.grey.shade600),
+                            fontSize: 11, color: scheme.onSurfaceVariant),
                       ),
                     ],
                   ),
                 ),
                 PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert, color: Colors.grey),
+                  icon: Icon(Icons.more_vert, color: scheme.onSurfaceVariant),
                   onSelected: (value) {
                     if (value == 'delete') {
                       _deleteItem(item, false);
@@ -807,7 +825,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                     PopupMenuItem(
                       value: 'delete',
                       child: Text(context.l10n.sellerDashDelete,
-                          style: const TextStyle(color: Colors.red)),
+                          style: const TextStyle(color: AppColors.danger)),
                     ),
                   ],
                 ),

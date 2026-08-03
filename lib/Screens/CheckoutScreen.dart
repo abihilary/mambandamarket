@@ -6,6 +6,7 @@ import '../api/auth_service.dart';
 import '../api/models.dart' as api;
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 import 'OrderDetailScreen.dart';
 
 /// Buying a verified company's listing in-app.
@@ -33,6 +34,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _cityController = TextEditingController();
   final _noteController = TextEditingController();
   final _momoController = TextEditingController();
+
+  // Keyed in visual order so a failed validation can scroll to the first
+  // offending field. The Mobile Money number sits below the fold on most
+  // phones: without this, tapping Pay looked like it did nothing at all.
+  final _nameKey = GlobalKey();
+  final _phoneKey = GlobalKey();
+  final _addressKey = GlobalKey();
+  final _cityKey = GlobalKey();
+  final _momoKey = GlobalKey();
 
   int _quantity = 1;
 
@@ -74,9 +84,42 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String get _displaySubtotal =>
       api.formatPrice(_subtotalCents, currency: widget.listing.currency);
 
+  /// Bring the first empty required field into view.
+  ///
+  /// Form.validate() marks every offender, but says nothing if the offender is
+  /// scrolled off screen — which is exactly where the Mobile Money number sits.
+  /// The button then appears to do nothing at all.
+  void _revealFirstInvalid() {
+    final ordered = <MapEntry<GlobalKey, TextEditingController>>[
+      MapEntry(_nameKey, _nameController),
+      MapEntry(_phoneKey, _phoneController),
+      MapEntry(_addressKey, _addressController),
+      MapEntry(_cityKey, _cityController),
+      MapEntry(_momoKey, _momoController),
+    ];
+    for (final entry in ordered) {
+      if (entry.value.text.trim().isNotEmpty) continue;
+      final fieldContext = entry.key.currentContext;
+      if (fieldContext != null) {
+        Scrollable.ensureVisible(
+          fieldContext,
+          duration: const Duration(milliseconds: 300),
+          alignment: 0.25,
+        );
+      }
+      return;
+    }
+  }
+
   Future<void> _submit() async {
     final l10n = context.l10n;
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      _revealFirstInvalid();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.checkoutFixFields)),
+      );
+      return;
+    }
 
     if (AuthService.instance.session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -135,7 +178,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.isUnauthorized ? l10n.checkoutSignInRequired : e.message),
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: AppColors.danger,
         ),
       );
     } catch (_) {
@@ -144,7 +187,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(l10n.checkoutOrderFailed),
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: AppColors.danger,
         ),
       );
     }
@@ -175,6 +218,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               _sectionTitle(l10n.checkoutDeliveryTitle),
               const SizedBox(height: 8),
               _field(
+                fieldKey: _nameKey,
                 controller: _nameController,
                 label: l10n.checkoutNameLabel,
                 icon: Icons.person_outline,
@@ -182,6 +226,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
               const SizedBox(height: 12),
               _field(
+                fieldKey: _phoneKey,
                 controller: _phoneController,
                 label: l10n.checkoutPhoneLabel,
                 icon: Icons.phone_outlined,
@@ -190,6 +235,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
               const SizedBox(height: 12),
               _field(
+                fieldKey: _addressKey,
                 controller: _addressController,
                 label: l10n.checkoutAddressLabel,
                 icon: Icons.location_on_outlined,
@@ -197,6 +243,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
               const SizedBox(height: 12),
               _field(
+                fieldKey: _cityKey,
                 controller: _cityController,
                 label: l10n.checkoutCityLabel,
                 icon: Icons.location_city_outlined,
@@ -230,6 +277,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
               const SizedBox(height: 12),
               TextFormField(
+                key: _momoKey,
                 controller: _momoController,
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
@@ -258,18 +306,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           child: ElevatedButton.icon(
             onPressed: _submitting ? null : _submit,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.indigo,
-              foregroundColor: Colors.white,
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
               minimumSize: const Size(double.infinity, 52),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(25)),
             ),
             icon: _submitting
-                ? const SizedBox(
+                ? SizedBox(
                     height: 18,
                     width: 18,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
+                        strokeWidth: 2, color: theme.colorScheme.onPrimary),
                   )
                 : const Icon(Icons.lock_outline),
             label: Text(
@@ -291,17 +339,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       );
 
   /// The trust promise, above everything else on the screen.
+  ///
+  /// The pastel green plate would disappear on the dark ground, so the fill is
+  /// the success token at low alpha instead. The icon and headline keep the
+  /// green — that's the signal — while the paragraph runs at full text contrast
+  /// so it stays readable on both grounds.
   Widget _escrowBanner(AppLocalizations l10n) => Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.green.shade50,
+          color: AppColors.success.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.green.shade200),
+          border: Border.all(color: AppColors.success.withValues(alpha: 0.35)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.verified_user_outlined, color: Colors.green.shade700),
+            const Icon(Icons.verified_user_outlined, color: AppColors.success),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -309,16 +362,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 children: [
                   Text(
                     l10n.checkoutEscrowTitle,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.green.shade900,
+                      color: AppColors.success,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     l10n.checkoutEscrowBody,
                     style: TextStyle(
-                        fontSize: 13, height: 1.35, color: Colors.green.shade900),
+                        fontSize: 13,
+                        height: 1.35,
+                        color: Theme.of(context).colorScheme.onSurface),
                   ),
                 ],
               ),
@@ -331,9 +386,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Row(
         children: [
@@ -347,8 +402,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               errorBuilder: (_, __, ___) => Container(
                 width: 64,
                 height: 64,
-                color: Colors.grey.shade200,
-                child: const Icon(Icons.broken_image, color: Colors.grey),
+                color: theme.colorScheme.surfaceContainerHighest,
+                child: Icon(Icons.broken_image,
+                    color: theme.colorScheme.onSurfaceVariant),
               ),
             ),
           ),
@@ -369,7 +425,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   listing.displayPrice,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: theme.primaryColor,
+                    color: theme.colorScheme.primary,
                   ),
                 ),
               ],
@@ -405,9 +461,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     required String label,
     required IconData icon,
     required String error,
+    Key? fieldKey,
     TextInputType? keyboardType,
   }) =>
       TextFormField(
+        key: fieldKey,
         controller: controller,
         keyboardType: keyboardType,
         decoration: InputDecoration(
@@ -424,16 +482,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     required Color color,
   }) {
     final selected = _method == value;
+    final theme = Theme.of(context);
     return InkWell(
       onTap: () => setState(() => _method = value),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
-          color: selected ? color.withOpacity(0.06) : Colors.white,
+          // [color] is the wallet's own brand mark (MTN yellow, Orange orange),
+          // so it stays fixed; only the plate under it follows the theme.
+          color: selected
+              ? color.withValues(alpha: 0.12)
+              : theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? color : Colors.grey.shade300,
+            color: selected ? color : theme.dividerColor,
             width: selected ? 2 : 1,
           ),
         ),
@@ -463,9 +526,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         children: [
@@ -478,7 +541,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
               Text(
                 l10n.checkoutUnitPrice(widget.listing.displayPrice, _quantity),
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                style: TextStyle(
+                    fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -486,33 +550,35 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _summaryRow(l10n.checkoutSubtotal, _displaySubtotal),
           const SizedBox(height: 8),
           _summaryRow(l10n.checkoutTotal, _displaySubtotal,
-              emphasized: true, color: theme.primaryColor),
+              emphasized: true, color: theme.colorScheme.primary),
         ],
       ),
     );
   }
 
   Widget _summaryRow(String label, String value,
-          {bool emphasized = false, Color? color}) =>
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: emphasized ? 15 : 13,
-              fontWeight: emphasized ? FontWeight.bold : FontWeight.normal,
-              color: emphasized ? Colors.black : Colors.grey.shade700,
-            ),
+      {bool emphasized = false, Color? color}) {
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: emphasized ? 15 : 13,
+            fontWeight: emphasized ? FontWeight.bold : FontWeight.normal,
+            color: emphasized ? scheme.onSurface : scheme.onSurfaceVariant,
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: emphasized ? 18 : 13,
-              fontWeight: FontWeight.bold,
-              color: color ?? Colors.black87,
-            ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: emphasized ? 18 : 13,
+            fontWeight: FontWeight.bold,
+            color: color ?? scheme.onSurface,
           ),
-        ],
-      );
+        ),
+      ],
+    );
+  }
 }

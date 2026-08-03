@@ -6,6 +6,7 @@ import '../api/api_client.dart';
 import '../api/models.dart' as api;
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 
 class CreateListingScreen extends StatefulWidget {
   final Map<String, dynamic>? initialListing;
@@ -118,11 +119,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (BuildContext ctx) {
+        final accent = Theme.of(ctx).colorScheme.primary;
         return SafeArea(
           child: Wrap(
             children: [
               ListTile(
-                leading: const Icon(Icons.camera_alt, color: Colors.indigo),
+                leading: Icon(Icons.camera_alt, color: accent),
                 title: Text(l10n.createTakePhotoWithCamera),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -130,7 +132,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.photo_library, color: Colors.indigo),
+                leading: Icon(Icons.photo_library, color: accent),
                 title: Text(l10n.createChooseFromGallery),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -158,7 +160,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(message), backgroundColor: AppColors.danger),
     );
   }
 
@@ -233,7 +235,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(l10n.createListingPublished),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.success,
         ),
       );
       Navigator.pop(context, listing);
@@ -278,7 +280,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             onTap: onRemove,
             child: const CircleAvatar(
               radius: 12,
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.danger,
               child: Icon(Icons.close, size: 14, color: Colors.white),
             ),
           ),
@@ -315,6 +317,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final isEditing = widget.initialListing != null;
     final totalImagesCount = _existingImages.length + _newImageFiles.length;
 
@@ -345,17 +349,19 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                           width: 100,
                           margin: const EdgeInsets.only(right: 12),
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
+                            color: scheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade300),
+                            border: Border.all(color: theme.dividerColor),
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.add_a_photo_outlined, color: Colors.indigo),
+                              Icon(Icons.add_a_photo_outlined,
+                                  color: scheme.primary),
                               const SizedBox(height: 4),
                               Text(l10n.createAddMedia,
-                                  style: const TextStyle(fontSize: 12, color: Colors.indigo)),
+                                  style: TextStyle(
+                                      fontSize: 12, color: scheme.primary)),
                             ],
                           ),
                         ),
@@ -484,17 +490,17 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               ElevatedButton(
                 onPressed: _isSubmitting ? null : _submitForm,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo,
-                  foregroundColor: Colors.white,
+                  backgroundColor: scheme.primary,
+                  foregroundColor: scheme.onPrimary,
                   minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 child: _isSubmitting
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 22,
                         width: 22,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
+                            strokeWidth: 2, color: scheme.onPrimary),
                       )
                     : Text(isEditing ? l10n.createSaveChanges : l10n.createPublishItem,
                         style: const TextStyle(

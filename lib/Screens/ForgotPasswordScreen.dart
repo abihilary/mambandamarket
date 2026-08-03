@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../api/auth_service.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 
 /// Request a password-recovery email.
 ///
@@ -45,7 +46,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(rateLimited ? l10n.tooManyAttempts : e.message),
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: AppColors.danger,
         ),
       );
     } catch (_) {
@@ -78,7 +79,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         children: [
           const SizedBox(height: 40),
           Icon(Icons.mark_email_read_outlined,
-              size: 72, color: theme.primaryColor),
+              size: 72, color: theme.colorScheme.primary),
           const SizedBox(height: 24),
           Text(context.l10n.checkEmailTitle,
               textAlign: TextAlign.center,
@@ -88,14 +89,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           Text(
             context.l10n.checkEmailBody(_emailController.text.trim()),
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey.shade600, height: 1.4),
+            style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant, height: 1.4),
           ),
           const SizedBox(height: 32),
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
             style: ElevatedButton.styleFrom(
-              backgroundColor: theme.primaryColor,
-              foregroundColor: Colors.white,
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
               minimumSize: const Size(double.infinity, 50),
               shape:
                   RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -117,7 +119,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 16),
-            Icon(Icons.lock_reset, size: 64, color: theme.primaryColor),
+            Icon(Icons.lock_reset,
+                size: 64, color: theme.colorScheme.primary),
             const SizedBox(height: 20),
             Text(context.l10n.forgotPasswordHeading,
                 textAlign: TextAlign.center,
@@ -127,7 +130,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             Text(
               context.l10n.forgotPasswordBody,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey.shade600),
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 28),
             TextFormField(
@@ -150,18 +153,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               onPressed: _isLoading ? null : _submit,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: theme.primaryColor,
-                foregroundColor: Colors.white,
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
               ),
               child: _isLoading
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
+                          strokeWidth: 2,
+                          color: theme.colorScheme.onPrimary),
                     )
                   : Text(context.l10n.sendLink,
                       style: const TextStyle(

@@ -53,8 +53,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentBottomIndex,
-        selectedItemColor: Colors.indigo,
-        unselectedItemColor: Colors.grey,
+        // Selected/unselected colours come from bottomNavigationBarTheme so the
+        // bar tracks the brand accent in both light and dark.
         type: BottomNavigationBarType.fixed,
         onTap: _onTabTapped,
         items: [
@@ -67,8 +67,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             label: context.l10n.navFavorites,
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.add_circle_outline,
-                size: 30, color: Colors.indigo),
+            icon: Icon(Icons.add_circle_outline,
+                size: 30, color: Theme.of(context).colorScheme.primary),
             label: context.l10n.navPublish,
           ),
           BottomNavigationBarItem(

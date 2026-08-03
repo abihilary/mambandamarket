@@ -11,6 +11,7 @@ import '../api/auth_service.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 import 'document_picker.dart';
 
 /// A single chat thread.
@@ -260,7 +261,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(context.l10n.chatFileTooLarge(_maxAttachmentMb)),
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: AppColors.danger,
         ),
       );
       return;
@@ -299,6 +300,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   // ── Attachment rendering ──────────────────────────────────────────────────
 
   Widget _attachment(Message m, bool mine) {
+    final cs = Theme.of(context).colorScheme;
     final local = _localFiles[m.id];
 
     if (m.attachmentIsImage) {
@@ -320,7 +322,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     }
 
     // Documents: a tappable chip showing the real file name.
-    final fg = mine ? Colors.white : Colors.black87;
+    final fg = mine ? cs.onPrimary : cs.onSurface;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: InkWell(
@@ -328,7 +330,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
-            color: mine ? Colors.white24 : Colors.grey.shade200,
+            color: mine
+                ? cs.onPrimary.withValues(alpha: 0.14)
+                : cs.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
@@ -356,20 +360,20 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final cs = Theme.of(context).colorScheme;
     final other = widget.conversation.counterparty;
     final name = other?.displayName ?? l10n.chatDefaultUser;
     final listing = widget.conversation.listing;
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
         title: Row(
           children: [
             CircleAvatar(
               radius: 18,
-              backgroundColor: Colors.indigo.shade200,
+              backgroundColor: cs.onPrimary.withValues(alpha: 0.2),
               backgroundImage: (other?.avatarUrl?.isNotEmpty ?? false)
                   ? NetworkImage(other!.avatarUrl!)
                   : null,
@@ -377,8 +381,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   ? null
                   : Text(
                       name.isEmpty ? '?' : name[0].toUpperCase(),
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.indigo),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: cs.onPrimary),
                     ),
             ),
             const SizedBox(width: 10),
@@ -387,13 +391,17 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(name,
-                      style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.bold)),
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: cs.onPrimary)),
                   Text(
                     listing?.title ?? l10n.chatDefaultListing,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 11, color: Colors.white70),
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: cs.onPrimary.withValues(alpha: 0.7)),
                   ),
                 ],
               ),
@@ -407,7 +415,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           if (listing != null)
             Container(
               padding: const EdgeInsets.all(10),
-              color: Colors.white,
+              color: cs.surface,
               child: Row(
                 children: [
                   ClipRRect(
@@ -418,7 +426,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                       height: 45,
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => Container(
-                          width: 45, height: 45, color: Colors.grey.shade200),
+                          width: 45,
+                          height: 45,
+                          color: cs.surfaceContainerHighest),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -432,8 +442,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                             style: const TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 13)),
                         Text(listing.displayPrice,
-                            style: const TextStyle(
-                                color: Colors.indigo,
+                            style: TextStyle(
+                                color: cs.primary,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13)),
                       ],
@@ -455,7 +465,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                 _error == _loadErrorSentinel
                                     ? l10n.chatLoadError
                                     : _error!,
-                                style: const TextStyle(color: Colors.grey)),
+                                style: TextStyle(color: cs.onSurfaceVariant)),
                             const SizedBox(height: 12),
                             OutlinedButton(
                                 onPressed: () => _load(),
@@ -466,7 +476,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                     : _messages.isEmpty
                         ? Center(
                             child: Text(l10n.chatEmpty,
-                                style: const TextStyle(color: Colors.grey)),
+                                style: TextStyle(color: cs.onSurfaceVariant)),
                           )
                         : ListView.builder(
                             controller: _scrollController,
@@ -498,8 +508,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                                 0.75),
                                         decoration: BoxDecoration(
                                           color: mine
-                                              ? Colors.indigo
-                                              : Colors.white,
+                                              ? cs.primary
+                                              : cs.surface,
                                           borderRadius:
                                               BorderRadius.circular(14),
                                         ),
@@ -518,8 +528,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                                   m.body!,
                                                   style: TextStyle(
                                                       color: mine
-                                                          ? Colors.white
-                                                          : Colors.black87),
+                                                          ? cs.onPrimary
+                                                          : cs.onSurface),
                                                 ),
                                               const SizedBox(height: 3),
                                               Row(
@@ -530,8 +540,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                                       style: TextStyle(
                                                           fontSize: 10,
                                                           color: mine
-                                                              ? Colors.white70
-                                                              : Colors.grey)),
+                                                              ? cs.onPrimary
+                                                                  .withValues(
+                                                                      alpha:
+                                                                          0.7)
+                                                              : cs.onSurfaceVariant)),
                                                   if (mine) ...[
                                                     const SizedBox(width: 4),
                                                     _statusIcon(m),
@@ -548,9 +561,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                               bottom: 8, right: 4),
                                           child: Text(
                                             l10n.chatSendFailed,
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                                 fontSize: 10,
-                                                color: Colors.red.shade700),
+                                                color: AppColors.danger),
                                           ),
                                         )
                                       else
@@ -566,14 +579,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           // Composer
           Container(
             padding: const EdgeInsets.fromLTRB(6, 8, 12, 12),
-            color: Colors.white,
+            color: cs.surface,
             child: SafeArea(
               top: false,
               child: Row(
                 children: [
                   IconButton(
                     icon: const Icon(Icons.attach_file),
-                    color: Colors.indigo,
+                    color: cs.primary,
                     tooltip: l10n.chatAttach,
                     onPressed: _openAttachSheet,
                   ),
@@ -591,18 +604,17 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                             borderRadius: BorderRadius.circular(24),
                             borderSide: BorderSide.none),
                         filled: true,
-                        fillColor: Colors.grey.shade100,
+                        fillColor: cs.surfaceContainerHighest,
                       ),
                       onSubmitted: (_) => _sendText(),
                     ),
                   ),
                   const SizedBox(width: 8),
                   CircleAvatar(
-                    backgroundColor: Colors.indigo,
+                    backgroundColor: cs.primary,
                     // Always live: sending no longer blocks on the network.
                     child: IconButton(
-                      icon: const Icon(Icons.send,
-                          color: Colors.white, size: 20),
+                      icon: Icon(Icons.send, color: cs.onPrimary, size: 20),
                       onPressed: _sendText,
                     ),
                   ),
@@ -616,16 +628,23 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   }
 
   Widget _statusIcon(Message m) {
+    // These sit inside the outgoing bubble, which is filled with the brand
+    // colour — everything here has to be an `onPrimary` tint to stay legible
+    // against lime in the dark theme as well as near-black in the light one.
+    final onBubble = Theme.of(context).colorScheme.onPrimary;
     if (m.hasFailed) {
-      return Icon(Icons.error_outline, size: 13, color: Colors.red.shade200);
+      return const Icon(Icons.error_outline, size: 13, color: AppColors.danger);
     }
     if (m.isPending) {
-      return const Icon(Icons.schedule, size: 13, color: Colors.white70);
+      return Icon(Icons.schedule,
+          size: 13, color: onBubble.withValues(alpha: 0.7));
     }
+    // Read vs delivered is carried by the glyph (done_all vs done); the read
+    // state just gets the fuller-strength tint.
     return Icon(
       m.isRead ? Icons.done_all : Icons.done,
       size: 13,
-      color: m.isRead ? Colors.lightBlueAccent : Colors.white70,
+      color: m.isRead ? onBubble : onBubble.withValues(alpha: 0.7),
     );
   }
 }

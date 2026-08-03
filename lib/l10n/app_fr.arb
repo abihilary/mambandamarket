@@ -471,6 +471,11 @@
   "checkoutMomoLabel": "Numéro Mobile Money",
   "checkoutMomoHelper": "Vous recevrez une demande sur ce numéro pour valider le paiement.",
   "checkoutMomoRequired": "Veuillez saisir le numéro à débiter",
+  "checkoutFixFields": "Veuillez remplir les champs en surbrillance.",
+  "appearance": "Apparence",
+  "appearanceSystem": "Par défaut du système",
+  "appearanceLight": "Clair",
+  "appearanceDark": "Sombre",
   "checkoutPayNow": "Payer {amount} en toute sécurité",
   "@checkoutPayNow": {
     "placeholders": {

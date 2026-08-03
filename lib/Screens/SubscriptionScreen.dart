@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   final String roleType; // 'buyer_seller' or 'business'
@@ -107,6 +108,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   Widget build(BuildContext context) {
     final isBusiness = widget.roleType == 'business';
     final tierData = _getTierData(isBusiness);
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -129,7 +131,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                     const SizedBox(height: 6),
                     Text(
                       context.l10n.subChoosePlanSubtitle,
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                      style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
                     ),
                     const SizedBox(height: 20),
 
@@ -137,7 +139,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                     Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
+                        color: cs.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -148,7 +150,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                               child: Container(
                                 padding: const EdgeInsets.symmetric(vertical: 10),
                                 decoration: BoxDecoration(
-                                  color: !_isAnnual ? Colors.white : Colors.transparent,
+                                  color: !_isAnnual ? cs.surface : Colors.transparent,
                                   borderRadius: BorderRadius.circular(10),
                                   boxShadow: !_isAnnual
                                       ? [const BoxShadow(color: Colors.black12, blurRadius: 4)]
@@ -169,7 +171,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                               child: Container(
                                 padding: const EdgeInsets.symmetric(vertical: 10),
                                 decoration: BoxDecoration(
-                                  color: _isAnnual ? Colors.white : Colors.transparent,
+                                  color: _isAnnual ? cs.surface : Colors.transparent,
                                   borderRadius: BorderRadius.circular(10),
                                   boxShadow: _isAnnual
                                       ? [const BoxShadow(color: Colors.black12, blurRadius: 4)]
@@ -178,9 +180,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                                 child: Center(
                                   child: Text(
                                     context.l10n.subBillingYearly,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.indigo,
+                                      color: cs.primary,
                                     ),
                                   ),
                                 ),
@@ -223,12 +225,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                           onPressed: () {},
                           child: Text(context.l10n.subTermsOfUse, style: const TextStyle(fontSize: 12)),
                         ),
-                        const Text('•', style: TextStyle(color: Colors.grey)),
+                        Text('•', style: TextStyle(color: cs.onSurfaceVariant)),
                         TextButton(
                           onPressed: () {},
                           child: Text(context.l10n.subPrivacyPolicy, style: const TextStyle(fontSize: 12)),
                         ),
-                        const Text('•', style: TextStyle(color: Colors.grey)),
+                        Text('•', style: TextStyle(color: cs.onSurfaceVariant)),
                         TextButton(
                           onPressed: () {},
                           child: Text(context.l10n.subRestorePurchases, style: const TextStyle(fontSize: 12)),
@@ -244,10 +246,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             Container(
               padding: const EdgeInsets.all(20.0),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cs.surface,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     offset: const Offset(0, -4),
                     blurRadius: 10,
                   ),
@@ -258,18 +260,18 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _processSubscription,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.indigo,
-                    foregroundColor: Colors.white,
+                    backgroundColor: cs.primary,
+                    foregroundColor: cs.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   child: _isLoading
-                      ? const SizedBox(
+                      ? SizedBox(
                     height: 20,
                     width: 20,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    child: CircularProgressIndicator(color: cs.onPrimary, strokeWidth: 2),
                   )
                       : Text(
                     context.l10n.subSubscribeTo(tierData[_selectedTier]!['name']),
@@ -288,6 +290,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     required String id,
     required Map<String, dynamic> data,
   }) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     final isSelected = _selectedTier == id;
     final price = _isAnnual ? data['annualPrice'] : data['monthlyPrice'];
     final List<String> features = List<String>.from(data['features']);
@@ -302,14 +306,16 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: isSelected ? Colors.indigo.shade50.withOpacity(0.5) : Colors.white,
+              color: isSelected
+                  ? Color.alphaBlend(cs.primary.withValues(alpha: 0.06), cs.surface)
+                  : cs.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isSelected ? Colors.indigo : Colors.grey.shade300,
+                color: isSelected ? cs.primary : theme.dividerColor,
                 width: isSelected ? 2 : 1,
               ),
               boxShadow: isSelected
-                  ? [BoxShadow(color: Colors.indigo.withOpacity(0.1), blurRadius: 10)]
+                  ? [BoxShadow(color: cs.primary.withValues(alpha: 0.1), blurRadius: 10)]
                   : [],
             ),
             child: Column(
@@ -323,13 +329,13 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: isSelected ? Colors.indigo : Colors.black,
+                        color: isSelected ? cs.primary : cs.onSurface,
                       ),
                     ),
                     Radio<String>(
                       value: id,
                       groupValue: _selectedTier,
-                      activeColor: Colors.indigo,
+                      activeColor: cs.primary,
                       onChanged: (val) {
                         if (val != null) setState(() => _selectedTier = val);
                       },
@@ -345,20 +351,20 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: cs.onSurface,
                       ),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       context.l10n.subPerMonth,
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                      style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13),
                     ),
                   ],
                 ),
                 if (_isAnnual)
                   Text(
                     context.l10n.subBilledAnnually,
-                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                    style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
                   ),
                 const Divider(height: 24),
                 ...features.map((feature) => _buildFeatureRow(feature)),
@@ -374,13 +380,17 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.indigo : Colors.amber.shade800,
+                  // Unselected badges keep a distinct amber tier accent. The
+                  // chip carries its own background, so it reads identically
+                  // in both themes — hence the fixed near-black label, which
+                  // amber cannot carry in white.
+                  color: isSelected ? cs.primary : AppColors.warning,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   badge,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: isSelected ? cs.onPrimary : AppColors.ink,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.5,
@@ -394,16 +404,17 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   }
 
   Widget _buildFeatureRow(String text) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6.0),
       child: Row(
         children: [
-          const Icon(Icons.check_circle, size: 16, color: Colors.indigo),
+          Icon(Icons.check_circle, size: 16, color: cs.primary),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(fontSize: 13, color: Colors.black87),
+              style: TextStyle(fontSize: 13, color: cs.onSurface),
             ),
           ),
         ],

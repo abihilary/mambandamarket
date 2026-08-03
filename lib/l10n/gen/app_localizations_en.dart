@@ -1313,6 +1313,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkoutMomoRequired => 'Please enter the number to charge';
 
   @override
+  String get checkoutFixFields => 'Please complete the highlighted fields.';
+
+  @override
+  String get appearance => 'Appearance';
+
+  @override
+  String get appearanceSystem => 'System default';
+
+  @override
+  String get appearanceLight => 'Light';
+
+  @override
+  String get appearanceDark => 'Dark';
+
+  @override
   String checkoutPayNow(Object amount) {
     return 'Pay $amount securely';
   }

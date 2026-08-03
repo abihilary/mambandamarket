@@ -6,6 +6,7 @@ import '../api/auth_service.dart';
 import '../api/config.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 
 class IndividualSellerOnboardingScreen extends StatefulWidget {
   const IndividualSellerOnboardingScreen({super.key});
@@ -66,10 +67,10 @@ class _IndividualSellerOnboardingScreenState
               ),
               if (_profileImage != null)
                 ListTile(
-                  leading: const Icon(Icons.delete, color: Colors.red),
+                  leading: const Icon(Icons.delete, color: AppColors.danger),
                   title: Text(
                     context.l10n.onbIndRemovePhoto,
-                    style: const TextStyle(color: Colors.red),
+                    style: const TextStyle(color: AppColors.danger),
                   ),
                   onTap: () {
                     Navigator.of(context).pop();
@@ -170,6 +171,7 @@ class _IndividualSellerOnboardingScreenState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -195,7 +197,7 @@ class _IndividualSellerOnboardingScreenState
                 Text(
                   context.l10n.onbIndHeaderSubtitle,
                   style: TextStyle(
-                    color: Colors.grey.shade600,
+                    color: scheme.onSurfaceVariant,
                     fontSize: 14,
                     height: 1.4,
                   ),
@@ -208,7 +210,7 @@ class _IndividualSellerOnboardingScreenState
                     children: [
                       CircleAvatar(
                         radius: 48,
-                        backgroundColor: Colors.grey.shade200,
+                        backgroundColor: scheme.surfaceContainerHighest,
                         backgroundImage: _profileImage != null
                             ? FileImage(_profileImage!)
                             : null,
@@ -216,7 +218,7 @@ class _IndividualSellerOnboardingScreenState
                             ? Icon(
                           Icons.person,
                           size: 52,
-                          color: Colors.grey.shade400,
+                          color: scheme.onSurfaceVariant,
                         )
                             : null,
                       ),
@@ -228,10 +230,10 @@ class _IndividualSellerOnboardingScreenState
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: theme.primaryColor,
+                              color: scheme.primary,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: Colors.white,
+                                color: scheme.surface,
                                 width: 2,
                               ),
                             ),
@@ -239,7 +241,7 @@ class _IndividualSellerOnboardingScreenState
                               _profileImage == null
                                   ? Icons.camera_alt
                                   : Icons.edit,
-                              color: Colors.white,
+                              color: scheme.onPrimary,
                               size: 16,
                             ),
                           ),
@@ -323,22 +325,24 @@ class _IndividualSellerOnboardingScreenState
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
+                    // Informational, not a money state — a neutral plate rather
+                    // than a pastel blue that only exists in light mode.
+                    color: scheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.blue.shade100),
+                    border: Border.all(color: theme.dividerColor),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Icon(Icons.shield_outlined,
-                          color: Colors.blue.shade700, size: 20),
+                          color: scheme.primary, size: 20),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           context.l10n.onbIndInfoBanner,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.blue.shade900,
+                            color: scheme.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -354,18 +358,18 @@ class _IndividualSellerOnboardingScreenState
                   child: ElevatedButton(
                     onPressed: _isSubmitting ? null : _submitOnboarding,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.primaryColor,
-                      foregroundColor: Colors.white,
+                      backgroundColor: scheme.primary,
+                      foregroundColor: scheme.onPrimary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     child: _isSubmitting
-                        ? const SizedBox(
+                        ? SizedBox(
                       width: 24,
                       height: 24,
                       child: CircularProgressIndicator(
-                        color: Colors.white,
+                        color: scheme.onPrimary,
                         strokeWidth: 2.5,
                       ),
                     )

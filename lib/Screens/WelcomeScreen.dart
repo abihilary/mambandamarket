@@ -81,7 +81,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               Icon(
                 Icons.shopping_bag_outlined,
                 size: 100,
-                color: theme.primaryColor,
+                color: theme.colorScheme.primary,
               ),
               const SizedBox(height: 24),
               Text(
@@ -89,7 +89,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 textAlign: TextAlign.center,
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 12),
@@ -97,7 +97,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 l10n.welcomeSubtitle,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey.shade600,
+                  color: theme.colorScheme.onSurfaceVariant,
                   height: 1.4,
                 ),
               ),
@@ -108,18 +108,19 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 onPressed: _isLoading ? null : _handleGoogleSignIn,
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  side: BorderSide(color: Colors.grey.shade300),
+                  side: BorderSide(color: theme.dividerColor),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
+                // Google's own mark stays Google-red in both themes.
                 icon: const Icon(Icons.g_mobiledata, size: 28, color: Colors.red),
                 label: Text(
                   l10n.continueWithGoogle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -131,8 +132,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   Navigator.pushNamed(context, '/role-selection');
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.primaryColor,
-                  foregroundColor: Colors.white,
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -153,7 +154,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 children: [
                   Text(
                     l10n.alreadyHaveAccount,
-                    style: TextStyle(color: Colors.grey.shade600),
+                    style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
                   ),
                   TextButton(
                     onPressed: () {

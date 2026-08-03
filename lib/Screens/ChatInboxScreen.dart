@@ -72,6 +72,7 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.messagesTitle,
@@ -86,14 +87,15 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.cloud_off, size: 44, color: Colors.grey),
+                        Icon(Icons.cloud_off,
+                            size: 44, color: cs.onSurfaceVariant),
                         const SizedBox(height: 12),
                         Text(
                             _error == _errSignIn
                                 ? l10n.signInToSeeMessages
                                 : l10n.couldNotLoadMessages,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.grey)),
+                            style: TextStyle(color: cs.onSurfaceVariant)),
                         const SizedBox(height: 16),
                         OutlinedButton(
                             onPressed: _load, child: Text(l10n.retry)),
@@ -107,7 +109,7 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
                     if (chats.isEmpty) {
                       return Center(
                         child: Text(l10n.noChatsYet,
-                            style: TextStyle(color: Colors.grey)),
+                            style: TextStyle(color: cs.onSurfaceVariant)),
                       );
                     }
                     return RefreshIndicator(
@@ -123,7 +125,8 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
 
                           return ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: Colors.indigo.shade100,
+                              backgroundColor:
+                                  cs.primary.withValues(alpha: 0.12),
                               backgroundImage:
                                   (avatar != null && avatar.isNotEmpty)
                                       ? NetworkImage(avatar)
@@ -133,9 +136,9 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
                                       name.isEmpty
                                           ? '?'
                                           : name[0].toUpperCase(),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.indigo),
+                                          color: cs.primary),
                                     )
                                   : null,
                             ),
@@ -151,25 +154,25 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
                                 Text(_timeLabel(chat.lastMessageAt),
                                     style: TextStyle(
                                         fontSize: 11,
-                                        color: Colors.grey.shade600)),
+                                        color: cs.onSurfaceVariant)),
                               ],
                             ),
                             subtitle: Text(
                               chat.listing?.title ?? 'Annonce',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: Colors.grey.shade700),
+                              style: TextStyle(color: cs.onSurfaceVariant),
                             ),
                             trailing: chat.unread > 0
                                 ? Container(
                                     padding: const EdgeInsets.all(7),
-                                    decoration: const BoxDecoration(
-                                      color: Colors.indigo,
+                                    decoration: BoxDecoration(
+                                      color: cs.primary,
                                       shape: BoxShape.circle,
                                     ),
                                     child: Text('${chat.unread}',
-                                        style: const TextStyle(
-                                            color: Colors.white,
+                                        style: TextStyle(
+                                            color: cs.onPrimary,
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold)),
                                   )

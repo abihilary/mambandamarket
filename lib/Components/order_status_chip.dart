@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 
 /// Status pills shared by the buyer's order list/detail and the company
 /// dashboard, so one status never gets two different colours or wordings
@@ -19,15 +20,22 @@ String orderStatusLabel(AppLocalizations l10n, String status) =>
       _ => status,
     };
 
-Color orderStatusColor(String status) => switch (status) {
-      'pending_payment' => Colors.orange.shade800,
-      'paid' => Colors.indigo,
-      'fulfilled' => Colors.blue.shade700,
-      'completed' => Colors.green.shade700,
-      'cancelled' => Colors.grey.shade600,
-      'refunded' => Colors.red.shade700,
-      _ => Colors.grey.shade600,
-    };
+/// Resolved against the active theme so a pill stays legible on either ground:
+/// the money states go through the semantic tokens, the brand state through the
+/// scheme, and the in-transit blue flips tone with the brightness.
+Color orderStatusColor(BuildContext context, String status) {
+  final theme = Theme.of(context);
+  final isDark = theme.brightness == Brightness.dark;
+  return switch (status) {
+    'pending_payment' => AppColors.warning,
+    'paid' => theme.colorScheme.primary,
+    'fulfilled' => isDark ? Colors.blue.shade300 : Colors.blue.shade700,
+    'completed' => AppColors.success,
+    'cancelled' => theme.colorScheme.onSurfaceVariant,
+    'refunded' => AppColors.danger,
+    _ => theme.colorScheme.onSurfaceVariant,
+  };
+}
 
 String payoutStatusLabel(AppLocalizations l10n, String status) =>
     switch (status) {
@@ -39,14 +47,18 @@ String payoutStatusLabel(AppLocalizations l10n, String status) =>
       _ => status,
     };
 
-Color payoutStatusColor(String status) => switch (status) {
-      'pending' => Colors.orange.shade800,
-      'processing' => Colors.blue.shade700,
-      'paid' => Colors.green.shade700,
-      'failed' => Colors.red.shade700,
-      'cancelled' => Colors.grey.shade600,
-      _ => Colors.grey.shade600,
-    };
+Color payoutStatusColor(BuildContext context, String status) {
+  final theme = Theme.of(context);
+  final isDark = theme.brightness == Brightness.dark;
+  return switch (status) {
+    'pending' => AppColors.warning,
+    'processing' => isDark ? Colors.blue.shade300 : Colors.blue.shade700,
+    'paid' => AppColors.success,
+    'failed' => AppColors.danger,
+    'cancelled' => theme.colorScheme.onSurfaceVariant,
+    _ => theme.colorScheme.onSurfaceVariant,
+  };
+}
 
 /// Small tinted pill. [isPayout] switches the label/colour table without
 /// callers having to pass both.
@@ -59,15 +71,16 @@ class StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final color =
-        isPayout ? payoutStatusColor(status) : orderStatusColor(status);
+    final color = isPayout
+        ? payoutStatusColor(context, status)
+        : orderStatusColor(context, status);
     final label =
         isPayout ? payoutStatusLabel(l10n, status) : orderStatusLabel(l10n, status);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(

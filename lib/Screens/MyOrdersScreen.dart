@@ -6,6 +6,7 @@ import '../api/auth_service.dart';
 import '../api/models.dart' as api;
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 import 'OrderDetailScreen.dart';
 
 /// The buyer's purchases. Cursor-paged the same way the chat history is, so a
@@ -99,6 +100,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
 
     return Scaffold(
       appBar: AppBar(
@@ -115,12 +117,11 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.cloud_off,
-                              size: 44, color: Colors.grey),
+                          Icon(Icons.cloud_off, size: 44, color: muted),
                           const SizedBox(height: 12),
                           Text(_message(l10n),
                               textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.grey)),
+                              style: TextStyle(color: muted)),
                           const SizedBox(height: 16),
                           OutlinedButton(
                               onPressed: _load,
@@ -139,13 +140,12 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                             children: [
                               const SizedBox(height: 120),
                               Icon(Icons.receipt_long_outlined,
-                                  size: 56, color: Colors.grey.shade400),
+                                  size: 56, color: muted),
                               const SizedBox(height: 12),
                               Center(
                                 child: Text(
                                   l10n.ordersEmpty,
-                                  style:
-                                      TextStyle(color: Colors.grey.shade600),
+                                  style: TextStyle(color: muted),
                                 ),
                               ),
                             ],
@@ -178,6 +178,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
 
   Widget _orderTile(AppLocalizations l10n, api.Order order) {
     final ml = MaterialLocalizations.of(context);
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
     final title = order.items.isEmpty
         ? order.reference
         : order.items.first.titleSnapshot;
@@ -185,9 +187,9 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -224,14 +226,14 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
               const SizedBox(height: 6),
               Text(
                 '${order.reference} · ${l10n.ordersItemCount(order.itemCount)}',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                style: TextStyle(fontSize: 12, color: muted),
               ),
               if (order.createdAt != null) ...[
                 const SizedBox(height: 2),
                 Text(
                   l10n.ordersPlacedOn(
                       ml.formatMediumDate(order.createdAt!.toLocal())),
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 12, color: muted),
                 ),
               ],
               const SizedBox(height: 8),
@@ -243,18 +245,18 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                     Expanded(
                       child: Row(
                         children: [
-                          Icon(Icons.lock_outline,
-                              size: 14, color: Colors.green.shade700),
+                          const Icon(Icons.lock_outline,
+                              size: 14, color: AppColors.success),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               l10n.orderEscrowHeldTitle,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.green.shade700,
+                                color: AppColors.success,
                               ),
                             ),
                           ),
@@ -265,10 +267,10 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                     const Spacer(),
                   Text(
                     order.displayTotal,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
-                        color: Colors.indigo),
+                        color: theme.colorScheme.primary),
                   ),
                 ],
               ),

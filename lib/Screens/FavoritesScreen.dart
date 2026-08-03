@@ -4,6 +4,7 @@ import '../api/auth_service.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
@@ -36,6 +37,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   Widget build(BuildContext context) {
     final signedIn = AuthService.instance.session != null;
     final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -45,7 +47,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       body: !signedIn
           ? Center(
               child: Text(l10n.signInToSeeFavorites,
-                  style: const TextStyle(color: Colors.grey)),
+                  style: TextStyle(color: scheme.onSurfaceVariant)),
             )
           : _isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -55,7 +57,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     if (favorites.isEmpty) {
                       return Center(
                         child: Text(l10n.noFavoritesYet,
-                            style: const TextStyle(color: Colors.grey)),
+                            style: TextStyle(color: scheme.onSurfaceVariant)),
                       );
                     }
 
@@ -79,7 +81,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                   errorBuilder: (_, __, ___) => Container(
                                       width: 50,
                                       height: 50,
-                                      color: Colors.grey.shade300),
+                                      color: scheme.surfaceContainerHighest),
                                 ),
                               ),
                               title: Text(item.title,
@@ -87,11 +89,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                       fontWeight: FontWeight.bold)),
                               subtitle: Text(item.displayPrice,
                                   style: const TextStyle(
-                                      color: Colors.indigo,
+                                      color: AppColors.success,
                                       fontWeight: FontWeight.bold)),
                               trailing: IconButton(
                                 icon: const Icon(Icons.favorite,
-                                    color: Colors.red),
+                                    color: AppColors.danger),
                                 onPressed: () => _repo.toggle(item.id),
                               ),
                             ),

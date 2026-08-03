@@ -6,6 +6,7 @@ import '../api/auth_service.dart';
 import '../api/models.dart' as api;
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 import 'CreateListingScreen.dart';
 
 class BusinessDashboardScreen extends StatefulWidget {
@@ -161,7 +162,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                 _showSnackBar(e.message);
               }
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             child: Text(l10n.bizDashDelete),
           ),
         ],
@@ -201,18 +202,21 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
   }
 
   Widget _buildImageWidget(String path) {
+    final cs = Theme.of(context).colorScheme;
+    Widget placeholder() => Container(
+          width: 80,
+          height: 80,
+          color: cs.surfaceContainerHighest,
+          child: Icon(Icons.broken_image, color: cs.onSurfaceVariant),
+        );
+
     if (path.startsWith('http://') || path.startsWith('https://')) {
       return Image.network(
         path,
         width: 80,
         height: 80,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => Container(
-          width: 80,
-          height: 80,
-          color: Colors.grey.shade200,
-          child: const Icon(Icons.broken_image, color: Colors.grey),
-        ),
+        errorBuilder: (context, error, stackTrace) => placeholder(),
       );
     } else {
       return Image.file(
@@ -220,12 +224,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
         width: 80,
         height: 80,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => Container(
-          width: 80,
-          height: 80,
-          color: Colors.grey.shade200,
-          child: const Icon(Icons.broken_image, color: Colors.grey),
-        ),
+        errorBuilder: (context, error, stackTrace) => placeholder(),
       );
     }
   }
@@ -233,6 +232,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     final displayedList = _filteredInventory;
 
     return Scaffold(
@@ -257,8 +257,8 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openCreateListingModal,
-        backgroundColor: theme.primaryColor,
-        foregroundColor: Colors.white,
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
         icon: const Icon(Icons.add_a_photo_outlined),
         label: Text(
           context.l10n.bizDashAddNewItem,
@@ -314,7 +314,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 32),
                 child: Column(
                   children: [
-                    const Icon(Icons.cloud_off, size: 44, color: Colors.grey),
+                    Icon(Icons.cloud_off, size: 44, color: cs.onSurfaceVariant),
                     const SizedBox(height: 12),
                     Text(
                         _error == _signInSentinel
@@ -323,7 +323,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                                 ? context.l10n.bizDashLoadError
                                 : _error!,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.grey)),
+                        style: TextStyle(color: cs.onSurfaceVariant)),
                     const SizedBox(height: 16),
                     OutlinedButton(onPressed: _load, child: Text(context.l10n.bizDashTryAgain)),
                   ],
@@ -338,7 +338,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                         ? context.l10n.bizDashNoItems
                         : context.l10n.bizDashNoMatch(
                             _filterLabel(context, _selectedFilter)),
-                    style: TextStyle(color: Colors.grey.shade600),
+                    style: TextStyle(color: cs.onSurfaceVariant),
                   ),
                 ),
               )
@@ -360,13 +360,14 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
   }
 
   Widget _buildStoreHeaderCard(ThemeData theme, BuildContext context) {
+    final cs = theme.colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -377,7 +378,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
           Container(
             height: 90,
             decoration: BoxDecoration(
-              color: Colors.indigo.shade100,
+              color: cs.surfaceContainerHighest,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
               image: const DecorationImage(
                 image: NetworkImage('https://picsum.photos/600/200?store=1'),
@@ -393,7 +394,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                   children: [
                     CircleAvatar(
                       radius: 26,
-                      backgroundColor: Colors.indigo.shade50,
+                      backgroundColor: cs.surfaceContainerHighest,
                       backgroundImage: const NetworkImage('https://picsum.photos/100/100?logo=1'),
                     ),
                     const SizedBox(width: 12),
@@ -413,7 +414,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                               const SizedBox(width: 4),
                               // Only badge stores the backend actually marked verified.
                               if (_store?.isVerified == true)
-                                Icon(Icons.verified, size: 16, color: theme.primaryColor),
+                                Icon(Icons.verified, size: 16, color: cs.primary),
                             ],
                           ),
                           const SizedBox(height: 2),
@@ -423,7 +424,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                                 : '${_store!.isVerified ? context.l10n.bizDashVerifiedMerchant : ""}'
                                     '${_store!.ratingAvg.toStringAsFixed(1)} ★ '
                                     '(${context.l10n.bizDashReviewsCount(_store!.ratingCount)})',
-                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                           ),
                         ],
                       ),
@@ -443,8 +444,8 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                         icon: const Icon(Icons.storefront_outlined, size: 18),
                         label: Text(context.l10n.bizDashGoToHomeMarketplace),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.primaryColor,
-                          foregroundColor: Colors.white,
+                          backgroundColor: cs.primary,
+                          foregroundColor: cs.onPrimary,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -472,6 +473,10 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
   }
 
   Widget _buildStatsOverview() {
+    // Each tile keeps a distinct accent so the four metrics stay tellable
+    // apart: money and traffic go through the semantic tokens, inquiries
+    // takes the brand accent, and units sold keeps a blue mid-tone that has
+    // enough contrast on either ground.
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -480,57 +485,59 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
               title: context.l10n.bizDashTotalRevenue,
               value: api.formatPrice(_stats?.earningsCents ?? 0, currency: _storeCurrency),
               icon: Icons.payments_outlined,
-              color: Colors.green),
+              color: AppColors.success),
           const SizedBox(width: 12),
           _buildStatCard(
               title: context.l10n.bizDashItemsSold,
               value: context.l10n.bizDashUnitsCount(_stats?.soldListings ?? 0),
               icon: Icons.shopping_bag_outlined,
-              color: Colors.blue),
+              color: Colors.blue.shade400),
           const SizedBox(width: 12),
           _buildStatCard(
               title: context.l10n.bizDashStoreVisits,
               value: '${_stats?.totalViews ?? 0}',
               icon: Icons.visibility_outlined,
-              color: Colors.orange),
+              color: AppColors.warning),
           const SizedBox(width: 12),
           _buildStatCard(
               title: context.l10n.bizDashInquiries,
               value: '${_stats?.inquiries ?? 0}',
               icon: Icons.chat_bubble_outline,
-              color: Colors.deepPurple),
+              color: Theme.of(context).colorScheme.primary),
         ],
       ),
     );
   }
 
   Widget _buildStatCard({required String title, required String value, required IconData icon, required Color color}) {
+    final theme = Theme.of(context);
     return Container(
       width: 140,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
             child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(height: 12),
           Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           const SizedBox(height: 2),
-          Text(title, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+          Text(title, style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
         ],
       ),
     );
   }
 
   Widget _buildInventoryCard(Map<String, dynamic> item, int index, ThemeData theme) {
+    final cs = theme.colorScheme;
     final List<String> images = List<String>.from(item['images'] ?? []);
     final String mainImage = images.isNotEmpty ? images.first : 'https://picsum.photos/300/200';
     final int quantity = item['quantity'] ?? 1;
@@ -538,9 +545,9 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Padding(
         padding: const EdgeInsets.all(10.0),
@@ -559,7 +566,9 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.7),
+                        // Scrim over the photo itself — stays a fixed dark
+                        // wash with a white count in both themes.
+                        color: Colors.black.withValues(alpha: 0.7),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -586,19 +595,19 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                     children: [
                       Text(
                         item['category'] ?? context.l10n.bizDashGeneralCategory,
-                        style: TextStyle(fontSize: 11, color: Colors.indigo.shade600, fontWeight: FontWeight.w600),
+                        style: TextStyle(fontSize: 11, color: cs.primary, fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         context.l10n.bizDashQty(quantity),
-                        style: TextStyle(fontSize: 11, color: Colors.grey.shade700, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     item['priceLabel'] as String,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: theme.primaryColor),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: cs.primary),
                   ),
                   const SizedBox(height: 6),
                   Row(
@@ -606,22 +615,22 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
+                          color: cs.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Text(item['condition'], style: TextStyle(fontSize: 10, color: Colors.grey.shade800)),
+                        child: Text(item['condition'], style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
                       ),
                       const SizedBox(width: 6),
                       if (item['hasGuarantee'] == true)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.green.shade50,
+                            color: AppColors.success.withValues(alpha: 0.14),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             context.l10n.bizDashGuarantee,
-                            style: const TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontSize: 10, color: AppColors.success, fontWeight: FontWeight.bold),
                           ),
                         ),
                     ],
@@ -630,7 +639,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
               ),
             ),
             PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, color: Colors.grey),
+              icon: Icon(Icons.more_vert, color: cs.onSurfaceVariant),
               onSelected: (value) {
                 if (value == 'edit') {
                   _openEditListingModal(item, index);
@@ -643,7 +652,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                 PopupMenuItem(
                   value: 'delete',
                   child: Text(context.l10n.bizDashDeleteItem,
-                      style: const TextStyle(color: Colors.red)),
+                      style: const TextStyle(color: AppColors.danger)),
                 ),
               ],
             ),

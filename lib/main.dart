@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'api/auth_service.dart';
 import 'api/config.dart';
 import 'l10n/l10n.dart';
+import 'theme/app_theme.dart';
+import 'theme/theme_controller.dart';
 
 // Navigation Shell
 
@@ -37,9 +38,10 @@ Future<void> main() async {
     publishableKey: AppConfig.supabasePublishableKey,
   );
 
-  // Restore the saved language before the first frame so the UI never flashes
-  // in the wrong language.
+  // Restore the saved language and theme before the first frame so the UI never
+  // flashes in the wrong language or briefly paints light before going dark.
   await LocaleController.instance.load();
+  await ThemeController.instance.load();
 
   runApp(const MarketplaceApp());
 }
@@ -85,7 +87,9 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
     // the new locale immediately.
     return ValueListenableBuilder<Locale?>(
       valueListenable: LocaleController.instance.locale,
-      builder: (context, locale, _) => MaterialApp(
+      builder: (context, locale, _) => ValueListenableBuilder<ThemeMode>(
+        valueListenable: ThemeController.instance.mode,
+        builder: (context, themeMode, _) => MaterialApp(
         navigatorKey: _navigatorKey,
         title: 'Mambanda Market',
         debugShowCheckedModeBanner: false,
@@ -93,14 +97,9 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
         locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        theme: ThemeData(
-          primarySwatch: Colors.indigo,
-          scaffoldBackgroundColor: const Color(0xFFF8F9FA),
-          useMaterial3: true,
-          textTheme: GoogleFonts.poppinsTextTheme(
-            Theme.of(context).textTheme,
-          ),
-        ),
+        theme: AppTheme.light(),
+        darkTheme: AppTheme.dark(),
+        themeMode: themeMode,
         initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),
@@ -129,6 +128,7 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
                       : 'buyer_seller',
             ),
         },
+      ),
       ),
     );
   }

@@ -7,6 +7,7 @@ import '../api/api_client.dart';
 import '../api/config.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 
 class BusinessOnboardingScreen extends StatefulWidget {
   const BusinessOnboardingScreen({super.key});
@@ -37,6 +38,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) {
+        final accent = Theme.of(ctx).colorScheme.primary;
         return SafeArea(
           child: Wrap(
             children: [
@@ -48,7 +50,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                 ),
               ),
               ListTile(
-                leading: const Icon(Icons.camera_alt, color: Colors.indigo),
+                leading: Icon(Icons.camera_alt, color: accent),
                 title: Text(l10n.onbBizTakePhoto),
                 onTap: () async {
                   final image = await _picker.pickImage(
@@ -60,7 +62,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.photo_library, color: Colors.indigo),
+                leading: Icon(Icons.photo_library, color: accent),
                 title: Text(l10n.onbBizChooseFromGallery),
                 onTap: () async {
                   final image = await _picker.pickImage(
@@ -110,7 +112,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(message), backgroundColor: AppColors.danger),
     );
   }
 
@@ -159,7 +161,8 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(l10n.onbBizSaved), backgroundColor: Colors.green),
+            content: Text(l10n.onbBizSaved),
+            backgroundColor: AppColors.success),
       );
       if (Navigator.canPop(context)) {
         Navigator.pop(context, true);
@@ -188,6 +191,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final l10n = context.l10n;
 
     return Scaffold(
@@ -210,7 +214,9 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                     height: 160,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: Colors.indigo.shade100,
+                      // A brand-tinted upload plate rather than a fixed pastel,
+                      // so it reads as "empty" on either ground.
+                      color: scheme.primary.withValues(alpha: 0.08),
                       image: _bannerImage != null
                           ? DecorationImage(
                         image: FileImage(File(_bannerImage!.path)),
@@ -223,12 +229,12 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.add_a_photo, color: Colors.indigo, size: 28),
+                          Icon(Icons.add_a_photo, color: scheme.primary, size: 28),
                           const SizedBox(height: 6),
                           Text(
                             l10n.onbBizUploadBanner,
                             style: TextStyle(
-                              color: Colors.indigo.shade800,
+                              color: scheme.primary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -243,7 +249,9 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.6),
+                              // Scrim over the user's own photo — stays a dark
+                              // plate with white text in either theme.
+                              color: Colors.black.withValues(alpha: 0.6),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
@@ -273,22 +281,25 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                       children: [
                         CircleAvatar(
                           radius: 42,
-                          backgroundColor: Colors.white,
+                          backgroundColor: scheme.surface,
                           child: CircleAvatar(
                             radius: 38,
-                            backgroundColor: Colors.indigo.shade50,
+                            backgroundColor:
+                                scheme.primary.withValues(alpha: 0.08),
                             backgroundImage: _avatarImage != null
                                 ? FileImage(File(_avatarImage!.path))
                                 : null,
                             child: _avatarImage == null
-                                ? const Icon(Icons.storefront, size: 36, color: Colors.indigo)
+                                ? Icon(Icons.storefront,
+                                    size: 36, color: scheme.primary)
                                 : null,
                           ),
                         ),
                         CircleAvatar(
                           radius: 14,
-                          backgroundColor: theme.primaryColor,
-                          child: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
+                          backgroundColor: scheme.primary,
+                          child: Icon(Icons.camera_alt,
+                              size: 14, color: scheme.onPrimary),
                         ),
                       ],
                     ),
@@ -358,8 +369,8 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                         onPressed: _saveStoreProfile,
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor: theme.primaryColor,
-                          foregroundColor: Colors.white,
+                          backgroundColor: scheme.primary,
+                          foregroundColor: scheme.onPrimary,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         child: Text(

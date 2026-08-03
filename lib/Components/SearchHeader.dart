@@ -35,6 +35,9 @@ class _SearchHeaderState extends State<SearchHeader> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Row(
@@ -44,14 +47,15 @@ class _SearchHeaderState extends State<SearchHeader> {
             child: Container(
               height: 44,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: scheme.surface,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: theme.dividerColor),
               ),
               child: Row(
                 children: [
                   const SizedBox(width: 12),
-                  const Icon(Icons.search, color: Colors.black54, size: 20),
+                  Icon(Icons.search,
+                      color: scheme.onSurfaceVariant, size: 20),
                   const SizedBox(width: 8),
 
                   // Real TextField for typing input
@@ -61,13 +65,13 @@ class _SearchHeaderState extends State<SearchHeader> {
                       onChanged: widget.onSearchChanged,
                       onSubmitted: widget.onSearchSubmitted,
                       textInputAction: TextInputAction.search,
-                      style: const TextStyle(fontSize: 13, color: Colors.black87),
+                      style: TextStyle(fontSize: 13, color: scheme.onSurface),
                       decoration: InputDecoration(
                         hintText:
                             context.l10n.searchHintRegion(widget.locationText),
                         hintStyle: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey.shade600,
+                          color: scheme.onSurfaceVariant,
                           overflow: TextOverflow.ellipsis,
                         ),
                         border: InputBorder.none,
@@ -86,9 +90,10 @@ class _SearchHeaderState extends State<SearchHeader> {
                         });
                         widget.onSearchChanged?.call("");
                       },
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 4.0),
-                        child: Icon(Icons.close, size: 18, color: Colors.grey),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                        child: Icon(Icons.close,
+                            size: 18, color: scheme.onSurfaceVariant),
                       ),
                     ),
 
@@ -99,13 +104,13 @@ class _SearchHeaderState extends State<SearchHeader> {
                       padding: const EdgeInsets.only(right: 6.0, left: 4.0),
                       child: Container(
                         padding: const EdgeInsets.all(5),
-                        decoration: const BoxDecoration(
-                          color: Colors.indigo,
+                        decoration: BoxDecoration(
+                          color: scheme.primary,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.location_on,
-                          color: Colors.white,
+                          color: scheme.onPrimary,
                           size: 14,
                         ),
                       ),
@@ -121,9 +126,9 @@ class _SearchHeaderState extends State<SearchHeader> {
           IconButton(
             constraints: const BoxConstraints(),
             padding: const EdgeInsets.all(6),
-            icon: const Icon(
+            icon: Icon(
               Icons.notifications_none_outlined,
-              color: Colors.black87,
+              color: scheme.onSurface,
               size: 26,
             ),
             onPressed: widget.onNotificationTap,

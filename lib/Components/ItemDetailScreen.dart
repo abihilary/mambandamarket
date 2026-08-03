@@ -7,6 +7,7 @@ import '../api/auth_service.dart';
 import '../api/models.dart' as api;
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 import 'ItemCard.dart';
 import 'report_sheet.dart';
 
@@ -163,7 +164,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           content: Text(e.code == 'own_listing'
               ? l10n.detailOwnListing
               : e.message),
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: AppColors.danger,
         ),
       );
     } finally {
@@ -197,17 +198,22 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.white,
       body: CustomScrollView(
         slivers: [
           // 1. Image Gallery Header Slider with PageView
           SliverAppBar(
             expandedHeight: 320,
             pinned: true,
-            backgroundColor: Colors.indigo,
+            // The bar is a photo backdrop that collapses to a plain surface —
+            // AppBarTheme supplies the collapsed colour for the active theme.
             leading: CircleAvatar(
-              backgroundColor: Colors.black.withOpacity(0.4),
+              // Scrim discs sit on top of the photo, so they stay black with
+              // white glyphs whichever theme is active.
+              backgroundColor: Colors.black.withValues(alpha: 0.4),
               child: IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
                 onPressed: () => Navigator.pop(context),
@@ -215,11 +221,11 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             ),
             actions: [
               CircleAvatar(
-                backgroundColor: Colors.black.withOpacity(0.4),
+                backgroundColor: Colors.black.withValues(alpha: 0.4),
                 child: IconButton(
                   icon: Icon(
                     _isFavorite ? Icons.favorite : Icons.favorite_border,
-                    color: _isFavorite ? Colors.red : Colors.white,
+                    color: _isFavorite ? AppColors.danger : Colors.white,
                     size: 20,
                   ),
                   // Persists through the API; local state follows the server.
@@ -228,7 +234,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               ),
               const SizedBox(width: 8),
               CircleAvatar(
-                backgroundColor: Colors.black.withOpacity(0.4),
+                backgroundColor: Colors.black.withValues(alpha: 0.4),
                 child: IconButton(
                   icon: const Icon(Icons.share, color: Colors.white, size: 20),
                   onPressed: () {},
@@ -237,7 +243,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               const SizedBox(width: 8),
               // Report the listing or its seller.
               CircleAvatar(
-                backgroundColor: Colors.black.withOpacity(0.4),
+                backgroundColor: Colors.black.withValues(alpha: 0.4),
                 child: PopupMenuButton<String>(
                   icon: const Icon(Icons.flag_outlined,
                       color: Colors.white, size: 20),
@@ -286,8 +292,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                         _imageList[index],
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
-                          color: Colors.grey.shade300,
-                          child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                          color: scheme.surfaceContainerHighest,
+                          child: Icon(Icons.broken_image,
+                              size: 50, color: scheme.onSurfaceVariant),
                         ),
                       );
                     },
@@ -300,7 +307,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.7),
+                        // Counter pill over the photo — always dark on light.
+                        color: Colors.black.withValues(alpha: 0.7),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -328,8 +336,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   // Location Tag
                   Text(
                     _listing?.city ?? '—',
-                    style: const TextStyle(
-                      color: Colors.indigo,
+                    style: TextStyle(
+                      color: scheme.primary,
                       fontWeight: FontWeight.bold,
                       decoration: TextDecoration.underline,
                     ),
@@ -348,17 +356,17 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     children: [
                       Text(
                         widget.price,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Colors.indigo,
+                          color: scheme.primary,
                         ),
                       ),
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
+                          color: scheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -375,15 +383,15 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     const SizedBox(height: 10),
                     Row(
                       children: [
-                        Icon(Icons.verified,
-                            size: 16, color: Colors.green.shade700),
+                        const Icon(Icons.verified,
+                            size: 16, color: AppColors.success),
                         const SizedBox(width: 6),
                         Text(
                           context.l10n.detailVerifiedCompany,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Colors.green.shade700,
+                            color: AppColors.success,
                           ),
                         ),
                       ],
@@ -394,14 +402,19 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   // Meta details
                   Row(
                     children: [
-                      const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                      Icon(Icons.calendar_today,
+                          size: 16, color: scheme.onSurfaceVariant),
                       const SizedBox(width: 4),
-                      Text(_postedLabel, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text(_postedLabel,
+                          style: TextStyle(
+                              color: scheme.onSurfaceVariant, fontSize: 12)),
                       const SizedBox(width: 16),
-                      const Icon(Icons.remove_red_eye_outlined, size: 16, color: Colors.grey),
+                      Icon(Icons.remove_red_eye_outlined,
+                          size: 16, color: scheme.onSurfaceVariant),
                       const SizedBox(width: 4),
                       Text(context.l10n.detailViews(_listing?.viewCount ?? 0),
-                          style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                          style: TextStyle(
+                              color: scheme.onSurfaceVariant, fontSize: 12)),
                     ],
                   ),
                   const Divider(height: 32),
@@ -413,7 +426,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     (_listing?.description?.isNotEmpty ?? false)
                         ? _listing!.description!
                         : context.l10n.detailNoDescription,
-                    style: const TextStyle(height: 1.4, color: Colors.black87, fontSize: 14),
+                    style: TextStyle(
+                        height: 1.4, color: scheme.onSurface, fontSize: 14),
                   ),
                   const Divider(height: 40),
 
@@ -483,17 +497,17 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               if (_isBuyable) ...[
                 Row(
                   children: [
-                    Icon(Icons.lock_outline,
-                        size: 14, color: Colors.green.shade700),
+                    const Icon(Icons.lock_outline,
+                        size: 14, color: AppColors.success),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         context.l10n.detailBuyerProtected,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 11,
                           height: 1.3,
                           fontWeight: FontWeight.w600,
-                          color: Colors.green.shade700,
+                          color: AppColors.success,
                         ),
                       ),
                     ),
@@ -520,8 +534,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   Widget _buyButton() => ElevatedButton.icon(
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.indigo,
-          foregroundColor: Colors.white,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Theme.of(context).colorScheme.onPrimary,
           minimumSize: const Size(0, 50),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
@@ -538,6 +552,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   /// [primary] fills the button when it's the only action on the bar, and
   /// outlines it when it sits next to "Buy now".
   Widget _chatButton({required bool primary}) {
+    final scheme = Theme.of(context).colorScheme;
     final disabled = widget.listingId == null || _startingChat;
     final icon = _startingChat
         ? SizedBox(
@@ -545,7 +560,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             width: 18,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: primary ? Colors.white : Colors.indigo,
+              color: primary ? scheme.onPrimary : scheme.primary,
             ),
           )
         : const Icon(Icons.chat_bubble_outline);
@@ -558,9 +573,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     if (!primary) {
       return OutlinedButton.icon(
         style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.indigo,
+          foregroundColor: scheme.primary,
           minimumSize: const Size(0, 50),
-          side: const BorderSide(color: Colors.indigo),
+          side: BorderSide(color: scheme.primary),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
         ),
@@ -572,8 +587,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
+        backgroundColor: scheme.primary,
+        foregroundColor: scheme.onPrimary,
         minimumSize: const Size(double.infinity, 50),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
         elevation: 2,

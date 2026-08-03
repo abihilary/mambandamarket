@@ -208,9 +208,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     // The horizontal strip highlights the newest few; the grid shows everything.
     final gallery = _listings.take(8).toList();
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      // No explicit background: the theme's scaffold ground is what flips
+      // between light and dark.
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -263,15 +265,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.cloud_off,
-                              size: 48, color: Colors.grey),
+                          Icon(Icons.cloud_off,
+                              size: 48, color: scheme.onSurfaceVariant),
                           const SizedBox(height: 12),
                           Text(
                               _error == _networkErrorSentinel
                                   ? context.l10n.connectionError
                                   : _error!,
                               textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.grey)),
+                              style:
+                                  TextStyle(color: scheme.onSurfaceVariant)),
                           const SizedBox(height: 16),
                           OutlinedButton(
                             onPressed: _loadListings,
@@ -291,15 +294,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.search_off,
-                              size: 48, color: Colors.grey),
+                          Icon(Icons.search_off,
+                              size: 48, color: scheme.onSurfaceVariant),
                           const SizedBox(height: 12),
                           Text(
                             _searchQuery.isNotEmpty
                                 ? context.l10n.nothingFoundFor(_searchQuery)
                                 : context.l10n.noListingsIn(_selectedLabel(context)),
                             textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.grey),
+                            style: TextStyle(color: scheme.onSurfaceVariant),
                           ),
                         ],
                       ),

@@ -4,6 +4,7 @@ import '../api/api_client.dart';
 import '../api/auth_service.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 
 /// A report reason: [code] goes to the API, [label] resolves the display text.
 class _Reason {
@@ -100,7 +101,7 @@ class _ReportSheetState extends State<_ReportSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(l10n.reportSuccess),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.success,
         ),
       );
     } on ApiException catch (e) {
@@ -109,7 +110,7 @@ class _ReportSheetState extends State<_ReportSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.isUnauthorized ? l10n.reportSignInRequired : l10n.reportError),
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: AppColors.danger,
         ),
       );
     } catch (_) {
@@ -118,7 +119,7 @@ class _ReportSheetState extends State<_ReportSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(l10n.reportError),
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: AppColors.danger,
         ),
       );
     }
@@ -143,7 +144,7 @@ class _ReportSheetState extends State<_ReportSheet> {
         children: [
           Row(
             children: [
-              Icon(Icons.flag_outlined, color: theme.primaryColor),
+              Icon(Icons.flag_outlined, color: theme.colorScheme.primary),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -188,18 +189,19 @@ class _ReportSheetState extends State<_ReportSheet> {
             child: ElevatedButton(
               onPressed: _submitting ? null : _submit,
               style: ElevatedButton.styleFrom(
-                backgroundColor: theme.primaryColor,
-                foregroundColor: Colors.white,
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
               ),
               child: _submitting
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
+                          strokeWidth: 2,
+                          color: theme.colorScheme.onPrimary),
                     )
                   : Text(l10n.reportSubmit,
                       style: const TextStyle(

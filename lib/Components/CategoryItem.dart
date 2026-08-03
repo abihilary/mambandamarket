@@ -24,6 +24,8 @@ class CategoryBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return SizedBox(
       height: 95,
       child: ListView.separated(
@@ -49,16 +51,16 @@ class CategoryBar extends StatelessWidget {
                     height: 52,
                     decoration: BoxDecoration(
                       color: cat.isSelected
-                          ? Colors.indigo.shade50
-                          : Colors.grey.shade100,
+                          ? scheme.primary.withValues(alpha: 0.14)
+                          : scheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(16),
                       border: cat.isSelected
-                          ? Border.all(color: Colors.indigo, width: 2.0)
+                          ? Border.all(color: scheme.primary, width: 2.0)
                           : Border.all(color: Colors.transparent),
                       boxShadow: cat.isSelected
                           ? [
                         BoxShadow(
-                          color: Colors.indigo.withOpacity(0.15),
+                          color: scheme.primary.withValues(alpha: 0.15),
                           blurRadius: 6,
                           offset: const Offset(0, 3),
                         )
@@ -68,7 +70,8 @@ class CategoryBar extends StatelessWidget {
                     child: Icon(
                       cat.icon,
                       size: 24,
-                      color: cat.isSelected ? Colors.indigo : Colors.black87,
+                      color:
+                          cat.isSelected ? scheme.primary : scheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -81,7 +84,8 @@ class CategoryBar extends StatelessWidget {
                       fontSize: 11,
                       height: 1.1,
                       fontWeight: cat.isSelected ? FontWeight.bold : FontWeight.w500,
-                      color: cat.isSelected ? Colors.indigo : Colors.black87,
+                      color:
+                          cat.isSelected ? scheme.primary : scheme.onSurface,
                     ),
                   ),
                 ],
