@@ -44,6 +44,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   late PageController _pageController;
   int _currentImageIndex = 0;
   bool _isFavorite = false;
+  bool _dontShowSafetyNoticeAgain = false;
 
   // List of images (defaults to widget.imageUrl + generated mock samples if empty)
   late List<String> _imageList;
@@ -124,7 +125,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       await FavoritesRepository.instance.toggle(id);
       if (mounted) {
         setState(() =>
-            _isFavorite = FavoritesRepository.instance.isFavorite(id));
+        _isFavorite = FavoritesRepository.instance.isFavorite(id));
       }
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -133,6 +134,208 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             e.isUnauthorized ? l10n.detailSignInToSave : e.message)),
       );
     }
+  }
+
+  /// Prompt the user with a payment & delivery safety warning before proceeding to chat.
+  void _onChatPressed() {
+    if (_dontShowSafetyNoticeAgain) {
+      _contactSeller();
+    } else {
+      _showSafetyWarningDialog();
+    }
+  }
+
+  void _showSafetyWarningDialog() {
+    bool dontShowAgainLocal = _dontShowSafetyNoticeAgain;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        final cs = Theme.of(ctx).colorScheme;
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+              actionsPadding: const EdgeInsets.all(16),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.warning.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.shield_outlined,
+                      color: AppColors.warning,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      "Safety & Payment Notice",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 8),
+                  Text(
+                    "Please keep your transaction safe by adhering to the following rules:",
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: cs.onSurfaceVariant,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  _buildSafetyBullet(
+                    ctx,
+                    icon: Icons.storefront_outlined,
+                    title: "On-Site Transaction",
+                    description: "Payment and item inspection should be completed on-site during delivery.",
+                  ),
+                  const SizedBox(height: 10),
+                  _buildSafetyBullet(
+                    ctx,
+                    icon: Icons.location_on_outlined,
+                    title: "Meet in Secure Locations",
+                    description: "Always arrange meetings in well-lit, public, and secure locations.",
+                  ),
+                  const SizedBox(height: 10),
+                  _buildSafetyBullet(
+                    ctx,
+                    icon: Icons.report_problem_outlined,
+                    title: "Platform Disclaimer",
+                    description: "The platform is not liable for advance payments or agreements made independently between parties.",
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(),
+                  Row(
+                    children: [
+                      SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: Checkbox(
+                          value: dontShowAgainLocal,
+                          activeColor: cs.primary,
+                          onChanged: (val) {
+                            setDialogState(() {
+                              dontShowAgainLocal = val ?? false;
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          setDialogState(() {
+                            dontShowAgainLocal = !dontShowAgainLocal;
+                          });
+                        },
+                        child: Text(
+                          "Don't show this again",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+
+                OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text("Cancel"),
+                ),
+                SizedBox(height: 8,),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _dontShowSafetyNoticeAgain = dontShowAgainLocal;
+                    });
+                    Navigator.pop(ctx);
+                    _contactSeller();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: cs.primary,
+                    foregroundColor: cs.onPrimary,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text(
+                    "Proceed to Chat",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildSafetyBullet(
+      BuildContext context, {
+        required IconData icon,
+        required String title,
+        required String description,
+      }) {
+    final cs = Theme.of(context).colorScheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: cs.primary),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: cs.onSurfaceVariant,
+                  height: 1.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   /// Opens (or reuses) the thread for this listing, then shows the room.
@@ -208,11 +411,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           SliverAppBar(
             expandedHeight: 320,
             pinned: true,
-            // The bar is a photo backdrop that collapses to a plain surface —
-            // AppBarTheme supplies the collapsed colour for the active theme.
             leading: CircleAvatar(
-              // Scrim discs sit on top of the photo, so they stay black with
-              // white glyphs whichever theme is active.
               backgroundColor: Colors.black.withValues(alpha: 0.4),
               child: IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
@@ -228,7 +427,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     color: _isFavorite ? AppColors.danger : Colors.white,
                     size: 20,
                   ),
-                  // Persists through the API; local state follows the server.
                   onPressed: widget.listingId == null ? null : _toggleFavorite,
                 ),
               ),
@@ -241,7 +439,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              // Report the listing or its seller.
               CircleAvatar(
                 backgroundColor: Colors.black.withValues(alpha: 0.4),
                 child: PopupMenuButton<String>(
@@ -280,7 +477,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Horizontal PageView for Multiple Images
                   PageView.builder(
                     controller: _pageController,
                     itemCount: _imageList.length,
@@ -299,15 +495,12 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       );
                     },
                   ),
-
-                  // Image Counter Indicator (e.g. "1/4")
                   Positioned(
                     bottom: 12,
                     right: 12,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        // Counter pill over the photo — always dark on light.
                         color: Colors.black.withValues(alpha: 0.7),
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -333,7 +526,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Location Tag
                   Text(
                     _listing?.city ?? '—',
                     style: TextStyle(
@@ -343,15 +535,11 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-
-                  // Title
                   Text(
                     widget.title,
                     style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
-
-                  // Price Bar
                   Row(
                     children: [
                       Text(
@@ -376,9 +564,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       ),
                     ],
                   ),
-
-                  // Buyable items come from an admin-verified company — say so,
-                  // because that badge is what makes paying in-app safe.
                   if (_isBuyable) ...[
                     const SizedBox(height: 10),
                     Row(
@@ -398,8 +583,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     ),
                   ],
                   const Divider(height: 32),
-
-                  // Meta details
                   Row(
                     children: [
                       Icon(Icons.calendar_today,
@@ -418,8 +601,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     ],
                   ),
                   const Divider(height: 32),
-
-                  // Description
                   Text(context.l10n.detailDetails, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   Text(
@@ -430,8 +611,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                         height: 1.4, color: scheme.onSurface, fontSize: 14),
                   ),
                   const Divider(height: 40),
-
-                  // 3. Related / Other Shop Items Section Header
                   Text(
                     context.l10n.detailRelated,
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -442,7 +621,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             ),
           ),
 
-          // 4. Grid of Other Related Shop Items
+          // 3. Grid of Other Related Shop Items
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             sliver: SliverGrid(
@@ -485,9 +664,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         ],
       ),
 
-      // Floating Bottom Action Bar. A company's item gets "Buy now" as the
-      // primary action, but chat stays available on every listing — plenty of
-      // buyers want to ask before they pay.
+      // Floating Bottom Action Bar
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(12.0),
@@ -533,21 +710,21 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   }
 
   Widget _buyButton() => ElevatedButton.icon(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          foregroundColor: Theme.of(context).colorScheme.onPrimary,
-          minimumSize: const Size(0, 50),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-          elevation: 2,
-        ),
-        onPressed: _buyNow,
-        icon: const Icon(Icons.shopping_bag_outlined),
-        label: Text(
-          context.l10n.detailBuyNow,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-        ),
-      );
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Theme.of(context).colorScheme.primary,
+      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+      minimumSize: const Size(0, 50),
+      shape:
+      RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+      elevation: 2,
+    ),
+    onPressed: _buyNow,
+    icon: const Icon(Icons.shopping_bag_outlined),
+    label: Text(
+      context.l10n.detailBuyNow,
+      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+    ),
+  );
 
   /// [primary] fills the button when it's the only action on the bar, and
   /// outlines it when it sits next to "Buy now".
@@ -556,13 +733,13 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     final disabled = widget.listingId == null || _startingChat;
     final icon = _startingChat
         ? SizedBox(
-            height: 18,
-            width: 18,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: primary ? scheme.onPrimary : scheme.primary,
-            ),
-          )
+      height: 18,
+      width: 18,
+      child: CircularProgressIndicator(
+        strokeWidth: 2,
+        color: primary ? scheme.onPrimary : scheme.primary,
+      ),
+    )
         : const Icon(Icons.chat_bubble_outline);
     final label = Text(
       context.l10n.detailMessageSeller,
@@ -577,9 +754,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           minimumSize: const Size(0, 50),
           side: BorderSide(color: scheme.primary),
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
         ),
-        onPressed: disabled ? null : _contactSeller,
+        onPressed: disabled ? null : _onChatPressed,
         icon: icon,
         label: label,
       );
@@ -593,7 +770,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
         elevation: 2,
       ),
-      onPressed: disabled ? null : _contactSeller,
+      onPressed: disabled ? null : _onChatPressed,
       icon: icon,
       label: label,
     );

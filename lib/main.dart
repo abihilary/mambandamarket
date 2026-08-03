@@ -7,9 +7,6 @@ import 'l10n/l10n.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 
-// Navigation Shell
-
-
 // Screens & Dashboards
 import 'package:mambandamarket/DashBoards/CreateListingScreen.dart';
 import 'package:mambandamarket/DashBoards/SellerDashboardScreen.dart';
@@ -31,15 +28,11 @@ import 'Service/MainNavigationShell.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Supabase issues and persists the auth session; the Core API trusts the JWT
-  // it mints. Only the publishable key ships in the client.
   await Supabase.initialize(
     url: AppConfig.supabaseUrl,
     publishableKey: AppConfig.supabasePublishableKey,
   );
 
-  // Restore the saved language and theme before the first frame so the UI never
-  // flashes in the wrong language or briefly paints light before going dark.
   await LocaleController.instance.load();
   await ThemeController.instance.load();
 
@@ -54,8 +47,6 @@ class MarketplaceApp extends StatefulWidget {
 }
 
 class _MarketplaceAppState extends State<MarketplaceApp> {
-  /// Lets us navigate in response to auth events that arrive from outside the
-  /// widget tree (a password-recovery deep link can land on any screen).
   final _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
@@ -74,8 +65,6 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
 
   void _onPasswordRecovery() {
     if (!AuthService.instance.passwordRecoveryRequested.value) return;
-    // The recovery session only permits setting a new password, so send the
-    // user there rather than into the app.
     _navigatorKey.currentState?.push(
       MaterialPageRoute(builder: (_) => const ResetPasswordScreen()),
     );
@@ -83,52 +72,90 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Rebuild the whole app when the language changes so every screen picks up
-    // the new locale immediately.
     return ValueListenableBuilder<Locale?>(
       valueListenable: LocaleController.instance.locale,
       builder: (context, locale, _) => ValueListenableBuilder<ThemeMode>(
         valueListenable: ThemeController.instance.mode,
         builder: (context, themeMode, _) => MaterialApp(
-        navigatorKey: _navigatorKey,
-        title: 'Mambanda Market',
-        debugShowCheckedModeBanner: false,
-        // null → Flutter falls back to the device language, then to English.
-        locale: locale,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        theme: AppTheme.light(),
-        darkTheme: AppTheme.dark(),
-        themeMode: themeMode,
-        initialRoute: '/',
-      routes: {
-        '/': (context) => const SplashScreen(),
-        '/welcome': (context) => const WelcomeScreen(),
-        '/role-selection': (context) => const RoleSelectionScreen(),
-        '/account-status': (context) => const AccountStatusScreen(),
-        '/home': (context) => const MainNavigationShell(), // Updated to MainNavigationShell
-        '/login': (context) => const LoginScreen(),
-        '/forgot-password': (context) => const ForgotPasswordScreen(),
-        '/reset-password': (context) => const ResetPasswordScreen(),
-        '/bussiness': (context) => BusinessOnboardingScreen(),
-        '/create-listing': (context) => const CreateListingScreen(),
-        '/business-dashboard': (context) => BusinessDashboardScreen(),
-        '/seller-dashboard': (context) => SellerDashboardScreen(),
-        // On-platform buying: the buyer's purchases, and the verified
-        // company's order/wallet/payout hub.
-        '/my-orders': (context) => const MyOrdersScreen(),
-        '/company-dashboard': (context) => const CompanyDashboardScreen(),
-        '/seller-onboard': (context) => IndividualSellerOnboardingScreen(),
-        // Tier pricing differs for business vs. individual sellers, so pick the
-        // plan set from the signed-in profile's role.
-        '/subscription': (context) => SubscriptionScreen(
-              roleType:
+          navigatorKey: _navigatorKey,
+          title: 'Mambanda Market',
+          debugShowCheckedModeBanner: false,
+          locale: locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          theme: AppTheme.light(),
+          darkTheme: AppTheme.dark(),
+          themeMode: themeMode,
+          initialRoute: '/',
+          onGenerateRoute: (settings) {
+            // Parse the incoming URI to extract path without query parameters
+            final uri = Uri.parse(settings.name ?? '/');
+
+            Widget builder;
+            switch (uri.path) {
+              case '/':
+                builder = const SplashScreen();
+                break;
+              case '/welcome':
+                builder = const WelcomeScreen();
+                break;
+              case '/role-selection':
+                builder = const RoleSelectionScreen();
+                break;
+              case '/account-status':
+                builder = const AccountStatusScreen();
+                break;
+              case '/home':
+                builder = const MainNavigationShell();
+                break;
+              case '/login':
+                builder = const LoginScreen();
+                break;
+              case '/forgot-password':
+                builder = const ForgotPasswordScreen();
+                break;
+              case '/reset-password':
+                builder = const ResetPasswordScreen();
+                break;
+              case '/bussiness':
+                builder = BusinessOnboardingScreen();
+                break;
+              case '/create-listing':
+                builder = const CreateListingScreen();
+                break;
+              case '/business-dashboard':
+                builder = BusinessDashboardScreen();
+                break;
+              case '/seller-dashboard':
+                builder = SellerDashboardScreen();
+                break;
+              case '/my-orders':
+                builder = const MyOrdersScreen();
+                break;
+              case '/company-dashboard':
+                builder = const CompanyDashboardScreen();
+                break;
+              case '/seller-onboard':
+                builder = IndividualSellerOnboardingScreen();
+                break;
+              case '/subscription':
+                builder = SubscriptionScreen(
+                  roleType:
                   AuthService.instance.me.value?.profile?.isBusiness == true
                       ? 'business'
                       : 'buyer_seller',
-            ),
-        },
-      ),
+                );
+                break;
+              default:
+                builder = const SplashScreen();
+            }
+
+            return MaterialPageRoute(
+              builder: (context) => builder,
+              settings: settings,
+            );
+          },
+        ),
       ),
     );
   }

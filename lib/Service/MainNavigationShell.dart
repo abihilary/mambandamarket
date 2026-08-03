@@ -7,7 +7,6 @@ import '../Screens/ChatInboxScreen.dart';
 import '../Screens/FavoritesScreen.dart';
 import '../Screens/HomeScreen.dart';
 import '../l10n/l10n.dart';
-         // Profile Tab
 
 class MainNavigationShell extends StatefulWidget {
   const MainNavigationShell({super.key});
@@ -19,6 +18,9 @@ class MainNavigationShell extends StatefulWidget {
 class _MainNavigationShellState extends State<MainNavigationShell> {
   int _currentBottomIndex = 0;
 
+  // Placeholder flag for user plan status (Replace with actual user/auth state later)
+  final bool _isFreePlan = true;
+
   // List of tab views
   final List<Widget> _pages = const [
     HomeScreen(),          // Index 0: Search / Home Feed
@@ -29,19 +31,48 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   ];
 
   void _onTabTapped(int index) async {
-    // Index 2 corresponds to "Insert" (+) action
+    // Index 2 corresponds to "Publish" (+) action
     if (index == 2) {
-      // Open Create Listing Screen as a Modal / Screen
-      await Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const CreateListingScreen()),
-      );
+      if (_isFreePlan) {
+        _showUpgradeDialog();
+      } else {
+        // Open Create Listing Screen as a Modal / Screen
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const CreateListingScreen()),
+        );
+      }
       return;
     }
 
     setState(() {
       _currentBottomIndex = index;
     });
+  }
+
+  void _showUpgradeDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Upgrade Required'),
+        content: const Text(
+          'Posting new listings requires a premium plan. Would you like to upgrade your subscription now?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.pushNamed(context, '/subscription');
+            },
+            child: const Text('Upgrade'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

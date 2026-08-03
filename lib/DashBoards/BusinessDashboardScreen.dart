@@ -17,25 +17,17 @@ class BusinessDashboardScreen extends StatefulWidget {
 }
 
 class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
-  // Stable, non-localized filter keys. These drive the filtering logic and the
-  // DropdownButton's `value`; only their display labels are localized, so the
-  // state stays language-independent.
+  // Stable, non-localized filter keys.
   static const String _filterAll = 'All';
   static const String _filterInStock = 'In Stock';
   static const String _filterOutOfStock = 'Out of Stock';
 
-  // Sentinels stored in [_error] for failures raised from initState's _load(),
-  // where context.l10n isn't available; build() translates them for display.
+  // Sentinels stored in [_error] for failures raised from initState's _load()
   static const String _signInSentinel = '__signin__';
   static const String _networkErrorSentinel = '__network__';
 
   String _selectedFilter = _filterAll;
 
-  // Inventory comes from the seller's own feed, which unlike public browse
-  // includes sold and hidden items and carries per-listing inquiry counts.
-  // Rows are rendered from maps, so API models are adapted rather than
-  // rewriting every widget; `priceLabel` is pre-formatted because listings are
-  // priced in XAF and this screen originally hardcoded a dollar sign.
   final List<Map<String, dynamic>> _mockInventory = [];
 
   bool _isLoading = true;
@@ -50,23 +42,22 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
   }
 
   Map<String, dynamic> _adapt(api.Listing l) => {
-        'id': l.id,
-        'title': l.title,
-        'priceLabel': l.displayPrice,
-        'priceCents': l.priceCents,
-        'quantity': l.quantity,
-        'category': l.categorySlug,
-        'category_slug': l.categorySlug,
-        'condition': l.condition ?? '',
-        'hasGuarantee': l.hasGuarantee,
-        'views': l.viewCount,
-        'inStock': l.quantity > 0,
-        'status': l.status,
-        'currency': l.currency,
-        'images': l.imageUrls,
-      };
+    'id': l.id,
+    'title': l.title,
+    'priceLabel': l.displayPrice,
+    'priceCents': l.priceCents,
+    'quantity': l.quantity,
+    'category': l.categorySlug,
+    'category_slug': l.categorySlug,
+    'condition': l.condition ?? '',
+    'hasGuarantee': l.hasGuarantee,
+    'views': l.viewCount,
+    'inStock': l.quantity > 0,
+    'status': l.status,
+    'currency': l.currency,
+    'images': l.imageUrls,
+  };
 
-  /// Currency of the inventory, so revenue isn't rendered with a stray symbol.
   String get _storeCurrency => _mockInventory.isEmpty
       ? 'XAF'
       : (_mockInventory.first['currency'] as String? ?? 'XAF');
@@ -108,7 +99,6 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
     }
   }
 
-  // Open Create Modal
   void _openCreateListingModal() async {
     final l10n = context.l10n;
     final newItem = await Navigator.push<Map<String, dynamic>>(
@@ -122,7 +112,6 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
     }
   }
 
-  // Open Edit Modal
   void _openEditListingModal(Map<String, dynamic> item, int index) async {
     final l10n = context.l10n;
     final updatedItem = await Navigator.push<Map<String, dynamic>>(
@@ -138,7 +127,6 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
     }
   }
 
-  // Delete Item Confirmation Dialog
   void _confirmDeleteItem(String id, String title) {
     final l10n = context.l10n;
     showDialog(
@@ -189,7 +177,6 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
     return _mockInventory;
   }
 
-  /// Localized display label for a stable filter key.
   String _filterLabel(BuildContext context, String filter) {
     switch (filter) {
       case _filterInStock:
@@ -204,11 +191,11 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
   Widget _buildImageWidget(String path) {
     final cs = Theme.of(context).colorScheme;
     Widget placeholder() => Container(
-          width: 80,
-          height: 80,
-          color: cs.surfaceContainerHighest,
-          child: Icon(Icons.broken_image, color: cs.onSurfaceVariant),
-        );
+      width: 80,
+      height: 80,
+      color: cs.surfaceContainerHighest,
+      child: Icon(Icons.broken_image, color: cs.onSurfaceVariant),
+    );
 
     if (path.startsWith('http://') || path.startsWith('https://')) {
       return Image.network(
@@ -269,6 +256,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             _buildStoreHeaderCard(theme, context),
             const SizedBox(height: 20),
@@ -282,9 +270,12 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  context.l10n.bizDashActiveListings(displayedList.length),
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                Expanded(
+                  child: Text(
+                    context.l10n.bizDashActiveListings(displayedList.length),
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 DropdownButton<String>(
                   value: _selectedFilter,
@@ -312,46 +303,48 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
             else if (_error != null)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 32),
-                child: Column(
-                  children: [
-                    Icon(Icons.cloud_off, size: 44, color: cs.onSurfaceVariant),
-                    const SizedBox(height: 12),
-                    Text(
-                        _error == _signInSentinel
-                            ? context.l10n.bizDashSignInPrompt
-                            : _error == _networkErrorSentinel
-                                ? context.l10n.bizDashLoadError
-                                : _error!,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: cs.onSurfaceVariant)),
-                    const SizedBox(height: 16),
-                    OutlinedButton(onPressed: _load, child: Text(context.l10n.bizDashTryAgain)),
-                  ],
-                ),
-              )
-            else if (displayedList.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 40),
                 child: Center(
-                  child: Text(
-                    _selectedFilter == _filterAll
-                        ? context.l10n.bizDashNoItems
-                        : context.l10n.bizDashNoMatch(
-                            _filterLabel(context, _selectedFilter)),
-                    style: TextStyle(color: cs.onSurfaceVariant),
+                  child: Column(
+                    children: [
+                      Icon(Icons.cloud_off, size: 44, color: cs.onSurfaceVariant),
+                      const SizedBox(height: 12),
+                      Text(
+                          _error == _signInSentinel
+                              ? context.l10n.bizDashSignInPrompt
+                              : _error == _networkErrorSentinel
+                              ? context.l10n.bizDashLoadError
+                              : _error!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: cs.onSurfaceVariant)),
+                      const SizedBox(height: 16),
+                      OutlinedButton(onPressed: _load, child: Text(context.l10n.bizDashTryAgain)),
+                    ],
                   ),
                 ),
               )
-            else
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: displayedList.length,
-                itemBuilder: (context, index) {
-                  final item = displayedList[index];
-                  return _buildInventoryCard(item, index, theme);
-                },
-              ),
+            else if (displayedList.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40),
+                  child: Center(
+                    child: Text(
+                      _selectedFilter == _filterAll
+                          ? context.l10n.bizDashNoItems
+                          : context.l10n.bizDashNoMatch(
+                          _filterLabel(context, _selectedFilter)),
+                      style: TextStyle(color: cs.onSurfaceVariant),
+                    ),
+                  ),
+                )
+              else
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: displayedList.length,
+                  itemBuilder: (context, index) {
+                    final item = displayedList[index];
+                    return _buildInventoryCard(item, index, theme);
+                  },
+                ),
             const SizedBox(height: 80),
           ],
         ),
@@ -374,6 +367,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             height: 90,
@@ -389,6 +383,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   children: [
@@ -404,17 +399,20 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                         children: [
                           Row(
                             children: [
-                              Text(
-                                _store?.shopName ?? context.l10n.bizDashYourStore,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
+                              Flexible(
+                                child: Text(
+                                  _store?.shopName ?? context.l10n.bizDashYourStore,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              const SizedBox(width: 4),
-                              // Only badge stores the backend actually marked verified.
-                              if (_store?.isVerified == true)
+                              if (_store?.isVerified == true) ...[
+                                const SizedBox(width: 4),
                                 Icon(Icons.verified, size: 16, color: cs.primary),
+                              ],
                             ],
                           ),
                           const SizedBox(height: 2),
@@ -422,9 +420,11 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                             _store == null
                                 ? context.l10n.bizDashSetupStorefront
                                 : '${_store!.isVerified ? context.l10n.bizDashVerifiedMerchant : ""}'
-                                    '${_store!.ratingAvg.toStringAsFixed(1)} ★ '
-                                    '(${context.l10n.bizDashReviewsCount(_store!.ratingCount)})',
+                                '${_store!.ratingAvg.toStringAsFixed(1)} ★ '
+                                '(${context.l10n.bizDashReviewsCount(_store!.ratingCount)})',
                             style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -442,25 +442,36 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                           Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
                         },
                         icon: const Icon(Icons.storefront_outlined, size: 18),
-                        label: Text(context.l10n.bizDashGoToHomeMarketplace),
+                        label: Text(
+                          context.l10n.bizDashGoToHomeMarketplace,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: cs.primary,
                           foregroundColor: cs.onPrimary,
                           elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          minimumSize: const Size.fromHeight(40),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    OutlinedButton(
-                      onPressed: _navigateToEditStore,
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _navigateToEditStore,
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(40),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: Text(
+                          context.l10n.bizDashEditStore,
+                          style: const TextStyle(fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                        ),
                       ),
-                      child: Text(context.l10n.bizDashEditStore,
-                          style: const TextStyle(fontSize: 12)),
                     ),
                   ],
                 ),
@@ -473,10 +484,6 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
   }
 
   Widget _buildStatsOverview() {
-    // Each tile keeps a distinct accent so the four metrics stay tellable
-    // apart: money and traffic go through the semantic tokens, inquiries
-    // takes the brand accent, and units sold keeps a blue mid-tone that has
-    // enough contrast on either ground.
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -521,6 +528,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             padding: const EdgeInsets.all(8),
@@ -528,9 +536,19 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
             child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(height: 12),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
           const SizedBox(height: 2),
-          Text(title, style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
+          Text(
+            title,
+            style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
         ],
       ),
     );
@@ -552,6 +570,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
       child: Padding(
         padding: const EdgeInsets.all(10.0),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Stack(
               children: [
@@ -566,8 +585,6 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                       decoration: BoxDecoration(
-                        // Scrim over the photo itself — stays a fixed dark
-                        // wash with a white count in both themes.
                         color: Colors.black.withValues(alpha: 0.7),
                         borderRadius: BorderRadius.circular(4),
                       ),
@@ -583,9 +600,10 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    item['title'],
+                    item['title'] ?? '',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
@@ -593,9 +611,12 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      Text(
-                        item['category'] ?? context.l10n.bizDashGeneralCategory,
-                        style: TextStyle(fontSize: 11, color: cs.primary, fontWeight: FontWeight.w600),
+                      Flexible(
+                        child: Text(
+                          item['category'] ?? context.l10n.bizDashGeneralCategory,
+                          style: TextStyle(fontSize: 11, color: cs.primary, fontWeight: FontWeight.w600),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -606,21 +627,28 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    item['priceLabel'] as String,
+                    (item['priceLabel'] as String?) ?? '',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: cs.primary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
-                  Row(
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: cs.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(4),
+                      if ((item['condition'] as String?)?.isNotEmpty ?? false)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: cs.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            item['condition'],
+                            style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant),
+                          ),
                         ),
-                        child: Text(item['condition'], style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
-                      ),
-                      const SizedBox(width: 6),
                       if (item['hasGuarantee'] == true)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

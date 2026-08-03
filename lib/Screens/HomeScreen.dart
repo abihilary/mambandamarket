@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import '../Components/CategoryItem.dart';
 import '../Components/ItemCard.dart';
 import '../Components/ItemDetailScreen.dart';
-import '../Components/SearchHeader.dart';
 
 // Backend
 import '../api/api_client.dart';
@@ -46,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final _repo = ListingsRepository.instance;
   final _favorites = FavoritesRepository.instance;
+  final TextEditingController _searchController = TextEditingController();
 
   List<Category> _categories = [];
   String? _selectedSlug; // null == "For You"
@@ -56,26 +56,11 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   String? _error;
 
-  /// Search radius shown next to the city. The backend already supports
-  /// `near`/`radius`; wiring a real device position is the remaining step, so
-  /// this is presentational for now rather than pretending to filter.
-  static const int _radiusKm = 25;
-
-  /// The user's own city, once /me has loaded. Falls back to a neutral label
-  /// rather than naming a town the user has nothing to do with.
-  String _locationLabel(BuildContext context) {
-    final city = AuthService.instance.me.value?.profile?.city;
-    return (city == null || city.isEmpty)
-        ? context.l10n.wholeRegion
-        : context.l10n.regionWithRadius(city, _radiusKm);
-  }
-
   @override
   void initState() {
     super.initState();
     _loadCategories();
     _loadListings();
-    // /me may resolve after first paint; refresh the header when it does.
     AuthService.instance.me.addListener(_onMeChanged);
   }
 
@@ -83,6 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     AuthService.instance.me.removeListener(_onMeChanged);
     _searchDebounce?.cancel();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -138,6 +124,12 @@ class _HomeScreenState extends State<HomeScreen> {
         Timer(const Duration(milliseconds: 350), () => _loadListings());
   }
 
+  void _clearSearch() {
+    _searchController.clear();
+    _onSearchChanged('');
+    setState(() {});
+  }
+
   void _onCategoryTapped(int index) {
     setState(() {
       // Index 0 is the synthetic "For You" entry.
@@ -184,35 +176,32 @@ class _HomeScreenState extends State<HomeScreen> {
     return _categories
         .firstWhere(
           (c) => c.slug == _selectedSlug,
-          orElse: () => Category(slug: _selectedSlug!, label: _selectedSlug!),
-        )
+      orElse: () => Category(slug: _selectedSlug!, label: _selectedSlug!),
+    )
         .displayLabel;
   }
 
   List<CategoryItem> _categoryItems(BuildContext context) => [
-        CategoryItem(
-          label: context.l10n.forYou,
-          icon: Icons.thumb_up_alt_outlined,
-          isSelected: _selectedSlug == null,
-        ),
-        ..._categories.map(
+    CategoryItem(
+      label: context.l10n.forYou,
+      icon: Icons.thumb_up_alt_outlined,
+      isSelected: _selectedSlug == null,
+    ),
+    ..._categories.map(
           (c) => CategoryItem(
-            label: c.displayLabel,
-            icon: _categoryIcons[c.slug] ?? Icons.sell_outlined,
-            isSelected: c.slug == _selectedSlug,
-          ),
-        ),
-      ];
+        label: c.displayLabel,
+        icon: _categoryIcons[c.slug] ?? Icons.sell_outlined,
+        isSelected: c.slug == _selectedSlug,
+      ),
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    // The horizontal strip highlights the newest few; the grid shows everything.
     final gallery = _listings.take(8).toList();
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      // No explicit background: the theme's scaffold ground is what flips
-      // between light and dark.
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -220,11 +209,94 @@ class _HomeScreenState extends State<HomeScreen> {
           },
           child: CustomScrollView(
             slivers: [
+              // Search Bar Row with Notification Icon integrated
               SliverToBoxAdapter(
-                child: SearchHeader(
-                  locationText: _locationLabel(context),
-                  onSearchChanged: _onSearchChanged,
-                  onNotificationTap: () {},
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 12.0),
+                  child: Row(
+                    children: [
+                      // Floating Search Bar Field
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: scheme.surfaceContainerLow,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withAlpha(8),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: (val) {
+                              _onSearchChanged(val);
+                              setState(() {});
+                            },
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: scheme.onSurface,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Search items, brands, categories...',
+                              hintStyle: TextStyle(
+                                color: scheme.onSurfaceVariant.withAlpha(180),
+                                fontSize: 14,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.search_rounded,
+                                color: scheme.primary,
+                                size: 22,
+                              ),
+                              suffixIcon: _searchController.text.isNotEmpty
+                                  ? IconButton(
+                                icon: const Icon(Icons.clear_rounded,
+                                    size: 18),
+                                onPressed: _clearSearch,
+                              )
+                                  : Container(
+                                margin: const EdgeInsets.all(8),
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: scheme.primaryContainer,
+                                  borderRadius:
+                                  BorderRadius.circular(10),
+                                ),
+                                child: Icon(
+                                  Icons.location_on_rounded,
+                                  size: 16,
+                                  color: scheme.onPrimaryContainer,
+                                ),
+                              ),
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 14.0,
+                                horizontal: 16.0,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+
+                      // Notification Bell Button inside the same row
+                      IconButton.filledTonal(
+                        onPressed: () {},
+                        icon: const Icon(Icons.notifications_none_rounded),
+                        style: IconButton.styleFrom(
+                          padding: const EdgeInsets.all(14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
@@ -269,12 +341,12 @@ class _HomeScreenState extends State<HomeScreen> {
                               size: 48, color: scheme.onSurfaceVariant),
                           const SizedBox(height: 12),
                           Text(
-                              _error == _networkErrorSentinel
-                                  ? context.l10n.connectionError
-                                  : _error!,
-                              textAlign: TextAlign.center,
-                              style:
-                                  TextStyle(color: scheme.onSurfaceVariant)),
+                            _error == _networkErrorSentinel
+                                ? context.l10n.connectionError
+                                : _error!,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: scheme.onSurfaceVariant),
+                          ),
                           const SizedBox(height: 16),
                           OutlinedButton(
                             onPressed: _loadListings,
@@ -286,105 +358,108 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 )
               else if (_listings.isEmpty)
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.search_off,
-                              size: 48, color: scheme.onSurfaceVariant),
-                          const SizedBox(height: 12),
-                          Text(
-                            _searchQuery.isNotEmpty
-                                ? context.l10n.nothingFoundFor(_searchQuery)
-                                : context.l10n.noListingsIn(_selectedLabel(context)),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: scheme.onSurfaceVariant),
-                          ),
-                        ],
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.search_off,
+                                size: 48, color: scheme.onSurfaceVariant),
+                            const SizedBox(height: 12),
+                            Text(
+                              _searchQuery.isNotEmpty
+                                  ? context.l10n.nothingFoundFor(_searchQuery)
+                                  : context.l10n
+                                  .noListingsIn(_selectedLabel(context)),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: scheme.onSurfaceVariant),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                )
-              else ...[
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0, vertical: 8.0),
-                    child: Text(
-                      context.l10n.galleryTitle(_selectedLabel(context)),
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
+                  )
+                else ...[
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 8.0),
+                        child: Text(
+                          context.l10n.galleryTitle(_selectedLabel(context)),
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
 
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: 210,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: gallery.length,
-                      itemBuilder: (context, index) {
-                        final item = gallery[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 12.0),
-                          child: ItemCard(
-                            imageUrl: item.primaryImageUrl,
-                            title: item.title,
-                            price: item.displayPrice,
-                            isCompact: true,
-                            onTap: () => _openItemDetail(item),
-                          ),
-                        );
-                      },
+                    SliverToBoxAdapter(
+                      child: SizedBox(
+                        height: 210,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: gallery.length,
+                          itemBuilder: (context, index) {
+                            final item = gallery[index];
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 12.0),
+                              child: ItemCard(
+                                imageUrl: item.primaryImageUrl,
+                                title: item.title,
+                                price: item.displayPrice,
+                                isCompact: true,
+                                onTap: () => _openItemDetail(item),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ),
-                  ),
-                ),
 
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 12.0),
-                    child: Text(context.l10n.recommendedForYou,
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
-                  ),
-                ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 12.0),
+                        child: Text(
+                          context.l10n.recommendedForYou,
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
 
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  sliver: ValueListenableBuilder<Set<String>>(
-                    valueListenable: _favorites.favoriteIds,
-                    builder: (context, favIds, _) => SliverGrid(
-                      gridDelegate:
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      sliver: ValueListenableBuilder<Set<String>>(
+                        valueListenable: _favorites.favoriteIds,
+                        builder: (context, favIds, _) => SliverGrid(
+                          gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 16,
-                        crossAxisSpacing: 12,
-                        childAspectRatio: 0.72,
-                      ),
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final item = _listings[index];
-                          return ItemCard(
-                            imageUrl: item.primaryImageUrl,
-                            title: item.title,
-                            price: item.displayPrice,
-                            isFavorite: favIds.contains(item.id),
-                            onTap: () => _openItemDetail(item),
-                            onFavoriteToggle: () => _toggleFavorite(item),
-                          );
-                        },
-                        childCount: _listings.length,
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 16,
+                            crossAxisSpacing: 12,
+                            childAspectRatio: 0.72,
+                          ),
+                          delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                              final item = _listings[index];
+                              return ItemCard(
+                                imageUrl: item.primaryImageUrl,
+                                title: item.title,
+                                price: item.displayPrice,
+                                isFavorite: favIds.contains(item.id),
+                                onTap: () => _openItemDetail(item),
+                                onFavoriteToggle: () => _toggleFavorite(item),
+                              );
+                            },
+                            childCount: _listings.length,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              ],
+                  ],
 
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
