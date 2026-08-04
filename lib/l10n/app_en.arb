@@ -670,6 +670,8 @@
   },
   "orderEscrowReleasedTitle": "Payment released",
   "orderEscrowReleasedBody": "You confirmed delivery, so the seller has been paid. Thank you.",
+  "orderPaidDirectTitle": "Paid to the seller",
+  "orderPaidDirectBody": "This shop is paid as soon as you pay, so there was nothing to hold and nothing for you to confirm.",
   "orderEscrowRefundedTitle": "Payment refunded",
   "orderEscrowRefundedBody": "Your payment has been returned to you.",
   "shipmentCodeTitle": "Your delivery code",

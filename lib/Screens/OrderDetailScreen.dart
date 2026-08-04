@@ -425,6 +425,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       icon = Icons.lock_outline;
       title = l10n.orderEscrowHeldTitle;
       body = l10n.orderEscrowHeldBody(order.displayTotal);
+    } else if (order.isEscrowReleased && order.confirmedAt == null) {
+      // Released without the buyer ever confirming: this shop doesn't use
+      // escrow, so the money settled the moment they paid. Telling them "you
+      // confirmed delivery" would credit them with a step they never took, on
+      // the one screen where they are trying to work out what protects them.
+      color = scheme.onSurfaceVariant;
+      icon = Icons.payments_outlined;
+      title = l10n.orderPaidDirectTitle;
+      body = l10n.orderPaidDirectBody;
     } else if (order.isEscrowReleased) {
       color = scheme.primary;
       icon = Icons.task_alt;

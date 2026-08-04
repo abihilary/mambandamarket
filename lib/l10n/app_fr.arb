@@ -539,6 +539,8 @@
   },
   "orderEscrowReleasedTitle": "Paiement libéré",
   "orderEscrowReleasedBody": "Vous avez confirmé la livraison, le vendeur a donc été payé. Merci.",
+  "orderPaidDirectTitle": "Payé au vendeur",
+  "orderPaidDirectBody": "Cette boutique est payée dès que vous payez : il n'y avait donc rien à retenir ni à confirmer de votre part.",
   "orderEscrowRefundedTitle": "Paiement remboursé",
   "orderEscrowRefundedBody": "Votre paiement vous a été restitué.",
   "shipmentCodeTitle": "Votre code de livraison",

@@ -1454,6 +1454,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'You confirmed delivery, so the seller has been paid. Thank you.';
 
   @override
+  String get orderPaidDirectTitle => 'Paid to the seller';
+
+  @override
+  String get orderPaidDirectBody =>
+      'This shop is paid as soon as you pay, so there was nothing to hold and nothing for you to confirm.';
+
+  @override
   String get orderEscrowRefundedTitle => 'Payment refunded';
 
   @override

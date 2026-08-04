@@ -1486,6 +1486,13 @@ class AppLocalizationsFr extends AppLocalizations {
       'Vous avez confirmé la livraison, le vendeur a donc été payé. Merci.';
 
   @override
+  String get orderPaidDirectTitle => 'Payé au vendeur';
+
+  @override
+  String get orderPaidDirectBody =>
+      'Cette boutique est payée dès que vous payez : il n\'y avait donc rien à retenir ni à confirmer de votre part.';
+
+  @override
   String get orderEscrowRefundedTitle => 'Paiement remboursé';
 
   @override

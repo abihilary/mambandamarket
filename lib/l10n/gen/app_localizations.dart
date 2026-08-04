@@ -2708,6 +2708,18 @@ abstract class AppLocalizations {
   /// **'You confirmed delivery, so the seller has been paid. Thank you.'**
   String get orderEscrowReleasedBody;
 
+  /// No description provided for @orderPaidDirectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid to the seller'**
+  String get orderPaidDirectTitle;
+
+  /// No description provided for @orderPaidDirectBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This shop is paid as soon as you pay, so there was nothing to hold and nothing for you to confirm.'**
+  String get orderPaidDirectBody;
+
   /// No description provided for @orderEscrowRefundedTitle.
   ///
   /// In en, this message translates to:
