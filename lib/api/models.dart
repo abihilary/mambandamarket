@@ -702,6 +702,10 @@ class Order {
   final DateTime? createdAt;
   final List<OrderItem> items;
 
+  /// The physical dispatch, once the shop has sent the goods out. Null until
+  /// then — there is nothing on the road to report.
+  final Shipment? shipment;
+
   const Order({
     required this.id,
     required this.buyerId,
@@ -722,6 +726,7 @@ class Order {
     this.confirmedAt,
     this.createdAt,
     this.items = const [],
+    this.shipment,
   });
 
   bool get isPendingPayment => status == 'pending_payment';
@@ -791,8 +796,60 @@ class Order {
           .map((m) =>
               OrderItem.fromJson(m.cast<String, dynamic>(), currency: currency))
           .toList(),
+      // `shipment`, not `delivery` — the latter key is already the address
+      // above, and reusing it would make the two silently collide.
+      shipment: json['shipment'] is Map
+          ? Shipment.fromJson((json['shipment'] as Map).cast<String, dynamic>())
+          : null,
     );
   }
+}
+
+/// An order on its way: where the parcel is, and the code the buyer reads out
+/// to the driver at the door.
+///
+/// The code is the buyer's half of the handover proof — the driver cannot close
+/// the stop without it. The API sends it to the buyer alone, and stops sending
+/// it once the stop is closed, so [proofCode] is null in every other case.
+class Shipment {
+  final String id;
+
+  /// pending | assigned | picked_up | in_transit | delivered | failed | returned
+  final String status;
+  final String? proofCode;
+  final String? recipientName;
+  final DateTime? pickedUpAt;
+  final DateTime? deliveredAt;
+  final String? failureReason;
+
+  const Shipment({
+    required this.id,
+    this.status = 'pending',
+    this.proofCode,
+    this.recipientName,
+    this.pickedUpAt,
+    this.deliveredAt,
+    this.failureReason,
+  });
+
+  /// Out of the shop and in a driver's hands — the point at which the buyer
+  /// should have the code ready.
+  bool get isOnTheRoad => status == 'picked_up' || status == 'in_transit';
+  bool get isDelivered => status == 'delivered';
+  bool get isFailed => status == 'failed' || status == 'returned';
+
+  /// Only worth putting on screen while it can still be used.
+  bool get hasUsableCode => (proofCode?.isNotEmpty ?? false) && !isDelivered && !isFailed;
+
+  factory Shipment.fromJson(Map<String, dynamic> json) => Shipment(
+        id: json['id'].toString(),
+        status: json['status']?.toString() ?? 'pending',
+        proofCode: json['proof_code']?.toString(),
+        recipientName: json['recipient_name']?.toString(),
+        pickedUpAt: DateTime.tryParse(json['picked_up_at']?.toString() ?? ''),
+        deliveredAt: DateTime.tryParse(json['delivered_at']?.toString() ?? ''),
+        failureReason: json['failure_reason']?.toString(),
+      );
 }
 
 /// A company's money, split into what it can actually take out and what is

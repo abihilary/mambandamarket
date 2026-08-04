@@ -2720,6 +2720,66 @@ abstract class AppLocalizations {
   /// **'Your payment has been returned to you.'**
   String get orderEscrowRefundedBody;
 
+  /// No description provided for @shipmentCodeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your delivery code'**
+  String get shipmentCodeTitle;
+
+  /// No description provided for @shipmentCodeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Read this code to the driver when they hand your order over. Don\'t share it before then — it is how we know you actually received your parcel.'**
+  String get shipmentCodeBody;
+
+  /// No description provided for @shipmentOnTheRoadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'On the way'**
+  String get shipmentOnTheRoadTitle;
+
+  /// No description provided for @shipmentOnTheRoadBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A driver has your order and is on the way to you.'**
+  String get shipmentOnTheRoadBody;
+
+  /// No description provided for @shipmentPreparingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Being prepared'**
+  String get shipmentPreparingTitle;
+
+  /// No description provided for @shipmentPreparingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The shop is packing your order for delivery.'**
+  String get shipmentPreparingBody;
+
+  /// No description provided for @shipmentDeliveredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered'**
+  String get shipmentDeliveredTitle;
+
+  /// No description provided for @shipmentDeliveredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Handed over on {date}.'**
+  String shipmentDeliveredBody(Object date);
+
+  /// No description provided for @shipmentFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery problem'**
+  String get shipmentFailedTitle;
+
+  /// No description provided for @shipmentFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The driver couldn\'t complete this delivery. The shop will be in touch.'**
+  String get shipmentFailedBody;
+
   /// No description provided for @orderConfirmDelivery.
   ///
   /// In en, this message translates to:

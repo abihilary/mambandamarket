@@ -1461,6 +1461,42 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your payment has been returned to you.';
 
   @override
+  String get shipmentCodeTitle => 'Your delivery code';
+
+  @override
+  String get shipmentCodeBody =>
+      'Read this code to the driver when they hand your order over. Don\'t share it before then — it is how we know you actually received your parcel.';
+
+  @override
+  String get shipmentOnTheRoadTitle => 'On the way';
+
+  @override
+  String get shipmentOnTheRoadBody =>
+      'A driver has your order and is on the way to you.';
+
+  @override
+  String get shipmentPreparingTitle => 'Being prepared';
+
+  @override
+  String get shipmentPreparingBody =>
+      'The shop is packing your order for delivery.';
+
+  @override
+  String get shipmentDeliveredTitle => 'Delivered';
+
+  @override
+  String shipmentDeliveredBody(Object date) {
+    return 'Handed over on $date.';
+  }
+
+  @override
+  String get shipmentFailedTitle => 'Delivery problem';
+
+  @override
+  String get shipmentFailedBody =>
+      'The driver couldn\'t complete this delivery. The shop will be in touch.';
+
+  @override
   String get orderConfirmDelivery => 'Confirm delivery';
 
   @override

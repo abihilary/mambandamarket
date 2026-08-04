@@ -672,6 +672,21 @@
   "orderEscrowReleasedBody": "You confirmed delivery, so the seller has been paid. Thank you.",
   "orderEscrowRefundedTitle": "Payment refunded",
   "orderEscrowRefundedBody": "Your payment has been returned to you.",
+  "shipmentCodeTitle": "Your delivery code",
+  "shipmentCodeBody": "Read this code to the driver when they hand your order over. Don't share it before then — it is how we know you actually received your parcel.",
+  "shipmentOnTheRoadTitle": "On the way",
+  "shipmentOnTheRoadBody": "A driver has your order and is on the way to you.",
+  "shipmentPreparingTitle": "Being prepared",
+  "shipmentPreparingBody": "The shop is packing your order for delivery.",
+  "shipmentDeliveredTitle": "Delivered",
+  "shipmentDeliveredBody": "Handed over on {date}.",
+  "@shipmentDeliveredBody": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "shipmentFailedTitle": "Delivery problem",
+  "shipmentFailedBody": "The driver couldn't complete this delivery. The shop will be in touch.",
   "orderConfirmDelivery": "Confirm delivery",
   "orderConfirmTitle": "Confirm delivery?",
   "orderConfirmBody": "This releases {amount} to the seller. Only confirm once you have received your order — this cannot be undone.",

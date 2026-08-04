@@ -218,6 +218,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         _headerCard(l10n, order),
                         const SizedBox(height: 16),
                         _escrowCard(l10n, order),
+                        // Above the items: when a driver is at the door, the
+                        // code is the only thing on this screen that matters.
+                        if (order.shipment != null) ...[
+                          const SizedBox(height: 16),
+                          _shipmentCard(l10n, order.shipment!),
+                        ],
                         const SizedBox(height: 16),
                         _itemsCard(l10n, order),
                         const SizedBox(height: 16),
@@ -297,6 +303,112 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           ],
         ),
       );
+
+  /// Where the parcel is, and — while it is still on its way — the code the
+  /// buyer reads out at the door.
+  ///
+  /// The code is the other half of the escrow promise: the driver cannot close
+  /// the delivery without it, so it is the buyer's evidence that "delivered"
+  /// means the goods actually arrived. It is set in a monospaced, widely
+  /// letter-spaced style because it gets read aloud to a stranger, often in bad
+  /// light through a gate.
+  Widget _shipmentCard(AppLocalizations l10n, api.Shipment shipment) {
+    final scheme = Theme.of(context).colorScheme;
+    late final Color color;
+    late final IconData icon;
+    late final String title;
+    late final String body;
+
+    if (shipment.isDelivered) {
+      color = AppColors.success;
+      icon = Icons.check_circle_outline;
+      title = l10n.shipmentDeliveredTitle;
+      body = l10n.shipmentDeliveredBody(_formatDate(shipment.deliveredAt));
+    } else if (shipment.isFailed) {
+      color = AppColors.danger;
+      icon = Icons.error_outline;
+      title = l10n.shipmentFailedTitle;
+      body = shipment.failureReason?.isNotEmpty == true
+          ? shipment.failureReason!
+          : l10n.shipmentFailedBody;
+    } else if (shipment.isOnTheRoad) {
+      color = scheme.primary;
+      icon = Icons.local_shipping_outlined;
+      title = l10n.shipmentOnTheRoadTitle;
+      body = l10n.shipmentOnTheRoadBody;
+    } else {
+      // Dispatched on paper but not yet picked up.
+      color = scheme.onSurfaceVariant;
+      icon = Icons.inventory_2_outlined;
+      title = l10n.shipmentPreparingTitle;
+      body = l10n.shipmentPreparingBody;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(fontWeight: FontWeight.bold, color: color),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(body, style: TextStyle(color: scheme.onSurface)),
+          if (shipment.hasUsableCode) ...[
+            const SizedBox(height: 16),
+            Text(
+              l10n.shipmentCodeTitle,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                color: scheme.surface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: color.withValues(alpha: 0.45)),
+              ),
+              child: Text(
+                shipment.proofCode!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 10,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                  color: scheme.onSurface,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.shipmentCodeBody,
+              style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 
   /// The escrow block — the reason a buyer trusts paying a stranger in-app.
   Widget _escrowCard(AppLocalizations l10n, api.Order order) {

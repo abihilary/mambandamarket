@@ -541,6 +541,21 @@
   "orderEscrowReleasedBody": "Vous avez confirmé la livraison, le vendeur a donc été payé. Merci.",
   "orderEscrowRefundedTitle": "Paiement remboursé",
   "orderEscrowRefundedBody": "Votre paiement vous a été restitué.",
+  "shipmentCodeTitle": "Votre code de livraison",
+  "shipmentCodeBody": "Lisez ce code au livreur au moment où il vous remet votre commande. Ne le communiquez pas avant — c'est ainsi que nous savons que vous avez bien reçu votre colis.",
+  "shipmentOnTheRoadTitle": "En route",
+  "shipmentOnTheRoadBody": "Un livreur a votre commande et se dirige vers vous.",
+  "shipmentPreparingTitle": "En préparation",
+  "shipmentPreparingBody": "La boutique prépare votre commande pour la livraison.",
+  "shipmentDeliveredTitle": "Livrée",
+  "shipmentDeliveredBody": "Remise le {date}.",
+  "@shipmentDeliveredBody": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "shipmentFailedTitle": "Problème de livraison",
+  "shipmentFailedBody": "Le livreur n'a pas pu effectuer cette livraison. La boutique vous contactera.",
   "orderConfirmDelivery": "Confirmer la livraison",
   "orderConfirmTitle": "Confirmer la livraison ?",
   "orderConfirmBody": "Cela libère {amount} au profit du vendeur. Ne confirmez qu'une fois votre commande reçue — cette action est irréversible.",

@@ -1492,6 +1492,42 @@ class AppLocalizationsFr extends AppLocalizations {
   String get orderEscrowRefundedBody => 'Votre paiement vous a été restitué.';
 
   @override
+  String get shipmentCodeTitle => 'Votre code de livraison';
+
+  @override
+  String get shipmentCodeBody =>
+      'Lisez ce code au livreur au moment où il vous remet votre commande. Ne le communiquez pas avant — c\'est ainsi que nous savons que vous avez bien reçu votre colis.';
+
+  @override
+  String get shipmentOnTheRoadTitle => 'En route';
+
+  @override
+  String get shipmentOnTheRoadBody =>
+      'Un livreur a votre commande et se dirige vers vous.';
+
+  @override
+  String get shipmentPreparingTitle => 'En préparation';
+
+  @override
+  String get shipmentPreparingBody =>
+      'La boutique prépare votre commande pour la livraison.';
+
+  @override
+  String get shipmentDeliveredTitle => 'Livrée';
+
+  @override
+  String shipmentDeliveredBody(Object date) {
+    return 'Remise le $date.';
+  }
+
+  @override
+  String get shipmentFailedTitle => 'Problème de livraison';
+
+  @override
+  String get shipmentFailedBody =>
+      'Le livreur n\'a pas pu effectuer cette livraison. La boutique vous contactera.';
+
+  @override
   String get orderConfirmDelivery => 'Confirmer la livraison';
 
   @override
