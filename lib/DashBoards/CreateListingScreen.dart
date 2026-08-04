@@ -397,7 +397,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 items: _categories
                     .map((c) => DropdownMenuItem(
                           value: c.slug,
-                          child: Text(c.label),
+                          // displayLabel, not label: browse has always used the
+                          // translated name, so listing something was the one
+                          // place a seller met the raw German seed data.
+                          child: Text(c.displayLabel),
                         ))
                     .toList(),
                 onChanged: (val) {
