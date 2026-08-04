@@ -49,6 +49,10 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  /// Which tab's data is already current, so a swipe doesn't refetch on every
+  /// animation frame. Starts at 0 because initState loads all three.
+  int _lastLoadedTab = 0;
+
   final List<api.Order> _orders = [];
   String? _nextBefore;
   bool _ordersLoading = true;
@@ -75,13 +79,39 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_onTabChanged);
     _loadAll();
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     super.dispose();
+  }
+
+  /// Refetch whichever tab the merchant just opened.
+  ///
+  /// Everything loads once in initState, so a sale landing while the screen is
+  /// open left the other tabs showing stale money — an order paid a minute ago
+  /// simply wasn't in the list, and the wallet still read "0 held". A money
+  /// screen should never need a pull-to-refresh to tell the truth.
+  void _onTabChanged() {
+    // TabController is an Animation, so this listener fires on every tick of a
+    // swipe, not just when the tab settles. Ignore mid-transition frames, then
+    // ignore any tick that didn't actually land on a different tab — otherwise
+    // one swipe would fire a burst of identical requests.
+    if (_tabController.indexIsChanging) return;
+    if (_tabController.index == _lastLoadedTab) return;
+    _lastLoadedTab = _tabController.index;
+    switch (_tabController.index) {
+      case 0:
+        _loadOrders();
+      case 1:
+        _loadWallet();
+      case 2:
+        _loadPayouts();
+    }
   }
 
   Future<void> _loadAll() =>
