@@ -637,6 +637,43 @@ class AppLocalizationsFr extends AppLocalizations {
       'Connectez-vous pour contacter le vendeur.';
 
   @override
+  String get safetyNoticeTitle => 'Sécurité et paiement';
+
+  @override
+  String get safetyNoticeIntro =>
+      'Pour une transaction en toute sécurité, respectez les règles suivantes :';
+
+  @override
+  String get safetyOnSiteTitle => 'Transaction sur place';
+
+  @override
+  String get safetyOnSiteBody =>
+      'Le paiement et la vérification de l’article se font sur place, au moment de la livraison.';
+
+  @override
+  String get safetySecureLocationTitle => 'Rendez-vous dans un lieu sûr';
+
+  @override
+  String get safetySecureLocationBody =>
+      'Donnez toujours rendez-vous dans un endroit public, éclairé et sécurisé.';
+
+  @override
+  String get safetyDisclaimerTitle => 'Avertissement de la plateforme';
+
+  @override
+  String get safetyDisclaimerBody =>
+      'La plateforme n’est pas responsable des paiements effectués à l’avance ni des accords conclus directement entre les parties.';
+
+  @override
+  String get safetyDontShowAgain => 'Ne plus afficher';
+
+  @override
+  String get safetyCancel => 'Annuler';
+
+  @override
+  String get safetyProceedToChat => 'Continuer vers la discussion';
+
+  @override
   String get detailOwnListing => 'Il s\'agit de votre propre annonce.';
 
   @override

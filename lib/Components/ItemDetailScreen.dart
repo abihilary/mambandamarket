@@ -177,10 +177,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      "Safety & Payment Notice",
-                      style: TextStyle(
+                      ctx.l10n.safetyNoticeTitle,
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -194,7 +194,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 children: [
                   const SizedBox(height: 8),
                   Text(
-                    "Please keep your transaction safe by adhering to the following rules:",
+                    ctx.l10n.safetyNoticeIntro,
                     style: TextStyle(
                       fontSize: 13,
                       color: cs.onSurfaceVariant,
@@ -205,22 +205,22 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   _buildSafetyBullet(
                     ctx,
                     icon: Icons.storefront_outlined,
-                    title: "On-Site Transaction",
-                    description: "Payment and item inspection should be completed on-site during delivery.",
+                    title: ctx.l10n.safetyOnSiteTitle,
+                    description: ctx.l10n.safetyOnSiteBody,
                   ),
                   const SizedBox(height: 10),
                   _buildSafetyBullet(
                     ctx,
                     icon: Icons.location_on_outlined,
-                    title: "Meet in Secure Locations",
-                    description: "Always arrange meetings in well-lit, public, and secure locations.",
+                    title: ctx.l10n.safetySecureLocationTitle,
+                    description: ctx.l10n.safetySecureLocationBody,
                   ),
                   const SizedBox(height: 10),
                   _buildSafetyBullet(
                     ctx,
                     icon: Icons.report_problem_outlined,
-                    title: "Platform Disclaimer",
-                    description: "The platform is not liable for advance payments or agreements made independently between parties.",
+                    title: ctx.l10n.safetyDisclaimerTitle,
+                    description: ctx.l10n.safetyDisclaimerBody,
                   ),
                   const SizedBox(height: 12),
                   const Divider(),
@@ -247,7 +247,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                           });
                         },
                         child: Text(
-                          "Don't show this again",
+                          ctx.l10n.safetyDontShowAgain,
                           style: TextStyle(
                             fontSize: 12,
                             color: cs.onSurfaceVariant,
@@ -267,7 +267,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text("Cancel"),
+                  child: Text(ctx.l10n.safetyCancel),
                 ),
                 SizedBox(height: 8,),
                 ElevatedButton(
@@ -286,9 +286,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text(
-                    "Proceed to Chat",
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  child: Text(
+                    ctx.l10n.safetyProceedToChat,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
               ],

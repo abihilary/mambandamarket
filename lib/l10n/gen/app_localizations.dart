@@ -1226,6 +1226,72 @@ abstract class AppLocalizations {
   /// **'Sign in to message the seller.'**
   String get detailSignInToMessage;
 
+  /// No description provided for @safetyNoticeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety & Payment Notice'**
+  String get safetyNoticeTitle;
+
+  /// No description provided for @safetyNoticeIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Please keep your transaction safe by adhering to the following rules:'**
+  String get safetyNoticeIntro;
+
+  /// No description provided for @safetyOnSiteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'On-Site Transaction'**
+  String get safetyOnSiteTitle;
+
+  /// No description provided for @safetyOnSiteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment and item inspection should be completed on-site during delivery.'**
+  String get safetyOnSiteBody;
+
+  /// No description provided for @safetySecureLocationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Meet in Secure Locations'**
+  String get safetySecureLocationTitle;
+
+  /// No description provided for @safetySecureLocationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Always arrange meetings in well-lit, public, and secure locations.'**
+  String get safetySecureLocationBody;
+
+  /// No description provided for @safetyDisclaimerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Platform Disclaimer'**
+  String get safetyDisclaimerTitle;
+
+  /// No description provided for @safetyDisclaimerBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The platform is not liable for advance payments or agreements made independently between parties.'**
+  String get safetyDisclaimerBody;
+
+  /// No description provided for @safetyDontShowAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t show this again'**
+  String get safetyDontShowAgain;
+
+  /// No description provided for @safetyCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get safetyCancel;
+
+  /// No description provided for @safetyProceedToChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Proceed to Chat'**
+  String get safetyProceedToChat;
+
   /// No description provided for @detailOwnListing.
   ///
   /// In en, this message translates to:

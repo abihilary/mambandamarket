@@ -629,6 +629,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailSignInToMessage => 'Sign in to message the seller.';
 
   @override
+  String get safetyNoticeTitle => 'Safety & Payment Notice';
+
+  @override
+  String get safetyNoticeIntro =>
+      'Please keep your transaction safe by adhering to the following rules:';
+
+  @override
+  String get safetyOnSiteTitle => 'On-Site Transaction';
+
+  @override
+  String get safetyOnSiteBody =>
+      'Payment and item inspection should be completed on-site during delivery.';
+
+  @override
+  String get safetySecureLocationTitle => 'Meet in Secure Locations';
+
+  @override
+  String get safetySecureLocationBody =>
+      'Always arrange meetings in well-lit, public, and secure locations.';
+
+  @override
+  String get safetyDisclaimerTitle => 'Platform Disclaimer';
+
+  @override
+  String get safetyDisclaimerBody =>
+      'The platform is not liable for advance payments or agreements made independently between parties.';
+
+  @override
+  String get safetyDontShowAgain => 'Don\'t show this again';
+
+  @override
+  String get safetyCancel => 'Cancel';
+
+  @override
+  String get safetyProceedToChat => 'Proceed to Chat';
+
+  @override
   String get detailOwnListing => 'This is your own listing.';
 
   @override
