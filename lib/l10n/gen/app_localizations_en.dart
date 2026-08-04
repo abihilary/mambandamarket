@@ -1234,17 +1234,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Protected purchase — we hold your payment until you confirm delivery.';
 
   @override
-  String get checkoutNoEscrowTitle => 'Paid directly to the seller';
-
-  @override
-  String get checkoutNoEscrowBody =>
-      'This seller is paid as soon as your payment goes through, so Mambanda Market does not hold it for you. Only continue if you trust them.';
-
-  @override
-  String get detailNoBuyerProtection =>
-      'Direct payment — the seller is paid immediately, not held until delivery.';
-
-  @override
   String get checkoutTitle => 'Checkout';
 
   @override
