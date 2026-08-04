@@ -672,24 +672,36 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (_isBuyable) ...[
-                Row(
-                  children: [
-                    const Icon(Icons.lock_outline,
-                        size: 14, color: AppColors.success),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        context.l10n.detailBuyerProtected,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          height: 1.3,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.success,
+                // An admin can switch escrow off per company. Where it is off,
+                // the seller is paid immediately, so claiming the payment is
+                // held would be false — say what actually happens instead.
+                Builder(builder: (context) {
+                  // Default to the protected wording if the listing isn't
+                  // loaded yet — never advertise "no protection" on a guess.
+                  final protected = _listing?.companyEscrow ?? true;
+                  final tone =
+                      protected ? AppColors.success : AppColors.warning;
+                  return Row(
+                    children: [
+                      Icon(protected ? Icons.lock_outline : Icons.info_outline,
+                          size: 14, color: tone),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          protected
+                              ? context.l10n.detailBuyerProtected
+                              : context.l10n.detailNoBuyerProtection,
+                          style: TextStyle(
+                            fontSize: 11,
+                            height: 1.3,
+                            fontWeight: FontWeight.w600,
+                            color: tone,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  );
+                }),
                 const SizedBox(height: 10),
               ],
               Row(

@@ -235,8 +235,14 @@ class ListingsRepository {
   ///
   /// Unlike [uploadImage] this keeps the original file name, which the API
   /// stores as the last path segment so the recipient sees "contrat.pdf".
-  Future<String> uploadChatFile(File file) async {
-    final name = file.path.split('/').last;
+  /// [filename] is what the recipient will see. Pass the picker's original name:
+  /// a document is staged in the cache under a uniquified name
+  /// (`chat-doc-<millis>-facture.pdf`), so deriving it from the path would show
+  /// that machine prefix instead of the file the sender actually chose.
+  Future<String> uploadChatFile(File file, {String? filename}) async {
+    final name = (filename == null || filename.trim().isEmpty)
+        ? file.path.split('/').last
+        : filename.trim();
     final dot = name.lastIndexOf('.');
     final ext = dot < 0 ? 'jpg' : name.substring(dot + 1).toLowerCase();
 

@@ -2330,6 +2330,24 @@ abstract class AppLocalizations {
   /// **'Protected purchase — we hold your payment until you confirm delivery.'**
   String get detailBuyerProtected;
 
+  /// No description provided for @checkoutNoEscrowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid directly to the seller'**
+  String get checkoutNoEscrowTitle;
+
+  /// No description provided for @checkoutNoEscrowBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This seller is paid as soon as your payment goes through, so Mambanda Market does not hold it for you. Only continue if you trust them.'**
+  String get checkoutNoEscrowBody;
+
+  /// No description provided for @detailNoBuyerProtection.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct payment — the seller is paid immediately, not held until delivery.'**
+  String get detailNoBuyerProtection;
+
   /// No description provided for @checkoutTitle.
   ///
   /// In en, this message translates to:

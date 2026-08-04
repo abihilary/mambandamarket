@@ -150,9 +150,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   Future<void> _deliver(Message optimistic) async {
     try {
       final file = _localFiles[optimistic.id];
+      // The optimistic bubble already carries the name the sender picked; reuse
+      // it so the recipient sees "facture.pdf" and not the cache-staged name.
       final path = file == null
           ? null
-          : await ListingsRepository.instance.uploadChatFile(file);
+          : await ListingsRepository.instance.uploadChatFile(
+              file,
+              filename: optimistic.attachmentName,
+            );
 
       final sent = await _chat.send(
         widget.conversation.id,

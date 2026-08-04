@@ -50,6 +50,14 @@ class Listing {
   /// single condition that makes an item buyable in-app: everything else is a
   /// classified ad the buyer arranges over chat.
   final String? companyId;
+
+  /// Whether this company's sales are held in escrow. An admin can switch it
+  /// off per company, and when it is off the app must stop telling the buyer
+  /// their payment is protected — the promise would simply be untrue.
+  ///
+  /// Defaults to true: only the listing *detail* embeds the company, so browse
+  /// results assume the protected case rather than advertising the risky one.
+  final bool companyEscrow;
   final String title;
   final String? description;
   final int priceCents;
@@ -77,6 +85,7 @@ class Listing {
     required this.sellerId,
     this.storeId,
     this.companyId,
+    this.companyEscrow = true,
     required this.title,
     this.description,
     required this.priceCents,
@@ -142,6 +151,9 @@ class Listing {
       sellerId: json['seller_id']?.toString() ?? '',
       storeId: json['store_id']?.toString(),
       companyId: json['company_id']?.toString(),
+      companyEscrow: json['company'] is Map
+          ? (json['company'] as Map)['escrow_enabled'] != false
+          : true,
       title: json['title']?.toString() ?? '',
       description: json['description']?.toString(),
       priceCents: _asInt(json['price_cents']),

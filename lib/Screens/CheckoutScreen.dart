@@ -344,32 +344,47 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   /// the success token at low alpha instead. The icon and headline keep the
   /// green — that's the signal — while the paragraph runs at full text contrast
   /// so it stays readable on both grounds.
-  Widget _escrowBanner(AppLocalizations l10n) => Container(
+  /// The protection promise — shown only when this company actually offers it.
+  ///
+  /// An admin can switch escrow off per company. When it is off the seller is
+  /// paid the moment payment clears, so a green "your money is protected"
+  /// banner would be a straight lie; the buyer is told plainly instead.
+  Widget _escrowBanner(AppLocalizations l10n) {
+    final protected = widget.listing.companyEscrow;
+    final tone = protected ? AppColors.success : AppColors.warning;
+    return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.success.withValues(alpha: 0.12),
+          color: tone.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.success.withValues(alpha: 0.35)),
+          border: Border.all(color: tone.withValues(alpha: 0.35)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.verified_user_outlined, color: AppColors.success),
+            Icon(
+              protected ? Icons.verified_user_outlined : Icons.info_outline,
+              color: tone,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    l10n.checkoutEscrowTitle,
-                    style: const TextStyle(
+                    protected
+                        ? l10n.checkoutEscrowTitle
+                        : l10n.checkoutNoEscrowTitle,
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.success,
+                      color: tone,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    l10n.checkoutEscrowBody,
+                    protected
+                        ? l10n.checkoutEscrowBody
+                        : l10n.checkoutNoEscrowBody,
                     style: TextStyle(
                         fontSize: 13,
                         height: 1.35,
@@ -381,6 +396,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ],
         ),
       );
+  }
 
   Widget _itemCard(ThemeData theme, api.Listing listing) {
     return Container(

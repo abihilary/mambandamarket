@@ -1263,6 +1263,17 @@ class AppLocalizationsFr extends AppLocalizations {
       'Achat protégé — nous conservons votre paiement jusqu\'à ce que vous confirmiez la livraison.';
 
   @override
+  String get checkoutNoEscrowTitle => 'Payé directement au vendeur';
+
+  @override
+  String get checkoutNoEscrowBody =>
+      'Ce vendeur est payé dès que votre paiement aboutit ; Mambanda Market ne le conserve pas pour vous. Ne continuez que si vous lui faites confiance.';
+
+  @override
+  String get detailNoBuyerProtection =>
+      'Paiement direct — le vendeur est payé immédiatement, sans blocage jusqu\'à la livraison.';
+
+  @override
   String get checkoutTitle => 'Commande';
 
   @override
