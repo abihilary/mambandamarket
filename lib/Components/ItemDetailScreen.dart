@@ -671,37 +671,35 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (_isBuyable) ...[
-                // An admin can switch escrow off per company. Where it is off,
-                // the seller is paid immediately, so claiming the payment is
-                // held would be false — say what actually happens instead.
-                Builder(builder: (context) {
-                  // Default to the protected wording if the listing isn't
-                  // loaded yet — never advertise "no protection" on a guess.
-                  final protected = _listing?.companyEscrow ?? true;
-                  final tone =
-                      protected ? AppColors.success : AppColors.warning;
-                  return Row(
-                    children: [
-                      Icon(protected ? Icons.lock_outline : Icons.info_outline,
-                          size: 14, color: tone),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          protected
-                              ? context.l10n.detailBuyerProtected
-                              : context.l10n.detailNoBuyerProtection,
-                          style: TextStyle(
-                            fontSize: 11,
-                            height: 1.3,
-                            fontWeight: FontWeight.w600,
-                            color: tone,
-                          ),
+              // Escrow is per company, and the promise appears only where the
+              // company actually gives it. Where it doesn't, this says nothing
+              // rather than warning: paying a shop that is paid on checkout is
+              // ordinary commerce, not a hazard, and an amber notice under every
+              // one of that merchant's listings argues against them for it.
+              //
+              // Silence is still honest — the protection is advertised where it
+              // exists and absent where it doesn't. Defaults to showing it while
+              // the listing loads, so a slow fetch never silently drops a
+              // promise the seller does keep.
+              if (_isBuyable && (_listing?.companyEscrow ?? true)) ...[
+                Row(
+                  children: [
+                    const Icon(Icons.lock_outline,
+                        size: 14, color: AppColors.success),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        context.l10n.detailBuyerProtected,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          height: 1.3,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.success,
                         ),
                       ),
-                    ],
-                  );
-                }),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 10),
               ],
               Row(

@@ -210,8 +210,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              _escrowBanner(l10n),
-              const SizedBox(height: 16),
+              if (listing.companyEscrow) ...[
+                _escrowBanner(l10n),
+                const SizedBox(height: 16),
+              ],
               _itemCard(theme, listing),
               const SizedBox(height: 16),
 
@@ -344,14 +346,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   /// the success token at low alpha instead. The icon and headline keep the
   /// green — that's the signal — while the paragraph runs at full text contrast
   /// so it stays readable on both grounds.
-  /// The protection promise — shown only when this company actually offers it.
-  ///
-  /// An admin can switch escrow off per company. When it is off the seller is
-  /// paid the moment payment clears, so a green "your money is protected"
-  /// banner would be a straight lie; the buyer is told plainly instead.
+  /// The protection promise. Built only where the company actually offers
+  /// escrow — where it doesn't, checkout says nothing rather than warning the
+  /// buyer off an ordinary purchase. The promise appears where it is true and
+  /// is absent where it isn't, which is honest without editorialising.
   Widget _escrowBanner(AppLocalizations l10n) {
-    final protected = widget.listing.companyEscrow;
-    final tone = protected ? AppColors.success : AppColors.warning;
+    const tone = AppColors.success;
     return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -362,29 +362,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              protected ? Icons.verified_user_outlined : Icons.info_outline,
-              color: tone,
-            ),
+            const Icon(Icons.verified_user_outlined, color: tone),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    protected
-                        ? l10n.checkoutEscrowTitle
-                        : l10n.checkoutNoEscrowTitle,
-                    style: TextStyle(
+                    l10n.checkoutEscrowTitle,
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: tone,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    protected
-                        ? l10n.checkoutEscrowBody
-                        : l10n.checkoutNoEscrowBody,
+                    l10n.checkoutEscrowBody,
                     style: TextStyle(
                         fontSize: 13,
                         height: 1.35,
