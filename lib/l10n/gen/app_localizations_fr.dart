@@ -418,8 +418,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get bizDashInquiries => 'Demandes';
 
   @override
-  String bizDashImagesCount(Object count) {
-    return '$count imgs';
+  String bizDashImagesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count images',
+      one: '1 image',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -694,7 +700,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get detailRelated => 'Annonces similaires';
 
   @override
-  String get detailMessageSeller => 'Message';
+  String get detailMessageSeller => 'Écrire';
 
   @override
   String detailPostedMinutes(Object count) {
@@ -1058,7 +1064,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get subBilledAnnually => 'Facturé annuellement';
 
   @override
-  String get subPlanClassic => 'Classic';
+  String get subPlanClassic => 'Classique';
 
   @override
   String get subPlanProBusiness => 'Pro Entreprise';
@@ -1770,4 +1776,32 @@ class AppLocalizationsFr extends AppLocalizations {
   String payoutRequestedOn(Object date) {
     return 'Demandé le $date';
   }
+
+  @override
+  String get homeSearchHint =>
+      'Rechercher un article, une marque, une catégorie…';
+
+  @override
+  String get splashTagline => 'Acheter, vendre, échanger';
+
+  @override
+  String get upgradeRequiredTitle => 'Abonnement requis';
+
+  @override
+  String get upgradeRequiredBody =>
+      'Publier de nouvelles annonces nécessite une formule premium. Voulez-vous passer à un abonnement supérieur maintenant ?';
+
+  @override
+  String get upgradeCancel => 'Annuler';
+
+  @override
+  String get upgradeConfirm => 'Mettre à niveau';
+
+  @override
+  String apiRequestFailed(int code) {
+    return 'Échec de la requête ($code)';
+  }
+
+  @override
+  String get imagePlaceholder => 'Sans photo';
 }

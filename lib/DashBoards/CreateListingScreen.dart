@@ -400,7 +400,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                           // displayLabel, not label: browse has always used the
                           // translated name, so listing something was the one
                           // place a seller met the raw German seed data.
-                          child: Text(c.displayLabel),
+                          child: Text(c.displayLabel(Localizations.localeOf(context))),
                         ))
                     .toList(),
                 onChanged: (val) {

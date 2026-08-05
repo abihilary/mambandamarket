@@ -178,7 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
           (c) => c.slug == _selectedSlug,
       orElse: () => Category(slug: _selectedSlug!, label: _selectedSlug!),
     )
-        .displayLabel;
+        .displayLabel(Localizations.localeOf(context));
   }
 
   List<CategoryItem> _categoryItems(BuildContext context) => [
@@ -189,7 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
     ..._categories.map(
           (c) => CategoryItem(
-        label: c.displayLabel,
+        label: c.displayLabel(Localizations.localeOf(context)),
         icon: _categoryIcons[c.slug] ?? Icons.sell_outlined,
         isSelected: c.slug == _selectedSlug,
       ),
@@ -241,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               fontWeight: FontWeight.w500,
                             ),
                             decoration: InputDecoration(
-                              hintText: 'Search items, brands, categories...',
+                              hintText: context.l10n.homeSearchHint,
                               hintStyle: TextStyle(
                                 color: scheme.onSurfaceVariant.withAlpha(180),
                                 fontSize: 14,

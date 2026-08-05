@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api/auth_service.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
+import '../l10n/l10n.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -89,7 +90,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Buy, Sell & Connect',
+              context.l10n.splashTagline,
               style: TextStyle(
                 color: scheme.onPrimary.withValues(alpha: 0.8),
                 fontSize: 16,

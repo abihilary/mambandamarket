@@ -415,8 +415,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bizDashInquiries => 'Inquiries';
 
   @override
-  String bizDashImagesCount(Object count) {
-    return '$count imgs';
+  String bizDashImagesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count images',
+      one: '1 image',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -1737,4 +1743,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String payoutRequestedOn(Object date) {
     return 'Requested on $date';
   }
+
+  @override
+  String get homeSearchHint => 'Search items, brands, categories…';
+
+  @override
+  String get splashTagline => 'Buy, Sell & Connect';
+
+  @override
+  String get upgradeRequiredTitle => 'Upgrade required';
+
+  @override
+  String get upgradeRequiredBody =>
+      'Posting new listings requires a premium plan. Would you like to upgrade your subscription now?';
+
+  @override
+  String get upgradeCancel => 'Cancel';
+
+  @override
+  String get upgradeConfirm => 'Upgrade';
+
+  @override
+  String apiRequestFailed(int code) {
+    return 'Request failed ($code)';
+  }
+
+  @override
+  String get imagePlaceholder => 'No photo';
 }

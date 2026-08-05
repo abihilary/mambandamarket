@@ -1,6 +1,9 @@
+import 'dart:ui' show Locale;
+
 import 'package:intl/intl.dart';
 
 import 'config.dart';
+import '../l10n/l10n.dart';
 
 /// Domain models mirroring the Core API's JSON payloads.
 ///
@@ -116,8 +119,13 @@ class Listing {
 
   /// First image as a full CDN URL, or a neutral placeholder when the listing
   /// has no images yet.
+  ///
+  /// The placeholder's caption is drawn into the image by the service, so it
+  /// is the one piece of user-facing text no source sweep can find — it read
+  /// "No Image" in English on a French phone until this was localized.
   String get primaryImageUrl => imagePaths.isEmpty
-      ? 'https://placehold.co/600x600/EEEEEE/999999/png?text=No+Image'
+      ? 'https://placehold.co/600x600/EEEEEE/999999/png'
+          '?text=${Uri.encodeComponent(l10nNow.imagePlaceholder)}'
       : AppConfig.storagePublicUrl('listing-images', imagePaths.first);
 
   List<String> get imageUrls => imagePaths
@@ -177,19 +185,29 @@ class Listing {
 class Category {
   final String slug;
 
-  /// Label as stored in the database — currently German, inherited from the
+  /// Label as stored in the database — historically German, inherited from the
   /// UI template the schema was seeded from.
   final String label;
+
+  /// Per-language names, once the API has them. Null on an older server.
+  final String? labelEn;
+  final String? labelFr;
   final String? icon;
 
-  const Category({required this.slug, required this.label, this.icon});
+  const Category({
+    required this.slug,
+    required this.label,
+    this.labelEn,
+    this.labelFr,
+    this.icon,
+  });
 
-  /// Display labels keyed by the stable slug.
+  /// Names keyed by the stable slug, as a fallback for a server that hasn't
+  /// been taught the per-language columns yet.
   ///
-  /// The marketplace serves francophone Cameroon, so the German labels sitting
-  /// in `categories.label` are wrong for users. Translating here rather than
-  /// rewriting the rows keeps the slug as the single identifier and is where
-  /// the other locales (the site offers EN/FR/DE) will slot in.
+  /// These used to be French-only, which meant an English speaker browsing the
+  /// app got "Livres & Musique" no matter what language they had chosen. The
+  /// slug stays the single identifier either way.
   static const Map<String, String> _fr = {
     'auto-rad': 'Auto & Moto',
     'elektronik': 'Électronique',
@@ -205,13 +223,38 @@ class Category {
     'verschenken': 'À donner',
   };
 
-  /// Falls back to whatever the API sent, so a category added later still
-  /// renders instead of disappearing.
-  String get displayLabel => _fr[slug] ?? label;
+  static const Map<String, String> _en = {
+    'auto-rad': 'Cars & bikes',
+    'elektronik': 'Electronics',
+    'mode': 'Fashion',
+    'familie': 'Family & kids',
+    'real-estate': 'Property',
+    'sport': 'Sport & leisure',
+    'jobs': 'Jobs',
+    'moebel': 'Home & garden',
+    'haustiere': 'Pets',
+    'dienstleistungen': 'Services',
+    'buecher-musik': 'Books & music',
+    'verschenken': 'Free to a good home',
+  };
+
+  /// The category's name in [locale].
+  ///
+  /// The server's own translation wins when it has one, then this file's
+  /// fallback, then whatever the API sent — so a category added tomorrow still
+  /// renders a word rather than disappearing or showing its slug.
+  String displayLabel(Locale locale) {
+    final french = locale.languageCode == 'fr';
+    final fromApi = french ? (labelFr ?? labelEn) : (labelEn ?? labelFr);
+    if (fromApi != null && fromApi.isNotEmpty) return fromApi;
+    return (french ? _fr[slug] : _en[slug]) ?? label;
+  }
 
   factory Category.fromJson(Map<String, dynamic> json) => Category(
         slug: json['slug'].toString(),
         label: json['label']?.toString() ?? json['slug'].toString(),
+        labelEn: json['label_en']?.toString(),
+        labelFr: json['label_fr']?.toString(),
         icon: json['icon']?.toString(),
       );
 }

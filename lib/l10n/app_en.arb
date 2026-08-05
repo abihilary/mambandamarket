@@ -201,10 +201,12 @@
   },
   "bizDashStoreVisits": "Store Visits",
   "bizDashInquiries": "Inquiries",
-  "bizDashImagesCount": "{count} imgs",
+  "bizDashImagesCount": "{count, plural, =1{1 image} other{{count} images}}",
   "@bizDashImagesCount": {
     "placeholders": {
-      "count": {}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "bizDashGeneralCategory": "General",
@@ -244,7 +246,11 @@
   "chatUploadFailed": "Could not send that file.",
   "chatFileTooLarge": "Files must be under {limit} MB.",
   "@chatFileTooLarge": {
-    "placeholders": { "limit": { "type": "int" } }
+    "placeholders": {
+      "limit": {
+        "type": "int"
+      }
+    }
   },
   "chatOpenFailed": "Could not open this file.",
   "chatAttachmentLabel": "Attachment",
@@ -789,5 +795,20 @@
     "placeholders": {
       "date": {}
     }
-  }
+  },
+  "homeSearchHint": "Search items, brands, categories…",
+  "splashTagline": "Buy, Sell & Connect",
+  "upgradeRequiredTitle": "Upgrade required",
+  "upgradeRequiredBody": "Posting new listings requires a premium plan. Would you like to upgrade your subscription now?",
+  "upgradeCancel": "Cancel",
+  "upgradeConfirm": "Upgrade",
+  "apiRequestFailed": "Request failed ({code})",
+  "@apiRequestFailed": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
+  "imagePlaceholder": "No photo"
 }

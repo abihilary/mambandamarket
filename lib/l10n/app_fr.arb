@@ -181,7 +181,7 @@
   "bizDashUnitsCount": "{count} unités",
   "bizDashStoreVisits": "Visites de la boutique",
   "bizDashInquiries": "Demandes",
-  "bizDashImagesCount": "{count} imgs",
+  "bizDashImagesCount": "{count, plural, =1{1 image} other{{count} images}}",
   "bizDashGeneralCategory": "Général",
   "bizDashQty": "• Qté : {count}",
   "bizDashGuarantee": "Garantie",
@@ -209,7 +209,11 @@
   "chatUploadFailed": "Impossible d'envoyer ce fichier.",
   "chatFileTooLarge": "Les fichiers doivent faire moins de {limit} Mo.",
   "@chatFileTooLarge": {
-    "placeholders": { "limit": { "type": "int" } }
+    "placeholders": {
+      "limit": {
+        "type": "int"
+      }
+    }
   },
   "chatOpenFailed": "Impossible d'ouvrir ce fichier.",
   "chatAttachmentLabel": "Pièce jointe",
@@ -251,14 +255,14 @@
   "createFailedToPickImages": "Échec de la sélection des images : {error}",
   "detailSignInToSave": "Connectez-vous pour enregistrer des articles.",
   "detailSignInToMessage": "Connectez-vous pour contacter le vendeur.",
-  "safetyNoticeTitle": "S\u00e9curit\u00e9 et paiement",
-  "safetyNoticeIntro": "Pour une transaction en toute s\u00e9curit\u00e9, respectez les r\u00e8gles suivantes :",
+  "safetyNoticeTitle": "Sécurité et paiement",
+  "safetyNoticeIntro": "Pour une transaction en toute sécurité, respectez les règles suivantes :",
   "safetyOnSiteTitle": "Transaction sur place",
-  "safetyOnSiteBody": "Le paiement et la v\u00e9rification de l\u2019article se font sur place, au moment de la livraison.",
-  "safetySecureLocationTitle": "Rendez-vous dans un lieu s\u00fbr",
-  "safetySecureLocationBody": "Donnez toujours rendez-vous dans un endroit public, \u00e9clair\u00e9 et s\u00e9curis\u00e9.",
+  "safetyOnSiteBody": "Le paiement et la vérification de l’article se font sur place, au moment de la livraison.",
+  "safetySecureLocationTitle": "Rendez-vous dans un lieu sûr",
+  "safetySecureLocationBody": "Donnez toujours rendez-vous dans un endroit public, éclairé et sécurisé.",
   "safetyDisclaimerTitle": "Avertissement de la plateforme",
-  "safetyDisclaimerBody": "La plateforme n\u2019est pas responsable des paiements effectu\u00e9s \u00e0 l\u2019avance ni des accords conclus directement entre les parties.",
+  "safetyDisclaimerBody": "La plateforme n’est pas responsable des paiements effectués à l’avance ni des accords conclus directement entre les parties.",
   "safetyDontShowAgain": "Ne plus afficher",
   "safetyCancel": "Annuler",
   "safetyProceedToChat": "Continuer vers la discussion",
@@ -268,7 +272,7 @@
   "detailDetails": "Détails",
   "detailNoDescription": "Aucune description fournie.",
   "detailRelated": "Annonces similaires",
-  "detailMessageSeller": "Message",
+  "detailMessageSeller": "Écrire",
   "detailPostedMinutes": "Il y a {count} min",
   "detailPostedHours": "Il y a {count} h",
   "detailPostedDays": "Il y a {count} j",
@@ -372,7 +376,7 @@
   "subSubscribeTo": "S'abonner à {name}",
   "subPerMonth": "/ mois",
   "subBilledAnnually": "Facturé annuellement",
-  "subPlanClassic": "Classic",
+  "subPlanClassic": "Classique",
   "subPlanProBusiness": "Pro Entreprise",
   "subPlanVipEnterprise": "VIP Entreprise",
   "subPlanProSeller": "Vendeur Pro",
@@ -658,5 +662,13 @@
     "placeholders": {
       "date": {}
     }
-  }
+  },
+  "homeSearchHint": "Rechercher un article, une marque, une catégorie…",
+  "splashTagline": "Acheter, vendre, échanger",
+  "upgradeRequiredTitle": "Abonnement requis",
+  "upgradeRequiredBody": "Publier de nouvelles annonces nécessite une formule premium. Voulez-vous passer à un abonnement supérieur maintenant ?",
+  "upgradeCancel": "Annuler",
+  "upgradeConfirm": "Mettre à niveau",
+  "apiRequestFailed": "Échec de la requête ({code})",
+  "imagePlaceholder": "Sans photo"
 }

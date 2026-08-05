@@ -827,8 +827,8 @@ abstract class AppLocalizations {
   /// No description provided for @bizDashImagesCount.
   ///
   /// In en, this message translates to:
-  /// **'{count} imgs'**
-  String bizDashImagesCount(Object count);
+  /// **'{count, plural, =1{1 image} other{{count} images}}'**
+  String bizDashImagesCount(int count);
 
   /// No description provided for @bizDashGeneralCategory.
   ///
@@ -3217,6 +3217,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Requested on {date}'**
   String payoutRequestedOn(Object date);
+
+  /// No description provided for @homeSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search items, brands, categories…'**
+  String get homeSearchHint;
+
+  /// No description provided for @splashTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy, Sell & Connect'**
+  String get splashTagline;
+
+  /// No description provided for @upgradeRequiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade required'**
+  String get upgradeRequiredTitle;
+
+  /// No description provided for @upgradeRequiredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Posting new listings requires a premium plan. Would you like to upgrade your subscription now?'**
+  String get upgradeRequiredBody;
+
+  /// No description provided for @upgradeCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get upgradeCancel;
+
+  /// No description provided for @upgradeConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade'**
+  String get upgradeConfirm;
+
+  /// No description provided for @apiRequestFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Request failed ({code})'**
+  String apiRequestFailed(int code);
+
+  /// No description provided for @imagePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'No photo'**
+  String get imagePlaceholder;
 }
 
 class _AppLocalizationsDelegate

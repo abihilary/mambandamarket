@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
+import '../l10n/l10n.dart';
 
 /// A failed API call, carrying the server's machine-readable error code.
 class ApiException implements Exception {
@@ -60,7 +61,10 @@ class ApiClient {
     throw ApiException(
       res.statusCode,
       err?['code']?.toString() ?? 'http_${res.statusCode}',
-      err?['message']?.toString() ?? 'Request failed (${res.statusCode})',
+      // The API always sends a message; this is the fallback for the times it
+      // cannot — a gateway 502 with an HTML body, say — which is exactly when
+      // a user is looking at the error.
+      err?['message']?.toString() ?? l10nNow.apiRequestFailed(res.statusCode),
     );
   }
 

@@ -51,24 +51,23 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   }
 
   void _showUpgradeDialog() {
+    final l10n = context.l10n;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Upgrade Required'),
-        content: const Text(
-          'Posting new listings requires a premium plan. Would you like to upgrade your subscription now?',
-        ),
+        title: Text(l10n.upgradeRequiredTitle),
+        content: Text(l10n.upgradeRequiredBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(l10n.upgradeCancel),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
               Navigator.pushNamed(context, '/subscription');
             },
-            child: const Text('Upgrade'),
+            child: Text(l10n.upgradeConfirm),
           ),
         ],
       ),
