@@ -8,6 +8,7 @@ import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import 'CreateListingScreen.dart';
+import 'ViewProfileScreen.dart'; // Import the newly created screen
 
 class BusinessDashboardScreen extends StatefulWidget {
   const BusinessDashboardScreen({super.key});
@@ -160,6 +161,18 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
 
   void _navigateToEditStore() {
     Navigator.pushNamed(context, '/bussiness');
+  }
+
+  void _navigateToViewProfile() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ViewProfileScreen(
+          store: _store,
+          inventory: _mockInventory,
+        ),
+      ),
+    );
   }
 
   void _showSnackBar(String message) {
@@ -438,12 +451,10 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-                        },
-                        icon: const Icon(Icons.storefront_outlined, size: 18),
-                        label: Text(
-                          context.l10n.bizDashGoToHomeMarketplace,
+                        onPressed: _navigateToViewProfile,
+                        icon: const Icon(Icons.person_outline, size: 18),
+                        label: const Text(
+                          'View Profile',
                           overflow: TextOverflow.ellipsis,
                         ),
                         style: ElevatedButton.styleFrom(

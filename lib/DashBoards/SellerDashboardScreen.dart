@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../Screens/IndividualSellerOnboardingScreen.dart';
+import 'ViewSellerProfileScreen.dart';
 import '../api/api_client.dart';
 import '../api/auth_service.dart';
 import '../api/models.dart' as api;
@@ -9,7 +10,6 @@ import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import 'CreateListingScreen.dart';
-
 
 class SellerDashboardScreen extends StatefulWidget {
   const SellerDashboardScreen({super.key});
@@ -22,10 +22,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  // The render code below is map-driven, so the API models are adapted into
-  // that shape rather than rewriting every row widget. Prices arrive
-  // pre-formatted (`priceLabel`) because listings are priced in XAF and the
-  // original UI hardcoded a dollar sign.
   final List<Map<String, dynamic>> _activeItems = [];
   final List<Map<String, dynamic>> _soldItems = [];
 
@@ -34,9 +30,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   int _earnedCents = 0;
   api.SellerDashboard? _stats;
 
-  // `_load` runs from initState, where a BuildContext isn't safe to localize.
-  // It records these sentinels instead, which `_gate()` translates at build
-  // time. Real API errors are stored verbatim and shown as-is.
   static const String _kSignInError = '__seller_dash_sign_in__';
   static const String _kLoadError = '__seller_dash_load__';
 
@@ -54,35 +47,33 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   }
 
   Map<String, dynamic> _fromListing(api.Listing l) => {
-        'id': l.id,
-        'title': l.title,
-        'priceLabel': l.displayPrice,
-        'category': l.categorySlug,
-        'condition': l.condition ?? '',
-        'hasGuarantee': l.hasGuarantee,
-        'views': l.viewCount,
-        'inquiries': l.inquiryCount,
-        'quantity': l.quantity,
-        'images': l.imageUrls,
-        'priceCents': l.priceCents,
-      };
+    'id': l.id,
+    'title': l.title,
+    'priceLabel': l.displayPrice,
+    'category': l.categorySlug,
+    'condition': l.condition ?? '',
+    'hasGuarantee': l.hasGuarantee,
+    'views': l.viewCount,
+    'inquiries': l.inquiryCount,
+    'quantity': l.quantity,
+    'images': l.imageUrls,
+    'priceCents': l.priceCents,
+    'inStock': l.quantity > 0,
+  };
 
   Map<String, dynamic> _fromSale(api.Sale s) => {
-        'id': s.listing?.id ?? s.id,
-        'saleId': s.id,
-        // Kept nullable-ish (empty) here because this adapter runs from the
-        // initState load path where there's no BuildContext; the localized
-        // fallback is applied at render time in the sold tab.
-        'title': s.listing?.title ?? '',
-        'priceLabel': s.displayPrice,
-        'category': s.listing?.categorySlug ?? '',
-        'condition': '',
-        'soldDate': s.soldAt == null
-            ? ''
-            : '${s.soldAt!.day}/${s.soldAt!.month}/${s.soldAt!.year}',
-        'buyerName': s.buyer?.displayName ?? '',
-        'images': s.listing?.imageUrls ?? const <String>[],
-      };
+    'id': s.listing?.id ?? s.id,
+    'saleId': s.id,
+    'title': s.listing?.title ?? '',
+    'priceLabel': s.displayPrice,
+    'category': s.listing?.categorySlug ?? '',
+    'condition': '',
+    'soldDate': s.soldAt == null
+        ? ''
+        : '${s.soldAt!.day}/${s.soldAt!.month}/${s.soldAt!.year}',
+    'buyerName': s.buyer?.displayName ?? '',
+    'images': s.listing?.imageUrls ?? const <String>[],
+  };
 
   Future<void> _load() async {
     final uid = AuthService.instance.userId;
@@ -133,13 +124,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     }
   }
 
-  /// Earnings in the currency the items were actually priced in, rather than
-  /// the dollar sign the template hardcoded.
   String _earnedCurrency = 'XAF';
   String get _totalEarnedLabel =>
       api.formatPrice(_earnedCents, currency: _earnedCurrency);
 
-  // Helper method to display either Network or File images seamlessly
   Widget _buildImageWidget(String path) {
     final scheme = Theme.of(context).colorScheme;
     if (path.startsWith('http://') || path.startsWith('https://')) {
@@ -171,8 +159,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     }
   }
 
-  // Open CreateListingScreen; it publishes through the API itself, so we just
-  // reload to pick the new item up with its server-assigned fields.
   void _openCreateListingModal() async {
     final l10n = context.l10n;
     final created = await Navigator.push(
@@ -207,9 +193,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     }
   }
 
-  // Handle Edit Action
   void _editItem(Map<String, dynamic> item) {
-    // Navigates to onboarding screen, passing existing item details
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -219,7 +203,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     );
   }
 
-  // Handle Delete Action
   void _deleteItem(Map<String, dynamic> item, bool isActive) {
     final l10n = context.l10n;
     showDialog(
@@ -236,8 +219,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             onPressed: () async {
               Navigator.pop(ctx);
               try {
-                // Soft-delete server-side, then reload so the tabs reflect
-                // what the server actually holds.
                 await ListingsRepository.instance.delete(item['id'] as String);
                 await _load();
                 if (!mounted) return;
@@ -303,7 +284,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
       body: SafeArea(
         child: Column(
           children: [
-            // PROFILE CARD
+            // PROFILE CARD WITH DUAL BUTTONS
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: _buildSellerHeaderCard(theme, context),
@@ -335,8 +316,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
               ),
             ),
             const SizedBox(height: 12),
-            // Reach figures come from the dashboard endpoint, which aggregates
-            // server-side rather than summing whatever page we happen to hold.
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Row(
@@ -355,8 +334,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                       title: context.l10n.sellerDashInquiries,
                       value: '${_stats?.inquiries ?? 0}',
                       icon: Icons.chat_bubble_outline,
-                      // Ambient brand violet, used here purely as a decorative
-                      // tint so the four stat tiles stay distinguishable.
                       color: AppColors.glow,
                     ),
                   ),
@@ -406,8 +383,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
         border: Border.all(color: theme.dividerColor),
         boxShadow: [
           BoxShadow(
-            // Drop shadows stay black in both themes; on a dark ground it
-            // simply reads as nothing.
             color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
@@ -420,7 +395,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             children: [
               const CircleAvatar(
                 radius: 24,
-                // The individual-seller tier is amber throughout this screen.
                 backgroundColor: AppColors.warning,
                 child: Icon(Icons.person, color: AppColors.ink, size: 28),
               ),
@@ -462,27 +436,58 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
           const SizedBox(height: 12),
           const Divider(height: 1),
           const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/home',
-                      (route) => false,
-                );
-              },
-              icon: const Icon(Icons.storefront_outlined, size: 18),
-              label: Text(context.l10n.sellerDashGoToMarketplace),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: scheme.primary,
-                foregroundColor: scheme.onPrimary,
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+          Row(
+            children: [
+              // Edit Profile Button (Routes to seller-onboard)
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                        const IndividualSellerOnboardingScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.edit_outlined, size: 16),
+                  label: const Text('Edit Profile'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(width: 10),
+              // View Profile Button (Routes to ViewSellerProfileScreen)
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ViewSellerProfileScreen(
+                          sellerStats: _stats,
+                          inventory: _activeItems,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.person_outline_rounded, size: 16),
+                  label: const Text('View Profile'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: scheme.primary,
+                    foregroundColor: scheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -533,8 +538,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     );
   }
 
-  /// Shared loading/error gate so a slow or failed fetch is distinguishable
-  /// from genuinely having nothing listed.
   Widget? _gate() {
     if (_isLoading) return const Center(child: CircularProgressIndicator());
     if (_error != null) {
@@ -542,8 +545,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
       final message = _error == _kSignInError
           ? l10n.sellerDashSignInPrompt
           : _error == _kLoadError
-              ? l10n.sellerDashLoadError
-              : _error!;
+          ? l10n.sellerDashLoadError
+          : _error!;
       final muted = Theme.of(context).colorScheme.onSurfaceVariant;
       return Center(
         child: Padding(
@@ -615,8 +618,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 4, vertical: 2),
                           decoration: BoxDecoration(
-                            // Scrim over a photo: stays black + white in both
-                            // themes so it survives whatever the image is.
                             color: Colors.black.withValues(alpha: 0.7),
                             borderRadius: BorderRadius.circular(4),
                           ),
@@ -797,7 +798,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
-                          // Money already received.
                           color: AppColors.success,
                         ),
                       ),

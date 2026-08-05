@@ -27,6 +27,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _referralController = TextEditingController();
 
   bool _obscurePassword = true;
   bool _isLoading = false;
@@ -251,6 +252,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   validator: (val) => val == null || val.length < 8
                       ? l10n.passwordMin8
                       : null,
+                ),
+                const SizedBox(height: 28),
+
+
+                // Obligatory Referral Code Field
+                TextFormField(
+                  controller: _referralController,
+                  textCapitalization: TextCapitalization.characters,
+                  decoration: InputDecoration(
+                    labelText: 'Referral Code *',
+                    hintText: 'Enter your referral code',
+                    prefixIcon: const Icon(Icons.card_giftcard_outlined),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+
                 ),
                 const SizedBox(height: 28),
 
