@@ -39,6 +39,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _referralController.dispose();
     super.dispose();
   }
 
@@ -86,6 +87,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
         displayName: _nameController.text.trim(),
         role: widget.role,
       );
+
+      // Park the referral before routing. It can only be claimed with a
+      // session, and sign-up frequently ends at "check your email" — so it is
+      // redeemed later, on the first launch that actually has one.
+      await auth.stashReferralCode(_referralController.text);
+      if (auth.session != null) await auth.redeemPendingReferral();
 
       if (!mounted) return;
 
@@ -256,13 +263,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(height: 28),
 
 
-                // Obligatory Referral Code Field
+                // Optional: an invite code from whoever told them about us.
                 TextFormField(
                   controller: _referralController,
                   textCapitalization: TextCapitalization.characters,
                   decoration: InputDecoration(
-                    labelText: 'Referral Code *',
-                    hintText: 'Enter your referral code',
+                    labelText: l10n.referralCodeOptional,
+                    hintText: l10n.referralCodeHint,
                     prefixIcon: const Icon(Icons.card_giftcard_outlined),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12)),

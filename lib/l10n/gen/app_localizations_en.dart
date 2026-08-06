@@ -635,6 +635,76 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailSignInToMessage => 'Sign in to message the seller.';
 
   @override
+  String get referralTitle => 'Referral code';
+
+  @override
+  String get referralSkip => 'Skip';
+
+  @override
+  String get referralSkipForNow => 'Skip for now';
+
+  @override
+  String get referralContinue => 'Continue';
+
+  @override
+  String get referralHeading => 'Have a referral code?';
+
+  @override
+  String get referralBody =>
+      'If a friend invited you, enter their code below. You can skip this step.';
+
+  @override
+  String get referralCodeOptional => 'Referral code (optional)';
+
+  @override
+  String get referralCodeHint => 'Enter code';
+
+  @override
+  String get inviteFriends => 'Invite friends';
+
+  @override
+  String get inviteTitle => 'Invite friends';
+
+  @override
+  String get inviteYourCode => 'Your code';
+
+  @override
+  String get inviteExplainer =>
+      'Share your code. When someone signs up with it and completes their first purchase, the referral counts.';
+
+  @override
+  String get inviteCopy => 'Copy';
+
+  @override
+  String get inviteCopied => 'Code copied.';
+
+  @override
+  String get inviteShare => 'Share';
+
+  @override
+  String inviteShareText(Object code) {
+    return 'Join me on Mambanda Market — use my code $code when you sign up.';
+  }
+
+  @override
+  String get inviteInvited => 'Invited';
+
+  @override
+  String get inviteQualified => 'Completed a purchase';
+
+  @override
+  String get inviteRewarded => 'Rewarded';
+
+  @override
+  String get inviteNoneYet => 'No invites yet.';
+
+  @override
+  String get inviteLoadError => 'Could not load your referrals.';
+
+  @override
+  String get inviteReferredBy => 'You joined with a friend’s code.';
+
+  @override
   String get safetyNoticeTitle => 'Safety & Payment Notice';
 
   @override

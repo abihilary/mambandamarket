@@ -36,6 +36,9 @@ class _SplashScreenState extends State<SplashScreen> {
           FavoritesRepository.instance.refresh(),
         ]);
         profileMissing = (results[0] as Me?)?.profile == null;
+        // A code entered at sign-up can only be claimed once a session exists,
+        // which for the email-confirmation path is here, not there.
+        await auth.redeemPendingReferral();
       } catch (_) {
         // Offline or an expired token — don't assume onboarding is incomplete;
         // fall through to /home (or the signed-out flow) rather than blocking.

@@ -1226,6 +1226,138 @@ abstract class AppLocalizations {
   /// **'Sign in to message the seller.'**
   String get detailSignInToMessage;
 
+  /// No description provided for @referralTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Referral code'**
+  String get referralTitle;
+
+  /// No description provided for @referralSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get referralSkip;
+
+  /// No description provided for @referralSkipForNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip for now'**
+  String get referralSkipForNow;
+
+  /// No description provided for @referralContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get referralContinue;
+
+  /// No description provided for @referralHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Have a referral code?'**
+  String get referralHeading;
+
+  /// No description provided for @referralBody.
+  ///
+  /// In en, this message translates to:
+  /// **'If a friend invited you, enter their code below. You can skip this step.'**
+  String get referralBody;
+
+  /// No description provided for @referralCodeOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Referral code (optional)'**
+  String get referralCodeOptional;
+
+  /// No description provided for @referralCodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter code'**
+  String get referralCodeHint;
+
+  /// No description provided for @inviteFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite friends'**
+  String get inviteFriends;
+
+  /// No description provided for @inviteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite friends'**
+  String get inviteTitle;
+
+  /// No description provided for @inviteYourCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Your code'**
+  String get inviteYourCode;
+
+  /// No description provided for @inviteExplainer.
+  ///
+  /// In en, this message translates to:
+  /// **'Share your code. When someone signs up with it and completes their first purchase, the referral counts.'**
+  String get inviteExplainer;
+
+  /// No description provided for @inviteCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get inviteCopy;
+
+  /// No description provided for @inviteCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Code copied.'**
+  String get inviteCopied;
+
+  /// No description provided for @inviteShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get inviteShare;
+
+  /// No description provided for @inviteShareText.
+  ///
+  /// In en, this message translates to:
+  /// **'Join me on Mambanda Market — use my code {code} when you sign up.'**
+  String inviteShareText(Object code);
+
+  /// No description provided for @inviteInvited.
+  ///
+  /// In en, this message translates to:
+  /// **'Invited'**
+  String get inviteInvited;
+
+  /// No description provided for @inviteQualified.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed a purchase'**
+  String get inviteQualified;
+
+  /// No description provided for @inviteRewarded.
+  ///
+  /// In en, this message translates to:
+  /// **'Rewarded'**
+  String get inviteRewarded;
+
+  /// No description provided for @inviteNoneYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No invites yet.'**
+  String get inviteNoneYet;
+
+  /// No description provided for @inviteLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your referrals.'**
+  String get inviteLoadError;
+
+  /// No description provided for @inviteReferredBy.
+  ///
+  /// In en, this message translates to:
+  /// **'You joined with a friend’s code.'**
+  String get inviteReferredBy;
+
   /// No description provided for @safetyNoticeTitle.
   ///
   /// In en, this message translates to:

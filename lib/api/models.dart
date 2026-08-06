@@ -1010,3 +1010,43 @@ class Payout {
             DateTime.tryParse(json['processed_at']?.toString() ?? ''),
       );
 }
+
+/// The caller's referral standing: the code they share, and how their invites
+/// are doing.
+///
+/// `qualified` is the number that matters — those invitees completed a
+/// purchase, so the referral is earned rather than merely signed up.
+class ReferralSummary {
+  final String? code;
+  final String? referredBy;
+  final int total;
+  final int pending;
+  final int qualified;
+  final int rewarded;
+
+  const ReferralSummary({
+    this.code,
+    this.referredBy,
+    this.total = 0,
+    this.pending = 0,
+    this.qualified = 0,
+    this.rewarded = 0,
+  });
+
+  /// Whether this user already claimed someone else's code. Attribution is
+  /// write-once, so the entry point should not be offered twice.
+  bool get hasReferrer => referredBy != null && referredBy!.isNotEmpty;
+
+  factory ReferralSummary.fromJson(Map<String, dynamic> json) {
+    final stats = (json['stats'] as Map?)?.cast<String, dynamic>() ?? const {};
+    int n(String k) => (stats[k] as num?)?.toInt() ?? 0;
+    return ReferralSummary(
+      code: json['code']?.toString(),
+      referredBy: json['referred_by']?.toString(),
+      total: n('total'),
+      pending: n('pending'),
+      qualified: n('qualified'),
+      rewarded: n('rewarded'),
+    );
+  }
+}

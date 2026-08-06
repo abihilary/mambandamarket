@@ -656,3 +656,26 @@ class ReportsRepository {
         if (detail != null && detail.trim().isNotEmpty) 'detail': detail.trim(),
       });
 }
+
+/// Referrals: the caller's own code and claiming someone else's.
+///
+/// Claiming deliberately goes through the API rather than writing the profile
+/// directly. `profiles` lets a user update their own row, so a client-side
+/// write would let the person being referred name any referrer they liked —
+/// including themselves. The server is the only thing allowed to decide.
+class ReferralsRepository {
+  ReferralsRepository._();
+  static final ReferralsRepository instance = ReferralsRepository._();
+
+  final _api = ApiClient.instance;
+
+  Future<ReferralSummary> me() async {
+    final json = await _api.get('/referrals/me') as Map<String, dynamic>;
+    return ReferralSummary.fromJson(json);
+  }
+
+  /// Throws [ApiException] with a specific code the caller can show verbatim:
+  /// `unknown_code`, `self_referral`, `already_referred`, `empty_code`.
+  Future<void> apply(String code) =>
+      _api.post('/referrals/apply', {'code': code.trim().toUpperCase()});
+}

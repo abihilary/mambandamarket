@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'api_client.dart';
@@ -251,6 +252,52 @@ class AuthService {
     final value = Me.fromJson(json);
     me.value = value;
     return value;
+  }
+
+  // ── Referral held over from sign-up ────────────────────────────────────────
+  //
+  // A referral can only be claimed once a session exists, but sign-up often
+  // ends at "check your email" — the user leaves, confirms, and comes back to
+  // the login screen, by which point an in-memory code is long gone. Parking it
+  // in preferences is what makes the code someone typed at sign-up actually
+  // count when they finally arrive.
+  static const _kPendingReferral = 'pending_referral_code';
+
+  Future<void> stashReferralCode(String code) async {
+    final trimmed = code.trim().toUpperCase();
+    if (trimmed.isEmpty) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_kPendingReferral, trimmed);
+    } catch (_) {
+      // Storage unavailable — the referral is lost, but sign-up must not fail
+      // over it.
+    }
+  }
+
+  /// Redeem anything parked at sign-up. Safe to call on every launch: the
+  /// server treats attribution as write-once, and the code is cleared whether
+  /// it was accepted or rejected, so a bad code is not retried forever.
+  Future<void> redeemPendingReferral() async {
+    if (session == null) return;
+    SharedPreferences prefs;
+    String? code;
+    try {
+      prefs = await SharedPreferences.getInstance();
+      code = prefs.getString(_kPendingReferral);
+    } catch (_) {
+      return;
+    }
+    if (code == null || code.isEmpty) return;
+
+    try {
+      await ApiClient.instance.post('/referrals/apply', {'code': code});
+    } catch (_) {
+      // Already referred, unknown code, or offline. Clearing regardless keeps
+      // this from becoming a request on every single launch; the user can still
+      // enter a code from the invite screen.
+    }
+    await prefs.remove(_kPendingReferral);
   }
 
   /// Best-effort top-up of [me] when it is missing.

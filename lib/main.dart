@@ -19,6 +19,7 @@ import 'Screens/AccountStatusScreen.dart';
 import 'Screens/ForgotPasswordScreen.dart';
 import 'Screens/IndividualSellerOnboardingScreen.dart';
 import 'Screens/MyOrdersScreen.dart';
+import 'Screens/InviteFriendsScreen.dart';
 import 'Screens/ResetPasswordScreen.dart';
 import 'Screens/RoleSelectionScreen.dart';
 import 'Screens/SplashScreen.dart';
@@ -135,6 +136,9 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
                 break;
               case '/my-orders':
                 builder = const MyOrdersScreen();
+                break;
+              case '/invite':
+                builder = const InviteFriendsScreen();
                 break;
               case '/company-dashboard':
                 builder = const CompanyDashboardScreen();

@@ -272,6 +272,16 @@ class _AccountScreenState extends State<AccountScreen> {
                   onTap: () => Navigator.pushNamed(context, '/my-orders'),
                 ),
 
+                // The other half of referrals: where you find the code to give
+                // out. Without it a code can only ever be typed in, never
+                // shared.
+                ListTile(
+                  leading: const Icon(Icons.card_giftcard_outlined),
+                  title: Text(l10n.inviteFriends),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => Navigator.pushNamed(context, '/invite'),
+                ),
+
                 // Verified merchants only — companies are provisioned by an
                 // admin, so there is nothing to show anyone else.
                 if (profile?.isCompany == true)

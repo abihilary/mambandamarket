@@ -643,6 +643,76 @@ class AppLocalizationsFr extends AppLocalizations {
       'Connectez-vous pour contacter le vendeur.';
 
   @override
+  String get referralTitle => 'Code de parrainage';
+
+  @override
+  String get referralSkip => 'Passer';
+
+  @override
+  String get referralSkipForNow => 'Passer pour l’instant';
+
+  @override
+  String get referralContinue => 'Continuer';
+
+  @override
+  String get referralHeading => 'Vous avez un code de parrainage ?';
+
+  @override
+  String get referralBody =>
+      'Si un ami vous a invité, saisissez son code ci-dessous. Vous pouvez passer cette étape.';
+
+  @override
+  String get referralCodeOptional => 'Code de parrainage (facultatif)';
+
+  @override
+  String get referralCodeHint => 'Saisir le code';
+
+  @override
+  String get inviteFriends => 'Inviter des amis';
+
+  @override
+  String get inviteTitle => 'Inviter des amis';
+
+  @override
+  String get inviteYourCode => 'Votre code';
+
+  @override
+  String get inviteExplainer =>
+      'Partagez votre code. Lorsqu’une personne s’inscrit avec et effectue son premier achat, le parrainage est validé.';
+
+  @override
+  String get inviteCopy => 'Copier';
+
+  @override
+  String get inviteCopied => 'Code copié.';
+
+  @override
+  String get inviteShare => 'Partager';
+
+  @override
+  String inviteShareText(Object code) {
+    return 'Rejoignez-moi sur Mambanda Market — utilisez mon code $code à l’inscription.';
+  }
+
+  @override
+  String get inviteInvited => 'Invités';
+
+  @override
+  String get inviteQualified => 'Ont effectué un achat';
+
+  @override
+  String get inviteRewarded => 'Récompensés';
+
+  @override
+  String get inviteNoneYet => 'Aucune invitation pour l’instant.';
+
+  @override
+  String get inviteLoadError => 'Impossible de charger vos parrainages.';
+
+  @override
+  String get inviteReferredBy => 'Vous avez rejoint grâce au code d’un ami.';
+
+  @override
   String get safetyNoticeTitle => 'Sécurité et paiement';
 
   @override
