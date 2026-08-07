@@ -16,9 +16,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Google sign-in finishes outside this screen (the user returns via the
-    // deep link). Wait for AuthService to fully resolve the session before
-    // routing: brand-new social accounts still need to pick an account type.
     AuthService.instance.signInResolved.addListener(_onSignInResolved);
   }
 
@@ -29,22 +26,40 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   void _onSignInResolved() {
-    if (!mounted) return;
-    final auth = AuthService.instance;
-    if (auth.session == null) return;
-    final String route;
-    if (auth.isAccountRestricted) {
-      route = '/account-status';
-    } else if (auth.needsRoleSelection.value) {
-      route = '/role-selection';
-    } else if (auth.pendingSubscriptionRole != null) {
-      // Fresh seller/business sign-up → the subscription step (one-shot).
-      auth.pendingSubscriptionRole = null;
-      route = '/subscription';
-    } else {
-      route = '/home';
-    }
-    Navigator.pushNamedAndRemoveUntil(context, route, (_) => false);
+    // Schedule navigation after the frame completes to prevent build-phase crashes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final auth = AuthService.instance;
+      if (auth.session == null) return;
+
+      final String targetRoute;
+      if (auth.isAccountRestricted) {
+        targetRoute = '/account-status';
+      } else if (auth.needsRoleSelection.value) {
+        targetRoute = '/role-selection';
+      } else if (auth.pendingSubscriptionRole != null) {
+        auth.pendingSubscriptionRole = null;
+        targetRoute = '/subscription';
+      } else {
+        targetRoute = '/home';
+      }
+
+      // Check if user has already entered a referral code in metadata
+      final metadata = auth.session?.user.userMetadata;
+      final hasReferral = metadata != null && metadata['referral_code'] != null;
+
+      if (!hasReferral) {
+        // Navigate to the named referral route safely
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/referral',
+              (_) => false,
+          arguments: targetRoute,
+        );
+      } else {
+        Navigator.pushNamedAndRemoveUntil(context, targetRoute, (_) => false);
+      }
+    });
   }
 
   Future<void> _handleGoogleSignIn() async {
@@ -113,7 +128,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                // Google's own mark stays Google-red in both themes.
                 icon: const Icon(Icons.g_mobiledata, size: 28, color: Colors.red),
                 label: Text(
                   l10n.continueWithGoogle,
@@ -159,7 +173,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   TextButton(
                     onPressed: () {
                       Navigator.pushNamed(context, '/login');
-                      // Login modal / screen
                     },
                     child: Text(
                       l10n.logIn,

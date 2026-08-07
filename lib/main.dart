@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mambandamarket/Components/ReferalScreen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'api/auth_service.dart';
@@ -128,6 +129,9 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
                 break;
               case '/seller-dashboard':
                 builder = SellerDashboardScreen();
+                break;
+              case '/referral':
+                builder = ReferralScreen(nextRoute:"/subscription");
                 break;
               case '/my-orders':
                 builder = const MyOrdersScreen();
