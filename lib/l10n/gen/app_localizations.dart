@@ -3397,6 +3397,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No photo'**
   String get imagePlaceholder;
+
+  /// Shown when sign-up is attempted with an address that already has an account.
+  ///
+  /// In en, this message translates to:
+  /// **'That email already has an account. Sign in instead.'**
+  String get signUpAlreadyRegistered;
+
+  /// Button taking the user from sign-up to the sign-in screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get signUpGoToSignIn;
 }
 
 class _AppLocalizationsDelegate

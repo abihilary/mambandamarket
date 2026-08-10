@@ -20,6 +20,24 @@ const String kOAuthRedirect = 'com.mabanda.mambandamarket://login-callback';
 const String kPasswordResetRedirect =
     'com.mabanda.mambandamarket://password-reset';
 
+/// How a sign-up attempt ended.
+///
+/// `alreadyRegistered` exists because Supabase does not treat a duplicate
+/// address as an error — it answers as though the account were new so the
+/// endpoint cannot be used to discover who has registered. The caller has to
+/// distinguish it, or someone with an existing account is told to check their
+/// email for a message that will never come.
+enum SignUpOutcome {
+  /// Confirmations are off: there is a session and the profile is synced.
+  signedIn,
+
+  /// Account created; the user must confirm by email before signing in.
+  confirmationRequired,
+
+  /// The address already has an account. Send them to sign-in instead.
+  alreadyRegistered,
+}
+
 /// Authentication + the signed-in user's profile.
 ///
 /// Supabase Auth issues the JWT; the Core API turns it into a `profiles` row via
@@ -79,6 +97,14 @@ class AuthService {
           } else {
             needsRoleSelection.value = false;
           }
+          // A code parked at sign-up can only be claimed once a profile exists.
+          // This handler is the one place every sign-in passes through — email,
+          // Google, or a session restored at launch — so claiming here is what
+          // makes a referral survive any route through onboarding. It is a
+          // no-op when nothing is parked. Skipped while role selection is
+          // pending: there is no profile yet to attach the referral to, and
+          // RoleSelectionScreen claims it as soon as it creates one.
+          if (!needsRoleSelection.value) await redeemPendingReferral();
         } catch (_) {
           // Non-fatal: the app still works, /me just retries later.
         } finally {
@@ -149,7 +175,7 @@ class AuthService {
     // the profile as a plain buyer before the chosen role is read back.
   }
 
-  Future<void> signUp({
+  Future<SignUpOutcome> signUp({
     required String email,
     required String password,
     String? displayName,
@@ -159,7 +185,7 @@ class AuthService {
     // confirmation gap (with confirmations on there's no session yet, hence
     // nothing to sync). onAuthStateChange reads them back and materializes the
     // profile on the first successful sign-in.
-    await _client.auth.signUp(
+    final res = await _client.auth.signUp(
       email: email,
       password: password,
       data: {
@@ -168,6 +194,17 @@ class AuthService {
         'role': role,
       },
     );
+
+    // Signing up with an address that already has an account is NOT an error
+    // in Supabase: it returns a session-less user so the response cannot be
+    // used to enumerate who is registered. Left unhandled that shows "check
+    // your email" to someone who already has an account and is simply trying
+    // to sign in — they wait for a mail that never arrives.
+    //
+    // The tell is an empty identity list, which only ever happens in this case.
+    if (session == null && (res.user?.identities?.isEmpty ?? false)) {
+      return SignUpOutcome.alreadyRegistered;
+    }
     // Confirmations disabled ⇒ signed in immediately; sync now and flag the
     // subscription step for paid roles.
     if (session != null) {
@@ -176,7 +213,9 @@ class AuthService {
       if (role == 'individual_seller' || role == 'business') {
         pendingSubscriptionRole = role;
       }
+      return SignUpOutcome.signedIn;
     }
+    return SignUpOutcome.confirmationRequired;
   }
 
   /// Google sign-in. Opens the consent screen; on mobile the user returns to
@@ -278,26 +317,50 @@ class AuthService {
   /// Redeem anything parked at sign-up. Safe to call on every launch: the
   /// server treats attribution as write-once, and the code is cleared whether
   /// it was accepted or rejected, so a bad code is not retried forever.
-  Future<void> redeemPendingReferral() async {
-    if (session == null) return;
+  ///
+  /// Returns true when a parked code was consumed (accepted or refused), so a
+  /// caller can skip asking for one it has already dealt with.
+  Future<bool> redeemPendingReferral() async {
+    if (session == null) return false;
+    // Mid-onboarding for a social sign-up: the profile is deliberately not
+    // created until a role is chosen, and the no_profile retry below would
+    // create a roleless one — quietly turning a seller into a buyer before they
+    // ever reach the subscription step. RoleSelectionScreen calls this the
+    // moment it creates the profile instead.
+    if (needsRoleSelection.value) return false;
     SharedPreferences prefs;
     String? code;
     try {
       prefs = await SharedPreferences.getInstance();
       code = prefs.getString(_kPendingReferral);
     } catch (_) {
-      return;
+      return false;
     }
-    if (code == null || code.isEmpty) return;
+    if (code == null || code.isEmpty) return false;
 
     try {
       await ApiClient.instance.post('/referrals/apply', {'code': code});
+    } on ApiException catch (e) {
+      // The server reached a verdict. Anything other than "not ready yet" is
+      // final — clear the code so this stops running on every launch.
+      if (e.code == 'no_profile') {
+        // /auth/sync has not created the profile yet. Sync and try once more;
+        // if that still fails the code stays parked for the next launch.
+        try {
+          await syncProfile();
+          await ApiClient.instance.post('/referrals/apply', {'code': code});
+        } catch (_) {
+          return false; // keep the code
+        }
+      }
     } catch (_) {
-      // Already referred, unknown code, or offline. Clearing regardless keeps
-      // this from becoming a request on every single launch; the user can still
-      // enter a code from the invite screen.
+      // Offline, or the server is unhappy. Keep the code: discarding it here
+      // would quietly cost the person who invited them their credit, which is
+      // the one outcome this whole feature exists to prevent.
+      return false;
     }
     await prefs.remove(_kPendingReferral);
+    return true;
   }
 
   /// Best-effort top-up of [me] when it is missing.

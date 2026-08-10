@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../Components/ReferalScreen.dart';
 import '../api/auth_service.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
@@ -39,6 +40,12 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     // Already signed in → persist the chosen role. This covers both a Google
     // sign-up finishing onboarding (creating its profile row with the picked
     // role + Google name) and an existing user upgrading from buyer.
+    //
+    // Read before the flag is cleared: it is what distinguishes a brand-new
+    // social account from an existing user changing their role, and only the
+    // former should be asked for a referral code.
+    final isNewSocialSignUp = auth.needsRoleSelection.value;
+    var referralHandled = false;
     try {
       await auth.syncProfile(
         role: _apiRole,
@@ -47,6 +54,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
       auth.pendingOAuthDisplayName = null;
       auth.needsRoleSelection.value = false;
       await auth.refreshMe();
+      // The profile now exists, so a code parked earlier (someone who started
+      // on the sign-up form, then chose Google instead) can finally be claimed.
+      referralHandled = await auth.redeemPendingReferral();
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -55,6 +65,23 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
       return;
     }
     if (!mounted) return;
+
+    // A Google sign-up never sees the sign-up form, so this is the only moment
+    // it can be asked who invited them — without this step the whole referral
+    // feature is invisible to everyone who signs in with Google. Existing users
+    // merely changing role skip it: they were attributed (or not) long ago, and
+    // the server would refuse a second code anyway.
+    if (isNewSocialSignUp && !referralHandled) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ReferralScreen(
+            nextRoute: _selectedRole == 'buyer' ? '/home' : '/subscription',
+          ),
+        ),
+      );
+      return;
+    }
 
     switch (_selectedRole) {
       case 'buyer':

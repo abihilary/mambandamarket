@@ -1840,4 +1840,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get imagePlaceholder => 'No photo';
+
+  @override
+  String get signUpAlreadyRegistered =>
+      'That email already has an account. Sign in instead.';
+
+  @override
+  String get signUpGoToSignIn => 'Sign in';
 }

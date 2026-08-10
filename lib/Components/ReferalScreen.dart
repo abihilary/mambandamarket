@@ -48,12 +48,23 @@ class _ReferralScreenState extends State<ReferralScreen> {
       await ReferralsRepository.instance.apply(code);
       _proceedToNext();
     } on ApiException catch (e) {
+      // The profile row has not caught up with the session yet. That is the one
+      // refusal worth retrying, so park the code and move on rather than
+      // blocking onboarding on a race the user cannot see or fix.
+      if (e.code == 'no_profile') {
+        await AuthService.instance.stashReferralCode(code);
+        _proceedToNext();
+        return;
+      }
       // A wrong code is worth saying out loud — silently moving on would leave
       // the person who invited them uncredited with nobody any the wiser.
       if (!mounted) return;
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
       );
     } catch (_) {
       // Offline or the server is unhappy: the code is kept for the next launch

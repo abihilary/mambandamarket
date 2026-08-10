@@ -81,12 +81,36 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     try {
       final auth = AuthService.instance;
-      await auth.signUp(
+      final outcome = await auth.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
         displayName: _nameController.text.trim(),
         role: widget.role,
       );
+
+      // Supabase answers a duplicate address as though it were new, so this is
+      // the only place the difference can be surfaced. Say it plainly rather
+      // than sending someone to wait for a confirmation email that will never
+      // arrive — and do not park the referral, since there is no new account
+      // for it to attach to.
+      if (outcome == SignUpOutcome.alreadyRegistered) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.signUpAlreadyRegistered),
+            // Same red as every other failure in this screen — a plain grey
+            // bar reads as information, and this is something that stopped.
+            backgroundColor: AppColors.danger,
+            action: SnackBarAction(
+              label: l10n.signUpGoToSignIn,
+              textColor: Colors.white,
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
+        );
+        return;
+      }
 
       // Park the referral before routing. It can only be claimed with a
       // session, and sign-up frequently ends at "check your email" — so it is

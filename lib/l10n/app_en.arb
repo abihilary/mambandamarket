@@ -319,14 +319,16 @@
   "inviteShare": "Share",
   "inviteShareText": "Join me on Mambanda Market — use my code {code} when you sign up.",
   "@inviteShareText": {
-    "placeholders": { "code": {} }
+    "placeholders": {
+      "code": {}
+    }
   },
   "inviteInvited": "Invited",
   "inviteQualified": "Completed a purchase",
   "inviteRewarded": "Rewarded",
   "inviteNoneYet": "No invites yet.",
   "inviteLoadError": "Could not load your referrals.",
-  "inviteReferredBy": "You joined with a friend\u2019s code.",
+  "inviteReferredBy": "You joined with a friend’s code.",
   "safetyNoticeTitle": "Safety & Payment Notice",
   "safetyNoticeIntro": "Please keep your transaction safe by adhering to the following rules:",
   "safetyOnSiteTitle": "On-Site Transaction",
@@ -835,5 +837,13 @@
       }
     }
   },
-  "imagePlaceholder": "No photo"
+  "imagePlaceholder": "No photo",
+  "signUpAlreadyRegistered": "That email already has an account. Sign in instead.",
+  "@signUpAlreadyRegistered": {
+    "description": "Shown when sign-up is attempted with an address that already has an account."
+  },
+  "signUpGoToSignIn": "Sign in",
+  "@signUpGoToSignIn": {
+    "description": "Button taking the user from sign-up to the sign-in screen."
+  }
 }

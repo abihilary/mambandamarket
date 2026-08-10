@@ -1874,4 +1874,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get imagePlaceholder => 'Sans photo';
+
+  @override
+  String get signUpAlreadyRegistered =>
+      'Cette adresse a déjà un compte. Connectez-vous plutôt.';
+
+  @override
+  String get signUpGoToSignIn => 'Se connecter';
 }
