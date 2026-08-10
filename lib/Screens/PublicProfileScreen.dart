@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../Components/ItemCard.dart';
 import '../Components/ItemDetailScreen.dart';
+import '../Components/VerifiedBadge.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
@@ -155,7 +156,14 @@ class _Header extends StatelessWidget {
     // A store's logo stands in for the avatar: on a storefront the brand is
     // the identity, not the person who happens to own the account.
     final imageUrl = (store?.logoUrl?.isNotEmpty ?? false) ? store!.logoUrl : profile.avatarUrl;
-    final verified = store?.isVerified ?? false;
+    // A company is admin-provisioned after a verification visit, so the role is
+    // as good a signal as the store flag. Keying only on the store meant an
+    // account whose subtitle read "Verified business" showed no mark at all
+    // whenever it had no storefront row — the claim without the evidence.
+    final verified = VerifiedBadge.applies(
+      isCompany: profile.isCompany,
+      storeVerified: store?.isVerified ?? false,
+    );
     // Hoisted so the analyzer can see it is non-null inside the button's
     // callback — a `store?.supportPhone?.isNotEmpty` guard does not promote.
     final supportPhone = store?.supportPhone;
@@ -210,13 +218,18 @@ class _Header extends StatelessWidget {
                                     ?.copyWith(fontWeight: FontWeight.bold),
                               ),
                             ),
-                            if (verified) ...[
-                              const SizedBox(width: 6),
-                              Icon(Icons.verified, size: 20, color: cs.primary),
-                            ],
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
+                        // The badge carries the tick, so the name does not need
+                        // one too — and the role line below stays plain
+                        // ("Business", not "Verified business") rather than
+                        // making the same claim a third time.
+                        if (verified)
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 6),
+                            child: VerifiedBadge(),
+                          ),
                         Text(
                           _roleLabel(l10n, profile, store),
                           style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13),

@@ -306,12 +306,17 @@
   "referralSkip": "Skip",
   "referralSkipForNow": "Skip for now",
   "detailSoldBy": "Sold by",
+  "verifiedBadge": "Verified",
+  "avatarFromGallery": "Choose from gallery",
+  "avatarFromCamera": "Take a photo",
+  "avatarCancel": "Cancel",
+  "avatarUploadFailed": "Couldn't update your picture. Please try again.",
   "profileFallbackName": "Profile",
   "profileLoadFailed": "Couldn't load this profile.",
   "profileRetry": "Try again",
   "profileRoleBuyer": "Buyer",
   "profileRoleSeller": "Seller",
-  "profileRoleCompany": "Verified business",
+  "profileRoleCompany": "Business",
   "profileRatingCount": "({count} reviews)",
   "@profileRatingCount": {
     "placeholders": {

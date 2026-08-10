@@ -1,9 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../api/auth_service.dart';
+import '../api/config.dart';
 import '../api/models.dart';
+import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../theme/theme_controller.dart';
@@ -24,6 +29,69 @@ class _AccountScreenState extends State<AccountScreen> {
     // failed refresh at startup hides every role-gated entry below — a verified
     // company would open this screen and find no Company dashboard at all.
     AuthService.instance.ensureMe();
+  }
+
+  /// True while a new picture is uploading, so the avatar can show progress
+  /// instead of looking like the tap did nothing.
+  bool _uploadingAvatar = false;
+
+  /// Set the account picture.
+  ///
+  /// The file goes straight to Supabase Storage on a short-lived signed URL —
+  /// it never streams through the API — and only the resulting public URL is
+  /// saved on the profile. The bucket namespaces every path under the caller's
+  /// user id, so one account can never overwrite another's picture.
+  Future<void> _changeAvatar() async {
+    if (_uploadingAvatar) return;
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: Text(l10n.avatarFromGallery),
+              onTap: () => Navigator.pop(sheetContext, ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: Text(l10n.avatarFromCamera),
+              onTap: () => Navigator.pop(sheetContext, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.close),
+              title: Text(l10n.avatarCancel),
+              onTap: () => Navigator.pop(sheetContext),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+
+    // Downscaled on the way out: an avatar is rendered at 34pt, and shipping a
+    // 12MP original over a mobile connection to draw a thumbnail is a cost the
+    // user pays for nothing.
+    final picked = await ImagePicker()
+        .pickImage(source: source, imageQuality: 85, maxWidth: 512, maxHeight: 512);
+    if (picked == null) return;
+
+    setState(() => _uploadingAvatar = true);
+    try {
+      final path = await ListingsRepository.instance
+          .uploadImage(File(picked.path), bucket: 'avatars');
+      await AuthService.instance.updateProfile({
+        'avatar_url': AppConfig.storagePublicUrl('avatars', path),
+      });
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.avatarUploadFailed)));
+    } finally {
+      if (mounted) setState(() => _uploadingAvatar = false);
+    }
   }
 
   Future<void> _resendConfirmation(BuildContext context, String email) async {
@@ -187,21 +255,52 @@ class _AccountScreenState extends State<AccountScreen> {
               padding: const EdgeInsets.all(16),
               children: [
                 ListTile(
-                  leading: CircleAvatar(
-                    radius: 28,
-                    backgroundColor: scheme.primary.withValues(alpha: 0.12),
-                    backgroundImage: (avatar != null && avatar.isNotEmpty)
-                        ? NetworkImage(avatar)
-                        : null,
-                    child: (avatar == null || avatar.isEmpty)
-                        ? Text(
-                            name.characters.first.toUpperCase(),
-                            style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: scheme.primary),
-                          )
-                        : null,
+                  leading: GestureDetector(
+                    onTap: _changeAvatar,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundColor: scheme.primary.withValues(alpha: 0.12),
+                          backgroundImage: (avatar != null && avatar.isNotEmpty)
+                              ? NetworkImage(avatar)
+                              : null,
+                          child: _uploadingAvatar
+                              ? SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2, color: scheme.primary),
+                                )
+                              : (avatar == null || avatar.isEmpty)
+                                  ? Text(
+                                      name.characters.first.toUpperCase(),
+                                      style: TextStyle(
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.bold,
+                                          color: scheme.primary),
+                                    )
+                                  : null,
+                        ),
+                        // Without this the picture looks like decoration; the
+                        // camera dot is the only thing that says it is a button.
+                        Positioned(
+                          right: -2,
+                          bottom: -2,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: scheme.primary,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: scheme.surface, width: 2),
+                            ),
+                            child: Icon(Icons.photo_camera,
+                                size: 12, color: scheme.onPrimary),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   title: Text(name,
                       style: const TextStyle(

@@ -1250,6 +1250,36 @@ abstract class AppLocalizations {
   /// **'Sold by'**
   String get detailSoldBy;
 
+  /// No description provided for @verifiedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get verifiedBadge;
+
+  /// No description provided for @avatarFromGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from gallery'**
+  String get avatarFromGallery;
+
+  /// No description provided for @avatarFromCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a photo'**
+  String get avatarFromCamera;
+
+  /// No description provided for @avatarCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get avatarCancel;
+
+  /// No description provided for @avatarUploadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t update your picture. Please try again.'**
+  String get avatarUploadFailed;
+
   /// No description provided for @profileFallbackName.
   ///
   /// In en, this message translates to:
@@ -1283,7 +1313,7 @@ abstract class AppLocalizations {
   /// No description provided for @profileRoleCompany.
   ///
   /// In en, this message translates to:
-  /// **'Verified business'**
+  /// **'Business'**
   String get profileRoleCompany;
 
   /// No description provided for @profileRatingCount.

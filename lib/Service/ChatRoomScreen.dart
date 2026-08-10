@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../Components/VerifiedBadge.dart';
 import '../Screens/PublicProfileScreen.dart';
 import '../api/api_client.dart';
 import '../api/auth_service.dart';
@@ -412,11 +413,26 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name,
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: cs.onPrimary)),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: cs.onPrimary)),
+                      ),
+                      // Knowing you are talking to a checked merchant rather
+                      // than an anonymous account matters most here, before any
+                      // money is discussed.
+                      if (other?.isCompany ?? false) ...[
+                        const SizedBox(width: 4),
+                        const VerifiedBadge(dense: true, size: 15),
+                      ],
+                    ],
+                  ),
                   Text(
                     listing?.title ?? l10n.chatDefaultListing,
                     maxLines: 1,

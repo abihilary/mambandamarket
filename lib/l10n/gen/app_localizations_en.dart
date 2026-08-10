@@ -647,6 +647,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailSoldBy => 'Sold by';
 
   @override
+  String get verifiedBadge => 'Verified';
+
+  @override
+  String get avatarFromGallery => 'Choose from gallery';
+
+  @override
+  String get avatarFromCamera => 'Take a photo';
+
+  @override
+  String get avatarCancel => 'Cancel';
+
+  @override
+  String get avatarUploadFailed =>
+      'Couldn\'t update your picture. Please try again.';
+
+  @override
   String get profileFallbackName => 'Profile';
 
   @override
@@ -662,7 +678,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileRoleSeller => 'Seller';
 
   @override
-  String get profileRoleCompany => 'Verified business';
+  String get profileRoleCompany => 'Business';
 
   @override
   String profileRatingCount(int count) {

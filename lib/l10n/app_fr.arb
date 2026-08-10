@@ -259,12 +259,17 @@
   "referralSkip": "Passer",
   "referralSkipForNow": "Passer pour l’instant",
   "detailSoldBy": "Vendu par",
+  "verifiedBadge": "Vérifié",
+  "avatarFromGallery": "Choisir dans la galerie",
+  "avatarFromCamera": "Prendre une photo",
+  "avatarCancel": "Annuler",
+  "avatarUploadFailed": "Impossible de mettre à jour votre photo. Réessayez.",
   "profileFallbackName": "Profil",
   "profileLoadFailed": "Impossible de charger ce profil.",
   "profileRetry": "Réessayer",
   "profileRoleBuyer": "Acheteur",
   "profileRoleSeller": "Vendeur",
-  "profileRoleCompany": "Entreprise vérifiée",
+  "profileRoleCompany": "Entreprise",
   "profileRatingCount": "({count} avis)",
   "@profileRatingCount": {
     "placeholders": {

@@ -90,9 +90,17 @@ class Listing {
   // who it belonged to. Null wherever the caller didn't ask for the embed.
   final String? sellerName;
   final String? sellerAvatarUrl;
+
+  /// The seller's account type. `company` is the admin-provisioned, verified
+  /// kind, so this is half of whether a listing may show the verified mark.
+  final String? sellerRole;
   final String? storeName;
   final String? storeLogoUrl;
   final bool storeVerified;
+
+  /// Has this seller actually been checked? True for an admin-provisioned
+  /// company, or a storefront an admin marked verified.
+  bool get sellerVerified => sellerRole == 'company' || storeVerified;
 
   /// What to call the seller on a listing: the shop name when there is one,
   /// because a storefront trades under its brand, not its owner's name.
@@ -127,6 +135,7 @@ class Listing {
     this.status = 'active',
     this.sellerName,
     this.sellerAvatarUrl,
+    this.sellerRole,
     this.storeName,
     this.storeLogoUrl,
     this.storeVerified = false,
@@ -208,6 +217,7 @@ class Listing {
       status: json['status']?.toString() ?? 'active',
       sellerName: seller?['display_name']?.toString(),
       sellerAvatarUrl: seller?['avatar_url']?.toString(),
+      sellerRole: seller?['role']?.toString(),
       storeName: store?['shop_name']?.toString(),
       storeLogoUrl: store?['logo_url']?.toString(),
       storeVerified: store?['is_verified'] == true,

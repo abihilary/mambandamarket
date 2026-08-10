@@ -49,6 +49,14 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- iOS kills the app outright if it reaches the photo library or camera
+	     without these strings. Chat attachments have used the picker since
+	     they shipped, so this was a crash waiting on any real device — the
+	     Simulator is more forgiving than the phone here. -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Mambanda Market needs access to your photos so you can set a profile picture and send images in chat.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Mambanda Market needs access to your camera so you can take a profile picture or photograph an item.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

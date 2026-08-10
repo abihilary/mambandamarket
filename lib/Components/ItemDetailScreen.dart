@@ -10,6 +10,7 @@ import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import 'ItemCard.dart';
+import 'VerifiedBadge.dart';
 import 'report_sheet.dart';
 
 class ItemDetailScreen extends StatefulWidget {
@@ -860,9 +861,9 @@ class _SellerRow extends StatelessWidget {
                               fontSize: 15, fontWeight: FontWeight.bold),
                         ),
                       ),
-                      if (listing.storeVerified) ...[
+                      if (listing.sellerVerified) ...[
                         const SizedBox(width: 5),
-                        Icon(Icons.verified, size: 16, color: scheme.primary),
+                        const VerifiedBadge(dense: true),
                       ],
                     ],
                   ),
