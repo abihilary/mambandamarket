@@ -258,6 +258,31 @@
   "referralTitle": "Code de parrainage",
   "referralSkip": "Passer",
   "referralSkipForNow": "Passer pour l’instant",
+  "detailSoldBy": "Vendu par",
+  "profileFallbackName": "Profil",
+  "profileLoadFailed": "Impossible de charger ce profil.",
+  "profileRetry": "Réessayer",
+  "profileRoleBuyer": "Acheteur",
+  "profileRoleSeller": "Vendeur",
+  "profileRoleCompany": "Entreprise vérifiée",
+  "profileRatingCount": "({count} avis)",
+  "@profileRatingCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "profileShopTitle": "Boutique ({count})",
+  "@profileShopTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "profileShopEmpty": "Aucune annonce pour le moment.",
+  "profileViewSeller": "Voir le vendeur",
   "referralContinue": "Continuer",
   "referralHeading": "Vous avez un code de parrainage ?",
   "referralBody": "Si un ami vous a invité, saisissez son code ci-dessous. Vous pouvez passer cette étape.",

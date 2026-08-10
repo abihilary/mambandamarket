@@ -381,6 +381,35 @@ class StoresRepository {
       });
 }
 
+/// Somebody else's public profile.
+///
+/// One call covers every kind of account, because the app does not know which
+/// it is looking at before it asks — you tap a name in a conversation, not a
+/// role. A buyer comes back with an empty shop and no store; a company comes
+/// back with its storefront, its logo and its support line.
+class UsersRepository {
+  UsersRepository._();
+  static final UsersRepository instance = UsersRepository._();
+
+  final _api = ApiClient.instance;
+
+  Future<PublicProfile> profile(String userId) async {
+    final json = await _api.get('/users/$userId') as Map<String, dynamic>;
+    final store = (json['store'] as Map?)?.cast<String, dynamic>();
+    final rating = (json['rating'] as Map?)?.cast<String, dynamic>();
+    return PublicProfile(
+      profile: Profile.fromJson((json['profile'] as Map).cast<String, dynamic>()),
+      store: store == null ? null : Store.fromJson(store),
+      listings: (json['listings'] as List? ?? [])
+          .whereType<Map>()
+          .map((m) => Listing.fromJson(m.cast<String, dynamic>()))
+          .toList(),
+      ratingAverage: (rating?['average'] as num?)?.toDouble() ?? 0,
+      ratingCount: (rating?['count'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
 /// Chat threads and message history.
 ///
 /// Real-time delivery arrives later with the Socket.IO service; until then the

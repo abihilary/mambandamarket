@@ -305,6 +305,31 @@
   "referralTitle": "Referral code",
   "referralSkip": "Skip",
   "referralSkipForNow": "Skip for now",
+  "detailSoldBy": "Sold by",
+  "profileFallbackName": "Profile",
+  "profileLoadFailed": "Couldn't load this profile.",
+  "profileRetry": "Try again",
+  "profileRoleBuyer": "Buyer",
+  "profileRoleSeller": "Seller",
+  "profileRoleCompany": "Verified business",
+  "profileRatingCount": "({count} reviews)",
+  "@profileRatingCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "profileShopTitle": "Shop ({count})",
+  "@profileShopTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "profileShopEmpty": "Nothing listed right now.",
+  "profileViewSeller": "View seller",
   "referralContinue": "Continue",
   "referralHeading": "Have a referral code?",
   "referralBody": "If a friend invited you, enter their code below. You can skip this step.",

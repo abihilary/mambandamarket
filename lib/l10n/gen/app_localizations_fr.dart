@@ -652,6 +652,43 @@ class AppLocalizationsFr extends AppLocalizations {
   String get referralSkipForNow => 'Passer pour l’instant';
 
   @override
+  String get detailSoldBy => 'Vendu par';
+
+  @override
+  String get profileFallbackName => 'Profil';
+
+  @override
+  String get profileLoadFailed => 'Impossible de charger ce profil.';
+
+  @override
+  String get profileRetry => 'Réessayer';
+
+  @override
+  String get profileRoleBuyer => 'Acheteur';
+
+  @override
+  String get profileRoleSeller => 'Vendeur';
+
+  @override
+  String get profileRoleCompany => 'Entreprise vérifiée';
+
+  @override
+  String profileRatingCount(int count) {
+    return '($count avis)';
+  }
+
+  @override
+  String profileShopTitle(int count) {
+    return 'Boutique ($count)';
+  }
+
+  @override
+  String get profileShopEmpty => 'Aucune annonce pour le moment.';
+
+  @override
+  String get profileViewSeller => 'Voir le vendeur';
+
+  @override
   String get referralContinue => 'Continuer';
 
   @override

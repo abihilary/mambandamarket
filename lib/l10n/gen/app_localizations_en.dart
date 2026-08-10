@@ -644,6 +644,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get referralSkipForNow => 'Skip for now';
 
   @override
+  String get detailSoldBy => 'Sold by';
+
+  @override
+  String get profileFallbackName => 'Profile';
+
+  @override
+  String get profileLoadFailed => 'Couldn\'t load this profile.';
+
+  @override
+  String get profileRetry => 'Try again';
+
+  @override
+  String get profileRoleBuyer => 'Buyer';
+
+  @override
+  String get profileRoleSeller => 'Seller';
+
+  @override
+  String get profileRoleCompany => 'Verified business';
+
+  @override
+  String profileRatingCount(int count) {
+    return '($count reviews)';
+  }
+
+  @override
+  String profileShopTitle(int count) {
+    return 'Shop ($count)';
+  }
+
+  @override
+  String get profileShopEmpty => 'Nothing listed right now.';
+
+  @override
+  String get profileViewSeller => 'View seller';
+
+  @override
   String get referralContinue => 'Continue';
 
   @override

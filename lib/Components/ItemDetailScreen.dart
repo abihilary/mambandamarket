@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../Screens/CheckoutScreen.dart';
+import '../Screens/PublicProfileScreen.dart';
 import '../Service/ChatRoomScreen.dart';
 import '../api/api_client.dart';
 import '../api/auth_service.dart';
@@ -601,6 +602,14 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     ],
                   ),
                   const Divider(height: 32),
+                  // Who is selling this. Tapping opens their profile and shop —
+                  // for a company that is where the verified mark and the
+                  // support line live, which is what a buyer wants before
+                  // paying a stranger for something they can't hold yet.
+                  if (_listing != null && _listing!.sellerId.isNotEmpty) ...[
+                    _SellerRow(listing: _listing!),
+                    const Divider(height: 32),
+                  ],
                   Text(context.l10n.detailDetails, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   Text(
@@ -783,6 +792,92 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       onPressed: disabled ? null : _onChatPressed,
       icon: icon,
       label: label,
+    );
+  }
+}
+
+/// "Sold by …" — the one place a listing says who is behind it.
+///
+/// A storefront shows its brand and logo; an individual shows their own name.
+/// Either way it opens the full profile, which is where the shop, the rating
+/// and (for a business) the verified mark and support line live.
+class _SellerRow extends StatelessWidget {
+  final api.Listing listing;
+
+  const _SellerRow({required this.listing});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final name = listing.sellerLabel ?? l10n.profileFallbackName;
+    final image = listing.sellerImageUrl;
+
+    return InkWell(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PublicProfileScreen(
+            userId: listing.sellerId,
+            initialName: listing.sellerLabel,
+          ),
+        ),
+      ),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: scheme.primary.withValues(alpha: 0.15),
+              backgroundImage: (image?.isNotEmpty ?? false) ? NetworkImage(image!) : null,
+              child: (image?.isNotEmpty ?? false)
+                  ? null
+                  : Text(
+                      name.isEmpty ? '?' : name[0].toUpperCase(),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: scheme.primary),
+                    ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.detailSoldBy,
+                      style: TextStyle(
+                          fontSize: 11, color: scheme.onSurfaceVariant)),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      if (listing.storeVerified) ...[
+                        const SizedBox(width: 5),
+                        Icon(Icons.verified, size: 16, color: scheme.primary),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Text(l10n.profileViewSeller,
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: scheme.primary)),
+            Icon(Icons.chevron_right, size: 18, color: scheme.primary),
+          ],
+        ),
+      ),
     );
   }
 }

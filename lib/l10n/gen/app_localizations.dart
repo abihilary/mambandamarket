@@ -1244,6 +1244,72 @@ abstract class AppLocalizations {
   /// **'Skip for now'**
   String get referralSkipForNow;
 
+  /// No description provided for @detailSoldBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold by'**
+  String get detailSoldBy;
+
+  /// No description provided for @profileFallbackName.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profileFallbackName;
+
+  /// No description provided for @profileLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load this profile.'**
+  String get profileLoadFailed;
+
+  /// No description provided for @profileRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get profileRetry;
+
+  /// No description provided for @profileRoleBuyer.
+  ///
+  /// In en, this message translates to:
+  /// **'Buyer'**
+  String get profileRoleBuyer;
+
+  /// No description provided for @profileRoleSeller.
+  ///
+  /// In en, this message translates to:
+  /// **'Seller'**
+  String get profileRoleSeller;
+
+  /// No description provided for @profileRoleCompany.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified business'**
+  String get profileRoleCompany;
+
+  /// No description provided for @profileRatingCount.
+  ///
+  /// In en, this message translates to:
+  /// **'({count} reviews)'**
+  String profileRatingCount(int count);
+
+  /// No description provided for @profileShopTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop ({count})'**
+  String profileShopTitle(int count);
+
+  /// No description provided for @profileShopEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing listed right now.'**
+  String get profileShopEmpty;
+
+  /// No description provided for @profileViewSeller.
+  ///
+  /// In en, this message translates to:
+  /// **'View seller'**
+  String get profileViewSeller;
+
   /// No description provided for @referralContinue.
   ///
   /// In en, this message translates to:

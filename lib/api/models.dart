@@ -83,6 +83,26 @@ class Listing {
   /// Present on the seller's own feed, where sold/hidden items are included.
   final String status;
 
+  // ── Who is selling ────────────────────────────────────────────────────────
+  //
+  // The API embeds the seller and their store on the browse feed and the
+  // detail; these were being parsed away, which is why a listing could not say
+  // who it belonged to. Null wherever the caller didn't ask for the embed.
+  final String? sellerName;
+  final String? sellerAvatarUrl;
+  final String? storeName;
+  final String? storeLogoUrl;
+  final bool storeVerified;
+
+  /// What to call the seller on a listing: the shop name when there is one,
+  /// because a storefront trades under its brand, not its owner's name.
+  String? get sellerLabel =>
+      (storeName?.isNotEmpty ?? false) ? storeName : sellerName;
+
+  /// Logo first, for the same reason.
+  String? get sellerImageUrl =>
+      (storeLogoUrl?.isNotEmpty ?? false) ? storeLogoUrl : sellerAvatarUrl;
+
   const Listing({
     required this.id,
     required this.sellerId,
@@ -105,6 +125,11 @@ class Listing {
     this.isFavorited = false,
     this.inquiryCount = 0,
     this.status = 'active',
+    this.sellerName,
+    this.sellerAvatarUrl,
+    this.storeName,
+    this.storeLogoUrl,
+    this.storeVerified = false,
   });
 
   bool get isSold => status == 'sold';
@@ -154,6 +179,9 @@ class Listing {
       images.add(json['primary_image'].toString());
     }
 
+    final seller = (json['seller'] as Map?)?.cast<String, dynamic>();
+    final store = (json['store'] as Map?)?.cast<String, dynamic>();
+
     return Listing(
       id: json['id'].toString(),
       sellerId: json['seller_id']?.toString() ?? '',
@@ -178,6 +206,11 @@ class Listing {
       isFavorited: json['is_favorited'] == true,
       inquiryCount: _asInt(json['inquiry_count']),
       status: json['status']?.toString() ?? 'active',
+      sellerName: seller?['display_name']?.toString(),
+      sellerAvatarUrl: seller?['avatar_url']?.toString(),
+      storeName: store?['shop_name']?.toString(),
+      storeLogoUrl: store?['logo_url']?.toString(),
+      storeVerified: store?['is_verified'] == true,
     );
   }
 }
@@ -295,6 +328,37 @@ class Profile {
         avatarUrl: json['avatar_url']?.toString(),
         city: json['city']?.toString(),
       );
+}
+
+/// Everything shown on somebody else's profile, from `GET /users/:id`.
+///
+/// Note there is no phone here. A personal number is not public — the database
+/// stopped serving `profiles.phone` to other users in 0022 — so the only number
+/// on a profile is [Store.supportPhone], which a merchant publishes on purpose.
+class PublicProfile {
+  final Profile profile;
+
+  /// Their storefront, or null for a buyer and for a seller who never opened
+  /// one. This is what carries the logo, banner and support line.
+  final Store? store;
+
+  /// Their shop: active listings only.
+  final List<Listing> listings;
+
+  /// Computed on read by the API — `profiles` carries no rating columns.
+  final double ratingAverage;
+  final int ratingCount;
+
+  const PublicProfile({
+    required this.profile,
+    this.store,
+    this.listings = const [],
+    this.ratingAverage = 0,
+    this.ratingCount = 0,
+  });
+
+  /// A storefront worth showing as one: branded, rather than a bare person.
+  bool get hasStorefront => store != null;
 }
 
 /// Account moderation state, as computed by `/me` (an expired suspension

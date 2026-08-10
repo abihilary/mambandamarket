@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../Screens/PublicProfileScreen.dart';
 import '../api/api_client.dart';
 import '../api/auth_service.dart';
 import '../api/models.dart';
@@ -374,7 +375,23 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       appBar: AppBar(
         backgroundColor: cs.primary,
         foregroundColor: cs.onPrimary,
-        title: Row(
+        // Tapping whoever you are talking to opens their profile — their shop,
+        // whether the business is verified, and its support line. Deciding
+        // whether to trust someone is most of what a first conversation is
+        // for, and until now the name at the top of it did nothing.
+        title: InkWell(
+          onTap: other == null
+              ? null
+              : () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PublicProfileScreen(
+                        userId: other.id,
+                        initialName: other.displayName,
+                      ),
+                    ),
+                  ),
+          child: Row(
           children: [
             CircleAvatar(
               radius: 18,
@@ -411,7 +428,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 ],
               ),
             ),
+            Icon(Icons.chevron_right,
+                size: 20, color: cs.onPrimary.withValues(alpha: 0.7)),
           ],
+        ),
         ),
       ),
       body: Column(
