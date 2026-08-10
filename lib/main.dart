@@ -132,7 +132,12 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
                 builder = SellerDashboardScreen();
                 break;
               case '/referral':
-                builder = ReferralScreen(nextRoute:"/subscription");
+                // The step is a detour, so whoever pushes it says where to go
+                // afterwards. Hardcoding /subscription sent free buyers to the
+                // seller paywall the moment they skipped it.
+                builder = ReferralScreen(
+                  nextRoute: settings.arguments as String? ?? '/home',
+                );
                 break;
               case '/my-orders':
                 builder = const MyOrdersScreen();

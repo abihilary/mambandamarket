@@ -16,6 +16,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   void initState() {
     super.initState();
+    // Google sign-in finishes outside this screen (the user returns via the
+    // deep link). Wait for AuthService to fully resolve the session before
+    // routing: brand-new social accounts still need to pick an account type.
     AuthService.instance.signInResolved.addListener(_onSignInResolved);
   }
 
@@ -44,21 +47,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         targetRoute = '/home';
       }
 
-      // Check if user has already entered a referral code in metadata
-      final metadata = auth.session?.user.userMetadata;
-      final hasReferral = metadata != null && metadata['referral_code'] != null;
-
-      if (!hasReferral) {
-        // Navigate to the named referral route safely
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          '/referral',
-              (_) => false,
-          arguments: targetRoute,
-        );
-      } else {
-        Navigator.pushNamedAndRemoveUntil(context, targetRoute, (_) => false);
-      }
+      // The referral step deliberately does NOT live here. Asking before role
+      // selection means asking before the profile row exists, and the server
+      // refuses a code it has nothing to attach to; it also skips the role
+      // step entirely. RoleSelectionScreen asks instead, once there is a
+      // profile to attribute — and it only asks a genuinely new account, so
+      // returning users are not nagged on every sign-in.
+      Navigator.pushNamedAndRemoveUntil(context, targetRoute, (_) => false);
     });
   }
 
