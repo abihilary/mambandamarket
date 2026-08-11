@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../Screens/IndividualSellerOnboardingScreen.dart';
@@ -10,6 +9,7 @@ import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import 'CreateListingScreen.dart';
+import '../Components/local_image.dart';
 
 class SellerDashboardScreen extends StatefulWidget {
   const SellerDashboardScreen({super.key});
@@ -144,8 +144,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
         ),
       );
     } else {
-      return Image.file(
-        File(path),
+      return LocalImage(
+        path,
         width: 75,
         height: 75,
         fit: BoxFit.cover,

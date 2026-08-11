@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../Components/VerifiedBadge.dart';
+import '../Components/local_image.dart';
 import '../Screens/PublicProfileScreen.dart';
 import '../api/api_client.dart';
 import '../api/auth_service.dart';
@@ -52,7 +52,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   /// Local files for messages still in flight, keyed by their temporary id, so
   /// an outgoing photo can be previewed before the server has ever seen it.
-  final Map<String, File> _localFiles = {};
+  final Map<String, XFile> _localFiles = {};
 
   bool _isLoading = true;
   String? _error;
@@ -130,7 +130,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     _deliver(optimistic);
   }
 
-  void _sendFile(File file, String name) {
+  void _sendFile(XFile file, String name) {
     final optimistic = Message(
       id: _tempId(),
       conversationId: widget.conversation.id,
@@ -259,11 +259,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       maxWidth: 1600,
     );
     if (shot == null) return;
-    _attachIfAllowed(File(shot.path), shot.name);
+    _attachIfAllowed(shot, shot.name);
   }
 
-  void _attachIfAllowed(File file, String name) {
-    final mb = file.lengthSync() / (1024 * 1024);
+  // Async because XFile has no synchronous length: a browser only knows a
+  // file's size by asking the Blob for it.
+  Future<void> _attachIfAllowed(XFile file, String name) async {
+    final mb = await file.length() / (1024 * 1024);
+    if (!mounted) return;
     if (mb > _maxAttachmentMb) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -312,7 +315,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
     if (m.attachmentIsImage) {
       final image = local != null
-          ? Image.file(local, width: 180, fit: BoxFit.cover)
+          ? LocalImage(local.path, width: 180, fit: BoxFit.cover)
           : (m.attachmentUrl != null
               ? Image.network(m.attachmentUrl!,
                   width: 180,

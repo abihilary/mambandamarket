@@ -1,8 +1,8 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import '../api/models.dart' as api;
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
+import '../Components/local_image.dart';
 
 class ViewProfileScreen extends StatelessWidget {
   final api.Store? store;
@@ -83,8 +83,8 @@ class ViewProfileScreen extends StatelessWidget {
         errorBuilder: (context, error, stackTrace) => placeholder(),
       );
     } else {
-      return Image.file(
-        File(path),
+      return LocalImage(
+        path,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) => placeholder(),
       );

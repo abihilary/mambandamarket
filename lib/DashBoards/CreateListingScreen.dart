@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -7,6 +6,7 @@ import '../api/models.dart' as api;
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
+import '../Components/local_image.dart';
 
 class CreateListingScreen extends StatefulWidget {
   final Map<String, dynamic>? initialListing;
@@ -209,7 +209,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       final uploaded = <String>[..._existingImages];
       for (final file in _newImageFiles) {
         uploaded.add(
-          await ListingsRepository.instance.uploadImage(File(file.path)),
+          await ListingsRepository.instance.uploadImage(file),
         );
       }
 
@@ -268,7 +268,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             image: DecorationImage(
               image: isNetwork
                   ? NetworkImage(path) as ImageProvider
-                  : FileImage(File(path)),
+                  : localImageProvider(path),
               fit: BoxFit.cover,
             ),
           ),

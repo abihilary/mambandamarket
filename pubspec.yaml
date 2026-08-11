@@ -63,6 +63,10 @@ dependencies:
   cupertino_icons: ^1.0.8
   google_fonts: ^8.2.0
   image_picker: ^1.2.3
+  # XFile: one file type that means something on both a phone and in a
+  # browser. Comes in with image_picker anyway; declared so the import is
+  # not relying on somebody else's transitive dependency.
+  cross_file: ^0.3.4
   url_launcher: ^6.3.2
 
 dev_dependencies:

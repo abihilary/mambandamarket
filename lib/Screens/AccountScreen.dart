@@ -1,4 +1,3 @@
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 
@@ -83,7 +82,7 @@ class _AccountScreenState extends State<AccountScreen> {
     setState(() => _uploadingAvatar = true);
     try {
       final path = await ListingsRepository.instance
-          .uploadImage(File(picked.path), bucket: 'avatars');
+          .uploadImage(picked, bucket: 'avatars');
       await AuthService.instance.updateProfile({
         'avatar_url': AppConfig.storagePublicUrl('avatars', path),
       });

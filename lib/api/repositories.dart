@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:cross_file/cross_file.dart';
 
 // `hide Category`: foundation exports a `Category` annotation that would clash
 // with our marketplace Category model.
@@ -209,12 +209,17 @@ class ListingsRepository {
   /// [bucket] selects the destination — listing photos, avatars, or store
   /// banners/logos. The server namespaces every path under the caller's user
   /// id, so one user can never write into another's folder.
+  /// Takes an [XFile] rather than a `dart:io` File, and uploads its bytes.
+  /// A browser has no filesystem — `File` exists there only as a stub that
+  /// throws — so bytes are the one currency both platforms share. The
+  /// extension comes from [XFile.name] because on web `path` is a `blob:` URL
+  /// with no extension at all.
   Future<String> uploadImage(
-    File file, {
+    XFile file, {
     String? listingId,
     String bucket = 'listing-images',
   }) async {
-    final ext = file.path.split('.').last.toLowerCase();
+    final ext = _extensionOf(file);
     final signed = await _api.post('/uploads/sign', {
       'bucket': bucket,
       'ext': ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic'].contains(ext)
@@ -226,8 +231,22 @@ class ListingsRepository {
     final path = signed['path'].toString();
     await Supabase.instance.client.storage
         .from(bucket)
-        .uploadToSignedUrl(path, signed['token'].toString(), file);
+        .uploadBinaryToSignedUrl(
+          path,
+          signed['token'].toString(),
+          await file.readAsBytes(),
+        );
     return path;
+  }
+
+  /// Lower-cased extension of a picked file, without the dot.
+  ///
+  /// Reads the name rather than the path: on web the path is a blob URL, and
+  /// on both platforms the name is what the user actually chose.
+  static String _extensionOf(XFile file) {
+    final name = file.name.isNotEmpty ? file.name : file.path;
+    final dot = name.lastIndexOf('.');
+    return dot < 0 ? '' : name.substring(dot + 1).toLowerCase();
   }
 
   /// Upload a chat attachment — a photo *or* a document — and return its
@@ -239,9 +258,9 @@ class ListingsRepository {
   /// a document is staged in the cache under a uniquified name
   /// (`chat-doc-<millis>-facture.pdf`), so deriving it from the path would show
   /// that machine prefix instead of the file the sender actually chose.
-  Future<String> uploadChatFile(File file, {String? filename}) async {
+  Future<String> uploadChatFile(XFile file, {String? filename}) async {
     final name = (filename == null || filename.trim().isEmpty)
-        ? file.path.split('/').last
+        ? (file.name.isNotEmpty ? file.name : file.path.split('/').last)
         : filename.trim();
     final dot = name.lastIndexOf('.');
     final ext = dot < 0 ? 'jpg' : name.substring(dot + 1).toLowerCase();
@@ -255,7 +274,11 @@ class ListingsRepository {
     final path = signed['path'].toString();
     await Supabase.instance.client.storage
         .from('chat-attachments')
-        .uploadToSignedUrl(path, signed['token'].toString(), file);
+        .uploadBinaryToSignedUrl(
+          path,
+          signed['token'].toString(),
+          await file.readAsBytes(),
+        );
     return path;
   }
 }

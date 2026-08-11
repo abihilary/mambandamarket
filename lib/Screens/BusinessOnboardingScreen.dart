@@ -1,4 +1,3 @@
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,6 +7,7 @@ import '../api/config.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
+import '../Components/local_image.dart';
 
 class BusinessOnboardingScreen extends StatefulWidget {
   const BusinessOnboardingScreen({super.key});
@@ -123,7 +123,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
   Future<String?> _uploadAsset(XFile? file) async {
     if (file == null) return null;
     final path = await ListingsRepository.instance
-        .uploadImage(File(file.path), bucket: 'store-assets');
+        .uploadImage(file, bucket: 'store-assets');
     return AppConfig.storagePublicUrl('store-assets', path);
   }
 
@@ -219,7 +219,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                       color: scheme.primary.withValues(alpha: 0.08),
                       image: _bannerImage != null
                           ? DecorationImage(
-                        image: FileImage(File(_bannerImage!.path)),
+                        image: localImageProvider(_bannerImage!.path),
                         fit: BoxFit.cover,
                       )
                           : null,
@@ -287,7 +287,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                             backgroundColor:
                                 scheme.primary.withValues(alpha: 0.08),
                             backgroundImage: _avatarImage != null
-                                ? FileImage(File(_avatarImage!.path))
+                                ? localImageProvider(_avatarImage!.path)
                                 : null,
                             child: _avatarImage == null
                                 ? Icon(Icons.storefront,

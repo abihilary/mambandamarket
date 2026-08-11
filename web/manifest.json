@@ -1,12 +1,15 @@
 {
-    "name": "mambandamarket",
-    "short_name": "mambandamarket",
-    "start_url": ".",
+    "name": "Mambanda Market",
+    "short_name": "Mambanda",
+    "start_url": "/",
+    "scope": "/",
     "display": "standalone",
-    "background_color": "#000000",
-    "theme_color": "#000000",
-    "description": "A new Flutter project.",
+    "background_color": "#07080C",
+    "theme_color": "#07080C",
+    "description": "Buy, sell and connect with people near you. Browse local listings, message sellers directly, and turn what you no longer need into cash.",
     "orientation": "portrait-primary",
+    "lang": "en",
+    "categories": ["shopping", "business"],
     "prefer_related_applications": false,
     "icons": [
         {

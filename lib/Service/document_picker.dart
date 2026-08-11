@@ -1,5 +1,5 @@
-import 'dart:io';
-
+import 'package:cross_file/cross_file.dart';
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/services.dart';
 
 /// Picks a document (PDF, Word, Excel, plain text) with the platform picker.
@@ -13,16 +13,22 @@ class DocumentPicker {
 
   /// Android only for now — iOS ships with the App Store build, and the chat
   /// composer hides the Document option wherever this is false.
-  static bool get isSupported => Platform.isAndroid;
+  ///
+  /// The web check comes first and is not incidental: `Platform.isAndroid`
+  /// reads `dart:io`, which in a browser is a stub that throws. Asking it on
+  /// the web build crashed the composer before it could hide anything.
+  /// `defaultTargetPlatform` answers the same question without dart:io.
+  static bool get isSupported =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
   /// The chosen file staged on disk plus its original name, or null if the
   /// user backed out.
-  static Future<({File file, String name})?> pick() async {
+  static Future<({XFile file, String name})?> pick() async {
     if (!isSupported) return null;
     final picked = await _channel.invokeMapMethod<String, String>('pick');
     final path = picked?['path'];
     final name = picked?['name'];
     if (path == null || name == null) return null;
-    return (file: File(path), name: name);
+    return (file: XFile(path, name: name), name: name);
   }
 }

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../api/api_client.dart';
@@ -8,6 +7,7 @@ import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import 'CreateListingScreen.dart';
+import '../Components/local_image.dart';
 import 'ViewProfileScreen.dart'; // Import the newly created screen
 
 class BusinessDashboardScreen extends StatefulWidget {
@@ -219,8 +219,8 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
         errorBuilder: (context, error, stackTrace) => placeholder(),
       );
     } else {
-      return Image.file(
-        File(path),
+      return LocalImage(
+        path,
         width: 80,
         height: 80,
         fit: BoxFit.cover,

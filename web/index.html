@@ -1,46 +1,119 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
+    Replaced by `flutter build web --base-href`. Left as the placeholder so the
+    app can be served from a subdirectory without editing this file.
   -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Buy, sell and connect with people near you. Browse local listings, message sellers directly, and turn what you no longer need into cash.">
 
-  <!-- iOS meta tags & icons -->
+  <!--
+    viewport-fit=cover lets the app paint into the iPhone's safe areas instead
+    of sitting in letterboxes once it is installed to the home screen. Flutter
+    injects a viewport tag of its own, but only after the engine boots — which
+    is several seconds away on a first visit, and the splash below has to be
+    laid out correctly for all of them.
+  -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#07080C">
+
+  <!--
+    iOS home-screen install. Safari never prompts and ignores most of the web
+    app manifest, so everything about how the installed app looks is decided
+    here: `apple-mobile-web-app-capable` is what drops the browser chrome, and
+    without `apple-touch-icon` iOS screenshots the page and uses that as the
+    icon.
+  -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="mambandamarket">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mambanda">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
-  <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>mambandamarket</title>
+  <title>Mambanda Market</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; background: #07080C; }
+
+    /*
+      A first visit downloads several megabytes of engine before Flutter can
+      draw anything. Without this the user stares at a black rectangle and
+      concludes the link is broken — on a slow connection that is the whole
+      first impression. Plain CSS on purpose: it has to render from the HTML
+      alone, before any script has run.
+    */
+    #boot {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 18px;
+      background: #07080C;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      transition: opacity .35s ease;
+    }
+    #boot.done { opacity: 0; pointer-events: none; }
+    #boot .mark {
+      width: 88px; height: 88px; border-radius: 24px;
+      background: #C9E505;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #boot .mark svg { width: 46px; height: 46px; }
+    #boot .name {
+      color: #F3F4F7; font-size: 21px; font-weight: 700; letter-spacing: .2px;
+    }
+    #boot .hint { color: #9AA0B0; font-size: 13px; }
+    #boot .bar {
+      width: 132px; height: 3px; border-radius: 3px;
+      background: rgba(201,229,5,.22); overflow: hidden;
+    }
+    #boot .bar i {
+      display: block; height: 100%; width: 40%; border-radius: 3px;
+      background: #C9E505; animation: slide 1.15s ease-in-out infinite;
+    }
+    @keyframes slide {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(330%); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #boot .bar i { animation: none; width: 100%; }
+    }
+  </style>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+  <div id="boot">
+    <div class="mark">
+      <!-- The storefront mark from the app's own splash, so the handover is seamless. -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="#0A0B07" stroke-width="1.9"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 9.5 4.5 4h15L21 9.5"/>
+        <path d="M3 9.5h18"/>
+        <path d="M4.5 9.5V20h15V9.5"/>
+        <path d="M9 20v-5.5h6V20"/>
+      </svg>
+    </div>
+    <div class="name">Mambanda Market</div>
+    <div class="bar"><i></i></div>
+    <div class="hint">Loading…</div>
+  </div>
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+  <script>
+    // Flutter fires this once it has painted. Fading the splash on the event
+    // rather than a timer means it is never pulled away from a still-blank
+    // screen on a slow connection, and never lingers on a fast one.
+    window.addEventListener('flutter-first-frame', function () {
+      var boot = document.getElementById('boot');
+      if (!boot) return;
+      boot.classList.add('done');
+      setTimeout(function () { boot.remove(); }, 400);
+    });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

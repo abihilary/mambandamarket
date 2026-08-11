@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../DashBoards/SellerDashboardScreen.dart';
@@ -7,6 +6,7 @@ import '../api/config.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
+import '../Components/local_image.dart';
 
 class IndividualSellerOnboardingScreen extends StatefulWidget {
   const IndividualSellerOnboardingScreen({super.key});
@@ -27,7 +27,7 @@ class _IndividualSellerOnboardingScreenState
 
   // Image Picker instance
   final ImagePicker _picker = ImagePicker();
-  File? _profileImage;
+  XFile? _profileImage;
   bool _isSubmitting = false;
 
   @override
@@ -99,7 +99,7 @@ class _IndividualSellerOnboardingScreenState
 
       if (pickedFile != null) {
         setState(() {
-          _profileImage = File(pickedFile.path);
+          _profileImage = pickedFile;
         });
       }
     } catch (e) {
@@ -120,7 +120,7 @@ class _IndividualSellerOnboardingScreenState
       final String fullName = _nameController.text.trim();
       final String phoneNumber = _phoneController.text.trim();
       final String bio = _bioController.text.trim();
-      final File? imageFile = _profileImage;
+      final XFile? imageFile = _profileImage;
 
       try {
         // Promote the account to a seller, then save the profile fields.
@@ -212,7 +212,7 @@ class _IndividualSellerOnboardingScreenState
                         radius: 48,
                         backgroundColor: scheme.surfaceContainerHighest,
                         backgroundImage: _profileImage != null
-                            ? FileImage(_profileImage!)
+                            ? localImageProvider(_profileImage!.path)
                             : null,
                         child: _profileImage == null
                             ? Icon(
