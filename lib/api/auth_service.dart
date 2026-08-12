@@ -8,8 +8,7 @@ import 'models.dart';
 /// Where Google sends the user back after consent.
 ///
 /// On mobile this is a custom scheme handled by the app (registered in the
-/// Android manifest and iOS Info.plist). On web we pass null so Supabase falls
-/// back to the project's configured Site URL.
+/// Android manifest and iOS Info.plist).
 const String kOAuthRedirect = 'com.mabanda.mambandamarket://login-callback';
 
 /// Where the password-recovery email link returns the user.
@@ -19,6 +18,16 @@ const String kOAuthRedirect = 'com.mabanda.mambandamarket://login-callback';
 /// password using the short-lived recovery session.
 const String kPasswordResetRedirect =
     'com.mabanda.mambandamarket://password-reset';
+
+/// Where auth flows return to, for whichever platform this is running on.
+///
+/// On web this must be the page's own origin. Passing null there does not mean
+/// "come back here" — Supabase falls back to the project's Site URL, which is
+/// the marketing site, so the user would finish signing in and land on a page
+/// that is not the app at all, with the session left behind in a redirect they
+/// never saw. Both web origins are on the project's redirect allowlist.
+String _redirectFor(String mobileScheme) =>
+    kIsWeb ? Uri.base.origin : mobileScheme;
 
 /// How a sign-up attempt ended.
 ///
@@ -227,7 +236,7 @@ class AuthService {
   Future<bool> signInWithGoogle() async {
     return _client.auth.signInWithOAuth(
       OAuthProvider.google,
-      redirectTo: kIsWeb ? null : kOAuthRedirect,
+      redirectTo: _redirectFor(kOAuthRedirect),
       authScreenLaunchMode:
           kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
     );
@@ -241,7 +250,7 @@ class AuthService {
   Future<void> sendPasswordReset(String email) async {
     await _client.auth.resetPasswordForEmail(
       email.trim(),
-      redirectTo: kIsWeb ? null : kPasswordResetRedirect,
+      redirectTo: _redirectFor(kPasswordResetRedirect),
     );
   }
 
