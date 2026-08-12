@@ -219,7 +219,14 @@ class ListingsRepository {
     String? listingId,
     String bucket = 'listing-images',
   }) async {
-    final ext = _extensionOf(file);
+    // Read first: the extension is decided by what the bytes actually are, not
+    // by what the file is called. Every picker here passes imageQuality, which
+    // makes image_picker re-encode to JPEG while leaving the name alone — so
+    // trusting the name filed camera photos as `photo.png` and served them as
+    // image/png, which is simply a lie about the content.
+    final bytes = await file.readAsBytes();
+    final ext = _sniffExtension(bytes) ?? _extensionOf(file);
+
     final signed = await _api.post('/uploads/sign', {
       'bucket': bucket,
       'ext': ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic'].contains(ext)
@@ -231,18 +238,37 @@ class ListingsRepository {
     final path = signed['path'].toString();
     await Supabase.instance.client.storage
         .from(bucket)
-        .uploadBinaryToSignedUrl(
-          path,
-          signed['token'].toString(),
-          await file.readAsBytes(),
-        );
+        .uploadBinaryToSignedUrl(path, signed['token'].toString(), bytes);
     return path;
+  }
+
+  /// The image format the bytes really are, or null if it is not one we know.
+  ///
+  /// Magic numbers, because the storage object's Content-Type is derived from
+  /// the extension and a wrong one follows the picture everywhere it is served.
+  static String? _sniffExtension(Uint8List b) {
+    bool at(int i, List<int> sig) {
+      if (b.length < i + sig.length) return false;
+      for (var k = 0; k < sig.length; k++) {
+        if (b[i + k] != sig[k]) return false;
+      }
+      return true;
+    }
+
+    if (at(0, [0xFF, 0xD8, 0xFF])) return 'jpg';
+    if (at(0, [0x89, 0x50, 0x4E, 0x47])) return 'png';
+    if (at(0, [0x47, 0x49, 0x46])) return 'gif';
+    // WEBP and HEIC both sit inside a container, identified a few bytes in.
+    if (at(0, [0x52, 0x49, 0x46, 0x46]) && at(8, [0x57, 0x45, 0x42, 0x50])) return 'webp';
+    if (at(4, [0x66, 0x74, 0x79, 0x70])) return 'heic';
+    return null;
   }
 
   /// Lower-cased extension of a picked file, without the dot.
   ///
   /// Reads the name rather than the path: on web the path is a blob URL, and
-  /// on both platforms the name is what the user actually chose.
+  /// on both platforms the name is what the user actually chose. Only a
+  /// fallback now — the bytes are the better authority.
   static String _extensionOf(XFile file) {
     final name = file.name.isNotEmpty ? file.name : file.path;
     final dot = name.lastIndexOf('.');
