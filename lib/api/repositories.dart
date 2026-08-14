@@ -285,11 +285,24 @@ class ListingsRepository {
   /// (`chat-doc-<millis>-facture.pdf`), so deriving it from the path would show
   /// that machine prefix instead of the file the sender actually chose.
   Future<String> uploadChatFile(XFile file, {String? filename}) async {
-    final name = (filename == null || filename.trim().isEmpty)
+    final bytes = await file.readAsBytes();
+    var name = (filename == null || filename.trim().isEmpty)
         ? (file.name.isNotEmpty ? file.name : file.path.split('/').last)
         : filename.trim();
-    final dot = name.lastIndexOf('.');
-    final ext = dot < 0 ? 'jpg' : name.substring(dot + 1).toLowerCase();
+    var dot = name.lastIndexOf('.');
+    var ext = dot < 0 ? 'jpg' : name.substring(dot + 1).toLowerCase();
+
+    // Same correction as uploadImage, for the same reason: the picker
+    // re-encodes to JPEG when imageQuality is set but leaves the name alone, so
+    // a gallery photo arrived as `scaled_242.png` and was then served as
+    // image/png. Only applied when the bytes are a recognisable image — a PDF
+    // matches nothing here, so a document keeps exactly the name the sender
+    // chose, which is the whole point of carrying the name through.
+    final sniffed = _sniffExtension(bytes);
+    if (sniffed != null && sniffed != ext && !(sniffed == 'jpg' && ext == 'jpeg')) {
+      name = '${dot < 0 ? name : name.substring(0, dot)}.$sniffed';
+      ext = sniffed;
+    }
 
     final signed = await _api.post('/uploads/sign', {
       'bucket': 'chat-attachments',
@@ -300,11 +313,7 @@ class ListingsRepository {
     final path = signed['path'].toString();
     await Supabase.instance.client.storage
         .from('chat-attachments')
-        .uploadBinaryToSignedUrl(
-          path,
-          signed['token'].toString(),
-          await file.readAsBytes(),
-        );
+        .uploadBinaryToSignedUrl(path, signed['token'].toString(), bytes);
     return path;
   }
 }
