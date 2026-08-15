@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 // Screens imports
 import '../DashBoards/CreateListingScreen.dart';
+import '../api/auth_service.dart';
 import '../Screens/AccountScreen.dart';
 import '../Screens/ChatInboxScreen.dart';
 import '../Screens/FavoritesScreen.dart';
@@ -18,8 +19,24 @@ class MainNavigationShell extends StatefulWidget {
 class _MainNavigationShellState extends State<MainNavigationShell> {
   int _currentBottomIndex = 0;
 
-  // Placeholder flag for user plan status (Replace with actual user/auth state later)
-  final bool _isFreePlan = true;
+  /// Whether this account still has room to publish.
+  ///
+  /// This was a hardcoded `true` "replace with real state later", which meant
+  /// the Publish tab answered "upgrade required" to everybody — a paying
+  /// subscriber, a verified company, and a free user with all three of their
+  /// listings still unused. The only way to reach the form was through a
+  /// seller dashboard, so for anyone else the button in the middle of the tab
+  /// bar simply did not work.
+  ///
+  /// `/me` already carries the quota, and Me.canPublish already interprets it
+  /// (a null limit means unlimited). The server stays the authority — the
+  /// create screen surfaces listing_limit_reached if the count moved
+  /// underneath us — so this only decides whether to offer the form or the
+  /// upgrade prompt.
+  ///
+  /// Defaults to letting them through when the profile has not loaded: a
+  /// failed /me should not look like an expired subscription.
+  bool get _canPublish => AuthService.instance.me.value?.canPublish ?? true;
 
   // List of tab views
   final List<Widget> _pages = const [
@@ -33,7 +50,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   void _onTabTapped(int index) async {
     // Index 2 corresponds to "Publish" (+) action
     if (index == 2) {
-      if (_isFreePlan) {
+      if (!_canPublish) {
         _showUpgradeDialog();
       } else {
         // Open Create Listing Screen as a Modal / Screen
