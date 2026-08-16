@@ -159,8 +159,12 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
     );
   }
 
-  void _navigateToEditStore() {
-    Navigator.pushNamed(context, '/bussiness');
+  Future<void> _navigateToEditStore() async {
+    // Awaited, then reloaded: the editor pops with `true` on save, but this
+    // never listened, so a merchant who changed their shop name or logo came
+    // back to the old one and reasonably concluded the save had not worked.
+    final saved = await Navigator.pushNamed(context, '/bussiness');
+    if (saved == true && mounted) await _load();
   }
 
   void _navigateToViewProfile() {

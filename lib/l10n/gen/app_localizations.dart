@@ -1280,6 +1280,60 @@ abstract class AppLocalizations {
   /// **'Couldn\'t update your picture. Please try again.'**
   String get avatarUploadFailed;
 
+  /// No description provided for @editProfileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit profile'**
+  String get editProfileTitle;
+
+  /// No description provided for @editProfileSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get editProfileSave;
+
+  /// No description provided for @editProfileSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated.'**
+  String get editProfileSaved;
+
+  /// No description provided for @editProfileFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save your profile. Please try again.'**
+  String get editProfileFailed;
+
+  /// No description provided for @editProfilePhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number'**
+  String get editProfilePhone;
+
+  /// No description provided for @editProfilePhoneHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Shown only to businesses you order from.'**
+  String get editProfilePhoneHelper;
+
+  /// No description provided for @editProfileCity.
+  ///
+  /// In en, this message translates to:
+  /// **'City'**
+  String get editProfileCity;
+
+  /// No description provided for @editProfileBio.
+  ///
+  /// In en, this message translates to:
+  /// **'About you'**
+  String get editProfileBio;
+
+  /// No description provided for @accountEditProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit profile'**
+  String get accountEditProfile;
+
   /// No description provided for @profileFallbackName.
   ///
   /// In en, this message translates to:

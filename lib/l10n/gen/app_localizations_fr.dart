@@ -671,6 +671,35 @@ class AppLocalizationsFr extends AppLocalizations {
       'Impossible de mettre à jour votre photo. Réessayez.';
 
   @override
+  String get editProfileTitle => 'Modifier le profil';
+
+  @override
+  String get editProfileSave => 'Enregistrer';
+
+  @override
+  String get editProfileSaved => 'Profil mis à jour.';
+
+  @override
+  String get editProfileFailed =>
+      'Impossible d\'enregistrer votre profil. Réessayez.';
+
+  @override
+  String get editProfilePhone => 'Numéro de téléphone';
+
+  @override
+  String get editProfilePhoneHelper =>
+      'Visible uniquement par les entreprises chez qui vous commandez.';
+
+  @override
+  String get editProfileCity => 'Ville';
+
+  @override
+  String get editProfileBio => 'À propos de vous';
+
+  @override
+  String get accountEditProfile => 'Modifier le profil';
+
+  @override
   String get profileFallbackName => 'Profil';
 
   @override

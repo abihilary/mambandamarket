@@ -663,6 +663,35 @@ class AppLocalizationsEn extends AppLocalizations {
       'Couldn\'t update your picture. Please try again.';
 
   @override
+  String get editProfileTitle => 'Edit profile';
+
+  @override
+  String get editProfileSave => 'Save changes';
+
+  @override
+  String get editProfileSaved => 'Profile updated.';
+
+  @override
+  String get editProfileFailed =>
+      'Couldn\'t save your profile. Please try again.';
+
+  @override
+  String get editProfilePhone => 'Phone number';
+
+  @override
+  String get editProfilePhoneHelper =>
+      'Shown only to businesses you order from.';
+
+  @override
+  String get editProfileCity => 'City';
+
+  @override
+  String get editProfileBio => 'About you';
+
+  @override
+  String get accountEditProfile => 'Edit profile';
+
+  @override
   String get profileFallbackName => 'Profile';
 
   @override

@@ -11,6 +11,7 @@ import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../theme/theme_controller.dart';
+import 'EditProfileScreen.dart';
 import 'ResetPasswordScreen.dart';
 
 class AccountScreen extends StatefulWidget {
@@ -91,6 +92,15 @@ class _AccountScreenState extends State<AccountScreen> {
     } finally {
       if (mounted) setState(() => _uploadingAvatar = false);
     }
+  }
+
+  /// Open the profile editor. `me` is reloaded by the save itself, so the
+  /// header behind this redraws on return without anything else being asked.
+  Future<void> _openEditProfile() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+    );
   }
 
   Future<void> _resendConfirmation(BuildContext context, String email) async {
@@ -305,6 +315,18 @@ class _AccountScreenState extends State<AccountScreen> {
                       style: const TextStyle(
                           fontSize: 18, fontWeight: FontWeight.bold)),
                   subtitle: Text(email),
+                  // The name and details had no editor anywhere in the app —
+                  // only the picture was changeable, and only by tapping it.
+                  // Both the row and the explicit entry below lead to one now.
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _openEditProfile,
+                ),
+
+                ListTile(
+                  leading: const Icon(Icons.edit_outlined),
+                  title: Text(l10n.accountEditProfile),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _openEditProfile,
                 ),
 
                 // Unconfirmed accounts can hold a session, so surface it here —
