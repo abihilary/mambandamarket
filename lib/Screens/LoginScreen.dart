@@ -6,6 +6,7 @@ import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import 'ForgotPasswordScreen.dart';
 import 'SignUpScreen.dart';
+import '../Components/ReferalScreen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -42,6 +43,23 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
     final auth = AuthService.instance;
     if (auth.session == null) return;
+    // A brand-new social account. The referral prompt used to be pushed by
+    // the account-type screen; with that screen skipped this is the only
+    // place left that knows this sign-in created the account, so offering it
+    // here is what stops Google users quietly losing the ability to credit
+    // whoever invited them. One-shot — cleared as it is consumed.
+    if (auth.justSignedUpSocially) {
+      auth.justSignedUpSocially = false;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+        builder: (_) => const ReferralScreen(nextRoute: '/home'),
+        ),
+        (_) => false,
+      );
+      return;
+    }
+
     final String route;
     if (auth.isAccountRestricted) {
       route = '/account-status';

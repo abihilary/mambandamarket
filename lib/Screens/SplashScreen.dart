@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api/auth_service.dart';
 import '../api/models.dart';
+import '../api/remote_config.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 
@@ -21,6 +22,11 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _handleNavigation() async {
     final auth = AuthService.instance;
+
+    // Before anything decides what to show: how sign-up behaves and what a new
+    // account may do are the server's call, not the build's. Falls back to the
+    // cache and then to defaults, so this never blocks the launch.
+    await RemoteConfig.instance.load();
 
     // A session with no profile row means onboarding never finished (e.g. a
     // Google sign-in that was abandoned before choosing an account type), so
@@ -48,6 +54,20 @@ class _SplashScreenState extends State<SplashScreen> {
     // Keep the brand moment visible briefly even when startup is instant.
     await Future.delayed(const Duration(milliseconds: 800));
     if (!mounted) return;
+
+    // A session with no profile used to mean "send them to pick a role". With
+    // the question switched off there is nothing to pick, so the default role
+    // is applied and they carry on — otherwise they would be marooned on a
+    // screen the flow is meant to have removed.
+    if (profileMissing && !RemoteConfig.instance.roleSelectionEnabled) {
+      try {
+        await auth.syncProfile(role: RemoteConfig.instance.defaultSignupRole);
+        await auth.refreshMe();
+        profileMissing = false;
+      } catch (_) {
+        // Offline: leave it; the next launch or /me repairs it.
+      }
+    }
 
     final target = auth.session == null
         ? '/welcome'

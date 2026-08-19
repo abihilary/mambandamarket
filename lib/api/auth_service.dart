@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'api_client.dart';
+import 'remote_config.dart';
 import 'models.dart';
 
 /// Where Google sends the user back after consent.
@@ -97,11 +98,24 @@ class AuthService {
               if (metaRole == 'individual_seller' || metaRole == 'business') {
                 pendingSubscriptionRole = metaRole;
               }
-            } else {
+            } else if (RemoteConfig.instance.roleSelectionEnabled) {
               // Social sign-up with no role yet → must pick one before entering,
               // rather than silently defaulting to buyer.
               pendingOAuthDisplayName = signupName;
               needsRoleSelection.value = true;
+            } else {
+              // Not asking: create the profile with the configured role and let
+              // them straight in. `justSignedUpSocially` is what tells the
+              // welcome screen to still offer the referral step — that prompt
+              // used to live on the role screen, and skipping the screen must
+              // not quietly cost referrers their credit.
+              await syncProfile(
+                role: RemoteConfig.instance.defaultSignupRole,
+                displayName: signupName,
+              );
+              await refreshMe();
+              needsRoleSelection.value = false;
+              justSignedUpSocially = true;
             }
           } else {
             needsRoleSelection.value = false;
@@ -149,6 +163,12 @@ class AuthService {
   /// social sign-ups, [needsRoleSelection] decided). Auth screens wait on this
   /// before routing so they don't navigate on a half-resolved session.
   final ValueNotifier<int> signInResolved = ValueNotifier(0);
+
+  /// True for the one sign-in that created a social account, when the
+  /// account-type step was switched off. The referral prompt used to be pushed
+  /// by that step; this is how the screen after sign-in knows to offer it
+  /// instead. Consumed (cleared) by whoever shows it.
+  bool justSignedUpSocially = false;
 
   /// The name Google gave us, kept so the role-selection step can persist it
   /// alongside the chosen role when it finally creates the profile.
@@ -272,6 +292,7 @@ class AuthService {
     needsRoleSelection.value = false;
     pendingOAuthDisplayName = null;
     pendingSubscriptionRole = null;
+    justSignedUpSocially = false;
   }
 
   /// Create/update the caller's profile row. Idempotent — safe on every login.

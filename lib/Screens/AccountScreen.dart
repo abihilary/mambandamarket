@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../api/auth_service.dart';
 import '../api/config.dart';
 import '../api/models.dart';
+import '../api/remote_config.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
@@ -92,6 +93,17 @@ class _AccountScreenState extends State<AccountScreen> {
     } finally {
       if (mounted) setState(() => _uploadingAvatar = false);
     }
+  }
+
+  /// Whether to offer the seller and business dashboards.
+  ///
+  /// Always, when sign-up still asks what kind of account somebody wants — that
+  /// is the world these entries were written for. When it does not, they are
+  /// kept for accounts that already are sellers and hidden from plain buyers,
+  /// who would otherwise be one tap from the onboarding the flow just removed.
+  bool _showsSellerEntries(Profile? profile) {
+    if (RemoteConfig.instance.roleSelectionEnabled) return true;
+    return profile?.isSeller == true || profile?.isCompany == true;
   }
 
   /// Open the profile editor. `me` is reloaded by the save itself, so the
@@ -413,19 +425,28 @@ class _AccountScreenState extends State<AccountScreen> {
                         Navigator.pushNamed(context, '/company-dashboard'),
                   ),
 
-                ListTile(
-                  leading: const Icon(Icons.storefront_outlined),
-                  title: Text(l10n.businessDashboard),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () =>
-                      Navigator.pushNamed(context, '/business-dashboard'),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.person_outline),
-                  title: Text(l10n.sellerSpace),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () => Navigator.pushNamed(context, '/seller-dashboard'),
-                ),
+                // Seller-side entries. Shown to everyone until now, including
+                // plain buyers — which contradicts an onboarding that has
+                // deliberately stopped mentioning account types at all, since
+                // both of these lead straight back to seller onboarding. Hidden
+                // only while the question is switched off, and never hidden
+                // from someone who actually is a seller: they return in full
+                // the moment selection is re-enabled.
+                if (_showsSellerEntries(profile)) ...[
+                  ListTile(
+                    leading: const Icon(Icons.storefront_outlined),
+                    title: Text(l10n.businessDashboard),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () =>
+                        Navigator.pushNamed(context, '/business-dashboard'),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.person_outline),
+                    title: Text(l10n.sellerSpace),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () => Navigator.pushNamed(context, '/seller-dashboard'),
+                  ),
+                ],
                 const Divider(),
 
                 // Language switcher — the "place to change language".

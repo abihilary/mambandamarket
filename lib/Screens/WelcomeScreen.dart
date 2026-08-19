@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../api/auth_service.dart';
+import '../Components/ReferalScreen.dart';
+import '../api/remote_config.dart';
+import 'SignUpScreen.dart';
 import '../l10n/l10n.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -34,6 +37,23 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       if (!mounted) return;
       final auth = AuthService.instance;
       if (auth.session == null) return;
+
+      // A brand-new social account. The referral prompt used to be pushed by
+      // the account-type screen; with that screen skipped this is the only
+      // place left that knows this sign-in created the account, so offering it
+      // here is what stops Google users quietly losing the ability to credit
+      // whoever invited them. One-shot — cleared as it is consumed.
+      if (auth.justSignedUpSocially) {
+        auth.justSignedUpSocially = false;
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const ReferralScreen(nextRoute: '/home'),
+          ),
+          (_) => false,
+        );
+        return;
+      }
 
       final String targetRoute;
       if (auth.isAccountRestricted) {
@@ -138,7 +158,20 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               // Secondary Action: Email Sign Up
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/role-selection');
+                  // Straight to the form when we are not asking what kind of
+                  // account this is. The role still travels with the sign-up;
+                  // it is chosen for them rather than by them.
+                  final cfg = RemoteConfig.instance;
+                  if (cfg.roleSelectionEnabled) {
+                    Navigator.pushNamed(context, '/role-selection');
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => SignUpScreen(role: cfg.defaultSignupRole),
+                      ),
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.primary,
