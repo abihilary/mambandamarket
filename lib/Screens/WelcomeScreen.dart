@@ -38,6 +38,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       final auth = AuthService.instance;
       if (auth.session == null) return;
 
+      // Two screens listen for this — whichever the user is standing on, plus
+      // the one underneath. Without this they both route: Login pushes
+      // synchronously, Welcome's post-frame callback then runs and replaces it,
+      // and the referral step vanishes a frame after appearing. Only the screen
+      // actually on top gets to decide where to go next.
+      if (!(ModalRoute.of(context)?.isCurrent ?? false)) return;
+
       // A brand-new social account. The referral prompt used to be pushed by
       // the account-type screen; with that screen skipped this is the only
       // place left that knows this sign-in created the account, so offering it
