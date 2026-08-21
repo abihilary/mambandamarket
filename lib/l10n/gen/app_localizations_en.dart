@@ -85,6 +85,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sellerSpace => 'Seller area';
 
   @override
+  String get sellerSpaceSubtitle => 'What you have posted, and what it earned';
+
+  @override
   String get changePassword => 'Change password';
 
   @override
@@ -1088,6 +1091,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sellerDashIndividualBadge => 'INDIVIDUAL';
+
+  @override
+  String get sellerDashBusinessBadge => 'BUSINESS';
+
+  @override
+  String get sellerDashCompanyBadge => 'COMPANY';
+
+  @override
+  String get sellerDashViewProfile => 'View profile';
+
+  @override
+  String get sellerDashItemUpdated => 'Listing updated.';
+
+  @override
+  String get sellerDashListingsUnlimited => 'Unlimited listings';
+
+  @override
+  String sellerDashListingsLeft(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count listings left',
+      one: '1 listing left',
+      zero: 'No listings left this month',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get sellerDashGoToMarketplace => 'Go to Home Marketplace';

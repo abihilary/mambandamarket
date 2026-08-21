@@ -45,6 +45,7 @@
   "changePlan": "Change plan",
   "businessDashboard": "Business dashboard",
   "sellerSpace": "Seller area",
+  "sellerSpaceSubtitle": "What you have posted, and what it earned",
   "changePassword": "Change password",
   "settingsPrivacy": "Settings & privacy",
   "logOut": "Log out",
@@ -508,6 +509,17 @@
   "sellerDashAccountName": "Personal Seller Account",
   "sellerDashAccountTier": "Individual Tier • Member since 2026",
   "sellerDashIndividualBadge": "INDIVIDUAL",
+  "sellerDashBusinessBadge": "BUSINESS",
+  "sellerDashCompanyBadge": "COMPANY",
+  "sellerDashViewProfile": "View profile",
+  "sellerDashItemUpdated": "Listing updated.",
+  "sellerDashListingsUnlimited": "Unlimited listings",
+  "sellerDashListingsLeft": "{count, plural, =0{No listings left this month} =1{1 listing left} other{{count} listings left}}",
+  "@sellerDashListingsLeft": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "sellerDashGoToMarketplace": "Go to Home Marketplace",
   "sellerDashTryAgain": "Try again",
   "sellerDashNoActiveItems": "No active items listed yet.",

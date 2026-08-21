@@ -236,6 +236,12 @@ abstract class AppLocalizations {
   /// **'Seller area'**
   String get sellerSpace;
 
+  /// No description provided for @sellerSpaceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What you have posted, and what it earned'**
+  String get sellerSpaceSubtitle;
+
   /// No description provided for @changePassword.
   ///
   /// In en, this message translates to:
@@ -2047,6 +2053,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'INDIVIDUAL'**
   String get sellerDashIndividualBadge;
+
+  /// No description provided for @sellerDashBusinessBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'BUSINESS'**
+  String get sellerDashBusinessBadge;
+
+  /// No description provided for @sellerDashCompanyBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'COMPANY'**
+  String get sellerDashCompanyBadge;
+
+  /// No description provided for @sellerDashViewProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'View profile'**
+  String get sellerDashViewProfile;
+
+  /// No description provided for @sellerDashItemUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Listing updated.'**
+  String get sellerDashItemUpdated;
+
+  /// No description provided for @sellerDashListingsUnlimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited listings'**
+  String get sellerDashListingsUnlimited;
+
+  /// No description provided for @sellerDashListingsLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No listings left this month} =1{1 listing left} other{{count} listings left}}'**
+  String sellerDashListingsLeft(num count);
 
   /// No description provided for @sellerDashGoToMarketplace.
   ///

@@ -95,16 +95,20 @@ class _AccountScreenState extends State<AccountScreen> {
     }
   }
 
-  /// Whether to offer the seller and business dashboards.
-  ///
-  /// Always, when sign-up still asks what kind of account somebody wants — that
-  /// is the world these entries were written for. When it does not, they are
-  /// kept for accounts that already are sellers and hidden from plain buyers,
-  /// who would otherwise be one tap from the onboarding the flow just removed.
-  bool _showsSellerEntries(Profile? profile) {
+  /// Whether to offer the business dashboard — the storefront: stock levels,
+  /// orders, a shop page. It only means something to an account that has a
+  /// store behind it, so plain buyers do not see it once sign-up has stopped
+  /// asking what kind of account somebody wants.
+  bool _showsBusinessDashboard(Profile? profile) {
     if (RemoteConfig.instance.roleSelectionEnabled) return true;
     return profile?.isSeller == true || profile?.isCompany == true;
   }
+
+  /// The seller area is a different thing: it is where you look after what
+  /// *you* posted — what is still live, what sold, what it earned. Every
+  /// account can post now, so every account gets it. Letting somebody publish
+  /// and then giving them nowhere to manage it afterwards is half a feature.
+  bool _showsSellerDashboard(Profile? profile) => profile != null;
 
   /// Open the profile editor. `me` is reloaded by the save itself, so the
   /// header behind this redraws on return without anything else being asked.
@@ -425,14 +429,13 @@ class _AccountScreenState extends State<AccountScreen> {
                         Navigator.pushNamed(context, '/company-dashboard'),
                   ),
 
-                // Seller-side entries. Shown to everyone until now, including
-                // plain buyers — which contradicts an onboarding that has
-                // deliberately stopped mentioning account types at all, since
-                // both of these lead straight back to seller onboarding. Hidden
-                // only while the question is switched off, and never hidden
-                // from someone who actually is a seller: they return in full
-                // the moment selection is re-enabled.
-                if (_showsSellerEntries(profile)) ...[
+                // Seller-side entries. These used to be one block shown or
+                // hidden together, which left a buyer who can post with
+                // nowhere to see what they had posted. They are two different
+                // promises and are gated separately: the storefront belongs to
+                // accounts that have a store, the seller area belongs to
+                // anybody who can publish — which is now everybody.
+                if (_showsBusinessDashboard(profile))
                   ListTile(
                     leading: const Icon(Icons.storefront_outlined),
                     title: Text(l10n.businessDashboard),
@@ -440,13 +443,14 @@ class _AccountScreenState extends State<AccountScreen> {
                     onTap: () =>
                         Navigator.pushNamed(context, '/business-dashboard'),
                   ),
+                if (_showsSellerDashboard(profile))
                   ListTile(
                     leading: const Icon(Icons.person_outline),
                     title: Text(l10n.sellerSpace),
+                    subtitle: Text(l10n.sellerSpaceSubtitle),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () => Navigator.pushNamed(context, '/seller-dashboard'),
                   ),
-                ],
                 const Divider(),
 
                 // Language switcher — the "place to change language".

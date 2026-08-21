@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../Screens/IndividualSellerOnboardingScreen.dart';
-import 'ViewSellerProfileScreen.dart';
+import '../Screens/EditProfileScreen.dart';
+import '../Screens/PublicProfileScreen.dart';
 import '../api/api_client.dart';
 import '../api/auth_service.dart';
 import '../api/models.dart' as api;
@@ -193,13 +193,26 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     }
   }
 
-  void _editItem(Map<String, dynamic> item) {
-    Navigator.push(
+  /// Edit a listing.
+  ///
+  /// This used to open the seller sign-up form with the listing handed over as
+  /// a route argument nothing on the other side ever read — so "Edit" on an
+  /// item showed an empty onboarding page and no way back to the item. The
+  /// create screen has always doubled as the editor; it is what the business
+  /// dashboard calls.
+  Future<void> _editItem(Map<String, dynamic> item) async {
+    final l10n = context.l10n;
+    final updated = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const IndividualSellerOnboardingScreen(),
-        settings: RouteSettings(arguments: item),
+        builder: (context) => CreateListingScreen(initialListing: item),
       ),
+    );
+    if (updated == null) return;
+    await _load();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.sellerDashItemUpdated)),
     );
   }
 
@@ -373,123 +386,179 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
 
   // --- WIDGET BUILDERS ---
 
+  /// The card at the top of the hub: who you are, how much of your allowance
+  /// is left, and the two things you do to your own profile.
+  ///
+  /// It used to be fixed text — "Personal Seller Account", "Individual Tier •
+  /// Member since 2026" — which read as real information and was not. Now that
+  /// every account reaches this screen, it shows the account actually signed in.
   Widget _buildSellerHeaderCard(ThemeData theme, BuildContext context) {
     final scheme = theme.colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.dividerColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const CircleAvatar(
-                radius: 24,
-                backgroundColor: AppColors.warning,
-                child: Icon(Icons.person, color: AppColors.ink, size: 28),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      context.l10n.sellerDashAccountName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      context.l10n.sellerDashAccountTier,
-                      style: TextStyle(
-                          fontSize: 12, color: scheme.onSurfaceVariant),
-                    ),
-                  ],
-                ),
-              ),
-              Chip(
-                label: Text(
-                  context.l10n.sellerDashIndividualBadge,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.warning,
-                  ),
-                ),
-                backgroundColor: AppColors.warning.withValues(alpha: 0.12),
-                side: BorderSide.none,
+    final l10n = context.l10n;
+
+    return ValueListenableBuilder<api.Me?>(
+      valueListenable: AuthService.instance.me,
+      builder: (context, me, _) {
+        final profile = me?.profile;
+        final avatar = profile?.avatarUrl;
+        final name = profile?.displayName?.isNotEmpty == true
+            ? profile!.displayName!
+            : l10n.sellerDashAccountName;
+
+        // What is left of the allowance. This is the number that decides
+        // whether the Sell button works, so it belongs where selling starts.
+        // Null while /me is still in flight — better a line that is not there
+        // yet than a made-up one.
+        final remaining = me?.remainingListings;
+        final subtitle = me == null
+            ? null
+            : remaining == null
+                ? l10n.sellerDashListingsUnlimited
+                : l10n.sellerDashListingsLeft(remaining < 0 ? 0 : remaining);
+
+        final badge = _accountBadge(profile, l10n);
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: scheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: theme.dividerColor),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          const Divider(height: 1),
-          const SizedBox(height: 12),
-          Row(
+          child: Column(
             children: [
-              // Edit Profile Button (Routes to seller-onboard)
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                        const IndividualSellerOnboardingScreen(),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.edit_outlined, size: 16),
-                  label: const Text('Edit Profile'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: AppColors.warning,
+                    backgroundImage: (avatar != null && avatar.isNotEmpty)
+                        ? NetworkImage(avatar)
+                        : null,
+                    child: (avatar != null && avatar.isNotEmpty)
+                        ? null
+                        : const Icon(Icons.person,
+                            color: AppColors.ink, size: 28),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                        if (subtitle != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            subtitle,
+                            style: TextStyle(
+                                fontSize: 12, color: scheme.onSurfaceVariant),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              // View Profile Button (Routes to ViewSellerProfileScreen)
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ViewSellerProfileScreen(
-                          sellerStats: _stats,
-                          inventory: _activeItems,
+                  if (badge != null)
+                    Chip(
+                      label: Text(
+                        badge,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.warning,
                         ),
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.person_outline_rounded, size: 16),
-                  label: const Text('View Profile'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: scheme.primary,
-                    foregroundColor: scheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      backgroundColor: AppColors.warning.withValues(alpha: 0.12),
+                      side: BorderSide.none,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  // Edit the profile itself. This used to open the seller
+                  // sign-up form, which saved a role change on the way past —
+                  // a buyer who tapped it came out the other side a seller.
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _openEditProfile,
+                      icon: const Icon(Icons.edit_outlined, size: 16),
+                      label: Text(l10n.editProfileTitle),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  // See what everybody else sees, from the same endpoint they
+                  // see it through — not a mock-up of it.
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _openPublicProfile(name),
+                      icon: const Icon(Icons.person_outline_rounded, size: 16),
+                      label: Text(l10n.sellerDashViewProfile),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: scheme.primary,
+                        foregroundColor: scheme.onPrimary,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        );
+      },
+    );
+  }
+
+  /// The tag beside the name. A plain buyer gets none: there is nothing to
+  /// announce, and inventing a tier for them is how the old card went wrong.
+  String? _accountBadge(api.Profile? profile, AppLocalizations l10n) {
+    if (profile == null) return null;
+    if (profile.isCompany) return l10n.sellerDashCompanyBadge;
+    if (profile.isBusiness) return l10n.sellerDashBusinessBadge;
+    if (profile.isSeller) return l10n.sellerDashIndividualBadge;
+    return null;
+  }
+
+  Future<void> _openEditProfile() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+    );
+  }
+
+  void _openPublicProfile(String name) {
+    final uid = AuthService.instance.userId;
+    if (uid == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PublicProfileScreen(userId: uid, initialName: name),
       ),
     );
   }

@@ -85,6 +85,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sellerSpace => 'Espace vendeur';
 
   @override
+  String get sellerSpaceSubtitle =>
+      'Ce que vous avez publié, et ce que cela a rapporté';
+
+  @override
   String get changePassword => 'Modifier le mot de passe';
 
   @override
@@ -1104,6 +1108,33 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get sellerDashIndividualBadge => 'INDIVIDUEL';
+
+  @override
+  String get sellerDashBusinessBadge => 'ENTREPRISE';
+
+  @override
+  String get sellerDashCompanyBadge => 'SOCIÉTÉ';
+
+  @override
+  String get sellerDashViewProfile => 'Voir le profil';
+
+  @override
+  String get sellerDashItemUpdated => 'Annonce mise à jour.';
+
+  @override
+  String get sellerDashListingsUnlimited => 'Annonces illimitées';
+
+  @override
+  String sellerDashListingsLeft(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count annonces restantes',
+      one: '1 annonce restante',
+      zero: 'Plus d\'annonce disponible',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get sellerDashGoToMarketplace => 'Aller à la place de marché';
