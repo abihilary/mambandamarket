@@ -17,11 +17,36 @@ class CreateListingScreen extends StatefulWidget {
   State<CreateListingScreen> createState() => _CreateListingScreenState();
 }
 
+/// A photo already on the listing.
+///
+/// The id is what the delete endpoint needs, and it only comes from
+/// GET /listings/:id/images — the dashboards hand over display URLs and
+/// nothing else. Without an id a photo can be shown but not removed, so the
+/// remove button is hidden rather than pretending the removal worked.
+class _ExistingImage {
+  final String? id;
+  final String url;
+
+  const _ExistingImage({required this.url, this.id});
+}
+
 class _CreateListingScreenState extends State<CreateListingScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
+
+  /// The only conditions the API accepts, and the only ones the dropdown
+  /// offers. Anything else — including the empty string the seller hub sends
+  /// for a listing with no condition — asserts inside the dropdown, so it is
+  /// filtered through here on the way in.
+  static const List<String> _conditions = [
+    'New',
+    'Like New',
+    'Used',
+    'Refurbished',
+  ];
 
   /// Category **slug** (the API's identifier), not the display label.
   String? _selectedCategory;
@@ -33,8 +58,17 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   List<api.Category> _categories = [];
 
   final ImagePicker _picker = ImagePicker();
-  final List<String> _existingImages = []; // Stores existing network/file image URLs or paths
-  final List<XFile> _newImageFiles = [];   // Stores newly picked images from camera/gallery
+  final List<_ExistingImage> _existingImages = []; // already on the listing
+  final List<XFile> _newImageFiles = [];           // just picked, not uploaded yet
+  final List<String> _removedImageIds = [];        // deleted on save, not before
+
+  /// The listing being edited, or null when publishing a new one. Everything
+  /// that behaves differently between the two reads this rather than checking
+  /// `widget.initialListing` again and drifting.
+  String? get _editingId {
+    final id = widget.initialListing?['id'];
+    return (id == null || id.toString().isEmpty) ? null : id.toString();
+  }
 
   @override
   void initState() {
@@ -43,17 +77,63 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     if (widget.initialListing != null) {
       final listing = widget.initialListing!;
       _titleController.text = listing['title']?.toString() ?? '';
-      _priceController.text = listing['price']?.toString() ?? '';
+      _descriptionController.text = listing['description']?.toString() ?? '';
       _quantityController.text = (listing['quantity'] ?? 1).toString();
-      _selectedCategory = listing['category_slug']?.toString();
-      _selectedCondition = listing['condition'] ?? 'New';
+      // The dashboards hand over the price in minor units; there has never
+      // been a 'price' key in that map, so this box opened empty and saving
+      // rewrote the price to whatever was typed to get past the validator.
+      _priceController.text = _priceFieldFor(listing);
+      // The seller hub sends the slug as 'category'; the store dashboard sends
+      // both. Reading only one of them silently reset the category on save.
+      _selectedCategory =
+          (listing['category_slug'] ?? listing['category'])?.toString();
+      final condition = listing['condition']?.toString();
+      _selectedCondition =
+          _conditions.contains(condition) ? condition! : 'New';
       _hasGuarantee = listing['hasGuarantee'] ?? false;
 
-      if (listing['images'] != null) {
-        _existingImages.addAll(List<String>.from(listing['images']));
+      // Show what the caller already has so the row is not empty while the
+      // real records — the ones carrying ids — are fetched.
+      final images = listing['images'];
+      if (images is List) {
+        _existingImages
+            .addAll(images.map((u) => _ExistingImage(url: u.toString())));
       }
+      _loadExistingImages();
     } else {
       _quantityController.text = '1';
+    }
+  }
+
+  /// The price as a human would type it, from whatever the caller passed.
+  String _priceFieldFor(Map<String, dynamic> listing) {
+    final cents = listing['priceCents'] ?? listing['price_cents'];
+    if (cents is! int) return listing['price']?.toString() ?? '';
+    final currency = (listing['currency'] ?? 'XAF').toString();
+    final amount = api.fromMinorUnits(cents, currency: currency);
+    // 145000, not 145000.0 — the box is a text field and that ends up in
+    // front of the seller.
+    return amount == amount.roundToDouble()
+        ? amount.round().toString()
+        : amount.toString();
+  }
+
+  /// Fetch the listing's photos so removals have an id to act on.
+  Future<void> _loadExistingImages() async {
+    final id = _editingId;
+    if (id == null) return;
+    try {
+      final images = await ListingsRepository.instance.images(id);
+      if (!mounted) return;
+      setState(() {
+        _existingImages
+          ..clear()
+          ..addAll(images.map((i) => _ExistingImage(id: i.id, url: i.url)));
+      });
+    } catch (_) {
+      // The photos stay on screen and stay on the listing; only changing them
+      // is off the table, which is what the message says.
+      if (mounted) _showErrorSnackBar(context.l10n.createCouldNotLoadImages);
     }
   }
 
@@ -147,7 +227,11 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   }
 
   void _removeExistingImage(int index) {
+    final image = _existingImages[index];
     setState(() {
+      // Deleted on save, not now: backing out of the screen must leave the
+      // listing exactly as it was.
+      if (image.id != null) _removedImageIds.add(image.id!);
       _existingImages.removeAt(index);
     });
   }
@@ -203,16 +287,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     }
 
     setState(() => _isSubmitting = true);
+    final editingId = _editingId;
     try {
-      // Images go straight to Supabase Storage via short-lived signed URLs —
-      // they never stream through the API.
-      final uploaded = <String>[..._existingImages];
-      for (final file in _newImageFiles) {
-        uploaded.add(
-          await ListingsRepository.instance.uploadImage(file),
-        );
-      }
-
       // Money is sent as integer minor units; never as a float. FCFA has no
       // minor unit, so the conversion is currency-aware — scaling by 100 here
       // published every listing at 100x its price.
@@ -220,9 +296,59 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         double.tryParse(_priceController.text.replaceAll(',', '.')) ?? 0,
       );
       final quantity = int.tryParse(_quantityController.text) ?? 1;
+      final description = _descriptionController.text.trim();
+
+      if (editingId != null) {
+        // Editing said "Edit Item" and "Save Changes" at the top and bottom of
+        // the screen, and then posted a second listing. The screen has always
+        // known which one it was; only this call did not.
+        await ListingsRepository.instance.update(editingId, {
+          'title': _titleController.text.trim(),
+          'description': description,
+          'price_cents': priceCents,
+          'quantity': quantity,
+          'category_slug': _selectedCategory!,
+          'condition': _selectedCondition,
+          'has_guarantee': _hasGuarantee,
+        });
+
+        // Photos are their own endpoints — PATCH /listings/:id does not carry
+        // them. Removals first, so a seller swapping every photo on a listing
+        // at the 12-image cap does not hit it on the way through.
+        for (final imageId in _removedImageIds) {
+          await ListingsRepository.instance.removeImage(editingId, imageId);
+        }
+        if (_newImageFiles.isNotEmpty) {
+          final added = <String>[];
+          for (final file in _newImageFiles) {
+            added.add(await ListingsRepository.instance.uploadImage(file));
+          }
+          await ListingsRepository.instance.addImages(editingId, added);
+        }
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.createListingUpdated),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        Navigator.pop(context, <String, dynamic>{'id': editingId});
+        return;
+      }
+
+      // Images go straight to Supabase Storage via short-lived signed URLs —
+      // they never stream through the API.
+      final uploaded = <String>[];
+      for (final file in _newImageFiles) {
+        uploaded.add(
+          await ListingsRepository.instance.uploadImage(file),
+        );
+      }
 
       final listing = await ListingsRepository.instance.create(
         title: _titleController.text.trim(),
+        description: description,
         priceCents: priceCents,
         quantity: quantity,
         categorySlug: _selectedCategory!,
@@ -238,7 +364,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           backgroundColor: AppColors.success,
         ),
       );
-      Navigator.pop(context, listing);
+      // A Map, because the store dashboard pushes this route typed as one and
+      // popping an api.Listing into it fails the cast on the way back.
+      Navigator.pop(context, <String, dynamic>{'id': listing.id});
     } on ApiException catch (e) {
       if (!mounted) return;
       if (e.isListingLimit) {
@@ -249,13 +377,17 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         _showErrorSnackBar(e.message);
       }
     } catch (_) {
-      if (mounted) _showErrorSnackBar(l10n.createCouldNotPublish);
+      if (mounted) {
+        _showErrorSnackBar(editingId != null
+            ? l10n.createCouldNotSaveChanges
+            : l10n.createCouldNotPublish);
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
-  Widget _buildImagePreview(String path, VoidCallback onRemove) {
+  Widget _buildImagePreview(String path, VoidCallback? onRemove) {
     final bool isNetwork = path.startsWith('http://') || path.startsWith('https://');
 
     return Stack(
@@ -273,18 +405,19 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             ),
           ),
         ),
-        Positioned(
-          top: 4,
-          right: 16,
-          child: GestureDetector(
-            onTap: onRemove,
-            child: const CircleAvatar(
-              radius: 12,
-              backgroundColor: AppColors.danger,
-              child: Icon(Icons.close, size: 14, color: Colors.white),
+        if (onRemove != null)
+          Positioned(
+            top: 4,
+            right: 16,
+            child: GestureDetector(
+              onTap: onRemove,
+              child: const CircleAvatar(
+                radius: 12,
+                backgroundColor: AppColors.danger,
+                child: Icon(Icons.close, size: 14, color: Colors.white),
+              ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -292,6 +425,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   @override
   void dispose() {
     _titleController.dispose();
+    _descriptionController.dispose();
     _priceController.dispose();
     _quantityController.dispose();
     super.dispose();
@@ -370,9 +504,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
 
                     final itemIndex = index - 1;
                     if (itemIndex < _existingImages.length) {
+                      final existing = _existingImages[itemIndex];
                       return _buildImagePreview(
-                        _existingImages[itemIndex],
-                            () => _removeExistingImage(itemIndex),
+                        existing.url,
+                        existing.id == null
+                            ? null
+                            : () => _removeExistingImage(itemIndex),
                       );
                     } else {
                       final newFileIndex = itemIndex - _existingImages.length;
@@ -420,6 +557,29 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 ),
                 validator: (val) =>
                 val == null || val.isEmpty ? l10n.createPleaseEnterTitle : null,
+              ),
+              const SizedBox(height: 16),
+
+              // DESCRIPTION FIELD
+              //
+              // The detail screen has always had a place for this and fell back
+              // to "no description" for every listing, because there was
+              // nowhere in the app to write one.
+              TextFormField(
+                controller: _descriptionController,
+                minLines: 3,
+                maxLines: 6,
+                maxLength: 8000,
+                keyboardType: TextInputType.multiline,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: InputDecoration(
+                  labelText: l10n.createDescription,
+                  hintText: l10n.createDescriptionHint,
+                  helperText: l10n.createDescriptionOptional,
+                  alignLabelWithHint: true,
+                  counterText: '',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
               ),
               const SizedBox(height: 16),
 
@@ -471,7 +631,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   labelText: l10n.createCondition,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                items: ['New', 'Like New', 'Used', 'Refurbished'].map((cond) {
+                items: _conditions.map((cond) {
                   return DropdownMenuItem(value: cond, child: Text(_conditionLabel(cond)));
                 }).toList(),
                 onChanged: (val) {

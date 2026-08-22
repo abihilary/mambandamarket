@@ -555,6 +555,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createPleaseEnterTitle => 'Please enter a title';
 
   @override
+  String get createDescription => 'Description';
+
+  @override
+  String get createDescriptionHint =>
+      'What it is, what condition it is in, what is included.';
+
+  @override
+  String get createDescriptionOptional =>
+      'Optional, but items with a description sell faster.';
+
+  @override
   String get createPriceLabel => 'Price (FCFA)';
 
   @override
@@ -610,6 +621,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get createListingPublished => 'Listing published.';
+
+  @override
+  String get createListingUpdated => 'Changes saved.';
+
+  @override
+  String get createCouldNotSaveChanges =>
+      'Could not save your changes. Check your connection.';
+
+  @override
+  String get createCouldNotLoadImages =>
+      'Could not load this item\'s photos, so they cannot be changed here.';
 
   @override
   String get createSignInToPublish => 'Please sign in to publish a listing.';

@@ -1076,6 +1076,24 @@ abstract class AppLocalizations {
   /// **'Please enter a title'**
   String get createPleaseEnterTitle;
 
+  /// No description provided for @createDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get createDescription;
+
+  /// No description provided for @createDescriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What it is, what condition it is in, what is included.'**
+  String get createDescriptionHint;
+
+  /// No description provided for @createDescriptionOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional, but items with a description sell faster.'**
+  String get createDescriptionOptional;
+
   /// No description provided for @createPriceLabel.
   ///
   /// In en, this message translates to:
@@ -1189,6 +1207,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Listing published.'**
   String get createListingPublished;
+
+  /// No description provided for @createListingUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes saved.'**
+  String get createListingUpdated;
+
+  /// No description provided for @createCouldNotSaveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save your changes. Check your connection.'**
+  String get createCouldNotSaveChanges;
+
+  /// No description provided for @createCouldNotLoadImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this item\'s photos, so they cannot be changed here.'**
+  String get createCouldNotLoadImages;
 
   /// No description provided for @createSignInToPublish.
   ///

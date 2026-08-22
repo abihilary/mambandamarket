@@ -49,8 +49,11 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   Map<String, dynamic> _fromListing(api.Listing l) => {
     'id': l.id,
     'title': l.title,
+    'description': l.description,
     'priceLabel': l.displayPrice,
+    'currency': l.currency,
     'category': l.categorySlug,
+    'category_slug': l.categorySlug,
     'condition': l.condition ?? '',
     'hasGuarantee': l.hasGuarantee,
     'views': l.viewCount,

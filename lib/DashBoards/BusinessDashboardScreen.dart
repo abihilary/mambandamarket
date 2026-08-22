@@ -45,6 +45,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
   Map<String, dynamic> _adapt(api.Listing l) => {
     'id': l.id,
     'title': l.title,
+    'description': l.description,
     'priceLabel': l.displayPrice,
     'priceCents': l.priceCents,
     'quantity': l.quantity,

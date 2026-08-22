@@ -34,6 +34,16 @@ int toMinorUnits(num amount, {String currency = 'XAF'}) =>
         ? amount.round()
         : (amount * 100).round();
 
+/// Turns a stored amount back into the number a human types into a price box.
+///
+/// The inverse of [toMinorUnits]. The edit screen needs this: prefilling a
+/// 145 000 FCFA listing by dividing by 100 puts 1450 in the box, and saving
+/// then quietly rewrites the price.
+num fromMinorUnits(int amountMinor, {String currency = 'XAF'}) =>
+    _zeroDecimalCurrencies.contains(currency.toUpperCase())
+        ? amountMinor
+        : amountMinor / 100;
+
 String formatPrice(int amountMinor, {String currency = 'XAF'}) {
   final symbols = {'EUR': '€', 'XAF': 'FCFA', 'XOF': 'FCFA', 'USD': '\$'};
   final isZeroDecimal = _zeroDecimalCurrencies.contains(currency.toUpperCase());
