@@ -65,12 +65,23 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   void initState() {
     super.initState();
     _load(markRead: true);
-    // Stand-in for live delivery until the socket service exists.
-    _poll = Timer.periodic(const Duration(seconds: 12), (_) => _load());
+    // The live subscription is what delivers a reply as it is sent. The poll
+    // stays as the backstop for a dropped socket, at a quarter of the rate it
+    // used to run now that it is no longer the only thing arriving.
+    ChatRepository.instance.pulse.addListener(_onLivePulse);
+    _poll = Timer.periodic(const Duration(seconds: 45), (_) => _load());
+  }
+
+  /// Something changed in one of this account's threads. It is usually this
+  /// one — the room is open — and reloading a thread that did not change costs
+  /// a single request.
+  void _onLivePulse() {
+    if (mounted) _load(markRead: true);
   }
 
   @override
   void dispose() {
+    ChatRepository.instance.pulse.removeListener(_onLivePulse);
     _poll?.cancel();
     _messageController.dispose();
     _scrollController.dispose();

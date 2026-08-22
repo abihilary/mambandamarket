@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cross_file/cross_file.dart';
 
 // `hide Category`: foundation exports a `Category` annotation that would clash
@@ -482,6 +484,77 @@ class ChatRepository {
   /// Inbox threads plus the badge total, kept here so the shell can watch it.
   final ValueNotifier<List<Conversation>> threads = ValueNotifier([]);
   final ValueNotifier<int> totalUnread = ValueNotifier(0);
+
+  /// Bumped every time the server says one of the caller's threads changed.
+  /// An open conversation watches this so a reply lands the moment it is sent
+  /// rather than on the room's next poll.
+  final ValueNotifier<int> pulse = ValueNotifier(0);
+
+  RealtimeChannel? _liveBuyer;
+  RealtimeChannel? _liveSeller;
+  Timer? _debounce;
+
+  /// Listen for changes to the caller's own threads.
+  ///
+  /// The subscription is on `conversations`, not `messages`: every new message
+  /// touches its thread row through the on_new_message trigger, so one row per
+  /// thread is enough to know something arrived, and no message text travels
+  /// over the socket. Bodies still come back over the authenticated REST call,
+  /// which is where the read rules already are.
+  ///
+  /// Two channels rather than one because a postgres filter matches a single
+  /// column, and the caller is the buyer in some threads and the seller in
+  /// others. Safe to call more than once.
+  void startLive() {
+    final uid = AuthService.instance.userId;
+    if (uid == null || _liveBuyer != null) return;
+    final client = Supabase.instance.client;
+    _liveBuyer = _watch(client, 'buyer_id', uid);
+    _liveSeller = _watch(client, 'seller_id', uid);
+  }
+
+  RealtimeChannel _watch(SupabaseClient client, String column, String uid) =>
+      client
+          .channel('conversations:$column:$uid')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'conversations',
+            filter: PostgresChangeFilter(
+              type: PostgresChangeFilterType.eq,
+              column: column,
+              value: uid,
+            ),
+            callback: (_) => _onLiveChange(),
+          )
+          .subscribe();
+
+  /// One message can arrive as more than one event — the thread's timestamp
+  /// and its unread counter are separate column writes. Collapse them so the
+  /// inbox is fetched once.
+  void _onLiveChange() {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () async {
+      try {
+        await refresh();
+        pulse.value++;
+      } catch (_) {
+        // A dropped refresh is not worth interrupting anybody over: the
+        // periodic sweep and the next tab switch both try again.
+      }
+    });
+  }
+
+  Future<void> stopLive() async {
+    _debounce?.cancel();
+    _debounce = null;
+    final client = Supabase.instance.client;
+    for (final channel in [_liveBuyer, _liveSeller]) {
+      if (channel != null) await client.removeChannel(channel);
+    }
+    _liveBuyer = null;
+    _liveSeller = null;
+  }
 
   Future<List<Conversation>> refresh() async {
     if (AuthService.instance.session == null) {

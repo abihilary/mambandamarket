@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 // Screens imports
 import '../DashBoards/CreateListingScreen.dart';
 import '../api/auth_service.dart';
+import '../api/repositories.dart';
 import '../Screens/AccountScreen.dart';
 import '../Screens/ChatInboxScreen.dart';
 import '../Screens/FavoritesScreen.dart';
@@ -16,8 +19,65 @@ class MainNavigationShell extends StatefulWidget {
   State<MainNavigationShell> createState() => _MainNavigationShellState();
 }
 
-class _MainNavigationShellState extends State<MainNavigationShell> {
+class _MainNavigationShellState extends State<MainNavigationShell>
+    with WidgetsBindingObserver {
   int _currentBottomIndex = 0;
+
+  /// Backstop behind the live subscription.
+  ///
+  /// Realtime is a socket, and sockets drop — on a train, on a lift, on a
+  /// carrier that decides an idle connection has had long enough. This sweeps
+  /// quietly in the background so a missed event costs a minute rather than
+  /// lasting until somebody thinks to open the tab.
+  static const Duration _sweepInterval = Duration(seconds: 45);
+  Timer? _sweep;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    ChatRepository.instance.startLive();
+    _startSweep();
+  }
+
+  @override
+  void dispose() {
+    _sweep?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    ChatRepository.instance.stopLive();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Coming back from the background used to change nothing: the inbox was
+      // as stale as the moment the app was put down. The socket is also very
+      // likely to have been closed while away, so it is re-established here.
+      ChatRepository.instance.startLive();
+      _inboxKey.currentState?.reload();
+      _startSweep();
+    } else if (state == AppLifecycleState.paused) {
+      // Nothing to poll for while nobody is looking. Push is what reaches a
+      // closed app, and that is not built yet.
+      _sweep?.cancel();
+    }
+  }
+
+  void _startSweep() {
+    _sweep?.cancel();
+    _sweep = Timer.periodic(_sweepInterval, (_) => _quietRefresh());
+  }
+
+  /// Refresh without touching the screen's own loading state, so the inbox
+  /// updates underneath the user instead of flashing a spinner at them.
+  Future<void> _quietRefresh() async {
+    try {
+      await ChatRepository.instance.refresh();
+    } catch (_) {
+      // Offline, most likely. The next sweep tries again.
+    }
+  }
 
   /// Whether this account still has room to publish.
   ///
@@ -132,7 +192,17 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
             label: context.l10n.navPublish,
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.chat_bubble_outline),
+            // Unread count, so a message that arrives while you are on another
+            // tab says so. Until now nothing in the bar changed at all.
+            icon: ValueListenableBuilder<int>(
+              valueListenable: ChatRepository.instance.totalUnread,
+              builder: (context, unread, child) => Badge.count(
+                count: unread,
+                isLabelVisible: unread > 0,
+                child: child,
+              ),
+              child: const Icon(Icons.chat_bubble_outline),
+            ),
             label: context.l10n.navMessages,
           ),
           BottomNavigationBarItem(
