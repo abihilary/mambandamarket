@@ -38,13 +38,22 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   /// failed /me should not look like an expired subscription.
   bool get _canPublish => AuthService.instance.me.value?.canPublish ?? true;
 
+  /// How the Messages tab is told to look again.
+  ///
+  /// The IndexedStack below keeps every tab alive, so the inbox loads once
+  /// when the app starts and then never again on its own. A conversation that
+  /// began after launch stayed invisible: the seller hub counted it on the
+  /// listing, and Messages still said there were none.
+  final GlobalKey<ChatInboxScreenState> _inboxKey =
+      GlobalKey<ChatInboxScreenState>();
+
   // List of tab views
-  final List<Widget> _pages = const [
-    HomeScreen(),          // Index 0: Search / Home Feed
-    FavoritesScreen(),     // Index 1: Favorites
-    SizedBox.shrink(),     // Index 2: Placeholder for Insert Modal Action
-    ChatInboxScreen(),     // Index 3: Charts / Messaging
-    AccountScreen(),       // Index 4: Account
+  late final List<Widget> _pages = [
+    const HomeScreen(),              // Index 0: Search / Home Feed
+    const FavoritesScreen(),         // Index 1: Favorites
+    const SizedBox.shrink(),         // Index 2: Placeholder for Insert Modal Action
+    ChatInboxScreen(key: _inboxKey), // Index 3: Charts / Messaging
+    const AccountScreen(),           // Index 4: Account
   ];
 
   void _onTabTapped(int index) async {
@@ -61,6 +70,10 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       }
       return;
     }
+
+    // Opening Messages re-reads the inbox. Without this it keeps showing
+    // whatever was true when the app was opened.
+    if (index == 3) _inboxKey.currentState?.reload();
 
     setState(() {
       _currentBottomIndex = index;

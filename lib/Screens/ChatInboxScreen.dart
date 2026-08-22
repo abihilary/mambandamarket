@@ -15,10 +15,10 @@ class ChatInboxScreen extends StatefulWidget {
   const ChatInboxScreen({super.key});
 
   @override
-  State<ChatInboxScreen> createState() => _ChatInboxScreenState();
+  State<ChatInboxScreen> createState() => ChatInboxScreenState();
 }
 
-class _ChatInboxScreenState extends State<ChatInboxScreen> {
+class ChatInboxScreenState extends State<ChatInboxScreen> {
   // Errors are stored as sentinels and translated in build(), since _load runs
   // from initState — before localizations are available.
   static const _errSignIn = '__signin__';
@@ -33,6 +33,13 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
     super.initState();
     _load();
   }
+
+  /// Re-read the inbox.
+  ///
+  /// The shell keeps this screen alive inside an IndexedStack, so initState
+  /// runs once at launch and never again. Without somebody asking it to look
+  /// again, a conversation that starts after the app opened never appears.
+  void reload() => _load();
 
   Future<void> _load() async {
     if (AuthService.instance.session == null) {
@@ -107,9 +114,25 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
                   valueListenable: _chat.threads,
                   builder: (context, chats, _) {
                     if (chats.isEmpty) {
-                      return Center(
-                        child: Text(l10n.noChatsYet,
-                            style: TextStyle(color: cs.onSurfaceVariant)),
+                      // Scrollable, so "no chats yet" can be pulled down to
+                      // refresh. A centred Text cannot be, which left the one
+                      // screen most likely to be out of date as the one screen
+                      // with no way to update it.
+                      return RefreshIndicator(
+                        onRefresh: _load,
+                        child: ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            SizedBox(
+                              height: MediaQuery.sizeOf(context).height * 0.6,
+                              child: Center(
+                                child: Text(l10n.noChatsYet,
+                                    style:
+                                        TextStyle(color: cs.onSurfaceVariant)),
+                              ),
+                            ),
+                          ],
+                        ),
                       );
                     }
                     return RefreshIndicator(
