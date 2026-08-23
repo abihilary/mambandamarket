@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'api/auth_service.dart';
 import 'api/config.dart';
+import 'api/push_service.dart';
 import 'l10n/l10n.dart';
 import 'navigation.dart';
 import 'theme/app_theme.dart';
@@ -43,6 +44,11 @@ Future<void> main() async {
   await LocaleController.instance.load();
   await ThemeController.instance.load();
 
+  // Brings up Firebase Messaging so a closed app can still be reached. A build
+  // with no google-services.json simply reports push unavailable and carries
+  // on, so this is not a launch-blocking dependency.
+  await PushService.instance.init();
+
   runApp(const MarketplaceApp());
 }
 
@@ -60,6 +66,12 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
     super.initState();
     AuthService.instance.passwordRecoveryRequested
         .addListener(_onPasswordRecovery);
+    // If a notification is what launched the app, open what it points at —
+    // after the first frame, since there is no Navigator to push onto before
+    // then.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => PushService.instance.handleLaunchNotification(),
+    );
   }
 
   @override

@@ -7,6 +7,20 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Firebase config, on the same terms as the signing keystore below: present on
+// a machine that has it, absent everywhere else, and the build works either
+// way. Applying google-services unconditionally would fail the build outright
+// on any checkout without the file — including CI and a fresh clone — and the
+// only thing lost by its absence is push. Firebase.initializeApp() then finds
+// no default app at runtime, PushService reports push unavailable, and every
+// other way a message arrives is unaffected.
+val hasFirebaseConfig = file("google-services.json").exists()
+if (hasFirebaseConfig) {
+    apply(plugin = "com.google.gms.google-services")
+} else {
+    logger.lifecycle("google-services.json not found — building without push.")
+}
+
 // Release signing credentials live in android/key.properties, which is
 // git-ignored. Without it the build falls back to debug signing so local
 // `flutter run --release` still works.
@@ -23,6 +37,10 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        // flutter_local_notifications schedules against java.time, which does
+        // not exist below API 26. Desugaring back-fills it, and the plugin
+        // refuses to link without it.
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -82,4 +100,8 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }

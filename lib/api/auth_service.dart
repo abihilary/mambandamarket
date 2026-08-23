@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'api_client.dart';
 import 'remote_config.dart';
 import 'models.dart';
+import 'push_service.dart';
 
 /// Where Google sends the user back after consent.
 ///
@@ -287,6 +288,10 @@ class AuthService {
   }
 
   Future<void> signOut() async {
+    // Before the session goes, not after: removing a device token is an
+    // authenticated call. Left behind, it would keep this phone receiving
+    // another account's messages after somebody else signed in on it.
+    await PushService.instance.unregister();
     await _client.auth.signOut();
     me.value = null;
     needsRoleSelection.value = false;

@@ -15,6 +15,7 @@ import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import 'document_picker.dart';
+import '../api/push_service.dart';
 
 /// A single chat thread.
 ///
@@ -64,6 +65,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   @override
   void initState() {
     super.initState();
+    // Suppresses a notification for the thread that is already on screen. A
+    // message arriving here is visible the moment it lands; a banner over the
+    // top of it would be telling the user about something they are reading.
+    PushService.activeConversationId = widget.conversation.id;
     _load(markRead: true);
     // The live subscription is what delivers a reply as it is sent. The poll
     // stays as the backstop for a dropped socket, at a quarter of the rate it
@@ -81,6 +86,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   @override
   void dispose() {
+    if (PushService.activeConversationId == widget.conversation.id) {
+      PushService.activeConversationId = null;
+    }
     ChatRepository.instance.pulse.removeListener(_onLivePulse);
     _poll?.cancel();
     _messageController.dispose();

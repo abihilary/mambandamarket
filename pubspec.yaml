@@ -68,6 +68,17 @@ dependencies:
   # not relying on somebody else's transitive dependency.
   cross_file: ^0.3.4
   url_launcher: ^6.3.2
+  # Push. Firebase comes back for Cloud Messaging only, exactly as the Supabase
+  # note above anticipated: the data layer stays where it is, and FCM is used
+  # purely as the transport that can reach a phone with the app closed — which
+  # a websocket, by definition, cannot.
+  firebase_core: ^4.13.0
+  firebase_messaging: ^16.5.0
+  # Android shows nothing for an FCM notification that arrives while the app is
+  # in the foreground. This puts one in the shade in that case, and creates the
+  # 'messages' channel the server addresses — without it Android 8+ silently
+  # drops every notification we send.
+  flutter_local_notifications: ^22.3.0
 
 dev_dependencies:
   flutter_test:
