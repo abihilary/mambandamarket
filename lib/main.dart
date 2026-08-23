@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'api/auth_service.dart';
 import 'api/config.dart';
 import 'l10n/l10n.dart';
+import 'navigation.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 
@@ -30,6 +31,10 @@ import 'Service/MainNavigationShell.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Ahead of runApp so this observer precedes WidgetsApp's: an auth callback
+  // arriving as a deep link must not be pushed onto the Navigator as a route.
+  WidgetsBinding.instance.addObserver(DeepLinkGuard());
+
   await Supabase.initialize(
     url: AppConfig.supabaseUrl,
     publishableKey: AppConfig.supabasePublishableKey,
@@ -49,7 +54,6 @@ class MarketplaceApp extends StatefulWidget {
 }
 
 class _MarketplaceAppState extends State<MarketplaceApp> {
-  final _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   void initState() {
@@ -67,7 +71,7 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
 
   void _onPasswordRecovery() {
     if (!AuthService.instance.passwordRecoveryRequested.value) return;
-    _navigatorKey.currentState?.push(
+    rootNavigatorKey.currentState?.push(
       MaterialPageRoute(builder: (_) => const ResetPasswordScreen()),
     );
   }
@@ -79,7 +83,7 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
       builder: (context, locale, _) => ValueListenableBuilder<ThemeMode>(
         valueListenable: ThemeController.instance.mode,
         builder: (context, themeMode, _) => MaterialApp(
-          navigatorKey: _navigatorKey,
+          navigatorKey: rootNavigatorKey,
           title: 'Mambanda Market',
           debugShowCheckedModeBanner: false,
           locale: locale,

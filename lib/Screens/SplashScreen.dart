@@ -74,7 +74,12 @@ class _SplashScreenState extends State<SplashScreen> {
         : auth.isAccountRestricted
             ? '/account-status'
             : (profileMissing ? '/role-selection' : '/home');
-    Navigator.pushReplacementNamed(context, target);
+    // Clears the stack rather than replacing just this screen. The splash is
+    // a gate: whatever it decides becomes the app's root, and nothing that was
+    // on screen before it should be reachable by pressing back afterwards. On
+    // a normal launch there is nothing underneath and this is identical to a
+    // replace; it matters when the splash was reached any other way.
+    Navigator.pushNamedAndRemoveUntil(context, target, (_) => false);
   }
 
   @override
