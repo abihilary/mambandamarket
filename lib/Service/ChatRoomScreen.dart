@@ -88,6 +88,22 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     super.dispose();
   }
 
+  /// Unread as it stands now, not as it stood when this room was opened.
+  ///
+  /// `widget.conversation` is a snapshot taken at navigation time. Reading the
+  /// count off it meant a thread opened with nothing unread never cleared
+  /// again: a message arriving while the room was on screen bumped the tab
+  /// badge, and the pulse-driven reload below declined to clear it because the
+  /// snapshot still said zero — so the badge sat there claiming one unread
+  /// while the user was looking straight at it. The repository's copy is
+  /// refreshed by the same event that delivered the message, so ask that.
+  int get _unread {
+    for (final t in _chat.threads.value) {
+      if (t.id == widget.conversation.id) return t.unread;
+    }
+    return widget.conversation.unread;
+  }
+
   Future<void> _load({bool markRead = false}) async {
     try {
       final page = await _chat.messages(widget.conversation.id);
@@ -103,7 +119,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         _error = null;
       });
       if (grew) _scrollToBottom();
-      if (markRead && widget.conversation.unread > 0) {
+      if (markRead && _unread > 0) {
         await _chat.markRead(widget.conversation.id);
       }
     } on ApiException catch (e) {
