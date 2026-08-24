@@ -1,4 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+
+import 'Components/ItemDetailScreen.dart';
+import 'api/repositories.dart';
+import 'api/share_links.dart';
 
 /// The app's one Navigator, reachable without a BuildContext.
 ///
@@ -37,5 +43,49 @@ final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 /// routed from here rather than by falling through.
 class DeepLinkGuard with WidgetsBindingObserver {
   @override
-  Future<bool> didPushRouteInformation(RouteInformation routeInformation) async => true;
+  Future<bool> didPushRouteInformation(RouteInformation routeInformation) async {
+    // A shared listing is the one link that does have somewhere to go. Android
+    // only hands it over once it has verified the domain against
+    // .well-known/assetlinks.json, so by the time this runs the link is known
+    // to be ours; the parser checks the shape again anyway, because the same
+    // path also sees links that arrived by other routes.
+    final id = ShareLinks.listingIdFrom(routeInformation.uri);
+    if (id != null) {
+      unawaited(openSharedListing(id));
+      return true;
+    }
+    // Everything else is an auth callback. Handled, and deliberately not
+    // routed — see above.
+    return true;
+  }
+}
+
+/// Open a listing that arrived as a link.
+///
+/// The link carries an id and nothing else, so the record is fetched over the
+/// API rather than reconstructed from the URL — the same reason a tapped push
+/// notification refetches its thread. What the sender saw and what the
+/// recipient sees then come from the same place, and a price edited since the
+/// link was sent shows the new price.
+///
+/// Never throws. A link to something deleted, or a tap while offline, should
+/// leave somebody in the app rather than on an error screen.
+Future<void> openSharedListing(String id) async {
+  try {
+    final listing = await ListingsRepository.instance.detail(id);
+    final navigator = rootNavigatorKey.currentState;
+    if (navigator == null) return;
+    await navigator.push(MaterialPageRoute(
+      builder: (_) => ItemDetailScreen(
+        title: listing.title,
+        price: listing.displayPrice,
+        imageUrl: listing.primaryImageUrl,
+        images: listing.imageUrls,
+        listingId: listing.id,
+        listing: listing,
+      ),
+    ));
+  } catch (e) {
+    debugPrint('[links] could not open listing $id ($e)');
+  }
 }

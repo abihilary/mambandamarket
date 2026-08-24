@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../Screens/CheckoutScreen.dart';
 import '../Screens/PublicProfileScreen.dart';
@@ -7,6 +8,7 @@ import '../api/api_client.dart';
 import '../api/auth_service.dart';
 import '../api/models.dart' as api;
 import '../api/repositories.dart';
+import '../api/share_links.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import 'ItemCard.dart';
@@ -117,6 +119,28 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     } catch (_) {
       // Non-fatal: the row just stays empty.
     }
+  }
+
+  /// Hand the listing to whatever the phone shares with.
+  ///
+  /// The text carries the title and price as well as the link, because a
+  /// WhatsApp message that is nothing but a URL reads like spam — and the
+  /// preview card that would otherwise carry the price is drawn by the
+  /// recipient's client, which may not fetch it at all on a slow connection.
+  ///
+  /// Disabled without a listing id: there is no page to point at for a screen
+  /// opened from mock data.
+  Future<void> _share() async {
+    final id = widget.listingId;
+    if (id == null) return;
+    final link = ShareLinks.listing(id);
+    final listing = _listing;
+    final title = listing?.title ?? widget.title;
+    final price = listing?.displayPrice ?? widget.price;
+    await SharePlus.instance.share(ShareParams(
+      text: '$title — $price\n$link',
+      subject: title,
+    ));
   }
 
   Future<void> _toggleFavorite() async {
@@ -437,7 +461,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 backgroundColor: Colors.black.withValues(alpha: 0.4),
                 child: IconButton(
                   icon: const Icon(Icons.share, color: Colors.white, size: 20),
-                  onPressed: () {},
+                  onPressed: widget.listingId == null ? null : _share,
                 ),
               ),
               const SizedBox(width: 8),

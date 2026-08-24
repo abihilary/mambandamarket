@@ -66,6 +66,22 @@
                 <data android:scheme="com.mabanda.mambandamarket"
                       android:host="password-reset"/>
             </intent-filter>
+            <!-- Shared listing links. A separate filter from the one above on
+                 purpose: autoVerify applies to the whole filter, and mixing a
+                 custom scheme into it makes Android refuse to verify the
+                 domain at all. Verification fetches
+                 https://mambandamarket.blacksilvergroups.xyz/.well-known/assetlinks.json
+                 and checks the release signing certificate against it, so a
+                 build signed with a different key falls back to the browser
+                 rather than opening here. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"
+                      android:host="mambandamarket.blacksilvergroups.xyz"
+                      android:pathPrefix="/l/"/>
+            </intent-filter>
         </activity>
         <!-- Push: the channel and icon the system uses for a notification that
              arrives while the app is not running, which is when FCM — not our
