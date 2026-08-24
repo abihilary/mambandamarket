@@ -60,6 +60,27 @@ class DeepLinkGuard with WidgetsBindingObserver {
   }
 }
 
+/// The link that launched the app, if that is how it started.
+///
+/// DeepLinkGuard only sees links that arrive while the app is running. A cold
+/// start is different: the URL is handed over as the *initial route* instead,
+/// which is the path a splash screen is already on, so the guard never runs
+/// and the tap ended on the home feed.
+///
+/// That is also the common case. Somebody tapping a listing in WhatsApp is
+/// usually not already in the app — quite often they have just installed it
+/// because of the link.
+///
+/// Called after the first frame: there is no Navigator to push onto before it.
+Future<void> handleLaunchLink() async {
+  final raw = WidgetsBinding.instance.platformDispatcher.defaultRouteName;
+  final uri = Uri.tryParse(raw);
+  if (uri == null) return;
+  final id = ShareLinks.listingIdFrom(uri);
+  if (id == null) return;
+  await openSharedListing(id);
+}
+
 /// Open a listing that arrived as a link.
 ///
 /// The link carries an id and nothing else, so the record is fetched over the

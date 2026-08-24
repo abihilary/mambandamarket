@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../api/auth_service.dart';
+import '../api/push_service.dart';
+import '../navigation.dart';
 import '../api/models.dart';
 import '../api/remote_config.dart';
 import '../api/repositories.dart';
@@ -80,6 +84,19 @@ class _SplashScreenState extends State<SplashScreen> {
     // a normal launch there is nothing underneath and this is identical to a
     // replace; it matters when the splash was reached any other way.
     Navigator.pushNamedAndRemoveUntil(context, target, (_) => false);
+
+    // Only now open whatever launched the app — a shared listing link, or a
+    // tapped notification. Both used to be opened from a post-frame callback
+    // in main(), which put them on screen *before* this line ran and the
+    // clear above then wiped them: tapping a shared listing on a phone where
+    // the app was not already running landed on the home feed, which is the
+    // most common way anyone receives one.
+    //
+    // Ordering, not timing: the splash decides the app's root, and these open
+    // on top of it, so backing out of a shared listing leaves you in the app
+    // rather than closing it.
+    unawaited(handleLaunchLink());
+    unawaited(PushService.instance.handleLaunchNotification());
   }
 
   @override

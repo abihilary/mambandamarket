@@ -266,10 +266,18 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     });
 
     try {
-      final result = await Share.share(
-        text,
-        subject: 'Check out this listing: $title',
-        sharePositionOrigin: sharePositionOrigin,
+      // share_plus 13 replaced the static Share.share with an instance and a
+      // params object. The pin moved because 10.1.4 does not compile against
+      // this project's Kotlin/AGP — its Android source references a
+      // ShareSuccessManager that no longer resolves — so the call site moves
+      // with it. Behaviour is unchanged: same text, same subject, same origin
+      // rect, same handling of the result.
+      final result = await SharePlus.instance.share(
+        ShareParams(
+          text: text,
+          subject: 'Check out this listing: $title',
+          sharePositionOrigin: sharePositionOrigin,
+        ),
       );
 
       if (!mounted) return;

@@ -66,12 +66,6 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
     super.initState();
     AuthService.instance.passwordRecoveryRequested
         .addListener(_onPasswordRecovery);
-    // If a notification is what launched the app, open what it points at —
-    // after the first frame, since there is no Navigator to push onto before
-    // then.
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => PushService.instance.handleLaunchNotification(),
-    );
   }
 
   @override
