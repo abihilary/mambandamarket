@@ -55,6 +55,8 @@ dependencies:
   # UI Enhancements
   flutter_slidable: ^3.1.0
   cached_network_image: ^3.3.1
+  # Native share sheet, for sending a listing to somebody.
+  share_plus: ^10.0.0
 
 
 
@@ -79,7 +81,6 @@ dependencies:
   # 'messages' channel the server addresses — without it Android 8+ silently
   # drops every notification we send.
   flutter_local_notifications: ^22.3.0
-  share_plus: ^13.3.0
 
 dev_dependencies:
   flutter_test:
