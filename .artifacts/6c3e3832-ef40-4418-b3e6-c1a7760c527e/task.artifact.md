@@ -1,0 +1,7 @@
+- [x] Implement sharing logic in `ItemDetailScreen.dart`
+    - [x] Define `_publicListingBaseUrl` and `_isSharing` state
+    - [x] Implement `_buildListingShareUri` and `_buildShareText`
+    - [x] Implement `_shareListing` using `Share.share`
+    - [x] Update the UI to call `_shareListing` and show loading state
+- [x] Improve gallery UI and other missing parts from the provided snippet
+- [x] Verify implementation consistency with `share_plus: ^10.0.0`
