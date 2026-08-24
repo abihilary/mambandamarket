@@ -3637,6 +3637,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign in'**
   String get signUpGoToSignIn;
+
+  /// No description provided for @updateRequiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This version has stopped working'**
+  String get updateRequiredTitle;
+
+  /// No description provided for @updateRequiredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A newer version of Mambanda Market is required to carry on. Download it to get back to your listings and messages.'**
+  String get updateRequiredBody;
+
+  /// No description provided for @updateDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download the update'**
+  String get updateDownload;
+
+  /// No description provided for @updateRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'I have already updated'**
+  String get updateRetry;
+
+  /// No description provided for @updateDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get updateDismiss;
+
+  /// No description provided for @updateAvailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A new version is available'**
+  String get updateAvailableTitle;
+
+  /// No description provided for @updateBannerBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Update now so you do not lose access.'**
+  String get updateBannerBody;
+
+  /// No description provided for @updateVerySoon.
+  ///
+  /// In en, this message translates to:
+  /// **'This version stops working in under a minute'**
+  String get updateVerySoon;
+
+  /// No description provided for @updateStopsIn.
+  ///
+  /// In en, this message translates to:
+  /// **'This version stops working in {left}'**
+  String updateStopsIn(String left);
+
+  /// No description provided for @updateInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day} other{{count} days}}'**
+  String updateInDays(int count);
+
+  /// No description provided for @updateInHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 hour} other{{count} hours}}'**
+  String updateInHours(int count);
+
+  /// No description provided for @updateInMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 minute} other{{count} minutes}}'**
+  String updateInMinutes(int count);
 }
 
 class _AppLocalizationsDelegate

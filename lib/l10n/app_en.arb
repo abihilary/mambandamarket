@@ -902,5 +902,45 @@
   "signUpGoToSignIn": "Sign in",
   "@signUpGoToSignIn": {
     "description": "Button taking the user from sign-up to the sign-in screen."
+  },
+  "updateRequiredTitle": "This version has stopped working",
+  "updateRequiredBody": "A newer version of Mambanda Market is required to carry on. Download it to get back to your listings and messages.",
+  "updateDownload": "Download the update",
+  "updateRetry": "I have already updated",
+  "updateDismiss": "Dismiss",
+  "updateAvailableTitle": "A new version is available",
+  "updateBannerBody": "Update now so you do not lose access.",
+  "updateVerySoon": "This version stops working in under a minute",
+  "updateStopsIn": "This version stops working in {left}",
+  "@updateStopsIn": {
+    "placeholders": {
+      "left": {
+        "type": "String"
+      }
+    }
+  },
+  "updateInDays": "{count, plural, =1{1 day} other{{count} days}}",
+  "@updateInDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "updateInHours": "{count, plural, =1{1 hour} other{{count} hours}}",
+  "@updateInHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "updateInMinutes": "{count, plural, =1{1 minute} other{{count} minutes}}",
+  "@updateInMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

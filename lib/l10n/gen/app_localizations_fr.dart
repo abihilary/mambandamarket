@@ -2016,4 +2016,69 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get signUpGoToSignIn => 'Se connecter';
+
+  @override
+  String get updateRequiredTitle => 'Cette version ne fonctionne plus';
+
+  @override
+  String get updateRequiredBody =>
+      'Une version plus récente de Mambanda Market est nécessaire pour continuer. Téléchargez-la pour retrouver vos annonces et vos messages.';
+
+  @override
+  String get updateDownload => 'Télécharger la mise à jour';
+
+  @override
+  String get updateRetry => 'J\'ai déjà mis à jour';
+
+  @override
+  String get updateDismiss => 'Ignorer';
+
+  @override
+  String get updateAvailableTitle => 'Une nouvelle version est disponible';
+
+  @override
+  String get updateBannerBody =>
+      'Mettez à jour maintenant pour ne pas perdre l\'accès.';
+
+  @override
+  String get updateVerySoon =>
+      'Cette version cesse de fonctionner dans moins d\'une minute';
+
+  @override
+  String updateStopsIn(String left) {
+    return 'Cette version cesse de fonctionner dans $left';
+  }
+
+  @override
+  String updateInDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count jours',
+      one: '1 jour',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String updateInHours(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count heures',
+      one: '1 heure',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String updateInMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count minutes',
+      one: '1 minute',
+    );
+    return '$_temp0';
+  }
 }

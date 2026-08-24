@@ -3,6 +3,7 @@ import 'package:mambandamarket/Components/ReferalScreen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'api/auth_service.dart';
+import 'Components/update_gate.dart';
 import 'api/config.dart';
 import 'api/push_service.dart';
 import 'l10n/l10n.dart';
@@ -90,6 +91,11 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
         valueListenable: ThemeController.instance.mode,
         builder: (context, themeMode, _) => MaterialApp(
           navigatorKey: rootNavigatorKey,
+          // Wraps every route, so an old build is stopped wherever it is —
+          // including a screen opened from a shared link or a notification.
+          // Defaults inert; see UpdateGate for why it fails open.
+          builder: (context, child) =>
+              UpdateGate(child: child ?? const SizedBox.shrink()),
           title: 'Mambanda Market',
           debugShowCheckedModeBanner: false,
           locale: locale,

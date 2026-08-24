@@ -81,6 +81,7 @@ dependencies:
   # 'messages' channel the server addresses — without it Android 8+ silently
   # drops every notification we send.
   flutter_local_notifications: ^22.3.0
+  package_info_plus: ^10.2.1
 
 dev_dependencies:
   flutter_test:

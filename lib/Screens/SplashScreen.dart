@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../api/auth_service.dart';
+import '../Components/update_gate.dart';
 import '../api/push_service.dart';
 import '../navigation.dart';
 import '../api/models.dart';
@@ -96,6 +97,9 @@ class _SplashScreenState extends State<SplashScreen> {
     // on top of it, so backing out of a shared listing leaves you in the app
     // rather than closing it.
     unawaited(handleLaunchLink());
+    // Same ordering reason: the countdown is a route, and the clear above
+    // would remove it.
+    unawaited(maybeWarnAboutUpdate());
     unawaited(PushService.instance.handleLaunchNotification());
   }
 

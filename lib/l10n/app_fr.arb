@@ -751,5 +751,45 @@
   "apiRequestFailed": "Échec de la requête ({code})",
   "imagePlaceholder": "Sans photo",
   "signUpAlreadyRegistered": "Cette adresse a déjà un compte. Connectez-vous plutôt.",
-  "signUpGoToSignIn": "Se connecter"
+  "signUpGoToSignIn": "Se connecter",
+  "updateRequiredTitle": "Cette version ne fonctionne plus",
+  "updateRequiredBody": "Une version plus récente de Mambanda Market est nécessaire pour continuer. Téléchargez-la pour retrouver vos annonces et vos messages.",
+  "updateDownload": "Télécharger la mise à jour",
+  "updateRetry": "J'ai déjà mis à jour",
+  "updateDismiss": "Ignorer",
+  "updateAvailableTitle": "Une nouvelle version est disponible",
+  "updateBannerBody": "Mettez à jour maintenant pour ne pas perdre l'accès.",
+  "updateVerySoon": "Cette version cesse de fonctionner dans moins d'une minute",
+  "updateStopsIn": "Cette version cesse de fonctionner dans {left}",
+  "@updateStopsIn": {
+    "placeholders": {
+      "left": {
+        "type": "String"
+      }
+    }
+  },
+  "updateInDays": "{count, plural, =1{1 jour} other{{count} jours}}",
+  "@updateInDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "updateInHours": "{count, plural, =1{1 heure} other{{count} heures}}",
+  "@updateInHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "updateInMinutes": "{count, plural, =1{1 minute} other{{count} minutes}}",
+  "@updateInMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }
