@@ -13,6 +13,9 @@ import '../api/auth_service.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
+import '../Components/home_board.dart';
+import '../api/board_media_cache.dart';
+import '../api/board_repository.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -61,6 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _loadCategories();
     _loadListings();
+    _loadBoard();
     AuthService.instance.me.addListener(_onMeChanged);
   }
 
@@ -128,6 +132,22 @@ class _HomeScreenState extends State<HomeScreen> {
     _searchController.clear();
     _onSearchChanged('');
     setState(() {});
+  }
+
+  /// Refresh the board, then let the media cache drop anything it no longer
+  /// refers to. Never throws — see BoardRepository.
+  Future<void> _loadBoard() async {
+    await BoardRepository.instance.load();
+    await BoardMediaCache.instance.reconcile(BoardRepository.instance.board.value);
+  }
+
+  /// A `category` link on the board filters the feed, exactly as tapping the
+  /// category bar does. Slug rather than index, because the board is authored
+  /// against category slugs and the bar's indices are a detail of this screen.
+  void _onCategorySlug(String slug) {
+    final index = _categories.indexWhere((c) => c.slug == slug);
+    if (index < 0) return; // A category that has since been removed.
+    _onCategoryTapped(index + 1);
   }
 
   void _onCategoryTapped(int index) {
@@ -205,7 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
-            await Future.wait([_loadListings(), _favorites.refresh()]);
+            await Future.wait([_loadListings(), _favorites.refresh(), _loadBoard()]);
           },
           child: CustomScrollView(
             slivers: [
@@ -307,20 +327,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
+              // Was a hardcoded picsum.photos placeholder — a random stock
+              // photo shown to every user since this screen was written. It is
+              // now whatever an admin published, and nothing at all when they
+              // have published nothing.
               SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 8.0, horizontal: 16.0),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      "https://picsum.photos/600/250?random=10",
-                      height: 140,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
+                child: HomeBoard(onCategory: _onCategorySlug),
               ),
 
               if (_isLoading)
