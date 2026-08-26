@@ -755,6 +755,7 @@
   "updateRequiredTitle": "Cette version ne fonctionne plus",
   "updateRequiredBody": "Une version plus récente de Mambanda Market est nécessaire pour continuer. Téléchargez-la pour retrouver vos annonces et vos messages.",
   "updateDownload": "Télécharger la mise à jour",
+  "updateOpenStore": "Mettre à jour sur Google Play",
   "updateRetry": "J'ai déjà mis à jour",
   "updateDismiss": "Ignorer",
   "updateAvailableTitle": "Une nouvelle version est disponible",

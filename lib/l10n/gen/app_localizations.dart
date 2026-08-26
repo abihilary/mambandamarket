@@ -3656,6 +3656,12 @@ abstract class AppLocalizations {
   /// **'Download the update'**
   String get updateDownload;
 
+  /// Update button for a copy installed from Google Play, which must send the user to the store listing rather than to an APK download.
+  ///
+  /// In en, this message translates to:
+  /// **'Update on Google Play'**
+  String get updateOpenStore;
+
   /// No description provided for @updateRetry.
   ///
   /// In en, this message translates to:

@@ -906,6 +906,10 @@
   "updateRequiredTitle": "This version has stopped working",
   "updateRequiredBody": "A newer version of Mambanda Market is required to carry on. Download it to get back to your listings and messages.",
   "updateDownload": "Download the update",
+  "updateOpenStore": "Update on Google Play",
+  "@updateOpenStore": {
+    "description": "Update button for a copy installed from Google Play, which must send the user to the store listing rather than to an APK download."
+  },
   "updateRetry": "I have already updated",
   "updateDismiss": "Dismiss",
   "updateAvailableTitle": "A new version is available",

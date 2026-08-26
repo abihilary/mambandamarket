@@ -2028,6 +2028,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get updateDownload => 'Télécharger la mise à jour';
 
   @override
+  String get updateOpenStore => 'Mettre à jour sur Google Play';
+
+  @override
   String get updateRetry => 'J\'ai déjà mis à jour';
 
   @override

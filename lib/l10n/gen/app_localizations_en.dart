@@ -1993,6 +1993,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateDownload => 'Download the update';
 
   @override
+  String get updateOpenStore => 'Update on Google Play';
+
+  @override
   String get updateRetry => 'I have already updated';
 
   @override

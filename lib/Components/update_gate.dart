@@ -15,6 +15,11 @@ import '../l10n/l10n.dart';
 /// until somebody chooses to replace it. When a release has to reach people,
 /// this is what asks, and then insists.
 ///
+/// A Play install is the exception and is asked the same question but sent
+/// somewhere else: see [UpdateChannel]. Play updates itself, and an app that
+/// hands its Play users an APK is breaking store policy as well as offering
+/// them a file they cannot install.
+///
 /// Wrapped around the whole app through MaterialApp.builder rather than placed
 /// on a screen, so it covers every route including one opened from a shared
 /// link or a notification. It re-checks on resume, so a phone left open past
@@ -44,6 +49,10 @@ class _UpdateGateState extends State<UpdateGate> with WidgetsBindingObserver {
   /// This build's number, from the package rather than a constant, so it
   /// cannot drift from what was actually shipped.
   int? _build;
+
+  /// Where this copy came from, which decides where the update button points
+  /// and what it is allowed to say.
+  UpdateChannel _channel = UpdateChannel.sideload;
 
 
   /// Drives the countdown text. One minute is enough for a deadline measured
@@ -88,7 +97,13 @@ class _UpdateGateState extends State<UpdateGate> with WidgetsBindingObserver {
 
   Future<void> _readBuild() async {
     final parsed = await currentBuildNumber();
-    if (mounted) setState(() => _build = parsed);
+    final channel = await currentUpdateChannel();
+    if (mounted) {
+      setState(() {
+        _build = parsed;
+        _channel = channel;
+      });
+    }
   }
 
   /// How this build stands against the configured floor.
@@ -109,12 +124,7 @@ class _UpdateGateState extends State<UpdateGate> with WidgetsBindingObserver {
   }
 
 
-  Future<void> _download() async {
-    await launchUrl(
-      Uri.parse('${ShareLinks.siteBase}/download'),
-      mode: LaunchMode.externalApplication,
-    );
-  }
+  Future<void> _download() => openUpdateDestination();
 
   @override
   Widget build(BuildContext context) {
@@ -122,7 +132,11 @@ class _UpdateGateState extends State<UpdateGate> with WidgetsBindingObserver {
     if (state == _GateState.blocked) {
       // Replaces the app rather than covering it: there is nothing behind this
       // worth reaching, and a dismissible "blocking" screen is not one.
-      return _BlockedScreen(onDownload: _download, onRetry: _retry);
+      return _BlockedScreen(
+        onDownload: _download,
+        onRetry: _retry,
+        channel: _channel,
+      );
     }
 
     // The warning is a dialog rather than something laid over the app.
@@ -159,10 +173,15 @@ String? formatRemaining(BuildContext context, Duration? left) {
 }
 
 class _CountdownDialog extends StatelessWidget {
-  const _CountdownDialog({required this.remaining, required this.onDownload});
+  const _CountdownDialog({
+    required this.remaining,
+    required this.onDownload,
+    required this.channel,
+  });
 
   final Duration? remaining;
   final VoidCallback onDownload;
+  final UpdateChannel channel;
 
   @override
   Widget build(BuildContext context) {
@@ -181,17 +200,27 @@ class _CountdownDialog extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
           child: Text(l10n.updateDismiss),
         ),
-        FilledButton(onPressed: onDownload, child: Text(l10n.updateDownload)),
+        FilledButton(
+          onPressed: onDownload,
+          child: Text(channel == UpdateChannel.play
+              ? l10n.updateOpenStore
+              : l10n.updateDownload),
+        ),
       ],
     );
   }
 }
 
 class _BlockedScreen extends StatelessWidget {
-  const _BlockedScreen({required this.onDownload, required this.onRetry});
+  const _BlockedScreen({
+    required this.onDownload,
+    required this.onRetry,
+    required this.channel,
+  });
 
   final VoidCallback onDownload;
   final Future<void> Function() onRetry;
+  final UpdateChannel channel;
 
   @override
   Widget build(BuildContext context) {
@@ -233,7 +262,9 @@ class _BlockedScreen extends StatelessWidget {
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(52),
                     ),
-                    child: Text(l10n.updateDownload),
+                    child: Text(channel == UpdateChannel.play
+                        ? l10n.updateOpenStore
+                        : l10n.updateDownload),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -283,6 +314,11 @@ Future<void> maybeWarnAboutUpdate() async {
     return;
   }
 
+  // Resolved before the navigator is looked up, so nothing is awaited between
+  // finding it and using its context. Both reads are cached after first call,
+  // so this costs nothing on the resume path.
+  final channel = await currentUpdateChannel();
+
   final navigator = rootNavigatorKey.currentState;
   if (navigator == null || !navigator.mounted) return;
   _warnedThisSession = true;
@@ -292,12 +328,10 @@ Future<void> maybeWarnAboutUpdate() async {
     context: navigator.context,
     builder: (ctx) => _CountdownDialog(
       remaining: left != null && !left.isNegative ? left : null,
+      channel: channel,
       onDownload: () {
         Navigator.pop(ctx);
-        unawaited(launchUrl(
-          Uri.parse('${ShareLinks.siteBase}/download'),
-          mode: LaunchMode.externalApplication,
-        ));
+        unawaited(openUpdateDestination());
       },
     ),
   );
@@ -305,19 +339,93 @@ Future<void> maybeWarnAboutUpdate() async {
 
 bool _warnedThisSession = false;
 
-/// This build's number, read once and remembered.
-int? _cachedBuild;
-bool _buildRead = false;
+/// This build's own details, read once and remembered.
+///
+/// One read rather than one per question: the build number and where the
+/// install came from are both on the same object, and the platform channel is
+/// not free.
+PackageInfo? _cachedInfo;
+bool _infoRead = false;
+
+Future<PackageInfo?> _packageInfo() async {
+  if (_infoRead) return _cachedInfo;
+  try {
+    _cachedInfo = await PackageInfo.fromPlatform();
+  } catch (_) {
+    // Left null. Every caller below treats that as "assume the build most
+    // people have", which is the sideload.
+  }
+  _infoRead = true;
+  return _cachedInfo;
+}
 
 Future<int?> currentBuildNumber() async {
-  if (_buildRead) return _cachedBuild;
-  try {
-    final info = await PackageInfo.fromPlatform();
-    _cachedBuild = int.tryParse(info.buildNumber);
-  } catch (_) {
-    // Unknown build means no gate; guessing would risk locking out a phone we
-    // cannot even identify.
+  final info = await _packageInfo();
+  // Unknown build means no gate; guessing would risk locking out a phone we
+  // cannot even identify.
+  if (info == null) return null;
+  return int.tryParse(info.buildNumber);
+}
+
+/// Google Play's own package name, as the installer API reports it.
+const String _playStorePackage = 'com.android.vending';
+
+/// How this copy of the app arrived, which decides where "update" should send
+/// it.
+///
+/// Not cosmetic. Play's Device and Network Abuse policy forbids an app
+/// distributing its own updates around the store it was installed from, and
+/// the download page hands out an APK — so pointing a Play install at it is
+/// both the wrong destination for the user and a policy problem for the
+/// listing. It is also simply broken: a Play build and a sideloaded build
+/// carry different signatures, so the APK cannot install over the Play one
+/// even if somebody tries.
+///
+/// Anything that is not Play is treated as a sideload. A sideload reports the
+/// installer's own package, or nothing at all when it came through adb, and
+/// the sideload is what the entire installed base is today — so it is the
+/// right answer when the question cannot be answered.
+enum UpdateChannel { play, sideload }
+
+Future<UpdateChannel> currentUpdateChannel() async {
+  final info = await _packageInfo();
+  return info?.installerStore == _playStorePackage
+      ? UpdateChannel.play
+      : UpdateChannel.sideload;
+}
+
+/// Send this install wherever its update actually lives.
+Future<void> openUpdateDestination() async {
+  final info = await _packageInfo();
+  if (info?.installerStore == _playStorePackage) {
+    // market:// opens the Play app straight on the listing. The https form is
+    // the fallback for the rare device that has Play as an installer but no
+    // Play app to handle the scheme.
+    //
+    // The package name comes from the package itself rather than a constant,
+    // for the same reason the build number does: it cannot then drift from
+    // what was actually shipped.
+    final id = info!.packageName;
+    if (await _tryLaunch(Uri.parse('market://details?id=$id'))) return;
+    await _tryLaunch(
+      Uri.parse('https://play.google.com/store/apps/details?id=$id'),
+    );
+    // Deliberately no fall-through to the download page. If both of those
+    // failed there is no browser and no Play app on this phone, and handing a
+    // Play install an APK it cannot install over itself would be worse than
+    // the button doing nothing. The blocking screen still offers retry.
+    return;
   }
-  _buildRead = true;
-  return _cachedBuild;
+
+  await _tryLaunch(Uri.parse('${ShareLinks.siteBase}/download'));
+}
+
+/// launchUrl throws when nothing can handle the scheme, which is a normal
+/// answer here rather than an error worth propagating into the gate.
+Future<bool> _tryLaunch(Uri uri) async {
+  try {
+    return await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } catch (_) {
+    return false;
+  }
 }
