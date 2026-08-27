@@ -70,14 +70,31 @@
                  purpose: autoVerify applies to the whole filter, and mixing a
                  custom scheme into it makes Android refuse to verify the
                  domain at all. Verification fetches
-                 https://mambandamarket.blacksilvergroups.xyz/.well-known/assetlinks.json
-                 and checks the release signing certificate against it, so a
-                 build signed with a different key falls back to the browser
-                 rather than opening here. -->
+                 /.well-known/assetlinks.json from each host below and checks
+                 the release signing certificate against it, so a build signed
+                 with a different key falls back to the browser rather than
+                 opening here.
+
+                 Three hosts, and all three stay. mambandamarket.com is where
+                 links are minted now; the blacksilvergroups address is where
+                 every link shared before the move still points, and those are
+                 sitting in people's chat histories rather than expiring. A
+                 host removed here is a link that silently stops opening the
+                 app — so hosts are added and not replaced.
+
+                 Verification is all-or-nothing across the filter: if any
+                 host fails to serve a matching assetlinks.json, Android
+                 verifies none of them — which is why www is deliberately
+                 absent. It has no certificate and serves nothing, and listing
+                 it here would take the two working hosts down with it. Add it
+                 once it resolves, not before. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"
+                      android:host="mambandamarket.com"
+                      android:pathPrefix="/l/"/>
                 <data android:scheme="https"
                       android:host="mambandamarket.blacksilvergroups.xyz"
                       android:pathPrefix="/l/"/>
