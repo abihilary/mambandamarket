@@ -13,14 +13,20 @@
     <!-- Camera Permission -->
     <uses-permission android:name="android.permission.CAMERA"/>
 
-    <!-- Media / Gallery Permissions -->
-    <!-- For Android 12 (API 32) and lower -->
+    <!-- Gallery access on Android 12 and below, where picking an image still
+         goes through a document intent. Capped at API 32 on purpose: from 13
+         the photo picker replaces it and asks for nothing.
+
+         There is deliberately no READ_MEDIA_IMAGES beside it. image_picker
+         uses the Android photo picker, which grants access to the individual
+         images somebody chooses and needs no permission to do it — the plugin
+         declares none itself, and every call here is a plain pickImage or
+         pickMultiImage. Declaring the permission anyway granted nothing the
+         app uses, and cost a Play policy declaration defending access it
+         never takes. -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
-
-    <!-- For Android 13+ (API 33+) to read photos from gallery -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <!-- Push. Android 13+ will not show a notification until the user has been
          asked; PushService raises that prompt, and without this declaration the
