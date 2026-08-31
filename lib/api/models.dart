@@ -247,13 +247,24 @@ class Category {
   final String? labelFr;
   final String? icon;
 
+  /// The category this one sits under, or null for a top-level group.
+  ///
+  /// The tree is exactly two levels deep. A listing may be filed on either a
+  /// root or a leaf — the twelve original categories became roots and every
+  /// listing published before the tree existed still points at one — so
+  /// nothing here may assume a category is a leaf.
+  final String? parentSlug;
+
   const Category({
     required this.slug,
     required this.label,
     this.labelEn,
     this.labelFr,
     this.icon,
+    this.parentSlug,
   });
+
+  bool get isRoot => parentSlug == null;
 
   /// Names keyed by the stable slug, as a fallback for a server that hasn't
   /// been taught the per-language columns yet.
@@ -309,7 +320,47 @@ class Category {
         labelEn: json['label_en']?.toString(),
         labelFr: json['label_fr']?.toString(),
         icon: json['icon']?.toString(),
+        parentSlug: json['parent_slug']?.toString(),
       );
+}
+
+/// One top-level category and the leaves filed under it.
+///
+/// Built on the client rather than asked of the API, because /categories
+/// already returns the whole list in one cached response and turning it into a
+/// tree is cheaper than a second round trip.
+class CategoryGroup {
+  final Category root;
+  final List<Category> children;
+
+  const CategoryGroup({required this.root, required this.children});
+
+  /// Group a flat category list, preserving the server's sort order.
+  ///
+  /// A child whose parent is missing from the list is promoted to a root
+  /// instead of being dropped. That should not happen — parent_slug is a
+  /// foreign key — but a filtered or partial response should cost the user a
+  /// slightly odd heading, not an item they can never file anything under.
+  static List<CategoryGroup> from(List<Category> all) {
+    final roots = all.where((c) => c.isRoot).toList();
+    final known = {for (final c in all) c.slug};
+    final orphans = all.where(
+      (c) => c.parentSlug != null && !known.contains(c.parentSlug),
+    );
+
+    final byParent = <String, List<Category>>{};
+    for (final c in all) {
+      final parent = c.parentSlug;
+      if (parent != null && known.contains(parent)) {
+        byParent.putIfAbsent(parent, () => []).add(c);
+      }
+    }
+
+    return [
+      for (final root in [...roots, ...orphans])
+        CategoryGroup(root: root, children: byParent[root.slug] ?? const []),
+    ];
+  }
 }
 
 class Profile {

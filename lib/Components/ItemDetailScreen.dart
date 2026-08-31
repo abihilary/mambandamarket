@@ -989,6 +989,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               imageUrl: item.primaryImageUrl,
               title: item.title,
               price: item.displayPrice,
+              location: item.city,
               onTap: () {
                 Navigator.push(
                   context,

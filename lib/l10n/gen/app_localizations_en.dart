@@ -549,6 +549,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createPleaseChooseACategory => 'Please choose a category.';
 
   @override
+  String get categoryPickerTitle => 'Choose a category';
+
+  @override
+  String get categoryPickerSearch => 'Search categories';
+
+  @override
+  String categoryPickerAllIn(Object name) {
+    return 'Everything in $name';
+  }
+
+  @override
+  String categoryPickerCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count subcategories',
+      one: '1 subcategory',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get categoryPickerNoMatch => 'No category matches that.';
+
+  @override
+  String get createListingLocation => 'Location';
+
+  @override
+  String get createListingLocationHint => 'e.g. Akwa, Douala';
+
+  @override
+  String get createListingLocationHelp =>
+      'Where buyers can meet you or collect the item.';
+
+  @override
+  String get createListingLocationTooLong =>
+      'Location is too long (120 characters max).';
+
+  @override
   String get createListingTitle => 'Listing Title';
 
   @override

@@ -1064,6 +1064,60 @@ abstract class AppLocalizations {
   /// **'Please choose a category.'**
   String get createPleaseChooseACategory;
 
+  /// No description provided for @categoryPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a category'**
+  String get categoryPickerTitle;
+
+  /// No description provided for @categoryPickerSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search categories'**
+  String get categoryPickerSearch;
+
+  /// No description provided for @categoryPickerAllIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything in {name}'**
+  String categoryPickerAllIn(Object name);
+
+  /// No description provided for @categoryPickerCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 subcategory} other{{count} subcategories}}'**
+  String categoryPickerCount(int count);
+
+  /// No description provided for @categoryPickerNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No category matches that.'**
+  String get categoryPickerNoMatch;
+
+  /// No description provided for @createListingLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get createListingLocation;
+
+  /// No description provided for @createListingLocationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Akwa, Douala'**
+  String get createListingLocationHint;
+
+  /// No description provided for @createListingLocationHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Where buyers can meet you or collect the item.'**
+  String get createListingLocationHelp;
+
+  /// No description provided for @createListingLocationTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Location is too long (120 characters max).'**
+  String get createListingLocationTooLong;
+
   /// No description provided for @createListingTitle.
   ///
   /// In en, this message translates to:

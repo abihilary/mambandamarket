@@ -122,11 +122,23 @@ class _MainNavigationShellState extends State<MainNavigationShell>
       if (!_canPublish) {
         _showUpgradeDialog();
       } else {
-        // Open Create Listing Screen as a Modal / Screen
-        await Navigator.push(
+        // The result is the new listing, or null if the seller backed out.
+        //
+        // This used to be awaited and dropped. Both dashboards reload after
+        // publishing, but the + in the tab bar is how most listings are
+        // created, and from here nothing refreshed: the seller published an
+        // item, landed back on a feed built at launch, and could not find it.
+        // Restarting the app was the only way to see their own listing.
+        final created = await Navigator.push<Map<String, dynamic>>(
           context,
           MaterialPageRoute(builder: (context) => const CreateListingScreen()),
         );
+        if (created == null || !mounted) return;
+        // The feed refetches itself off ListingsRepository.revision, which the
+        // publish already bumped — so it is reloading before this runs. All
+        // that is left is to show them the tab it lands on, rather than
+        // leaving them on whatever one they pressed + from.
+        setState(() => _currentBottomIndex = 0);
       }
       return;
     }

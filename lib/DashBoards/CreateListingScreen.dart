@@ -6,6 +6,8 @@ import '../api/models.dart' as api;
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
+import '../Components/category_icons.dart';
+import '../Components/category_picker.dart';
 import '../Components/local_image.dart';
 
 class CreateListingScreen extends StatefulWidget {
@@ -36,6 +38,27 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+  final FocusNode _locationFocus = FocusNode();
+
+  /// Suggestions behind the location box.
+  ///
+  /// The field stays free text — the column is a plain string and a seller in
+  /// a village this list has never heard of must still be able to type it.
+  /// These exist so the common cases agree with each other: left alone, the
+  /// same neighbourhood arrives as "akwa", "Akwa Douala" and "AKWA-DLA", and
+  /// nothing downstream can group those.
+  static const List<String> _locationSuggestions = [
+    'Akwa, Douala', 'Bonanjo, Douala', 'Bonapriso, Douala', 'Bonabéri, Douala',
+    'Deïdo, Douala', 'Bali, Douala', 'New Bell, Douala', 'Makepe, Douala',
+    'Bonamoussadi, Douala', 'Logbessou, Douala', 'Ndogbong, Douala',
+    'Logpom, Douala', 'Kotto, Douala', 'Cité des Palmiers, Douala',
+    'Yassa, Douala', 'PK8, Douala', 'Ngodi, Douala', 'Bepanda, Douala',
+    'Douala', 'Yaoundé', 'Bafoussam', 'Bamenda', 'Garoua', 'Maroua',
+    'Ngaoundéré', 'Bertoua', 'Buea', 'Limbe', 'Kribi', 'Ebolowa', 'Kumba',
+    'Edéa', 'Dschang', 'Foumban', 'Nkongsamba', 'Sangmélima', 'Bafang',
+    'Mbouda', 'Tiko', 'Loum',
+  ];
 
   /// The only conditions the API accepts, and the only ones the dropdown
   /// offers. Anything else — including the empty string the seller hub sends
@@ -91,6 +114,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       _selectedCondition =
           _conditions.contains(condition) ? condition! : 'New';
       _hasGuarantee = listing['hasGuarantee'] ?? false;
+      // Both spellings, for the same reason the category reads two keys: the
+      // seller hub and the store dashboard build this map differently.
+      _locationController.text =
+          (listing['city'] ?? listing['location'] ?? '').toString();
 
       // Show what the caller already has so the row is not empty while the
       // real records — the ones carrying ids — are fetched.
@@ -310,6 +337,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           'category_slug': _selectedCategory!,
           'condition': _selectedCondition,
           'has_guarantee': _hasGuarantee,
+          // Sent even when blank: the API reads "" as "cleared" and stores
+          // null, which is how a seller removes a location they no longer
+          // want on the listing. Omitting the key would leave the old one.
+          'city': _locationController.text.trim(),
         });
 
         // Photos are their own endpoints — PATCH /listings/:id does not carry
@@ -354,6 +385,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         categorySlug: _selectedCategory!,
         condition: _selectedCondition,
         hasGuarantee: _hasGuarantee,
+        city: _locationController.text.trim().isEmpty
+            ? null
+            : _locationController.text.trim(),
         imagePaths: uploaded,
       );
 
@@ -428,7 +462,53 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     _descriptionController.dispose();
     _priceController.dispose();
     _quantityController.dispose();
+    _locationController.dispose();
+    _locationFocus.dispose();
     super.dispose();
+  }
+
+  api.Category? _categoryBySlug(String? slug) {
+    if (slug == null) return null;
+    for (final c in _categories) {
+      if (c.slug == slug) return c;
+    }
+    return null;
+  }
+
+  /// The chosen category as the seller should read it: "Food & drink › Drinks".
+  ///
+  /// The group is part of the answer, not decoration. Leaf names repeat across
+  /// the tree — "Services" sits under three different roots and "Scissors"
+  /// names both a hairdresser and a tailor — so a leaf on its own does not say
+  /// what was actually picked.
+  String _categoryFieldText(BuildContext context) {
+    final selected = _categoryBySlug(_selectedCategory);
+    if (selected == null) {
+      // A slug with no matching category means the list has not arrived yet;
+      // showing the raw slug beats showing "Select category" over a choice the
+      // seller already made and is about to save.
+      return _selectedCategory ??
+          (_categories.isEmpty
+              ? context.l10n.createLoading
+              : context.l10n.createSelectCategory);
+    }
+    final locale = Localizations.localeOf(context);
+    final parent = _categoryBySlug(selected.parentSlug);
+    return parent == null
+        ? selected.displayLabel(locale)
+        : '${parent.displayLabel(locale)} › ${selected.displayLabel(locale)}';
+  }
+
+  Future<void> _pickCategory() async {
+    if (_categories.isEmpty) return;
+    final picked = await showCategoryPicker(
+      context,
+      categories: _categories,
+      selectedSlug: _selectedCategory,
+    );
+    // null means dismissed, which is not the same as cleared.
+    if (picked == null || !mounted) return;
+    setState(() => _selectedCategory = picked);
   }
 
   /// Localized display label for a condition. The stable value ([cond]) is
@@ -524,27 +604,66 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               const SizedBox(height: 20),
 
               // CATEGORY SELECTOR
-              DropdownButtonFormField<String>(
+              //
+              // A sheet rather than a dropdown. The category list is a
+              // two-level tree of roughly ninety entries now; a dropdown is a
+              // single unsearchable column, so finding "Groceries" meant
+              // scrolling past everything the marketplace sells.
+              FormField<String>(
                 initialValue: _selectedCategory,
-                decoration: InputDecoration(
-                  labelText: l10n.createSelectCategory,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  hintText: _categories.isEmpty ? l10n.createLoading : null,
-                ),
-                items: _categories
-                    .map((c) => DropdownMenuItem(
-                          value: c.slug,
-                          // displayLabel, not label: browse has always used the
-                          // translated name, so listing something was the one
-                          // place a seller met the raw German seed data.
-                          child: Text(c.displayLabel(Localizations.localeOf(context))),
-                        ))
-                    .toList(),
-                onChanged: (val) {
-                  if (val != null) setState(() => _selectedCategory = val);
+                validator: (_) => _selectedCategory == null
+                    ? l10n.createPleaseChooseCategory
+                    : null,
+                builder: (field) {
+                  final chosen = _selectedCategory != null;
+                  return InkWell(
+                    onTap: _categories.isEmpty
+                        ? null
+                        : () async {
+                            await _pickCategory();
+                            // Clears the error the moment a choice is made,
+                            // instead of leaving it under a filled-in field
+                            // until the next save attempt.
+                            field.didChange(_selectedCategory);
+                          },
+                    borderRadius: BorderRadius.circular(12),
+                    child: InputDecorator(
+                      isEmpty: false,
+                      decoration: InputDecoration(
+                        labelText: l10n.createSelectCategory,
+                        errorText: field.errorText,
+                        suffixIcon: const Icon(Icons.expand_more),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: Row(
+                        children: [
+                          if (chosen) ...[
+                            Icon(
+                              categoryIcon(
+                                _categoryBySlug(_selectedCategory) ??
+                                    api.Category(
+                                        slug: _selectedCategory!,
+                                        label: _selectedCategory!),
+                              ),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                          ],
+                          Expanded(
+                            child: Text(
+                              _categoryFieldText(context),
+                              overflow: TextOverflow.ellipsis,
+                              style: chosen
+                                  ? null
+                                  : TextStyle(color: scheme.onSurfaceVariant),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
                 },
-                validator: (val) =>
-                    val == null ? l10n.createPleaseChooseCategory : null,
               ),
               const SizedBox(height: 16),
 
@@ -637,6 +756,76 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 onChanged: (val) {
                   if (val != null) setState(() => _selectedCondition = val);
                 },
+              ),
+              const SizedBox(height: 16),
+
+              // LOCATION
+              //
+              // Free text, with suggestions rather than a fixed list. The
+              // column is a plain string and always has been; anything that
+              // forced a choice from a dropdown would exclude every seller
+              // outside the towns somebody thought to type into this file.
+              LayoutBuilder(
+                builder: (context, constraints) => RawAutocomplete<String>(
+                  textEditingController: _locationController,
+                  focusNode: _locationFocus,
+                  optionsBuilder: (value) {
+                    final q = foldForSearch(value.text.trim());
+                    if (q.isEmpty) return const Iterable<String>.empty();
+                    return _locationSuggestions
+                        .where((s) => foldForSearch(s).contains(q))
+                        .take(6);
+                  },
+                  fieldViewBuilder:
+                      (context, controller, focusNode, onFieldSubmitted) =>
+                          TextFormField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    textCapitalization: TextCapitalization.words,
+                    textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (_) => onFieldSubmitted(),
+                    decoration: InputDecoration(
+                      labelText: l10n.createListingLocation,
+                      hintText: l10n.createListingLocationHint,
+                      helperText: l10n.createListingLocationHelp,
+                      prefixIcon: const Icon(Icons.location_on_outlined),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    // Optional, so no required-check. The cap matches the
+                    // API's, which would otherwise reject the whole save with
+                    // a validation error naming a field the form never
+                    // flagged.
+                    validator: (val) => (val != null && val.trim().length > 120)
+                        ? l10n.createListingLocationTooLong
+                        : null,
+                  ),
+                  optionsViewBuilder: (context, onSelected, options) => Align(
+                    alignment: Alignment.topLeft,
+                    child: Material(
+                      elevation: 4,
+                      borderRadius: BorderRadius.circular(12),
+                      child: SizedBox(
+                        width: constraints.maxWidth,
+                        child: ListView.builder(
+                          padding: EdgeInsets.zero,
+                          shrinkWrap: true,
+                          itemCount: options.length,
+                          itemBuilder: (context, i) {
+                            final option = options.elementAt(i);
+                            return ListTile(
+                              dense: true,
+                              leading:
+                                  const Icon(Icons.location_on_outlined, size: 18),
+                              title: Text(option),
+                              onTap: () => onSelected(option),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
 

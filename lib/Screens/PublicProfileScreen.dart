@@ -366,6 +366,7 @@ class _Shop extends StatelessWidget {
                   imageUrl: item.primaryImageUrl,
                   title: item.title,
                   price: item.displayPrice,
+                  location: item.city,
                   onTap: () => onOpen(item),
                 );
               },

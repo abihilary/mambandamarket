@@ -18,6 +18,18 @@ class ListingsRepository {
 
   final _api = ApiClient.instance;
 
+  /// Bumped whenever this device changes the catalogue.
+  ///
+  /// Screens that hold a list of listings watch this instead of each caller
+  /// remembering to refresh whatever else might be showing the same data. The
+  /// two dashboards did reload themselves after publishing, but the home feed
+  /// — which lives in an IndexedStack and is built once at launch — did not,
+  /// so a seller published an item and then could not find it in the app.
+  ///
+  /// Deliberately a counter and not the listing: a watcher's job is to refetch,
+  /// not to splice one object into a list it did not build.
+  final ValueNotifier<int> revision = ValueNotifier<int>(0);
+
   /// Browse / search. Every filter is optional; the server applies full-text
   /// search, category/price filters and PostGIS radius in one query.
   Future<List<Listing>> browse({
@@ -183,21 +195,31 @@ class ListingsRepository {
             {'storage_path': imagePaths[i], 'position': i}
         ],
     }) as Map<String, dynamic>;
-    return Listing.fromJson((json['listing'] as Map).cast<String, dynamic>());
+    final listing =
+        Listing.fromJson((json['listing'] as Map).cast<String, dynamic>());
+    revision.value++;
+    return listing;
   }
 
-  Future<void> update(String id, Map<String, dynamic> fields) =>
-      _api.patch('/listings/$id', fields);
+  Future<void> update(String id, Map<String, dynamic> fields) async {
+    await _api.patch('/listings/$id', fields);
+    revision.value++;
+  }
 
   /// Close a sale. The server verifies ownership and records it in `sales`.
-  Future<void> markSold(String id, {int? soldPriceCents, String? buyerId}) =>
-      _api.patch('/listings/$id', {
-        'action': 'mark_sold',
-        if (soldPriceCents != null) 'sold_price_cents': soldPriceCents,
-        if (buyerId != null) 'buyer_id': buyerId,
-      });
+  Future<void> markSold(String id, {int? soldPriceCents, String? buyerId}) async {
+    await _api.patch('/listings/$id', {
+      'action': 'mark_sold',
+      if (soldPriceCents != null) 'sold_price_cents': soldPriceCents,
+      if (buyerId != null) 'buyer_id': buyerId,
+    });
+    revision.value++;
+  }
 
-  Future<void> delete(String id) => _api.delete('/listings/$id');
+  Future<void> delete(String id) async {
+    await _api.delete('/listings/$id');
+    revision.value++;
+  }
 
   Future<SellerDashboard> dashboard(String sellerId) async {
     final json =

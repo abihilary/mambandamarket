@@ -16,6 +16,7 @@ import '../l10n/l10n.dart';
 import '../Components/home_board.dart';
 import '../api/board_media_cache.dart';
 import '../api/board_repository.dart';
+import '../Components/category_icons.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -29,22 +30,6 @@ class _HomeScreenState extends State<HomeScreen> {
   /// user-facing message can be localized in build() rather than baked in at
   /// fetch time (which runs from initState, before localizations are ready).
   static const String _networkErrorSentinel = '__network__';
-
-  /// Icon per seeded category slug; anything new falls back to a generic tag.
-  static const Map<String, IconData> _categoryIcons = {
-    'auto-rad': Icons.directions_car_outlined,
-    'elektronik': Icons.devices_outlined,
-    'mode': Icons.checkroom_outlined,
-    'familie': Icons.child_friendly_outlined,
-    'real-estate': Icons.home_outlined,
-    'sport': Icons.sports_basketball_outlined,
-    'jobs': Icons.work_outline,
-    'moebel': Icons.weekend_outlined,
-    'haustiere': Icons.pets_outlined,
-    'dienstleistungen': Icons.handyman_outlined,
-    'buecher-musik': Icons.menu_book_outlined,
-    'verschenken': Icons.card_giftcard_outlined,
-  };
 
   final _repo = ListingsRepository.instance;
   final _favorites = FavoritesRepository.instance;
@@ -62,6 +47,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    // The tabs live in an IndexedStack: this screen is built once at launch
+    // and then never rebuilt on its own. Without this, a seller published an
+    // item and came back to a feed frozen at app start, with their own
+    // listing missing from it.
+    _repo.revision.addListener(_onCatalogueChanged);
     _loadCategories();
     _loadListings();
     _loadBoard();
@@ -70,6 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    _repo.revision.removeListener(_onCatalogueChanged);
     AuthService.instance.me.removeListener(_onMeChanged);
     _searchDebounce?.cancel();
     _searchController.dispose();
@@ -141,19 +132,34 @@ class _HomeScreenState extends State<HomeScreen> {
     await BoardMediaCache.instance.reconcile(BoardRepository.instance.board.value);
   }
 
+  void _onCatalogueChanged() {
+    if (mounted) _loadListings();
+  }
+
+  /// The categories the bar offers: top-level groups only.
+  ///
+  /// Every leaf in the bar would be eighty-eight tiles of horizontal scrolling
+  /// to reach "Zu verschenken". Browsing a root sweeps everything filed
+  /// underneath it (see migration 0031), so the roots are a complete way in.
+  List<Category> get _barCategories =>
+      _categories.where((c) => c.isRoot).toList();
+
   /// A `category` link on the board filters the feed, exactly as tapping the
-  /// category bar does. Slug rather than index, because the board is authored
-  /// against category slugs and the bar's indices are a detail of this screen.
+  /// category bar does.
+  ///
+  /// Sets the slug directly rather than going through a bar index: a board can
+  /// link to a leaf, and leaves are deliberately not in the bar.
   void _onCategorySlug(String slug) {
-    final index = _categories.indexWhere((c) => c.slug == slug);
-    if (index < 0) return; // A category that has since been removed.
-    _onCategoryTapped(index + 1);
+    if (!_categories.any((c) => c.slug == slug)) return; // since removed
+    setState(() => _selectedSlug = slug);
+    _loadListings();
   }
 
   void _onCategoryTapped(int index) {
+    final bar = _barCategories;
     setState(() {
       // Index 0 is the synthetic "For You" entry.
-      _selectedSlug = index == 0 ? null : _categories[index - 1].slug;
+      _selectedSlug = index == 0 ? null : bar[index - 1].slug;
     });
     _loadListings();
   }
@@ -201,20 +207,33 @@ class _HomeScreenState extends State<HomeScreen> {
         .displayLabel(Localizations.localeOf(context));
   }
 
-  List<CategoryItem> _categoryItems(BuildContext context) => [
-    CategoryItem(
-      label: context.l10n.forYou,
-      icon: Icons.thumb_up_alt_outlined,
-      isSelected: _selectedSlug == null,
-    ),
-    ..._categories.map(
-          (c) => CategoryItem(
-        label: c.displayLabel(Localizations.localeOf(context)),
-        icon: _categoryIcons[c.slug] ?? Icons.sell_outlined,
-        isSelected: c.slug == _selectedSlug,
+  List<CategoryItem> _categoryItems(BuildContext context) {
+    // When a leaf is filtering the feed — reached from a board link — light up
+    // the group it belongs to, so the bar is not left showing no selection at
+    // all while the header names a category.
+    final selected = _selectedSlug;
+    final selectedRoot = selected == null
+        ? null
+        : _categories
+            .where((c) => c.slug == selected)
+            .map((c) => c.parentSlug ?? c.slug)
+            .firstOrNull;
+
+    return [
+      CategoryItem(
+        label: context.l10n.forYou,
+        icon: Icons.thumb_up_alt_outlined,
+        isSelected: selected == null,
       ),
-    ),
-  ];
+      ..._barCategories.map(
+        (c) => CategoryItem(
+          label: c.displayLabel(Localizations.localeOf(context)),
+          icon: categoryIcon(c),
+          isSelected: c.slug == selectedRoot,
+        ),
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -422,6 +441,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 imageUrl: item.primaryImageUrl,
                                 title: item.title,
                                 price: item.displayPrice,
+                                location: item.city,
                                 isCompact: true,
                                 onTap: () => _openItemDetail(item),
                               ),
@@ -461,6 +481,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 imageUrl: item.primaryImageUrl,
                                 title: item.title,
                                 price: item.displayPrice,
+                                location: item.city,
                                 isFavorite: favIds.contains(item.id),
                                 onTap: () => _openItemDetail(item),
                                 onFavoriteToggle: () => _toggleFavorite(item),

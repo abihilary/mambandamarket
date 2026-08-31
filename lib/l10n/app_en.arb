@@ -265,6 +265,27 @@
   "createLoading": "Loading…",
   "createPleaseChooseCategory": "Please choose a category",
   "createPleaseChooseACategory": "Please choose a category.",
+  "categoryPickerTitle": "Choose a category",
+  "categoryPickerSearch": "Search categories",
+  "categoryPickerAllIn": "Everything in {name}",
+  "@categoryPickerAllIn": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "categoryPickerCount": "{count, plural, =1{1 subcategory} other{{count} subcategories}}",
+  "@categoryPickerCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "categoryPickerNoMatch": "No category matches that.",
+  "createListingLocation": "Location",
+  "createListingLocationHint": "e.g. Akwa, Douala",
+  "createListingLocationHelp": "Where buyers can meet you or collect the item.",
+  "createListingLocationTooLong": "Location is too long (120 characters max).",
   "createListingTitle": "Listing Title",
   "createPleaseEnterTitle": "Please enter a title",
   "createDescription": "Description",

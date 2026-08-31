@@ -7,6 +7,11 @@ class ItemCard extends StatelessWidget {
   final String title;
   final String price;
   final String? priceAddon;
+
+  /// Where the item is, as the seller typed it. Null or blank renders nothing
+  /// rather than an empty pin — most listings published before this existed
+  /// have no location and should not all sprout a bare icon.
+  final String? location;
   final bool isCompact;
   final bool isFavorite;
   final VoidCallback? onTap;
@@ -18,6 +23,7 @@ class ItemCard extends StatelessWidget {
     required this.title,
     required this.price,
     this.priceAddon,
+    this.location,
     this.isCompact = false,
     this.isFavorite = false,
     this.onTap,
@@ -119,6 +125,34 @@ class ItemCard extends StatelessWidget {
                       ]
                     ],
                   ),
+                  if (location != null && location!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 12,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 2),
+                        // One line, ellipsised. A compact card is 140px wide
+                        // and "Cité des Palmiers, Douala" does not fit; a
+                        // second line would push the price out of the grid
+                        // cell and overflow every tile in the row.
+                        Expanded(
+                          child: Text(
+                            location!.trim(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
