@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -165,7 +166,22 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   }
 
   Future<void> _loadCategories() async {
-    final l10n = context.l10n;
+    // Deliberately not `final l10n = context.l10n` up here.
+    //
+    // This runs from initState, and context.l10n resolves through
+    // dependOnInheritedWidgetOfExactType, which is illegal before initState
+    // has returned. It threw on the very first line — outside the try — so
+    // the fetch never ran, _categories stayed empty, and the field sat on
+    // "Loading…" forever without even showing the error snackbar, because the
+    // throw happened before the block that shows it.
+    //
+    // It is an assert, so only debug builds ever hit it: release, including
+    // everything on Play, loaded categories fine. That is precisely why it
+    // survived — the one place it breaks is somebody testing a debug build,
+    // and the symptom looks like a slow network rather than a crash.
+    //
+    // Reading it inside the catch is safe: that is after an await, so the
+    // element is mounted and the lookup is legal.
     try {
       final cats = await ListingsRepository.instance.categories();
       if (!mounted) return;
@@ -176,8 +192,17 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           _selectedCategory = cats.isNotEmpty ? cats.first.slug : null;
         }
       });
-    } catch (_) {
-      if (mounted) _showErrorSnackBar(l10n.createCouldNotLoadCategories);
+    } catch (e, stack) {
+      // The reason used to be discarded here, which is why a category list
+      // that would not load was indistinguishable from one still loading:
+      // the field said "Loading…" forever and nothing anywhere said why.
+      // The reason used to be discarded, which is what made a list that would
+      // not load indistinguishable from one still loading.
+      debugPrint('[categories] load failed: $e');
+      debugPrintStack(stackTrace: stack, label: '[categories]');
+      if (mounted) {
+        _showErrorSnackBar(context.l10n.createCouldNotLoadCategories);
+      }
     }
   }
 
