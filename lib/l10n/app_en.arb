@@ -570,6 +570,35 @@
   "sellerDashCompanyBadge": "COMPANY",
   "sellerDashViewProfile": "View profile",
   "homeNearMe": "Near me",
+  "searchRecent": "Recent searches",
+  "searchClearRecents": "Clear",
+  "searchEmptyPrompt": "Search for anything on Mambanda Market.",
+  "searchNoResults": "Nothing matches \u201c{query}\u201d.",
+  "@searchNoResults": {
+    "placeholders": {
+      "query": {}
+    }
+  },
+  "searchNoResultsFiltered": "Nothing matches these filters.",
+  "searchResultsCount": "{count, plural, =1{1 result} other{{count} results}}",
+  "@searchResultsCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "filterCategory": "Category",
+  "filterPrice": "Price",
+  "filterCondition": "Condition",
+  "filterSort": "Sort",
+  "filterReset": "Reset all",
+  "filterApply": "Apply",
+  "filterAny": "Any",
+  "sortNewest": "Newest first",
+  "sortPriceLow": "Price: low to high",
+  "sortPriceHigh": "Price: high to low",
+  "sortNearest": "Nearest first",
+  "priceMin": "Min",
+  "priceMax": "Max",
   "locationDenied": "Location is off for Mambanda, so we cannot tell you how far away things are.",
   "locationDeniedForever": "Location is blocked for Mambanda. You can turn it back on in your phone's Settings.",
   "locationServicesOff": "Turn on location on your phone to see what is near you.",

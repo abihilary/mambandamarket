@@ -1217,6 +1217,73 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeNearMe => 'Near me';
 
   @override
+  String get searchRecent => 'Recent searches';
+
+  @override
+  String get searchClearRecents => 'Clear';
+
+  @override
+  String get searchEmptyPrompt => 'Search for anything on Mambanda Market.';
+
+  @override
+  String searchNoResults(Object query) {
+    return 'Nothing matches “$query”.';
+  }
+
+  @override
+  String get searchNoResultsFiltered => 'Nothing matches these filters.';
+
+  @override
+  String searchResultsCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count results',
+      one: '1 result',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get filterCategory => 'Category';
+
+  @override
+  String get filterPrice => 'Price';
+
+  @override
+  String get filterCondition => 'Condition';
+
+  @override
+  String get filterSort => 'Sort';
+
+  @override
+  String get filterReset => 'Reset all';
+
+  @override
+  String get filterApply => 'Apply';
+
+  @override
+  String get filterAny => 'Any';
+
+  @override
+  String get sortNewest => 'Newest first';
+
+  @override
+  String get sortPriceLow => 'Price: low to high';
+
+  @override
+  String get sortPriceHigh => 'Price: high to low';
+
+  @override
+  String get sortNearest => 'Nearest first';
+
+  @override
+  String get priceMin => 'Min';
+
+  @override
+  String get priceMax => 'Max';
+
+  @override
   String get locationDenied =>
       'Location is off for Mambanda, so we cannot tell you how far away things are.';
 

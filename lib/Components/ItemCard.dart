@@ -78,7 +78,11 @@ class ItemCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (!isCompact)
+                // A heart with nothing behind it is a control that lies. It
+                // shows only where the caller has somewhere for the tap to go
+                // — the compact rail never did, and now neither does any
+                // screen that omits the callback.
+                if (!isCompact && onFavoriteToggle != null)
                   Positioned(
                     top: 8,
                     right: 8,

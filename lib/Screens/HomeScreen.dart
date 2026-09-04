@@ -19,6 +19,7 @@ import '../api/board_repository.dart';
 import '../api/location_service.dart';
 import '../Components/category_icons.dart';
 import '../Components/category_picker.dart';
+import 'SearchScreen.dart';
 import '../theme/app_tokens.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -36,12 +37,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final _repo = ListingsRepository.instance;
   final _favorites = FavoritesRepository.instance;
-  final TextEditingController _searchController = TextEditingController();
 
   List<Category> _categories = [];
   String? _selectedSlug; // null == "For You"
-  String _searchQuery = '';
-  Timer? _searchDebounce;
 
   /// Anchor for the gallery's "See all". The rail shows the first eight of
   /// exactly the same list the grid below shows in full, so "all of them" is a
@@ -78,8 +76,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _repo.revision.removeListener(_onCatalogueChanged);
     AuthService.instance.me.removeListener(_onMeChanged);
-    _searchDebounce?.cancel();
-    _searchController.dispose();
     super.dispose();
   }
 
@@ -108,7 +104,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final origin = _nearMe ? LocationService.instance.cached : null;
     try {
       final items = await _repo.browse(
-        query: _searchQuery.isEmpty ? null : _searchQuery,
         categorySlug: _selectedSlug,
         // No radius: the RPC skips its st_dwithin guard when radius is null, so
         // this annotates every listing with a distance and hides none. With a
@@ -179,18 +174,20 @@ class _HomeScreenState extends State<HomeScreen> {
         .showSnackBar(SnackBar(content: Text(message)));
   }
 
-  /// Debounced so typing doesn't fire a request per keystroke.
-  void _onSearchChanged(String query) {
-    _searchQuery = query;
-    _searchDebounce?.cancel();
-    _searchDebounce =
-        Timer(const Duration(milliseconds: 350), () => _loadListings());
-  }
-
-  void _clearSearch() {
-    _searchController.clear();
-    _onSearchChanged('');
-    setState(() {});
+  /// Search is a place, not a filter on this screen.
+  ///
+  /// Typing here used to narrow the feed in situ: the same grid quietly became
+  /// fewer items, and everything the API can search on — price, condition,
+  /// ordering, distance — had nowhere to live. Whatever category is showing
+  /// travels with the user, so opening search from inside "Food & drink"
+  /// starts there rather than throwing the choice away.
+  Future<void> _openSearch() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SearchScreen(initialCategorySlug: _selectedSlug),
+      ),
+    );
   }
 
   /// Refresh the board, then let the media cache drop anything it no longer
@@ -409,67 +406,52 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              // Search Bar Row with Notification Icon integrated
+              // The way into search, and the way to say "near me".
+              //
+              // The field is a button rather than an input: search is its own
+              // screen now, with recents, filters, ordering and pages beyond
+              // the first, none of which fits under a feed.
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 12.0),
                   child: Row(
                     children: [
-                      // Floating Search Bar Field
                       Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: scheme.surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withAlpha(8),
-                                blurRadius: 10,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: TextField(
-                            controller: _searchController,
-                            onChanged: (val) {
-                              _onSearchChanged(val);
-                              setState(() {});
-                            },
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: scheme.onSurface,
-                              fontWeight: FontWeight.w500,
+                        child: InkWell(
+                          onTap: _openSearch,
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            height: 48,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            decoration: BoxDecoration(
+                              color: scheme.surfaceContainerLow,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withAlpha(8),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
                             ),
-                            decoration: InputDecoration(
-                              hintText: context.l10n.homeSearchHint,
-                              hintStyle: TextStyle(
-                                color: scheme.onSurfaceVariant.withAlpha(180),
-                                fontSize: 14,
-                              ),
-                              prefixIcon: Icon(
-                                Icons.search_rounded,
-                                color: scheme.primary,
-                                size: 22,
-                              ),
-                              // The pin that used to sit here was decoration
-                              // dressed as a control: a tappable-looking tile
-                              // in a text field, wired to nothing. The real
-                              // location control arrives with the distance
-                              // work; until then there is nothing to fake.
-                              suffixIcon: _searchController.text.isNotEmpty
-                                  ? IconButton(
-                                      icon: const Icon(Icons.clear_rounded,
-                                          size: 18),
-                                      onPressed: _clearSearch,
-                                    )
-                                  : null,
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 14.0,
-                                horizontal: 16.0,
-                              ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.search_rounded,
+                                    color: scheme.primary, size: 22),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    context.l10n.homeSearchHint,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: scheme.onSurfaceVariant
+                                          .withAlpha(180),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -550,9 +532,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 size: 48, color: scheme.onSurfaceVariant),
                             const SizedBox(height: 12),
                             Text(
-                              _searchQuery.isNotEmpty
-                                  ? context.l10n.nothingFoundFor(_searchQuery)
-                                  : context.l10n
+                              // Only ever a category now: a text query lives on
+                              // the search screen and never empties this one.
+                              context.l10n
                                   .noListingsIn(_selectedLabel(context)),
                               textAlign: TextAlign.center,
                               style: TextStyle(color: scheme.onSurfaceVariant),

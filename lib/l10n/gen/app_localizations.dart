@@ -2258,6 +2258,120 @@ abstract class AppLocalizations {
   /// **'Near me'**
   String get homeNearMe;
 
+  /// No description provided for @searchRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent searches'**
+  String get searchRecent;
+
+  /// No description provided for @searchClearRecents.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get searchClearRecents;
+
+  /// No description provided for @searchEmptyPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for anything on Mambanda Market.'**
+  String get searchEmptyPrompt;
+
+  /// No description provided for @searchNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing matches “{query}”.'**
+  String searchNoResults(Object query);
+
+  /// No description provided for @searchNoResultsFiltered.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing matches these filters.'**
+  String get searchNoResultsFiltered;
+
+  /// No description provided for @searchResultsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 result} other{{count} results}}'**
+  String searchResultsCount(num count);
+
+  /// No description provided for @filterCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get filterCategory;
+
+  /// No description provided for @filterPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get filterPrice;
+
+  /// No description provided for @filterCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'Condition'**
+  String get filterCondition;
+
+  /// No description provided for @filterSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get filterSort;
+
+  /// No description provided for @filterReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset all'**
+  String get filterReset;
+
+  /// No description provided for @filterApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get filterApply;
+
+  /// No description provided for @filterAny.
+  ///
+  /// In en, this message translates to:
+  /// **'Any'**
+  String get filterAny;
+
+  /// No description provided for @sortNewest.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest first'**
+  String get sortNewest;
+
+  /// No description provided for @sortPriceLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Price: low to high'**
+  String get sortPriceLow;
+
+  /// No description provided for @sortPriceHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'Price: high to low'**
+  String get sortPriceHigh;
+
+  /// No description provided for @sortNearest.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearest first'**
+  String get sortNearest;
+
+  /// No description provided for @priceMin.
+  ///
+  /// In en, this message translates to:
+  /// **'Min'**
+  String get priceMin;
+
+  /// No description provided for @priceMax.
+  ///
+  /// In en, this message translates to:
+  /// **'Max'**
+  String get priceMax;
+
   /// No description provided for @locationDenied.
   ///
   /// In en, this message translates to:
