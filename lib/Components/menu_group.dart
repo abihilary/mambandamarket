@@ -82,16 +82,39 @@ class MenuRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
+            // The deck's tiles are not flat swatches: each is lit from the
+            // middle and the glyph blooms slightly. Two cheap things produce
+            // that — a radial gradient on the tile, and a shadow on the Icon
+            // rather than on the box, because a box shadow haloes a rounded
+            // square while what should glow is the mark inside it.
             Container(
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: danger
-                    ? AppColors.danger.withValues(alpha: 0.12)
-                    : tokens.iconTile,
+                gradient: RadialGradient(
+                  radius: 0.85,
+                  colors: danger
+                      ? [
+                          AppColors.danger.withValues(alpha: 0.22),
+                          AppColors.danger.withValues(alpha: 0.06),
+                        ]
+                      : [tokens.iconTile, tokens.iconTileEdge],
+                ),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(icon, size: 21, color: ink),
+              child: Icon(
+                icon,
+                size: 21,
+                color: ink,
+                shadows: [
+                  Shadow(
+                    color: danger
+                        ? AppColors.danger.withValues(alpha: 0.45)
+                        : tokens.iconGlow,
+                    blurRadius: 10,
+                  ),
+                ],
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(

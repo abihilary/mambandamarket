@@ -10,6 +10,7 @@ import '../api/models.dart';
 import '../api/remote_config.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
+import '../Components/plan_card.dart';
 import '../Components/menu_group.dart';
 import '../theme/app_theme.dart';
 import '../theme/theme_controller.dart';
@@ -398,30 +399,17 @@ class _AccountScreenState extends State<AccountScreen> {
                 if (me != null)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Card(
-                      elevation: 0,
-                      color: scheme.primary.withValues(alpha: 0.10),
-                      child: ListTile(
-                        leading: Icon(Icons.workspace_premium_outlined,
-                            color: scheme.primary),
-                        title: Text(
-                          me.subscription?['plan'] != null
-                              ? l10n.planLabel(me.subscription!['plan'].toString())
-                              : l10n.freePlan,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        subtitle: Text(
-                          me.listingLimit == null
-                              ? l10n.listingsUnlimited(me.activeListings)
-                              : l10n.listingsUsed(
-                                  me.activeListings, me.listingLimit!),
-                        ),
-                        trailing: TextButton(
-                          onPressed: () =>
-                              Navigator.pushNamed(context, '/subscription'),
-                          child: Text(l10n.changePlan),
-                        ),
-                      ),
+                    child: PlanCard(
+                      title: me.subscription?['plan'] != null
+                          ? l10n.planLabel(me.subscription!['plan'].toString())
+                          : l10n.freePlan,
+                      subtitle: me.listingLimit == null
+                          ? l10n.listingsUnlimited(me.activeListings)
+                          : l10n.listingsUsed(
+                              me.activeListings, me.listingLimit!),
+                      actionLabel: l10n.changePlan,
+                      onAction: () =>
+                          Navigator.pushNamed(context, '/subscription'),
                     ),
                   ),
 

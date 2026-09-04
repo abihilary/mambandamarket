@@ -27,6 +27,16 @@ class GlassSurface extends StatelessWidget {
   final Widget child;
   final double sigma;
 
+  /// Rounds the pane. A bar wants square corners; a card does not.
+  final BorderRadius? borderRadius;
+
+  /// Overrides [AppTokens.glassTint].
+  ///
+  /// A panel sitting on colour needs a different mix from a bar sitting on a
+  /// scrolling feed — on a light ground especially, where too sheer a tint over
+  /// a pale blur leaves text floating on nothing.
+  final Color? tint;
+
   /// A hairline along the top edge. Without it the bar has no boundary at all
   /// where a pale photo scrolls under a pale tint, and the labels look like
   /// they are floating on the content.
@@ -37,28 +47,43 @@ class GlassSurface extends StatelessWidget {
     required this.child,
     this.sigma = 18,
     this.topBorder = true,
+    this.borderRadius,
+    this.tint,
   });
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: tokens.glassTint,
-            border: topBorder
-                ? Border(
-                    top: BorderSide(
-                      color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
-                    ),
-                  )
-                : null,
-          ),
-          child: child,
+    final radius = borderRadius;
+    final pane = BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: tint ?? tokens.glassTint,
+          borderRadius: radius,
+          border: radius != null
+              // A rounded pane is an object, so it gets an outline all the way
+              // round; a bar only needs the edge that meets the content.
+              ? Border.all(
+                  color: Theme.of(context)
+                      .dividerColor
+                      .withValues(alpha: 0.6),
+                )
+              : topBorder
+                  ? Border(
+                      top: BorderSide(
+                        color: Theme.of(context)
+                            .dividerColor
+                            .withValues(alpha: 0.6),
+                      ),
+                    )
+                  : null,
         ),
+        child: child,
       ),
     );
+    return radius == null
+        ? ClipRect(child: pane)
+        : ClipRRect(borderRadius: radius, child: pane);
   }
 }
