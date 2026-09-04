@@ -98,6 +98,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get logOut => 'Se déconnecter';
 
   @override
+  String get logOutConfirmTitle => 'Se déconnecter ?';
+
+  @override
+  String get logOutConfirmBody =>
+      'Vous devrez vous reconnecter pour publier, acheter ou envoyer un message.';
+
+  @override
+  String get logOutConfirmCancel => 'Rester connecté';
+
+  @override
   String get welcomeTitle => 'Trouvez tout ce qu\'il vous faut';
 
   @override
@@ -1672,6 +1682,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get myOrders => 'Mes commandes';
+
+  @override
+  String get myOrdersSubtitle => 'Suivez et consultez vos commandes';
+
+  @override
+  String get inviteFriendsSubtitle => 'Gagnez des récompenses ensemble';
 
   @override
   String get ordersTitle => 'Mes commandes';

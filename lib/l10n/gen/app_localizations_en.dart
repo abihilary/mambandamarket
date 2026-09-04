@@ -97,6 +97,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logOut => 'Log out';
 
   @override
+  String get logOutConfirmTitle => 'Log out?';
+
+  @override
+  String get logOutConfirmBody =>
+      'You\'ll need to sign in again to publish, buy or message anyone.';
+
+  @override
+  String get logOutConfirmCancel => 'Stay signed in';
+
+  @override
   String get welcomeTitle => 'Find Everything You Need';
 
   @override
@@ -1639,6 +1649,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get myOrders => 'My orders';
+
+  @override
+  String get myOrdersSubtitle => 'Track and view your orders';
+
+  @override
+  String get inviteFriendsSubtitle => 'Earn rewards together';
 
   @override
   String get ordersTitle => 'My orders';

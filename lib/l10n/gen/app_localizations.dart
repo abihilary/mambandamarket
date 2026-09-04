@@ -260,6 +260,24 @@ abstract class AppLocalizations {
   /// **'Log out'**
   String get logOut;
 
+  /// No description provided for @logOutConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Log out?'**
+  String get logOutConfirmTitle;
+
+  /// No description provided for @logOutConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll need to sign in again to publish, buy or message anyone.'**
+  String get logOutConfirmBody;
+
+  /// No description provided for @logOutConfirmCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay signed in'**
+  String get logOutConfirmCancel;
+
   /// No description provided for @welcomeTitle.
   ///
   /// In en, this message translates to:
@@ -3031,6 +3049,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'My orders'**
   String get myOrders;
+
+  /// No description provided for @myOrdersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track and view your orders'**
+  String get myOrdersSubtitle;
+
+  /// No description provided for @inviteFriendsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Earn rewards together'**
+  String get inviteFriendsSubtitle;
 
   /// No description provided for @ordersTitle.
   ///

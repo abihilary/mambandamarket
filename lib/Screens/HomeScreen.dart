@@ -286,12 +286,15 @@ class _HomeScreenState extends State<HomeScreen> {
           isSelected: c.slug == selectedRoot,
         ),
       ),
-      // Never "selected" — it opens the picker rather than filtering.
-      CategoryItem(
-        label: context.l10n.homeMoreCategories,
-        icon: Icons.more_horiz,
-        isSelected: false,
-      ),
+      // Never "selected" — it opens the picker rather than filtering. Hidden
+      // until the categories arrive, since the sheet it opens is built from
+      // them and would come up empty.
+      if (_categories.isNotEmpty)
+        CategoryItem(
+          label: context.l10n.homeMoreCategories,
+          icon: Icons.more_horiz,
+          isSelected: false,
+        ),
     ];
   }
 
@@ -584,7 +587,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
 
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              // Clears the docked FAB, which overhangs the bar and would
+              // otherwise sit on top of the last row of cards.
+              const SliverToBoxAdapter(child: SizedBox(height: 96)),
             ],
           ),
         ),

@@ -48,7 +48,10 @@ class AppTokens extends ThemeExtension<AppTokens> {
     accentFill: AppColors.lime,
     onAccentFill: AppColors.onLime,
     accentInk: AppColors.lime,
-    iconTile: AppColors.darkElevated,
+    // A lime wash, not darkElevated: that is the same colour as groupSurface,
+    // so the tile disappeared into the card it sits on and only the glyph
+    // showed. The deck's tiles are visible objects.
+    iconTile: Color(0x1AC9E505),
     groupSurface: AppColors.darkElevated,
   );
 

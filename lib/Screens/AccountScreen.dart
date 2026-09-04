@@ -10,6 +10,7 @@ import '../api/models.dart';
 import '../api/remote_config.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
+import '../Components/menu_group.dart';
 import '../theme/app_theme.dart';
 import '../theme/theme_controller.dart';
 import 'EditProfileScreen.dart';
@@ -136,6 +137,30 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _logOut(BuildContext context) async {
+    final l10n = context.l10n;
+    // Was a single tap, at the bottom of a list of navigation rows, styled
+    // like all of them. Easy to hit by accident, and there is no undo — the
+    // session is gone and the password has to come back out.
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.logOutConfirmTitle),
+        content: Text(l10n.logOutConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.logOutConfirmCancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            child: Text(l10n.logOut),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
     await AuthService.instance.signOut();
     if (!context.mounted) return;
     Navigator.pushNamedAndRemoveUntil(context, '/welcome', (_) => false);
@@ -277,7 +302,9 @@ class _AccountScreenState extends State<AccountScreen> {
           return RefreshIndicator(
             onRefresh: () async => auth.refreshMe(),
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              // Bottom room for the docked FAB, which overhangs the bar
+              // and would otherwise sit on top of the last row.
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
               children: [
                 ListTile(
                   leading: GestureDetector(
@@ -395,109 +422,99 @@ class _AccountScreenState extends State<AccountScreen> {
                     ),
                   ),
 
-                const Divider(height: 32),
+                const SizedBox(height: 20),
 
-                // Purchases made in-app (escrow orders). Everyone can buy, so
-                // this is not gated on a role.
-                ListTile(
-                  // Leading icons take their colour from listTileTheme, which
-                  // is the brand accent in light and lime in dark.
-                  leading: const Icon(Icons.receipt_long_outlined),
-                  title: Text(l10n.myOrders),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () => Navigator.pushNamed(context, '/my-orders'),
-                ),
+                // Grouped, as the deck arranges them. Previously these were
+                // bare ListTiles at the top level of the ListView: nothing
+                // said which rows belonged together, the trailing glyph
+                // alternated between two different chevrons, and Log out
+                // looked exactly like one more place to navigate to.
+                MenuGroup(children: [
+                  MenuRow(
+                    icon: Icons.receipt_long_outlined,
+                    title: l10n.myOrders,
+                    subtitle: l10n.myOrdersSubtitle,
+                    onTap: () => Navigator.pushNamed(context, '/my-orders'),
+                  ),
+                  MenuRow(
+                    icon: Icons.card_giftcard_outlined,
+                    title: l10n.inviteFriends,
+                    subtitle: l10n.inviteFriendsSubtitle,
+                    onTap: () => Navigator.pushNamed(context, '/invite'),
+                  ),
+                  // Verified merchants only — companies are provisioned by an
+                  // admin, so there is nothing to show anyone else.
+                  if (profile?.isCompany == true)
+                    MenuRow(
+                      icon: Icons.verified_outlined,
+                      title: l10n.companyDashboard,
+                      onTap: () =>
+                          Navigator.pushNamed(context, '/company-dashboard'),
+                    ),
+                  // The storefront belongs to accounts that have a store; the
+                  // seller area belongs to anybody who can publish, which is
+                  // everybody. Two different promises, gated separately.
+                  if (_showsBusinessDashboard(profile))
+                    MenuRow(
+                      icon: Icons.storefront_outlined,
+                      title: l10n.businessDashboard,
+                      onTap: () =>
+                          Navigator.pushNamed(context, '/business-dashboard'),
+                    ),
+                  if (_showsSellerDashboard(profile))
+                    MenuRow(
+                      icon: Icons.sell_outlined,
+                      title: l10n.sellerSpace,
+                      subtitle: l10n.sellerSpaceSubtitle,
+                      onTap: () =>
+                          Navigator.pushNamed(context, '/seller-dashboard'),
+                    ),
+                ]),
 
-                // The other half of referrals: where you find the code to give
-                // out. Without it a code can only ever be typed in, never
-                // shared.
-                ListTile(
-                  leading: const Icon(Icons.card_giftcard_outlined),
-                  title: Text(l10n.inviteFriends),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () => Navigator.pushNamed(context, '/invite'),
-                ),
+                MenuGroup(children: [
+                  MenuRow(
+                    icon: Icons.language,
+                    title: l10n.language,
+                    subtitle: _currentLanguageLabel(context),
+                    onTap: () => _pickLanguage(context),
+                  ),
+                  // Appearance sits beside language: both are "how the app
+                  // looks to me", and both persist across launches.
+                  ValueListenableBuilder<ThemeMode>(
+                    valueListenable: ThemeController.instance.mode,
+                    builder: (context, mode, _) => MenuRow(
+                      icon: switch (mode) {
+                        ThemeMode.dark => Icons.dark_mode_outlined,
+                        ThemeMode.light => Icons.light_mode_outlined,
+                        ThemeMode.system => Icons.brightness_auto_outlined,
+                      },
+                      title: l10n.appearance,
+                      subtitle: _themeLabel(context, mode),
+                      onTap: () => _pickTheme(context),
+                    ),
+                  ),
+                  MenuRow(
+                    icon: Icons.lock_outline,
+                    title: l10n.changePassword,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const ResetPasswordScreen()),
+                    ),
+                  ),
+                ]),
 
-                // Verified merchants only — companies are provisioned by an
-                // admin, so there is nothing to show anyone else.
-                if (profile?.isCompany == true)
-                  ListTile(
-                    leading: const Icon(Icons.verified_outlined),
-                    title: Text(l10n.companyDashboard),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () =>
-                        Navigator.pushNamed(context, '/company-dashboard'),
+                // "Settings & privacy" used to sit here with `onTap: () {}`.
+                // It went nowhere, so it is gone rather than left as a row
+                // that does nothing when pressed.
+                MenuGroup(children: [
+                  MenuRow(
+                    icon: Icons.logout,
+                    title: l10n.logOut,
+                    danger: true,
+                    onTap: () => _logOut(context),
                   ),
-
-                // Seller-side entries. These used to be one block shown or
-                // hidden together, which left a buyer who can post with
-                // nowhere to see what they had posted. They are two different
-                // promises and are gated separately: the storefront belongs to
-                // accounts that have a store, the seller area belongs to
-                // anybody who can publish — which is now everybody.
-                if (_showsBusinessDashboard(profile))
-                  ListTile(
-                    leading: const Icon(Icons.storefront_outlined),
-                    title: Text(l10n.businessDashboard),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () =>
-                        Navigator.pushNamed(context, '/business-dashboard'),
-                  ),
-                if (_showsSellerDashboard(profile))
-                  ListTile(
-                    leading: const Icon(Icons.person_outline),
-                    title: Text(l10n.sellerSpace),
-                    subtitle: Text(l10n.sellerSpaceSubtitle),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () => Navigator.pushNamed(context, '/seller-dashboard'),
-                  ),
-                const Divider(),
-
-                // Language switcher — the "place to change language".
-                ListTile(
-                  leading: const Icon(Icons.language),
-                  title: Text(l10n.language),
-                  subtitle: Text(_currentLanguageLabel(context)),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () => _pickLanguage(context),
-                ),
-                // Appearance sits beside language: both are "how the app looks
-                // to me", and both persist across launches.
-                ValueListenableBuilder<ThemeMode>(
-                  valueListenable: ThemeController.instance.mode,
-                  builder: (context, mode, _) => ListTile(
-                    leading: Icon(switch (mode) {
-                      ThemeMode.dark => Icons.dark_mode_outlined,
-                      ThemeMode.light => Icons.light_mode_outlined,
-                      ThemeMode.system => Icons.brightness_auto_outlined,
-                    }),
-                    title: Text(l10n.appearance),
-                    subtitle: Text(_themeLabel(context, mode)),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () => _pickTheme(context),
-                  ),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.lock_outline),
-                  title: Text(l10n.changePassword),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const ResetPasswordScreen()),
-                  ),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.settings_outlined),
-                  title: Text(l10n.settingsPrivacy),
-                  onTap: () {},
-                ),
-                ListTile(
-                  leading: const Icon(Icons.logout, color: AppColors.danger),
-                  title: Text(l10n.logOut,
-                      style: const TextStyle(color: AppColors.danger)),
-                  onTap: () => _logOut(context),
-                ),
+                ]),
               ],
             ),
           );
