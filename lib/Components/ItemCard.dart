@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../theme/app_theme.dart';
 import '../theme/app_tokens.dart';
@@ -13,6 +14,12 @@ class ItemCard extends StatelessWidget {
   /// rather than an empty pin — most listings published before this existed
   /// have no location and should not all sprout a bare icon.
   final String? location;
+
+  /// How far the item is from the buyer, in metres, when the feed was asked
+  /// for a position. Null whenever we do not know — either the buyer has not
+  /// shared a location or this listing carries none — and null renders
+  /// nothing, for the same reason a blank city renders nothing.
+  final double? distanceMeters;
   final bool isCompact;
   final bool isFavorite;
   final VoidCallback? onTap;
@@ -25,15 +32,27 @@ class ItemCard extends StatelessWidget {
     required this.price,
     this.priceAddon,
     this.location,
+    this.distanceMeters,
     this.isCompact = false,
     this.isFavorite = false,
     this.onTap,
     this.onFavoriteToggle,
   }) : super(key: key);
 
+  /// "350 m" under a kilometre, "2,3 km" above it.
+  ///
+  /// No translated unit: m and km are the same word in both languages we ship,
+  /// and the separator follows the locale through NumberFormat.
+  String _distanceLabel(BuildContext context, double metres) {
+    if (metres < 1000) return '${metres.round()} m';
+    final locale = Localizations.localeOf(context).toString();
+    return '${NumberFormat('0.#', locale).format(metres / 1000)} km';
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final distance = distanceMeters;
 
     return GestureDetector(
       onTap: onTap,
@@ -127,7 +146,8 @@ class ItemCard extends StatelessWidget {
                       ]
                     ],
                   ),
-                  if (location != null && location!.trim().isNotEmpty) ...[
+                  if ((location != null && location!.trim().isNotEmpty) ||
+                      distance != null) ...[
                     const SizedBox(height: 2),
                     Row(
                       children: [
@@ -143,7 +163,12 @@ class ItemCard extends StatelessWidget {
                         // cell and overflow every tile in the row.
                         Expanded(
                           child: Text(
-                            location!.trim(),
+                            [
+                              if (location != null && location!.trim().isNotEmpty)
+                                location!.trim(),
+                              if (distance != null)
+                                _distanceLabel(context, distance),
+                            ].join(' \u00b7 '),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(

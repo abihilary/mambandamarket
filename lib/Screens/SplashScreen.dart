@@ -7,6 +7,7 @@ import '../Components/update_gate.dart';
 import '../api/push_service.dart';
 import '../navigation.dart';
 import '../api/models.dart';
+import '../api/location_service.dart';
 import '../api/remote_config.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
@@ -32,6 +33,12 @@ class _SplashScreenState extends State<SplashScreen> {
     // account may do are the server's call, not the build's. Falls back to the
     // cache and then to defaults, so this never blocks the launch.
     await RemoteConfig.instance.load();
+
+    // Reads a cached coordinate off disk — it never touches the platform and
+    // never prompts, so it costs nothing for the majority who have not granted
+    // location. It is loaded here so the feed can read a position
+    // synchronously on its very first build.
+    await LocationService.instance.load();
 
     // A session with no profile row means onboarding never finished (e.g. a
     // Google sign-in that was abandoned before choosing an account type), so

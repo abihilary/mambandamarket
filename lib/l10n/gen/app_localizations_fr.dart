@@ -1230,6 +1230,85 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sellerDashViewProfile => 'Voir le profil';
 
   @override
+  String get homeNearMe => 'À proximité';
+
+  @override
+  String get locationDenied =>
+      'La localisation est désactivée pour Mambanda, nous ne pouvons donc pas indiquer les distances.';
+
+  @override
+  String get locationDeniedForever =>
+      'La localisation est bloquée pour Mambanda. Vous pouvez la réactiver dans les Réglages de votre téléphone.';
+
+  @override
+  String get locationServicesOff =>
+      'Activez la localisation sur votre téléphone pour voir ce qui se trouve près de vous.';
+
+  @override
+  String get locationUnavailable =>
+      'Impossible de déterminer votre position. Réessayez dans un instant.';
+
+  @override
+  String get createUseMyLocation => 'Utiliser ma position actuelle';
+
+  @override
+  String get createLocationCaptured =>
+      'Les acheteurs verront à peu près la distance.';
+
+  @override
+  String get createLocationRemove => 'Retirer';
+
+  @override
+  String hubBackfillBody(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de vos annonces n’indiquent pas la distance aux acheteurs',
+      one: '1 de vos annonces n’indique pas la distance aux acheteurs',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get hubBackfillAction => 'Ajouter ma position';
+
+  @override
+  String get hubBackfillDismiss => 'Plus tard';
+
+  @override
+  String get hubBackfillConfirmTitle =>
+      'Ajouter votre position à ces annonces ?';
+
+  @override
+  String hubBackfillConfirmBody(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Votre position approximative sera ajoutée à $count annonces.',
+      one: 'Votre position approximative sera ajoutée à 1 annonce.',
+    );
+    return '$_temp0 Les acheteurs voient une distance, jamais une adresse, et vous pouvez la retirer en modifiant l’annonce.';
+  }
+
+  @override
+  String get hubBackfillConfirm => 'Ajouter';
+
+  @override
+  String hubBackfillDone(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Ajoutée à $count annonces.',
+      one: 'Ajoutée à 1 annonce.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get hubBackfillFailed =>
+      'Impossible de mettre à jour toutes les annonces. Réessayez plus tard.';
+
+  @override
   String get sellerDashStatActive => 'Actives';
 
   @override

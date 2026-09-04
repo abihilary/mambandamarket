@@ -568,6 +568,37 @@
   "sellerDashBusinessBadge": "BUSINESS",
   "sellerDashCompanyBadge": "COMPANY",
   "sellerDashViewProfile": "View profile",
+  "homeNearMe": "Near me",
+  "locationDenied": "Location is off for Mambanda, so we cannot tell you how far away things are.",
+  "locationDeniedForever": "Location is blocked for Mambanda. You can turn it back on in your phone's Settings.",
+  "locationServicesOff": "Turn on location on your phone to see what is near you.",
+  "locationUnavailable": "Could not work out where you are. Try again in a moment.",
+  "createUseMyLocation": "Use my current location",
+  "createLocationCaptured": "Buyers will see roughly how far away this is.",
+  "createLocationRemove": "Remove",
+  "hubBackfillBody": "{count, plural, =1{1 of your listings does not show buyers how far away it is} other{{count} of your listings do not show buyers how far away they are}}",
+  "@hubBackfillBody": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "hubBackfillAction": "Add my location",
+  "hubBackfillDismiss": "Not now",
+  "hubBackfillConfirmTitle": "Add your location to these listings?",
+  "hubBackfillConfirmBody": "{count, plural, =1{Your approximate position is added to 1 listing.} other{Your approximate position is added to {count} listings.}} Buyers see a distance, never an address, and you can remove it from any listing by editing it.",
+  "@hubBackfillConfirmBody": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "hubBackfillConfirm": "Add it",
+  "hubBackfillDone": "{count, plural, =1{Added to 1 listing.} other{Added to {count} listings.}}",
+  "@hubBackfillDone": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "hubBackfillFailed": "Could not update every listing. Try again later.",
   "sellerDashStatActive": "Active",
   "sellerDashStatSold": "Sold",
   "sellerDashStatViews": "Views",

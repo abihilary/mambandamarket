@@ -5,6 +5,9 @@ import '../Screens/PublicProfileScreen.dart';
 import '../api/api_client.dart';
 import '../api/auth_service.dart';
 import '../api/models.dart' as api;
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../api/location_service.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
@@ -31,6 +34,17 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   int _earnedCents = 0;
   api.SellerDashboard? _stats;
 
+  /// How many listings were missing a location when this seller last dismissed
+  /// the backfill prompt.
+  ///
+  /// Stored as a count rather than a flag so that dismissing it once does not
+  /// silence it forever: publish three more listings without a location and it
+  /// asks again, which a boolean would not.
+  static const String _kBackfillDismissedAt = 'hub_backfill_dismissed_at';
+
+  int? _backfillDismissedAt;
+  bool _backfilling = false;
+
   static const String _kSignInError = '__seller_dash_sign_in__';
   static const String _kLoadError = '__seller_dash_load__';
 
@@ -39,6 +53,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _load();
+    _readBackfillDismissal();
   }
 
   @override
@@ -63,6 +78,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     // "cleared". Editing anything about a listing silently deleted its
     // location.
     'city': l.city,
+    // Whether the row already carries a coordinate. Drives the backfill
+    // prompt; the coordinate itself is never read by the app.
+    'hasLocation': l.hasLocation,
     'views': l.viewCount,
     'inquiries': l.inquiryCount,
     'quantity': l.quantity,
@@ -329,6 +347,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             ),
             const SizedBox(height: 16),
 
+            if (_showBackfill) _buildBackfillBanner(theme),
+
             // TAB BAR
             TabBar(
               controller: _tabController,
@@ -541,6 +561,170 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
       context,
       MaterialPageRoute(
         builder: (_) => PublicProfileScreen(userId: uid, initialName: name),
+      ),
+    );
+  }
+
+  Future<void> _readBackfillDismissal() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (!mounted) return;
+      setState(() => _backfillDismissedAt = prefs.getInt(_kBackfillDismissedAt));
+    } catch (_) {
+      // A device that cannot read its preferences just gets asked again.
+    }
+  }
+
+  /// Active listings a buyer cannot be told the distance to.
+  int get _missingLocation =>
+      _activeItems.where((i) => i['hasLocation'] != true).length;
+
+  bool get _showBackfill =>
+      _missingLocation > 0 && _missingLocation != _backfillDismissedAt;
+
+  Future<void> _dismissBackfill() async {
+    final count = _missingLocation;
+    setState(() => _backfillDismissedAt = count);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_kBackfillDismissedAt, count);
+    } catch (_) {}
+  }
+
+  /// Capture the position once, write it to every active listing that has none.
+  ///
+  /// Ask-once/write-many because a seller's stock is nearly always in one
+  /// place, and asking per listing is the difference between a backfill that
+  /// happens and one that does not. Never runs without the confirmation: this
+  /// writes a coordinate to rows the seller is not looking at.
+  Future<void> _runBackfill() async {
+    final l10n = context.l10n;
+    final targets =
+        _activeItems.where((i) => i['hasLocation'] != true).toList();
+    if (targets.isEmpty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.hubBackfillConfirmTitle),
+        content: Text(l10n.hubBackfillConfirmBody(targets.length)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.sellerDashCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.hubBackfillConfirm),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _backfilling = true);
+    final outcome = await LocationService.instance.refresh();
+    if (!mounted) return;
+    final point = LocationService.instance.cached;
+    if (outcome != LocationOutcome.ok || point == null) {
+      setState(() => _backfilling = false);
+      final message = switch (outcome) {
+        LocationOutcome.servicesOff => l10n.locationServicesOff,
+        LocationOutcome.deniedForever => l10n.locationDeniedForever,
+        LocationOutcome.denied => l10n.locationDenied,
+        _ => l10n.locationUnavailable,
+      };
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
+      return;
+    }
+
+    // One PATCH per listing, sequentially. A seller has a handful of items, and
+    // firing them in parallel would only make a partial failure harder to
+    // report honestly.
+    var written = 0;
+    for (final item in targets) {
+      try {
+        await ListingsRepository.instance.update(item['id'] as String, {
+          'location': [point.lng, point.lat],
+        });
+        written++;
+      } catch (_) {
+        // Keep going: nine of ten written is a better outcome than none.
+      }
+    }
+    if (!mounted) return;
+    setState(() => _backfilling = false);
+    await _load();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(written == targets.length
+          ? l10n.hubBackfillDone(written)
+          : l10n.hubBackfillFailed),
+      backgroundColor:
+          written == targets.length ? AppColors.success : AppColors.danger,
+    ));
+  }
+
+  /// The prompt itself.
+  Widget _buildBackfillBanner(ThemeData theme) {
+    final l10n = context.l10n;
+    final tokens = context.tokens;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+      decoration: BoxDecoration(
+        color: tokens.iconTile,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.my_location, size: 20, color: tokens.accentInk),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.hubBackfillBody(_missingLocation),
+                  style: const TextStyle(fontSize: 13),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: _backfilling ? null : _runBackfill,
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: _backfilling
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(l10n.hubBackfillAction),
+                    ),
+                    const SizedBox(width: 12),
+                    TextButton(
+                      onPressed: _backfilling ? null : _dismissBackfill,
+                      style: TextButton.styleFrom(
+                        foregroundColor: theme.colorScheme.onSurfaceVariant,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(l10n.hubBackfillDismiss),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

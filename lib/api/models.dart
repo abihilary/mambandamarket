@@ -83,6 +83,15 @@ class Listing {
   final int viewCount;
   final DateTime? createdAt;
   final double? distanceMeters;
+
+  /// Whether this row carries a coordinate at all.
+  ///
+  /// Only meaningful where the payload includes the column — the seller's own
+  /// feed, which selects `*`. The browse RPC does not return `location`, so
+  /// this is false on the buyer's feed and nothing there reads it. The value
+  /// itself is PostGIS's own encoding and the app has no use for it; all that
+  /// matters is whether a buyer could be told how far away this is.
+  final bool hasLocation;
   final List<String> imagePaths;
   final bool isFavorited;
 
@@ -139,6 +148,7 @@ class Listing {
     this.viewCount = 0,
     this.createdAt,
     this.distanceMeters,
+    this.hasLocation = false,
     this.imagePaths = const [],
     this.isFavorited = false,
     this.inquiryCount = 0,
@@ -221,6 +231,7 @@ class Listing {
       viewCount: _asInt(json['view_count']),
       createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
       distanceMeters: (json['distance_m'] as num?)?.toDouble(),
+      hasLocation: json['location'] != null,
       imagePaths: images,
       isFavorited: json['is_favorited'] == true,
       inquiryCount: _asInt(json['inquiry_count']),

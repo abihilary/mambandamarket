@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Network access. Flutter injects this into the debug/profile manifests
          automatically, but NOT the main one, so a release build without this
@@ -27,6 +28,26 @@
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
+
+    <!-- Approximate location, so a buyer can be told how far away something is.
+
+         COARSE only, and FINE is actively removed below rather than merely
+         left out: geolocator_android declares FINE in its own manifest, and
+         manifest merging is a union — without the tools:node="remove" the
+         release APK would ask for precise location no matter what this file
+         says. A precise point on a private seller's listing is their doorstep,
+         and a handful of distance readings trilaterate it.
+
+         There is no ACCESS_BACKGROUND_LOCATION and there never should be: the
+         app asks where you are only while you are looking at it, which also
+         keeps this out of Play's background-location review entirely. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION"
+        tools:node="remove" />
+    <uses-feature
+        android:name="android.hardware.location"
+        android:required="false" />
 
     <!-- Push. Android 13+ will not show a notification until the user has been
          asked; PushService raises that prompt, and without this declaration the

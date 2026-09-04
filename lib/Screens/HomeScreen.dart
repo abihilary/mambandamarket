@@ -16,6 +16,7 @@ import '../l10n/l10n.dart';
 import '../Components/home_board.dart';
 import '../api/board_media_cache.dart';
 import '../api/board_repository.dart';
+import '../api/location_service.dart';
 import '../Components/category_icons.dart';
 import '../Components/category_picker.dart';
 import '../theme/app_tokens.dart';
@@ -50,6 +51,14 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Listing> _listings = [];
   bool _isLoading = true;
   String? _error;
+
+  /// Whether the feed is being asked to annotate distances.
+  ///
+  /// Off until the buyer presses the pin, and it stays off if they decline the
+  /// permission — there is no version of this where the app decides on its own
+  /// that it would like to know where somebody is.
+  bool _nearMe = false;
+  bool _locating = false;
 
   @override
   void initState() {
@@ -92,10 +101,23 @@ class _HomeScreenState extends State<HomeScreen> {
       _isLoading = true;
       _error = null;
     });
+    // Read synchronously. This is the whole reason the service caches: an
+    // `await` on a platform call here would put a plugin round trip in front of
+    // every feed load, including for the people who have refused location and
+    // would wait only to arrive at exactly the request they get today.
+    final origin = _nearMe ? LocationService.instance.cached : null;
     try {
       final items = await _repo.browse(
         query: _searchQuery.isEmpty ? null : _searchQuery,
         categorySlug: _selectedSlug,
+        // No radius: the RPC skips its st_dwithin guard when radius is null, so
+        // this annotates every listing with a distance and hides none. With a
+        // radius it would empty the feed, since almost no listing carries a
+        // coordinate yet. Sorting is by distance with nulls last, so listings
+        // that do not know where they are keep their place rather than vanish.
+        lat: origin?.lat,
+        lng: origin?.lng,
+        sort: origin != null ? 'distance' : 'recent',
         limit: 40,
       );
       if (!mounted) return;
@@ -116,6 +138,45 @@ class _HomeScreenState extends State<HomeScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  /// Turn distances on, asking for permission the first time.
+  ///
+  /// Awaiting the platform is fine here — this runs from a press, and the
+  /// button shows a spinner while it waits. Every refusal is an ordinary
+  /// answer: say what happened, leave the chip off, change nothing else.
+  Future<void> _toggleNearMe() async {
+    if (_nearMe) {
+      setState(() => _nearMe = false);
+      _loadListings();
+      return;
+    }
+
+    setState(() => _locating = true);
+    final outcome = await LocationService.instance.refresh();
+    if (!mounted) return;
+    setState(() => _locating = false);
+
+    final l10n = context.l10n;
+    // A failed refresh with a position already on disk is still usable: the
+    // city has not moved since yesterday.
+    final usable = outcome == LocationOutcome.ok ||
+        (outcome == LocationOutcome.unavailable &&
+            LocationService.instance.cached != null);
+    if (usable) {
+      setState(() => _nearMe = true);
+      _loadListings();
+      return;
+    }
+
+    final message = switch (outcome) {
+      LocationOutcome.servicesOff => l10n.locationServicesOff,
+      LocationOutcome.deniedForever => l10n.locationDeniedForever,
+      LocationOutcome.denied => l10n.locationDenied,
+      _ => l10n.locationUnavailable,
+    };
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   /// Debounced so typing doesn't fire a request per keystroke.
@@ -407,11 +468,15 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ),
-                      // The notification bell that sat here was
-                      // `onPressed: () {}` — a prominent, brightly filled
-                      // button that did nothing at all. There is no
-                      // notifications screen to route it to, so it is gone
-                      // rather than left as a promise the app cannot keep.
+                      // Where the notification bell used to be — that one was
+                      // `onPressed: () {}`, a brightly filled button wired to
+                      // nothing. This one does something.
+                      const SizedBox(width: 10),
+                      _NearMeButton(
+                        active: _nearMe,
+                        busy: _locating,
+                        onPressed: _locating ? null : _toggleNearMe,
+                      ),
                     ],
                   ),
                 ),
@@ -534,6 +599,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 title: item.title,
                                 price: item.displayPrice,
                                 location: item.city,
+                                distanceMeters: item.distanceMeters,
                                 isCompact: true,
                                 onTap: () => _openItemDetail(item),
                               ),
@@ -575,6 +641,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 title: item.title,
                                 price: item.displayPrice,
                                 location: item.city,
+                                distanceMeters: item.distanceMeters,
                                 isFavorite: favIds.contains(item.id),
                                 onTap: () => _openItemDetail(item),
                                 onFavoriteToggle: () => _toggleFavorite(item),
@@ -591,6 +658,65 @@ class _HomeScreenState extends State<HomeScreen> {
               // otherwise sit on top of the last row of cards.
               const SliverToBoxAdapter(child: SizedBox(height: 96)),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The pin beside the search field.
+///
+/// Lime-filled when on, outlined when off — a fill reads on either ground,
+/// which a lime glyph on white would not.
+class _NearMeButton extends StatelessWidget {
+  final bool active;
+  final bool busy;
+  final VoidCallback? onPressed;
+
+  const _NearMeButton({
+    required this.active,
+    required this.busy,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final scheme = Theme.of(context).colorScheme;
+    return Tooltip(
+      message: context.l10n.homeNearMe,
+      child: Material(
+        color: active ? tokens.accentFill : scheme.surfaceContainerLow,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: active
+              ? BorderSide.none
+              : BorderSide(color: Theme.of(context).dividerColor),
+        ),
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(16),
+          child: SizedBox(
+            width: 48,
+            height: 48,
+            child: Center(
+              child: busy
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    )
+                  : Icon(
+                      active ? Icons.my_location : Icons.location_on_outlined,
+                      size: 22,
+                      color:
+                          active ? tokens.onAccentFill : scheme.onSurfaceVariant,
+                    ),
+            ),
           ),
         ),
       ),

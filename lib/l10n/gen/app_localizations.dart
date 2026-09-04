@@ -2246,6 +2246,102 @@ abstract class AppLocalizations {
   /// **'View profile'**
   String get sellerDashViewProfile;
 
+  /// No description provided for @homeNearMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Near me'**
+  String get homeNearMe;
+
+  /// No description provided for @locationDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location is off for Mambanda, so we cannot tell you how far away things are.'**
+  String get locationDenied;
+
+  /// No description provided for @locationDeniedForever.
+  ///
+  /// In en, this message translates to:
+  /// **'Location is blocked for Mambanda. You can turn it back on in your phone\'s Settings.'**
+  String get locationDeniedForever;
+
+  /// No description provided for @locationServicesOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on location on your phone to see what is near you.'**
+  String get locationServicesOff;
+
+  /// No description provided for @locationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not work out where you are. Try again in a moment.'**
+  String get locationUnavailable;
+
+  /// No description provided for @createUseMyLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Use my current location'**
+  String get createUseMyLocation;
+
+  /// No description provided for @createLocationCaptured.
+  ///
+  /// In en, this message translates to:
+  /// **'Buyers will see roughly how far away this is.'**
+  String get createLocationCaptured;
+
+  /// No description provided for @createLocationRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get createLocationRemove;
+
+  /// No description provided for @hubBackfillBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 of your listings does not show buyers how far away it is} other{{count} of your listings do not show buyers how far away they are}}'**
+  String hubBackfillBody(num count);
+
+  /// No description provided for @hubBackfillAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add my location'**
+  String get hubBackfillAction;
+
+  /// No description provided for @hubBackfillDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get hubBackfillDismiss;
+
+  /// No description provided for @hubBackfillConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your location to these listings?'**
+  String get hubBackfillConfirmTitle;
+
+  /// No description provided for @hubBackfillConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Your approximate position is added to 1 listing.} other{Your approximate position is added to {count} listings.}} Buyers see a distance, never an address, and you can remove it from any listing by editing it.'**
+  String hubBackfillConfirmBody(num count);
+
+  /// No description provided for @hubBackfillConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Add it'**
+  String get hubBackfillConfirm;
+
+  /// No description provided for @hubBackfillDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Added to 1 listing.} other{Added to {count} listings.}}'**
+  String hubBackfillDone(num count);
+
+  /// No description provided for @hubBackfillFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update every listing. Try again later.'**
+  String get hubBackfillFailed;
+
   /// No description provided for @sellerDashStatActive.
   ///
   /// In en, this message translates to:

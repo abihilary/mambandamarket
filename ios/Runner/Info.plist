@@ -57,6 +57,11 @@
 	<string>Mambanda Market needs access to your photos so you can set a profile picture and send images in chat.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Mambanda Market needs access to your camera so you can take a profile picture or photograph an item.</string>
+	<!-- Same rule as the two above: reaching Core Location without a usage
+	     string terminates the app. WhenInUse only — nothing here asks where
+	     you are unless the app is open and you pressed something. -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Mambanda Market uses your approximate location to show how far away items are, and to add a rough location to items you list. It is never used in the background.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

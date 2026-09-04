@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../api/api_client.dart';
 import '../api/models.dart' as api;
+import '../api/location_service.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
@@ -41,6 +42,15 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   final TextEditingController _quantityController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final FocusNode _locationFocus = FocusNode();
+
+  /// The coordinate behind the location box, if the seller offered one.
+  ///
+  /// Deliberately separate from the text: the box stays what a human wrote and
+  /// what buyers read, and this rides along silently. Writing a lat/lng into
+  /// the box would replace "Bonaberi, Douala" with a pair of numbers nobody
+  /// asked for and nobody can read.
+  Coordinate? _capturedPoint;
+  bool _capturingPoint = false;
 
   /// Suggestions behind the location box.
   ///
@@ -366,6 +376,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           // null, which is how a seller removes a location they no longer
           // want on the listing. Omitting the key would leave the old one.
           'city': _locationController.text.trim(),
+          // Only when the seller captured one on this visit. Omitted otherwise
+          // so editing the price does not silently drop a coordinate the
+          // listing already had — the edit form has no way to read the
+          // existing one back, so absence here must mean "leave it alone".
+          if (_capturedPoint != null)
+            'location': [_capturedPoint!.lng, _capturedPoint!.lat],
         });
 
         // Photos are their own endpoints — PATCH /listings/:id does not carry
@@ -413,6 +429,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         city: _locationController.text.trim().isEmpty
             ? null
             : _locationController.text.trim(),
+        lat: _capturedPoint?.lat,
+        lng: _capturedPoint?.lng,
         imagePaths: uploaded,
       );
 
@@ -479,6 +497,32 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           ),
       ],
     );
+  }
+
+  /// Attach the seller's approximate position to this listing.
+  ///
+  /// Never blocks publishing: every refusal ends in a message and a form that
+  /// is exactly as usable as it was before the button was pressed.
+  Future<void> _captureLocation() async {
+    setState(() => _capturingPoint = true);
+    final outcome = await LocationService.instance.refresh();
+    if (!mounted) return;
+    final l10n = context.l10n;
+    setState(() {
+      _capturingPoint = false;
+      if (outcome == LocationOutcome.ok) {
+        _capturedPoint = LocationService.instance.cached;
+      }
+    });
+    if (outcome == LocationOutcome.ok) return;
+    final message = switch (outcome) {
+      LocationOutcome.servicesOff => l10n.locationServicesOff,
+      LocationOutcome.deniedForever => l10n.locationDeniedForever,
+      LocationOutcome.denied => l10n.locationDenied,
+      _ => l10n.locationUnavailable,
+    };
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -852,7 +896,45 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
+
+              // The coordinate behind the words. Optional, and additive: it
+              // never touches the text above, and skipping it costs the seller
+              // nothing except appearing in "near me" without a distance.
+              Row(
+                children: [
+                  if (_capturedPoint == null)
+                    TextButton.icon(
+                      onPressed: _capturingPoint ? null : _captureLocation,
+                      icon: _capturingPoint
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.my_location, size: 18),
+                      label: Text(l10n.createUseMyLocation),
+                    )
+                  else ...[
+                    const Icon(Icons.check_circle,
+                        size: 18, color: AppColors.success),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        l10n.createLocationCaptured,
+                        style: TextStyle(
+                            fontSize: 12, color: scheme.onSurfaceVariant),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => setState(() => _capturedPoint = null),
+                      child: Text(l10n.createLocationRemove),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 4),
 
               // GUARANTEE CHECKBOX
               CheckboxListTile(

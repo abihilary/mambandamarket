@@ -1212,6 +1212,84 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sellerDashViewProfile => 'View profile';
 
   @override
+  String get homeNearMe => 'Near me';
+
+  @override
+  String get locationDenied =>
+      'Location is off for Mambanda, so we cannot tell you how far away things are.';
+
+  @override
+  String get locationDeniedForever =>
+      'Location is blocked for Mambanda. You can turn it back on in your phone\'s Settings.';
+
+  @override
+  String get locationServicesOff =>
+      'Turn on location on your phone to see what is near you.';
+
+  @override
+  String get locationUnavailable =>
+      'Could not work out where you are. Try again in a moment.';
+
+  @override
+  String get createUseMyLocation => 'Use my current location';
+
+  @override
+  String get createLocationCaptured =>
+      'Buyers will see roughly how far away this is.';
+
+  @override
+  String get createLocationRemove => 'Remove';
+
+  @override
+  String hubBackfillBody(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count of your listings do not show buyers how far away they are',
+      one: '1 of your listings does not show buyers how far away it is',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get hubBackfillAction => 'Add my location';
+
+  @override
+  String get hubBackfillDismiss => 'Not now';
+
+  @override
+  String get hubBackfillConfirmTitle => 'Add your location to these listings?';
+
+  @override
+  String hubBackfillConfirmBody(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Your approximate position is added to $count listings.',
+      one: 'Your approximate position is added to 1 listing.',
+    );
+    return '$_temp0 Buyers see a distance, never an address, and you can remove it from any listing by editing it.';
+  }
+
+  @override
+  String get hubBackfillConfirm => 'Add it';
+
+  @override
+  String hubBackfillDone(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Added to $count listings.',
+      one: 'Added to 1 listing.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get hubBackfillFailed =>
+      'Could not update every listing. Try again later.';
+
+  @override
   String get sellerDashStatActive => 'Active';
 
   @override
