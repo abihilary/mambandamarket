@@ -703,10 +703,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
 /// The pinned bar.
 ///
-/// Deliberately not a copy of the header. There, the field is an object on the
-/// page — filled, rounded, with the pin next to it. Here the glass is the
-/// surface, so the field is drawn straight onto it: no fill, no outline, no
-/// second control. The feed reads through it, which is the point.
+/// Deliberately not a copy of the header. There, the field is a filled object
+/// on the page with the pin next to it. Here the glass *is* the field: one
+/// inset pill, no fill of its own and no second control, with the feed reading
+/// through it — which is the point.
 ///
 /// The pin does not travel up with it. "Near me" is a mode you set once and
 /// leave set, so it belongs where you set it rather than following you down
@@ -725,6 +725,9 @@ class _FloatingSearch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const duration = Duration(milliseconds: 220);
+    // Half the bar's height: a pill rather than a rounded box, which is what
+    // the header's field already is at 48/16.
+    const radius = 24.0;
     final scheme = Theme.of(context).colorScheme;
     return IgnorePointer(
       // Hidden means gone: a transparent bar that still swallows taps would
@@ -737,33 +740,45 @@ class _FloatingSearch extends StatelessWidget {
         child: AnimatedOpacity(
           opacity: visible ? 1 : 0,
           duration: duration,
-          // No border on any edge. A rule along the bottom drew the eye to
-          // where the bar stops instead of to what it is for, and the whole
-          // effect depends on not announcing an edge: the blur is what says
-          // the content is behind rather than beside.
-          child: GlassSurface(
-            sigma: 20,
-            topBorder: false,
-            child: InkWell(
-              onTap: onSearch,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
-                child: Row(
-                  children: [
-                    Icon(Icons.search_rounded, color: scheme.primary, size: 22),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        context.l10n.homeSearchHint,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: scheme.onSurfaceVariant.withAlpha(200),
+          // Inset and rounded, so it is an object floating over the feed
+          // rather than a strip stuck to the top of it. Full width with square
+          // ends read as chrome — part of the screen, always there; short of
+          // the edges it reads as something that arrived.
+          //
+          // The padding sits inside the slide, so the bar clears the top edge
+          // completely on the way out. Outside it, the gap would stay behind
+          // and leave a sliver of glass showing at rest.
+          child: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: FractionallySizedBox(
+              widthFactor: 0.94,
+              child: GlassSurface(
+                sigma: 20,
+                borderRadius: BorderRadius.circular(radius),
+                child: InkWell(
+                  onTap: onSearch,
+                  borderRadius: BorderRadius.circular(radius),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 13, 18, 13),
+                    child: Row(
+                      children: [
+                        Icon(Icons.search_rounded,
+                            color: scheme.primary, size: 22),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            context.l10n.homeSearchHint,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: scheme.onSurfaceVariant.withAlpha(200),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
