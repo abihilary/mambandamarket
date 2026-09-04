@@ -444,12 +444,58 @@ class _HomeScreenState extends State<HomeScreen> {
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 12.0),
-                      child: _SearchRow(
-                        height: 48,
-                        onSearch: _openSearch,
-                        nearMe: _nearMe,
-                        locating: _locating,
-                        onNearMe: _locating ? null : _toggleNearMe,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: _openSearch,
+                              borderRadius: BorderRadius.circular(16),
+                              child: Container(
+                                height: 48,
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: scheme.surfaceContainerLow,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withAlpha(8),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.search_rounded,
+                                        color: scheme.primary, size: 22),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        context.l10n.homeSearchHint,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: scheme.onSurfaceVariant
+                                              .withAlpha(180),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Where the notification bell used to be — that one was
+                          // `onPressed: () {}`, a brightly filled button wired to
+                          // nothing. This one does something.
+                          const SizedBox(width: 10),
+                          _NearMeButton(
+                            active: _nearMe,
+                            busy: _locating,
+                            onPressed: _locating ? null : _toggleNearMe,
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -646,9 +692,6 @@ class _HomeScreenState extends State<HomeScreen> {
               child: _FloatingSearch(
                 visible: _searchPinned,
                 onSearch: _openSearch,
-                nearMe: _nearMe,
-                locating: _locating,
-                onNearMe: _locating ? null : _toggleNearMe,
               ),
             ),
           ],
@@ -658,85 +701,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-/// The search button and the pin beside it.
+/// The pinned bar.
 ///
-/// One widget for both places it appears — in the header and in the bar that
-/// replaces it — so the two cannot drift apart.
-class _SearchRow extends StatelessWidget {
-  final double height;
-  final VoidCallback onSearch;
-  final bool nearMe;
-  final bool locating;
-  final VoidCallback? onNearMe;
-
-  const _SearchRow({
-    required this.height,
-    required this.onSearch,
-    required this.nearMe,
-    required this.locating,
-    this.onNearMe,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final radius = BorderRadius.circular(height / 3);
-    return Row(
-      children: [
-        Expanded(
-          child: InkWell(
-            onTap: onSearch,
-            borderRadius: radius,
-            child: Container(
-              height: height,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: scheme.surfaceContainerLow,
-                borderRadius: radius,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(8),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.search_rounded, color: scheme.primary, size: 22),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      context.l10n.homeSearchHint,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: scheme.onSurfaceVariant.withAlpha(180),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        // Where the notification bell used to be — that one was
-        // `onPressed: () {}`, a brightly filled button wired to nothing. This
-        // one does something.
-        const SizedBox(width: 10),
-        _NearMeButton(
-          size: height,
-          active: nearMe,
-          busy: locating,
-          onPressed: onNearMe,
-        ),
-      ],
-    );
-  }
-}
-
-/// The pinned bar itself.
+/// Deliberately not a copy of the header. There, the field is an object on the
+/// page — filled, rounded, with the pin next to it. Here the glass is the
+/// surface, so the field is drawn straight onto it: no fill, no outline, no
+/// second control. The feed reads through it, which is the point.
+///
+/// The pin does not travel up with it. "Near me" is a mode you set once and
+/// leave set, so it belongs where you set it rather than following you down
+/// forty cards, and taking it off leaves one target instead of two.
 ///
 /// Slides rather than fades alone: appearing in place would look like a bar
 /// that was always there and only just decided to paint itself, whereas coming
@@ -745,21 +719,13 @@ class _SearchRow extends StatelessWidget {
 class _FloatingSearch extends StatelessWidget {
   final bool visible;
   final VoidCallback onSearch;
-  final bool nearMe;
-  final bool locating;
-  final VoidCallback? onNearMe;
 
-  const _FloatingSearch({
-    required this.visible,
-    required this.onSearch,
-    required this.nearMe,
-    required this.locating,
-    this.onNearMe,
-  });
+  const _FloatingSearch({required this.visible, required this.onSearch});
 
   @override
   Widget build(BuildContext context) {
     const duration = Duration(milliseconds: 220);
+    final scheme = Theme.of(context).colorScheme;
     return IgnorePointer(
       // Hidden means gone: a transparent bar that still swallows taps would
       // eat the first row of cards.
@@ -771,31 +737,33 @@ class _FloatingSearch extends StatelessWidget {
         child: AnimatedOpacity(
           opacity: visible ? 1 : 0,
           duration: duration,
+          // No border on any edge. A rule along the bottom drew the eye to
+          // where the bar stops instead of to what it is for, and the whole
+          // effect depends on not announcing an edge: the blur is what says
+          // the content is behind rather than beside.
           child: GlassSurface(
             sigma: 20,
             topBorder: false,
-            child: DecoratedBox(
-              // The bar meets the feed at its bottom edge, not its top, so
-              // that is the edge that needs a line — without it a pale card
-              // scrolling under a pale tint leaves the pill floating on
-              // nothing.
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: Theme.of(context)
-                        .dividerColor
-                        .withValues(alpha: 0.6),
-                  ),
-                ),
-              ),
+            child: InkWell(
+              onTap: onSearch,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
-                child: _SearchRow(
-                  height: 44,
-                  onSearch: onSearch,
-                  nearMe: nearMe,
-                  locating: locating,
-                  onNearMe: onNearMe,
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+                child: Row(
+                  children: [
+                    Icon(Icons.search_rounded, color: scheme.primary, size: 22),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        context.l10n.homeSearchHint,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: scheme.onSurfaceVariant.withAlpha(200),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -814,20 +782,18 @@ class _NearMeButton extends StatelessWidget {
   final bool active;
   final bool busy;
   final VoidCallback? onPressed;
-  final double size;
 
   const _NearMeButton({
     required this.active,
     required this.busy,
     required this.onPressed,
-    this.size = 48,
   });
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final scheme = Theme.of(context).colorScheme;
-    final radius = BorderRadius.circular(size / 3);
+    final radius = BorderRadius.circular(16);
     return Tooltip(
       message: context.l10n.homeNearMe,
       child: Material(
@@ -842,8 +808,8 @@ class _NearMeButton extends StatelessWidget {
           onTap: onPressed,
           borderRadius: radius,
           child: SizedBox(
-            width: size,
-            height: size,
+            width: 48,
+            height: 48,
             child: Center(
               child: busy
                   ? SizedBox(
