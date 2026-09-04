@@ -1272,8 +1272,11 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             ),
           ),
           _buildRelatedSection(),
-          // Clearance for the action bar the content now runs beneath.
-          const SliverToBoxAdapter(child: SizedBox(height: 130)),
+          // Clearance for the action bar the content now runs beneath. Sized
+          // for the tallest version of that bar — buyer-protection line, buy
+          // button and message button — so the last row of related items is
+          // never left half-covered by it.
+          const SliverToBoxAdapter(child: SizedBox(height: 165)),
         ],
       ),
       bottomNavigationBar: GlassSurface(
