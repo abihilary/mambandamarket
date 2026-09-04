@@ -107,11 +107,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logOutConfirmCancel => 'Stay signed in';
 
   @override
-  String get welcomeTitle => 'Find Everything You Need';
+  String get welcomeTitle => 'Your Market.';
 
   @override
-  String get welcomeSubtitle =>
-      'Join thousands of local buyers and sellers in your community today.';
+  String get welcomeSubtitle => 'Everything you need, right in your community.';
 
   @override
   String get continueWithGoogle => 'Continue with Google';

@@ -281,13 +281,13 @@ abstract class AppLocalizations {
   /// No description provided for @welcomeTitle.
   ///
   /// In en, this message translates to:
-  /// **'Find Everything You Need'**
+  /// **'Your Market.'**
   String get welcomeTitle;
 
   /// No description provided for @welcomeSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Join thousands of local buyers and sellers in your community today.'**
+  /// **'Everything you need, right in your community.'**
   String get welcomeSubtitle;
 
   /// No description provided for @continueWithGoogle.

@@ -108,11 +108,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get logOutConfirmCancel => 'Rester connecté';
 
   @override
-  String get welcomeTitle => 'Trouvez tout ce qu\'il vous faut';
+  String get welcomeTitle => 'Votre marché.';
 
   @override
   String get welcomeSubtitle =>
-      'Rejoignez des milliers d\'acheteurs et de vendeurs de votre région dès aujourd\'hui.';
+      'Tout ce qu’il vous faut, juste à côté de chez vous.';
 
   @override
   String get continueWithGoogle => 'Continuer avec Google';

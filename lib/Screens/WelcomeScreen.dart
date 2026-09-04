@@ -5,6 +5,7 @@ import '../Components/ReferalScreen.dart';
 import '../api/remote_config.dart';
 import 'SignUpScreen.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 import '../theme/app_tokens.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -115,25 +116,40 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Spacer(),
-              // Hero Icon / Graphic Area
+              const SizedBox(height: 12),
+              // The hero from screen 01 of the deck: the wordmark surrounded
+              // by floating stock — headphones, a controller, a handbag,
+              // trainers, a sofa, a phone, a tyre — on the lime-flecked dark
+              // texture. It is the designer's own artwork rather than an
+              // approximation of it, and it is the thing that makes the first
+              // screen say "marketplace"; the bag glyph that used to sit here
+              // said "an app".
               //
-              // A lime disc rather than a bare lime glyph: on a light ground a
-              // 100px lime icon on white is 1.4:1 — technically drawn, not
-              // actually visible. The wash carries the brand and the glyph
-              // stays ink.
-              Center(
-                child: Container(
-                  width: 132,
-                  height: 132,
-                  decoration: BoxDecoration(
-                    color: tokens.iconTile,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.shopping_bag_outlined,
-                    size: 64,
-                    color: tokens.accentInk,
+              // Always on its dark ground, in both themes. The art is dark by
+              // construction, and the alternative — a light variant that does
+              // not exist — would mean inventing one.
+              // Expanded rather than a fixed height or a fixed ratio: the art
+              // is 832x1440, which at full width would be 1.7 screens tall on
+              // a phone. This gives it whatever is left after the copy and the
+              // buttons have taken theirs, so it grows on a tall device and
+              // shrinks on a short one instead of overflowing.
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: Container(
+                    width: double.infinity,
+                    color: AppColors.darkGround,
+                    child: Image.asset(
+                      'assets/brand/onboarding_hero.png',
+                      // Centre-cropped, so the wordmark survives every shape of
+                      // box; it is the products at the edges that give way
+                      // first on a short screen.
+                      fit: BoxFit.cover,
+                      // A missing asset must not take the sign-in screen down
+                      // with it: without this the whole route throws and the
+                      // app has no way in at all.
+                      errorBuilder: (context, error, stack) => const SizedBox(),
+                    ),
                   ),
                 ),
               ),
@@ -146,7 +162,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   color: theme.colorScheme.onSurface,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Text(
                 l10n.welcomeSubtitle,
                 textAlign: TextAlign.center,
@@ -155,7 +171,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   height: 1.4,
                 ),
               ),
-              const Spacer(),
+              const SizedBox(height: 28),
 
               // Primary action. The deck leads on Create Account, and it is
               // also the honest ordering: Google is one way in, signing up is
