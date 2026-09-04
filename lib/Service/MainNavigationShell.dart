@@ -221,9 +221,14 @@ class _MainNavigationShellState extends State<MainNavigationShell>
             elevation: 0,
             child: Row(
               children: [
+                // Home, not Search. The magnifier was accurate while the feed
+                // was the only place you could search from; now that search is
+                // a screen of its own, a tab that opens the feed and calls
+                // itself Search sends you to the wrong place twice — once for
+                // the word and once for the glyph.
                 _NavItem(
-                  icon: Icons.search,
-                  label: context.l10n.navSearch,
+                  icon: Icons.home_outlined,
+                  label: context.l10n.navHome,
                   selected: _currentBottomIndex == 0,
                   onTap: () => _onTabTapped(0),
                 ),

@@ -27,7 +27,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageSystemSubtitle => 'Follow your device language';
 
   @override
-  String get navSearch => 'Search';
+  String get navHome => 'Home';
 
   @override
   String get navFavorites => 'Favorites';

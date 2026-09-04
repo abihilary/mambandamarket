@@ -134,11 +134,11 @@ abstract class AppLocalizations {
   /// **'Follow your device language'**
   String get languageSystemSubtitle;
 
-  /// No description provided for @navSearch.
+  /// No description provided for @navHome.
   ///
   /// In en, this message translates to:
-  /// **'Search'**
-  String get navSearch;
+  /// **'Home'**
+  String get navHome;
 
   /// No description provided for @navFavorites.
   ///
