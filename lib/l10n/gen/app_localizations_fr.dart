@@ -344,6 +344,46 @@ class AppLocalizationsFr extends AppLocalizations {
   String get couldNotLoadMessages => 'Impossible de charger vos messages.';
 
   @override
+  String get messagesSearchHint => 'Rechercher des messages';
+
+  @override
+  String get messagesFilterAll => 'Tous';
+
+  @override
+  String get messagesFilterUnread => 'Non lus';
+
+  @override
+  String get messagesNoUnread => 'Rien de non lu.';
+
+  @override
+  String get messagesNoMatches =>
+      'Aucune discussion ne correspond à votre recherche.';
+
+  @override
+  String get chatUnknownUser => 'Utilisateur';
+
+  @override
+  String get chatUnknownListing => 'Annonce';
+
+  @override
+  String get timeJustNow => 'à l’instant';
+
+  @override
+  String timeMinutesShort(Object count) {
+    return '$count min';
+  }
+
+  @override
+  String timeHoursShort(Object count) {
+    return '$count h';
+  }
+
+  @override
+  String timeDaysShort(Object count) {
+    return '$count j';
+  }
+
+  @override
   String get bizDashTitle => 'Tableau de bord de la boutique';
 
   @override
@@ -1188,6 +1228,18 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get sellerDashViewProfile => 'Voir le profil';
+
+  @override
+  String get sellerDashStatActive => 'Actives';
+
+  @override
+  String get sellerDashStatSold => 'Vendues';
+
+  @override
+  String get sellerDashStatViews => 'Vues';
+
+  @override
+  String get sellerDashStatInquiries => 'Demandes';
 
   @override
   String get sellerDashItemUpdated => 'Annonce mise à jour.';

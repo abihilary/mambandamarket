@@ -341,6 +341,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get couldNotLoadMessages => 'Could not load your messages.';
 
   @override
+  String get messagesSearchHint => 'Search messages';
+
+  @override
+  String get messagesFilterAll => 'All';
+
+  @override
+  String get messagesFilterUnread => 'Unread';
+
+  @override
+  String get messagesNoUnread => 'Nothing unread.';
+
+  @override
+  String get messagesNoMatches => 'No conversation matches your search.';
+
+  @override
+  String get chatUnknownUser => 'User';
+
+  @override
+  String get chatUnknownListing => 'Listing';
+
+  @override
+  String get timeJustNow => 'now';
+
+  @override
+  String timeMinutesShort(Object count) {
+    return '${count}m';
+  }
+
+  @override
+  String timeHoursShort(Object count) {
+    return '${count}h';
+  }
+
+  @override
+  String timeDaysShort(Object count) {
+    return '${count}d';
+  }
+
+  @override
   String get bizDashTitle => 'Store Dashboard';
 
   @override
@@ -1171,6 +1210,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sellerDashViewProfile => 'View profile';
+
+  @override
+  String get sellerDashStatActive => 'Active';
+
+  @override
+  String get sellerDashStatSold => 'Sold';
+
+  @override
+  String get sellerDashStatViews => 'Views';
+
+  @override
+  String get sellerDashStatInquiries => 'Inquiries';
 
   @override
   String get sellerDashItemUpdated => 'Listing updated.';

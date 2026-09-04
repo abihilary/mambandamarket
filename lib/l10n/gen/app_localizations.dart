@@ -704,6 +704,72 @@ abstract class AppLocalizations {
   /// **'Could not load your messages.'**
   String get couldNotLoadMessages;
 
+  /// No description provided for @messagesSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search messages'**
+  String get messagesSearchHint;
+
+  /// No description provided for @messagesFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get messagesFilterAll;
+
+  /// No description provided for @messagesFilterUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get messagesFilterUnread;
+
+  /// No description provided for @messagesNoUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing unread.'**
+  String get messagesNoUnread;
+
+  /// No description provided for @messagesNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'No conversation matches your search.'**
+  String get messagesNoMatches;
+
+  /// No description provided for @chatUnknownUser.
+  ///
+  /// In en, this message translates to:
+  /// **'User'**
+  String get chatUnknownUser;
+
+  /// No description provided for @chatUnknownListing.
+  ///
+  /// In en, this message translates to:
+  /// **'Listing'**
+  String get chatUnknownListing;
+
+  /// No description provided for @timeJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'now'**
+  String get timeJustNow;
+
+  /// No description provided for @timeMinutesShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}m'**
+  String timeMinutesShort(Object count);
+
+  /// No description provided for @timeHoursShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}h'**
+  String timeHoursShort(Object count);
+
+  /// No description provided for @timeDaysShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}d'**
+  String timeDaysShort(Object count);
+
   /// No description provided for @bizDashTitle.
   ///
   /// In en, this message translates to:
@@ -2179,6 +2245,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View profile'**
   String get sellerDashViewProfile;
+
+  /// No description provided for @sellerDashStatActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get sellerDashStatActive;
+
+  /// No description provided for @sellerDashStatSold.
+  ///
+  /// In en, this message translates to:
+  /// **'Sold'**
+  String get sellerDashStatSold;
+
+  /// No description provided for @sellerDashStatViews.
+  ///
+  /// In en, this message translates to:
+  /// **'Views'**
+  String get sellerDashStatViews;
+
+  /// No description provided for @sellerDashStatInquiries.
+  ///
+  /// In en, this message translates to:
+  /// **'Inquiries'**
+  String get sellerDashStatInquiries;
 
   /// No description provided for @sellerDashItemUpdated.
   ///

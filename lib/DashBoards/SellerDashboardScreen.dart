@@ -8,6 +8,7 @@ import '../api/models.dart' as api;
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_tokens.dart';
 import 'CreateListingScreen.dart';
 import '../Components/local_image.dart';
 
@@ -287,16 +288,12 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.notifications_none),
-            onPressed: () {},
-          ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openCreateListingModal,
-        backgroundColor: scheme.primary,
-        foregroundColor: scheme.onPrimary,
+        backgroundColor: context.tokens.accentFill,
+        foregroundColor: context.tokens.onAccentFill,
         icon: const Icon(Icons.add_a_photo_outlined),
         label: Text(
           context.l10n.sellerDashSellItem,
@@ -315,52 +312,20 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             // STATS SUMMARY
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildStatTile(
-                      title: context.l10n.sellerDashActiveItems,
-                      value: '${_activeItems.length}',
-                      icon: Icons.sell_outlined,
-                      color: AppColors.warning,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildStatTile(
-                      title: context.l10n.sellerDashTotalEarned,
-                      value: _totalEarnedLabel,
-                      icon: Icons.account_balance_wallet_outlined,
-                      color: AppColors.success,
-                    ),
-                  ),
-                ],
+              child: _buildStatTile(
+                title: context.l10n.sellerDashTotalEarned,
+                value: _totalEarnedLabel,
+                icon: Icons.account_balance_wallet_outlined,
+                color: AppColors.success,
               ),
             ),
             const SizedBox(height: 12),
+            // One divided strip rather than a 2x2 grid of bordered boxes: it is
+            // the deck's shape, and it leaves room for the fourth number the
+            // dashboard endpoint has always returned and nothing ever showed.
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildStatTile(
-                      title: context.l10n.sellerDashTotalViews,
-                      value: '${_stats?.totalViews ?? 0}',
-                      icon: Icons.visibility_outlined,
-                      color: scheme.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildStatTile(
-                      title: context.l10n.sellerDashInquiries,
-                      value: '${_stats?.inquiries ?? 0}',
-                      icon: Icons.chat_bubble_outline,
-                      color: AppColors.glow,
-                    ),
-                  ),
-                ],
-              ),
+              child: _buildStatStrip(theme),
             ),
             const SizedBox(height: 16),
 
@@ -445,16 +410,24 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             children: [
               Row(
                 children: [
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: AppColors.warning,
-                    backgroundImage: (avatar != null && avatar.isNotEmpty)
-                        ? NetworkImage(avatar)
-                        : null,
-                    child: (avatar != null && avatar.isNotEmpty)
-                        ? null
-                        : const Icon(Icons.person,
-                            color: AppColors.ink, size: 28),
+                  // The allowance, drawn around the avatar. The number was
+                  // already written underneath in words; the ring is what makes
+                  // "two left" legible at a glance, and it is the one figure on
+                  // this screen that decides whether Sell works at all.
+                  _QuotaRing(
+                    used: me?.activeListings ?? 0,
+                    limit: me?.listingLimit,
+                    child: CircleAvatar(
+                      radius: 24,
+                      backgroundColor: AppColors.warning,
+                      backgroundImage: (avatar != null && avatar.isNotEmpty)
+                          ? NetworkImage(avatar)
+                          : null,
+                      child: (avatar != null && avatar.isNotEmpty)
+                          ? null
+                          : const Icon(Icons.person,
+                              color: AppColors.ink, size: 28),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -526,8 +499,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                       icon: const Icon(Icons.person_outline_rounded, size: 16),
                       label: Text(l10n.sellerDashViewProfile),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: scheme.primary,
-                        foregroundColor: scheme.onPrimary,
+                        backgroundColor: context.tokens.accentFill,
+                        foregroundColor: context.tokens.onAccentFill,
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -568,6 +541,67 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
       context,
       MaterialPageRoute(
         builder: (_) => PublicProfileScreen(userId: uid, initialName: name),
+      ),
+    );
+  }
+
+  /// Active / Sold / Views / Inquiries in one card.
+  ///
+  /// Active reads the dashboard's own count rather than the length of the list
+  /// on screen: the list is the first page of active listings, so on an account
+  /// with more than a page of stock the tile disagreed with the tab beside it.
+  /// Sold has been parsed off the endpoint since the beginning and never shown.
+  Widget _buildStatStrip(ThemeData theme) {
+    final l10n = context.l10n;
+    final entries = <(String, String)>[
+      (l10n.sellerDashStatActive, '${_stats?.activeListings ?? _activeItems.length}'),
+      (l10n.sellerDashStatSold, '${_stats?.soldListings ?? _soldItems.length}'),
+      (l10n.sellerDashStatViews, '${_stats?.totalViews ?? 0}'),
+      (l10n.sellerDashStatInquiries, '${_stats?.inquiries ?? 0}'),
+    ];
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Row(
+        children: [
+          for (var i = 0; i < entries.length; i++) ...[
+            if (i > 0)
+              SizedBox(
+                height: 34,
+                child: VerticalDivider(
+                  width: 1,
+                  thickness: 1,
+                  color: theme.dividerColor,
+                ),
+              ),
+            Expanded(
+              child: Column(
+                children: [
+                  Text(
+                    entries[i].$2,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    entries[i].$1,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -912,6 +946,50 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
           ),
         );
       },
+    );
+  }
+}
+
+/// A progress ring around the avatar showing how much of the listing allowance
+/// is spent.
+///
+/// Draws nothing but the child when the limit is null — an unlimited account
+/// has no fraction to show, and a full ring would read as "you are out".
+class _QuotaRing extends StatelessWidget {
+  final int used;
+  final int? limit;
+  final Widget child;
+
+  const _QuotaRing({required this.used, required this.limit, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final cap = limit;
+    if (cap == null || cap <= 0) return child;
+    final tokens = context.tokens;
+    final fraction = (used / cap).clamp(0.0, 1.0);
+    // Lime while there is room, red once the allowance is gone — the same
+    // state the Publish button is in.
+    final colour = fraction >= 1.0 ? AppColors.danger : tokens.accentFill;
+    return SizedBox(
+      width: 60,
+      height: 60,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: 58,
+            height: 58,
+            child: CircularProgressIndicator(
+              value: fraction,
+              strokeWidth: 3,
+              backgroundColor: Theme.of(context).dividerColor,
+              valueColor: AlwaysStoppedAnimation<Color>(colour),
+            ),
+          ),
+          child,
+        ],
+      ),
     );
   }
 }

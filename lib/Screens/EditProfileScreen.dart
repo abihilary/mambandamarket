@@ -8,6 +8,7 @@ import '../api/config.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_tokens.dart';
 
 /// Edit your own profile: picture, name, phone, city, bio.
 ///
@@ -170,7 +171,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Form(
             key: _formKey,
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
               children: [
                 Center(
                   child: GestureDetector(
@@ -275,27 +276,43 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     border: const OutlineInputBorder(),
                   ),
                 ),
-                const SizedBox(height: 8),
-
-                FilledButton(
-                  onPressed: _saving ? null : _save,
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: _saving
-                      // A save uploads a picture and then writes the profile, so
-                      // it is long enough that a button which merely goes flat
-                      // reads as a tap that missed.
-                      ? SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: scheme.onPrimary),
-                        )
-                      : Text(l10n.editProfileSave),
-                ),
               ],
             ),
+          ),
+        ),
+      ),
+      // Save is pinned rather than sitting at the end of the list. The bio box
+      // is four lines tall and the keyboard covers most of the screen, so the
+      // button was reliably below the fold at exactly the moment it was wanted.
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+          decoration: BoxDecoration(
+            color: scheme.surface,
+            border: Border(
+              top: BorderSide(color: theme.dividerColor.withValues(alpha: 0.5)),
+            ),
+          ),
+          child: FilledButton(
+            onPressed: _saving ? null : _save,
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
+            child: _saving
+                // A save uploads a picture and then writes the profile, so it is
+                // long enough that a button which merely goes flat reads as a
+                // tap that missed.
+                ? SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                        // Not onPrimary: the button is lime in both themes now,
+                        // and light-mode onPrimary is white — an invisible
+                        // spinner on a lime button.
+                        strokeWidth: 2,
+                        color: context.tokens.onAccentFill),
+                  )
+                : Text(l10n.editProfileSave),
           ),
         ),
       ),

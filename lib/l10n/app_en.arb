@@ -161,6 +161,32 @@
   "noChatsYet": "No active chats yet.",
   "signInToSeeMessages": "Sign in to see your messages.",
   "couldNotLoadMessages": "Could not load your messages.",
+  "messagesSearchHint": "Search messages",
+  "messagesFilterAll": "All",
+  "messagesFilterUnread": "Unread",
+  "messagesNoUnread": "Nothing unread.",
+  "messagesNoMatches": "No conversation matches your search.",
+  "chatUnknownUser": "User",
+  "chatUnknownListing": "Listing",
+  "timeJustNow": "now",
+  "timeMinutesShort": "{count}m",
+  "@timeMinutesShort": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "timeHoursShort": "{count}h",
+  "@timeHoursShort": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "timeDaysShort": "{count}d",
+  "@timeDaysShort": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "bizDashTitle": "Store Dashboard",
   "bizDashGoToHomeFeed": "Go to Home Feed",
   "bizDashAddNewItem": "Add New Item",
@@ -542,6 +568,10 @@
   "sellerDashBusinessBadge": "BUSINESS",
   "sellerDashCompanyBadge": "COMPANY",
   "sellerDashViewProfile": "View profile",
+  "sellerDashStatActive": "Active",
+  "sellerDashStatSold": "Sold",
+  "sellerDashStatViews": "Views",
+  "sellerDashStatInquiries": "Inquiries",
   "sellerDashItemUpdated": "Listing updated.",
   "sellerDashListingsUnlimited": "Unlimited listings",
   "sellerDashListingsLeft": "{count, plural, =0{No listings left this month} =1{1 listing left} other{{count} listings left}}",

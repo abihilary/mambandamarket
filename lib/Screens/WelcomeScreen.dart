@@ -5,6 +5,7 @@ import '../Components/ReferalScreen.dart';
 import '../api/remote_config.dart';
 import 'SignUpScreen.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_tokens.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -105,6 +106,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = context.l10n;
+    final tokens = context.tokens;
 
     return Scaffold(
       body: SafeArea(
@@ -115,10 +117,25 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             children: [
               const Spacer(),
               // Hero Icon / Graphic Area
-              Icon(
-                Icons.shopping_bag_outlined,
-                size: 100,
-                color: theme.colorScheme.primary,
+              //
+              // A lime disc rather than a bare lime glyph: on a light ground a
+              // 100px lime icon on white is 1.4:1 — technically drawn, not
+              // actually visible. The wash carries the brand and the glyph
+              // stays ink.
+              Center(
+                child: Container(
+                  width: 132,
+                  height: 132,
+                  decoration: BoxDecoration(
+                    color: tokens.iconTile,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.shopping_bag_outlined,
+                    size: 64,
+                    color: tokens.accentInk,
+                  ),
+                ),
               ),
               const SizedBox(height: 24),
               Text(
@@ -140,29 +157,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               ),
               const Spacer(),
 
-              // Primary Action: Google Sign-In
-              OutlinedButton.icon(
-                onPressed: _isLoading ? null : _handleGoogleSignIn,
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  side: BorderSide(color: theme.dividerColor),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                icon: const Icon(Icons.g_mobiledata, size: 28, color: Colors.red),
-                label: Text(
-                  l10n.continueWithGoogle,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Secondary Action: Email Sign Up
+              // Primary action. The deck leads on Create Account, and it is
+              // also the honest ordering: Google is one way in, signing up is
+              // the one everybody has.
               ElevatedButton(
                 onPressed: () {
                   // Straight to the form when we are not asking what kind of
@@ -181,8 +178,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
+                  backgroundColor: tokens.accentFill,
+                  foregroundColor: tokens.onAccentFill,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -193,6 +190,28 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   l10n.createAccount,
                   style: const TextStyle(
                       fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Secondary Action: Google Sign-In
+              OutlinedButton.icon(
+                onPressed: _isLoading ? null : _handleGoogleSignIn,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  side: BorderSide(color: theme.dividerColor),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: const Icon(Icons.g_mobiledata, size: 28, color: Colors.red),
+                label: Text(
+                  l10n.continueWithGoogle,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
