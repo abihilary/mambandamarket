@@ -10,7 +10,7 @@ import '../api/models.dart';
 import '../api/location_service.dart';
 import '../api/remote_config.dart';
 import '../api/repositories.dart';
-import '../l10n/l10n.dart';
+import '../theme/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -112,49 +112,43 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // The splash is a full-bleed brand plate, so everything on it is keyed to
-    // onPrimary — the lime ground in dark mode cannot carry white.
-    final scheme = Theme.of(context).colorScheme;
-
+    // Black in both themes, and the same black the native launch window paints.
+    //
+    // This used to key off colorScheme.primary, which meant two different
+    // splashes: near-black with a white disc on a light phone, a full lime
+    // plate on a dark one — and neither of them was the mark. A splash is the
+    // one screen with no reason to have an opinion; it exists to be
+    // indistinguishable from the window underneath it.
+    //
+    // The onboarding hero deliberately does not appear here. It is an 866KB
+    // decode at the precise moment the app is trying to start, and it is on
+    // screen again a beat later on Welcome — the same picture twice in two
+    // seconds is not a brand, it is a stutter.
     return Scaffold(
-      backgroundColor: scheme.primary,
+      backgroundColor: AppColors.darkGround,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: scheme.onPrimary,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.storefront_rounded,
-                size: 64,
-                color: scheme.primary,
-              ),
+            Image.asset(
+              'assets/brand/mark.png',
+              width: 132,
+              // Never let a missing asset be the difference between the app
+              // starting and not.
+              errorBuilder: (context, error, stack) => const SizedBox(height: 132),
             ),
-            const SizedBox(height: 24),
-            Text(
-              'Mambanda Market',
-              style: TextStyle(
-                color: scheme.onPrimary,
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
+            const SizedBox(height: 40),
+            SizedBox(
+              height: 22,
+              width: 22,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                // Dim on purpose. The wait is normally a blink; a bright
+                // spinner advertises a delay that mostly is not happening.
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppColors.lime.withValues(alpha: 0.5),
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              context.l10n.splashTagline,
-              style: TextStyle(
-                color: scheme.onPrimary.withValues(alpha: 0.8),
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(height: 48),
-            CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(scheme.onPrimary),
             ),
           ],
         ),

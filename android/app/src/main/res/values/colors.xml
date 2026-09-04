@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#000000</color>
+    <!-- AppColors.darkGround. The native launch window, the Android 12+ splash
+         and the Flutter splash all paint this exact value, which is what makes
+         the handoff between the three invisible. -->
+    <color name="brand_ground">#07080C</color>
 </resources>

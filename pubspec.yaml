@@ -140,6 +140,10 @@ flutter:
     # widgets. The floating products are what make the first screen say
     # "marketplace" instead of "some app with a bag icon".
     - assets/brand/onboarding_hero.png
+    # The M mark on transparency, for the splash. Trimmed out of the adaptive
+    # icon foreground so the launcher, the system splash and the app's own
+    # splash are provably the same drawing.
+    - assets/brand/mark.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
