@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../api/auth_service.dart';
 import '../Components/ReferalScreen.dart';
@@ -105,55 +106,96 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // This screen is dark whatever the phone is set to.
+    //
+    // The deck draws it on black, and the artwork is black — there is no light
+    // version of it and inventing one would mean redrawing somebody else's
+    // hero. Rendering the dark art on the light theme's ground produced a black
+    // slab floating on white with a hard edge: not a design, an accident. A
+    // brand screen that owns its own palette is ordinary; a half-light one is
+    // not.
+    return Theme(
+      data: AppTheme.dark(),
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        // The art runs under the status bar, so the clock and the icons have to
+        // be light or they vanish into it.
+        value: SystemUiOverlayStyle.light.copyWith(
+          statusBarColor: Colors.transparent,
+          systemNavigationBarColor: AppColors.darkGround,
+          systemNavigationBarIconBrightness: Brightness.light,
+        ),
+        child: Builder(builder: _buildBody),
+      ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = context.l10n;
     final tokens = context.tokens;
 
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 12),
-              // The hero from screen 01 of the deck: the wordmark surrounded
-              // by floating stock — headphones, a controller, a handbag,
-              // trainers, a sofa, a phone, a tyre — on the lime-flecked dark
-              // texture. It is the designer's own artwork rather than an
-              // approximation of it, and it is the thing that makes the first
-              // screen say "marketplace"; the bag glyph that used to sit here
-              // said "an app".
-              //
-              // Always on its dark ground, in both themes. The art is dark by
-              // construction, and the alternative — a light variant that does
-              // not exist — would mean inventing one.
-              // Expanded rather than a fixed height or a fixed ratio: the art
-              // is 832x1440, which at full width would be 1.7 screens tall on
-              // a phone. This gives it whatever is left after the copy and the
-              // buttons have taken theirs, so it grows on a tall device and
-              // shrinks on a short one instead of overflowing.
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(28),
-                  child: Container(
-                    width: double.infinity,
-                    color: AppColors.darkGround,
-                    child: Image.asset(
-                      'assets/brand/onboarding_hero.png',
-                      // Centre-cropped, so the wordmark survives every shape of
-                      // box; it is the products at the edges that give way
-                      // first on a short screen.
-                      fit: BoxFit.cover,
-                      // A missing asset must not take the sign-in screen down
-                      // with it: without this the whole route throws and the
-                      // app has no way in at all.
-                      errorBuilder: (context, error, stack) => const SizedBox(),
+      backgroundColor: AppColors.darkGround,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // The hero from screen 01 of the deck: the wordmark surrounded by
+          // floating stock — headphones, a controller, a handbag, trainers, a
+          // sofa, a phone, a tyre — on the lime-flecked dark texture. It is the
+          // designer's own artwork rather than an approximation of it, and it
+          // is the thing that makes the first screen say "marketplace"; the bag
+          // glyph that used to sit here said "an app".
+          //
+          // Full-bleed and unrounded, as the deck has it: no SafeArea above it,
+          // so the texture runs under the status bar rather than starting below
+          // a white strip.
+          //
+          // Expanded rather than a fixed height or a fixed ratio: the art is
+          // 832x1440, which at full width would stand 1.7 screens tall on a
+          // phone. This gives it whatever is left after the copy and the
+          // buttons have taken theirs, so it grows on a tall device and gives
+          // way on a short one instead of overflowing.
+          Expanded(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  'assets/brand/onboarding_hero.png',
+                  // Centre-cropped, so the wordmark survives every shape of
+                  // box; it is the products at the edges that give way first on
+                  // a short screen.
+                  fit: BoxFit.cover,
+                  // A missing asset must not take the sign-in screen down with
+                  // it: without this the whole route throws and the app has no
+                  // way in at all.
+                  errorBuilder: (context, error, stack) => const SizedBox(),
+                ),
+                // The art bottoms out at #020206 and the ground is #07080C —
+                // close, but a straight cut between two near-blacks still reads
+                // as a line. This dissolves the join.
+                const Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 120,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Color(0x0007080C), AppColors.darkGround],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
               Text(
                 l10n.welcomeTitle,
                 textAlign: TextAlign.center,
@@ -252,9 +294,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-            ],
+              ],
+            ),
           ),
-        ),
+          // Only at the bottom: the gesture bar is real, the notch is where the
+          // artwork is meant to be.
+          SafeArea(top: false, child: const SizedBox(height: 4)),
+        ],
       ),
     );
   }
