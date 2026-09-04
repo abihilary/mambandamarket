@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
@@ -188,6 +189,12 @@ class _MainNavigationShellState extends State<MainNavigationShell>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Content runs underneath the bar rather than stopping above it. Without
+      // this there is nothing behind the glass to blur except the scaffold's
+      // own background, and the effect costs a frame to render nothing. Every
+      // scrollable in the tabs already carries 96px of bottom padding for the
+      // publish button, which is also what keeps the last row reachable here.
+      extendBody: true,
       body: IndexedStack(
         index: _currentBottomIndex,
         children: _pages,
@@ -197,48 +204,139 @@ class _MainNavigationShellState extends State<MainNavigationShell>
       // BottomAppBar with four hand-rolled tabs and a docked FAB between them.
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: _PublishButton(onPressed: _openPublish),
-      bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 7,
-        height: 68,
-        padding: EdgeInsets.zero,
-        color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
-        child: Row(
-          children: [
-            _NavItem(
-              icon: Icons.search,
-              label: context.l10n.navSearch,
-              selected: _currentBottomIndex == 0,
-              onTap: () => _onTabTapped(0),
+      bottomNavigationBar: Stack(
+        children: [
+          // The glass sits behind the bar rather than around it, so
+          // BottomAppBar keeps doing its own layout — height, safe-area inset
+          // and notch — and this only has to match the shape it draws.
+          Positioned.fill(child: _GlassBarBackdrop()),
+          BottomAppBar(
+            shape: const CircularNotchedRectangle(),
+            notchMargin: 7,
+            height: 68,
+            padding: EdgeInsets.zero,
+            // The colour moved to the backdrop above. Left opaque here it
+            // would paint over the blur it is meant to be showing.
+            color: Colors.transparent,
+            elevation: 0,
+            child: Row(
+              children: [
+                _NavItem(
+                  icon: Icons.search,
+                  label: context.l10n.navSearch,
+                  selected: _currentBottomIndex == 0,
+                  onTap: () => _onTabTapped(0),
+                ),
+                _NavItem(
+                  icon: Icons.favorite_border,
+                  label: context.l10n.navFavorites,
+                  selected: _currentBottomIndex == 1,
+                  onTap: () => _onTabTapped(1),
+                ),
+                // Room for the notch the FAB sits in.
+                const Spacer(),
+                _NavItem(
+                  icon: Icons.chat_bubble_outline,
+                  label: context.l10n.navMessages,
+                  selected: _currentBottomIndex == 3,
+                  onTap: () => _onTabTapped(3),
+                  // Unread count, so a message that arrives while you are on
+                  // another tab says so.
+                  badgeListenable: ChatRepository.instance.totalUnread,
+                ),
+                _NavItem(
+                  icon: Icons.person_outline,
+                  label: context.l10n.navAccount,
+                  selected: _currentBottomIndex == 4,
+                  onTap: () => _onTabTapped(4),
+                ),
+              ],
             ),
-            _NavItem(
-              icon: Icons.favorite_border,
-              label: context.l10n.navFavorites,
-              selected: _currentBottomIndex == 1,
-              onTap: () => _onTabTapped(1),
-            ),
-            // Room for the notch the FAB sits in.
-            const Spacer(),
-            _NavItem(
-              icon: Icons.chat_bubble_outline,
-              label: context.l10n.navMessages,
-              selected: _currentBottomIndex == 3,
-              onTap: () => _onTabTapped(3),
-              // Unread count, so a message that arrives while you are on
-              // another tab says so.
-              badgeListenable: ChatRepository.instance.totalUnread,
-            ),
-            _NavItem(
-              icon: Icons.person_outline,
-              label: context.l10n.navAccount,
-              selected: _currentBottomIndex == 4,
-              onTap: () => _onTabTapped(4),
-            ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The blurred, tinted pane behind the tab bar.
+///
+/// Clipped to the same notched outline BottomAppBar draws, so the FAB still
+/// cuts a hole in the bar instead of sitting on a rectangle. The shape comes
+/// from `CircularNotchedRectangle` itself rather than a hand-rolled arc, which
+/// is what keeps the two edges identical.
+///
+/// The tint and the hairline are painted along that same path: a `Border` on a
+/// box would draw its top edge straight across the notch.
+class _GlassBarBackdrop extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return ClipPath(
+      clipper: const _NotchedBarClipper(),
+      child: BackdropFilter(
+        // Modest on purpose: a Gaussian blur costs in proportion to its sigma,
+        // and this strip is redrawn on every frame of every scroll.
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: CustomPaint(
+          painter: _NotchedBarPainter(
+            fill: tokens.glassTint,
+            stroke: Theme.of(context).dividerColor.withValues(alpha: 0.6),
+          ),
         ),
       ),
     );
   }
+}
+
+/// The bar's outline, notch and all.
+///
+/// 28 is the default FloatingActionButton radius and 7 is the notchMargin set
+/// on the BottomAppBar above; the guest circle is centred on the top edge,
+/// which is where a centre-docked FAB sits.
+Path _notchedBarPath(Size size) {
+  const double fabRadius = 28;
+  const double notchMargin = 7;
+  final guest = Rect.fromCircle(
+    center: Offset(size.width / 2, 0),
+    radius: fabRadius + notchMargin,
+  );
+  return const CircularNotchedRectangle()
+      .getOuterPath(Offset.zero & size, guest);
+}
+
+class _NotchedBarClipper extends CustomClipper<Path> {
+  const _NotchedBarClipper();
+
+  @override
+  Path getClip(Size size) => _notchedBarPath(size);
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class _NotchedBarPainter extends CustomPainter {
+  final Color fill;
+  final Color stroke;
+
+  const _NotchedBarPainter({required this.fill, required this.stroke});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = _notchedBarPath(size);
+    canvas.drawPath(path, Paint()..color = fill);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = stroke
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _NotchedBarPainter old) =>
+      old.fill != fill || old.stroke != stroke;
 }
 /// The lime disc in the middle of the bar.
 ///

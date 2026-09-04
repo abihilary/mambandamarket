@@ -329,6 +329,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noFavoritesYet => 'No favorites yet.';
 
   @override
+  String get favoritesOtherCategory => 'Other';
+
+  @override
   String get messagesTitle => 'Messages & Chats';
 
   @override

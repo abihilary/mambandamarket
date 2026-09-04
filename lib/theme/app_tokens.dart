@@ -36,12 +36,21 @@ class AppTokens extends ThemeExtension<AppTokens> {
   /// Ground for a grouped card — the deck's clusters of related rows.
   final Color groupSurface;
 
+  /// Tint painted over a blurred backdrop.
+  ///
+  /// Translucent on purpose: the blur alone leaves a smeared photo, which is
+  /// unreadable behind labels. The tint is what turns it into a surface. Its
+  /// alpha is the whole trick — too opaque and it is just a bar, too sheer and
+  /// the text sits on whatever colour happens to scroll underneath it.
+  final Color glassTint;
+
   const AppTokens({
     required this.accentFill,
     required this.onAccentFill,
     required this.accentInk,
     required this.iconTile,
     required this.groupSurface,
+    required this.glassTint,
   });
 
   static const dark = AppTokens(
@@ -53,6 +62,9 @@ class AppTokens extends ThemeExtension<AppTokens> {
     // showed. The deck's tiles are visible objects.
     iconTile: Color(0x1AC9E505),
     groupSurface: AppColors.darkElevated,
+    // Darker and more opaque than the light equivalent: a bright photo behind
+    // a sheer dark bar washes it out, and white labels then sit on grey.
+    glassTint: Color(0xCC1A1C18),
   );
 
   static final light = AppTokens(
@@ -63,6 +75,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     // without putting bright lime next to body text.
     iconTile: AppColors.lime.withValues(alpha: 0.12),
     groupSurface: AppColors.lightSurface,
+    glassTint: AppColors.lightSurface.withValues(alpha: 0.72),
   );
 
   /// Shorthand: `context.tokens.accentInk`.
@@ -76,6 +89,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     Color? accentInk,
     Color? iconTile,
     Color? groupSurface,
+    Color? glassTint,
   }) =>
       AppTokens(
         accentFill: accentFill ?? this.accentFill,
@@ -83,6 +97,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
         accentInk: accentInk ?? this.accentInk,
         iconTile: iconTile ?? this.iconTile,
         groupSurface: groupSurface ?? this.groupSurface,
+        glassTint: glassTint ?? this.glassTint,
       );
 
   @override
@@ -94,6 +109,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
       accentInk: Color.lerp(accentInk, other.accentInk, t)!,
       iconTile: Color.lerp(iconTile, other.iconTile, t)!,
       groupSurface: Color.lerp(groupSurface, other.groupSurface, t)!,
+      glassTint: Color.lerp(glassTint, other.glassTint, t)!,
     );
   }
 }

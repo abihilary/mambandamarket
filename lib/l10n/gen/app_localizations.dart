@@ -680,6 +680,12 @@ abstract class AppLocalizations {
   /// **'No favorites yet.'**
   String get noFavoritesYet;
 
+  /// No description provided for @favoritesOtherCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get favoritesOtherCategory;
+
   /// No description provided for @messagesTitle.
   ///
   /// In en, this message translates to:

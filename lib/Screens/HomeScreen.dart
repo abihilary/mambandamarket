@@ -366,6 +366,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       body: SafeArea(
+        // Not at the bottom. With extendBody on the shell, Scaffold grows the
+        // body's MediaQuery bottom padding by the height of the tab bar so
+        // that a SafeArea can avoid it — which is the opposite of what is
+        // wanted here. The feed is supposed to run underneath the glass; its
+        // last sliver already carries 96px of clearance.
+        bottom: false,
         child: RefreshIndicator(
           onRefresh: () async {
             await Future.wait([_loadListings(), _favorites.refresh(), _loadBoard()]);

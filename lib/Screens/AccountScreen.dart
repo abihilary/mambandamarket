@@ -237,6 +237,9 @@ class _AccountScreenState extends State<AccountScreen> {
         }
 
         return SafeArea(
+          // See HomeScreen: the list runs under the glass bar and its own
+          // bottom padding is the clearance.
+          bottom: false,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

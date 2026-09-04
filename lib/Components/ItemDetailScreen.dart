@@ -10,6 +10,7 @@ import '../api/models.dart' as api;
 import '../api/repositories.dart';
 import '../api/share_links.dart';
 import '../l10n/l10n.dart';
+import 'glass_surface.dart';
 import '../theme/app_theme.dart';
 import 'ItemCard.dart';
 import 'VerifiedBadge.dart';
@@ -1032,6 +1033,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         : context.l10n.detailNoDescription;
 
     return Scaffold(
+      // So the page passes under the action bar and there is something for it
+      // to blur. The sliver at the end of the list carries the clearance.
+      extendBody: true,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -1268,23 +1272,18 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             ),
           ),
           _buildRelatedSection(),
-          const SliverToBoxAdapter(child: SizedBox(height: 30)),
+          // Clearance for the action bar the content now runs beneath.
+          const SliverToBoxAdapter(child: SizedBox(height: 130)),
         ],
       ),
-      bottomNavigationBar: SafeArea(
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-          decoration: BoxDecoration(
-            color: scheme.surface,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 15,
-                offset: const Offset(0, -4),
-              ),
-            ],
-          ),
-          child: Column(
+      bottomNavigationBar: GlassSurface(
+        // The drop shadow that used to separate this bar from the page is gone:
+        // a translucent surface is already legible as one, and a shadow above a
+        // blur reads as a smudge.
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (_isBuyable && (_listing?.companyEscrow ?? true)) ...[
@@ -1319,6 +1318,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 ],
               ),
             ],
+            ),
           ),
         ),
       ),
