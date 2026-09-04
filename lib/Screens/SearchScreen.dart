@@ -88,6 +88,13 @@ class _SearchScreenState extends State<SearchScreen> {
   static const _kMaxRecents = 8;
   static const _pageSize = 30;
 
+  /// The field's shape: rounded, with no line of its own. The theme fills it,
+  /// and a fill with `InputBorder.none` is painted as a bare rectangle.
+  static final OutlineInputBorder _pill = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(22),
+    borderSide: BorderSide.none,
+  );
+
   final _repo = ListingsRepository.instance;
   final _favorites = FavoritesRepository.instance;
   final _controller = TextEditingController();
@@ -304,27 +311,41 @@ class _SearchScreenState extends State<SearchScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        // The back arrow already sits close to the field, so the title keeps
+        // no spacing of its own on the left; the right is padded instead,
+        // because an AppBar with no actions runs its title to the very edge
+        // and the field ended flush against the bezel.
         titleSpacing: 0,
-        title: TextField(
-          controller: _controller,
-          autofocus: true,
-          textInputAction: TextInputAction.search,
-          onChanged: _onQueryChanged,
-          onSubmitted: _submit,
-          decoration: InputDecoration(
-            hintText: l10n.homeSearchHint,
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
-            suffixIcon: _controller.text.isEmpty
-                ? null
-                : IconButton(
-                    icon: const Icon(Icons.clear_rounded, size: 20),
-                    onPressed: () {
-                      _controller.clear();
-                      _onQueryChanged('');
-                    },
-                  ),
+        title: Padding(
+          padding: const EdgeInsets.only(right: 12),
+          child: TextField(
+            controller: _controller,
+            autofocus: true,
+            textInputAction: TextInputAction.search,
+            onChanged: _onQueryChanged,
+            onSubmitted: _submit,
+            decoration: InputDecoration(
+              hintText: l10n.homeSearchHint,
+              isDense: true,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              // Rounded and borderless rather than no border at all: with
+              // InputBorder.none the theme's fill is painted as a bare
+              // rectangle, which is what made the field read as a strip
+              // stopping at the screen edge rather than as a field.
+              border: _pill,
+              enabledBorder: _pill,
+              focusedBorder: _pill,
+              suffixIcon: _controller.text.isEmpty
+                  ? null
+                  : IconButton(
+                      icon: const Icon(Icons.clear_rounded, size: 20),
+                      onPressed: () {
+                        _controller.clear();
+                        _onQueryChanged('');
+                      },
+                    ),
+            ),
           ),
         ),
         bottom: PreferredSize(
