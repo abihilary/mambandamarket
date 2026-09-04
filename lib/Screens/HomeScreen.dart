@@ -19,6 +19,7 @@ import '../api/board_repository.dart';
 import '../api/location_service.dart';
 import '../Components/category_icons.dart';
 import '../Components/category_picker.dart';
+import '../Components/glass_surface.dart';
 import 'SearchScreen.dart';
 import '../theme/app_tokens.dart';
 
@@ -58,6 +59,19 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _nearMe = false;
   bool _locating = false;
 
+  /// The feed's own controller, so the floating search bar can watch it.
+  final ScrollController _scroll = ScrollController();
+
+  /// Whether the compact search bar is showing.
+  ///
+  /// The real search field is the one in the header; this is the same button
+  /// again, kept within reach once the header has scrolled away. Two thresholds
+  /// rather than one: a single boundary makes the bar flicker in and out while
+  /// a finger rests near it, since every pixel of overscroll crosses it.
+  bool _searchPinned = false;
+  static const double _pinAt = 132;
+  static const double _unpinAt = 104;
+
   @override
   void initState() {
     super.initState();
@@ -66,6 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // item and came back to a feed frozen at app start, with their own
     // listing missing from it.
     _repo.revision.addListener(_onCatalogueChanged);
+    _scroll.addListener(_onScroll);
     _loadCategories();
     _loadListings();
     _loadBoard();
@@ -76,11 +91,22 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _repo.revision.removeListener(_onCatalogueChanged);
     AuthService.instance.me.removeListener(_onMeChanged);
+    _scroll.dispose();
     super.dispose();
   }
 
   void _onMeChanged() {
     if (mounted) setState(() {});
+  }
+
+  void _onScroll() {
+    if (!_scroll.hasClients) return;
+    final offset = _scroll.position.pixels;
+    final pinned = _searchPinned ? offset > _unpinAt : offset > _pinAt;
+    // Only ever one setState per crossing: this runs on every frame of every
+    // scroll, and rebuilding the whole feed each time would cost more than the
+    // bar is worth.
+    if (pinned != _searchPinned) setState(() => _searchPinned = pinned);
   }
 
   Future<void> _loadCategories() async {
@@ -369,283 +395,410 @@ class _HomeScreenState extends State<HomeScreen> {
         // wanted here. The feed is supposed to run underneath the glass; its
         // last sliver already carries 96px of clearance.
         bottom: false,
-        child: RefreshIndicator(
-          onRefresh: () async {
-            await Future.wait([_loadListings(), _favorites.refresh(), _loadBoard()]);
-          },
-          child: CustomScrollView(
-            slivers: [
-              // Greeting. The deck opens on the person rather than on the
-              // search field, which is what makes the feed read as "yours".
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: ValueListenableBuilder<Me?>(
-                    valueListenable: AuthService.instance.me,
-                    builder: (context, me, _) => Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _greeting(context, me),
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
+        child: Stack(
+          children: [
+            RefreshIndicator(
+              onRefresh: () async {
+                await Future.wait(
+                    [_loadListings(), _favorites.refresh(), _loadBoard()]);
+              },
+              child: CustomScrollView(
+                controller: _scroll,
+                slivers: [
+                  // Greeting. The deck opens on the person rather than on the
+                  // search field, which is what makes the feed read as "yours".
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      child: ValueListenableBuilder<Me?>(
+                        valueListenable: AuthService.instance.me,
+                        builder: (context, me, _) => Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _greeting(context, me),
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              context.l10n.homeGreetingSubtitle,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // The way into search, and the way to say "near me".
+                  //
+                  // The field is a button rather than an input: search is its own
+                  // screen now, with recents, filters, ordering and pages beyond
+                  // the first, none of which fits under a feed.
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 12.0),
+                      child: _SearchRow(
+                        height: 48,
+                        onSearch: _openSearch,
+                        nearMe: _nearMe,
+                        locating: _locating,
+                        onNearMe: _locating ? null : _toggleNearMe,
+                      ),
+                    ),
+                  ),
+
+                  SliverToBoxAdapter(
+                    child: CategoryBar(
+                      categories: _categoryItems(context),
+                      onSelectCategory: _onCategoryTapped,
+                    ),
+                  ),
+
+                  // Was a hardcoded picsum.photos placeholder — a random stock
+                  // photo shown to every user since this screen was written. It is
+                  // now whatever an admin published, and nothing at all when they
+                  // have published nothing.
+                  SliverToBoxAdapter(
+                    child: HomeBoard(onCategory: _onCategorySlug),
+                  ),
+
+                  if (_isLoading)
+                    const SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (_error != null)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.cloud_off,
+                                  size: 48, color: scheme.onSurfaceVariant),
+                              const SizedBox(height: 12),
+                              Text(
+                                _error == _networkErrorSentinel
+                                    ? context.l10n.connectionError
+                                    : _error!,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: scheme.onSurfaceVariant),
+                              ),
+                              const SizedBox(height: 16),
+                              OutlinedButton(
+                                onPressed: _loadListings,
+                                child: Text(context.l10n.retry),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          context.l10n.homeGreetingSubtitle,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: scheme.onSurfaceVariant,
+                      ),
+                    )
+                  else if (_listings.isEmpty)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.search_off,
+                                    size: 48, color: scheme.onSurfaceVariant),
+                                const SizedBox(height: 12),
+                                Text(
+                                  // Only ever a category now: a text query lives on
+                                  // the search screen and never empties this one.
+                                  context.l10n
+                                      .noListingsIn(_selectedLabel(context)),
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: scheme.onSurfaceVariant),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      )
+                    else ...[
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    context.l10n
+                                        .galleryTitle(_selectedLabel(context)),
+                                    style: const TextStyle(
+                                        fontSize: 18, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: _seeAll,
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: context.tokens.accentInk,
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                  child: Text(context.l10n.homeSeeAll),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        SliverToBoxAdapter(
+                          child: SizedBox(
+                            height: 210,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              itemCount: gallery.length,
+                              itemBuilder: (context, index) {
+                                final item = gallery[index];
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 12.0),
+                                  child: ItemCard(
+                                    imageUrl: item.primaryImageUrl,
+                                    title: item.title,
+                                    price: item.displayPrice,
+                                    location: item.city,
+                                    distanceMeters: item.distanceMeters,
+                                    isCompact: true,
+                                    onTap: () => _openItemDetail(item),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 12.0),
+                            child: Text(
+                              context.l10n.recommendedForYou,
+                              key: _recommendedKey,
+                              style: const TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          sliver: ValueListenableBuilder<Set<String>>(
+                            valueListenable: _favorites.favoriteIds,
+                            builder: (context, favIds, _) => SliverGrid(
+                              gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 16,
+                                crossAxisSpacing: 12,
+                                childAspectRatio: 0.72,
+                              ),
+                              delegate: SliverChildBuilderDelegate(
+                                    (context, index) {
+                                  final item = _listings[index];
+                                  return ItemCard(
+                                    imageUrl: item.primaryImageUrl,
+                                    title: item.title,
+                                    price: item.displayPrice,
+                                    location: item.city,
+                                    distanceMeters: item.distanceMeters,
+                                    isFavorite: favIds.contains(item.id),
+                                    onTap: () => _openItemDetail(item),
+                                    onFavoriteToggle: () => _toggleFavorite(item),
+                                  );
+                                },
+                                childCount: _listings.length,
+                              ),
+                            ),
                           ),
                         ),
                       ],
-                    ),
+
+                  // Clears the docked FAB, which overhangs the bar and would
+                  // otherwise sit on top of the last row of cards.
+                  const SliverToBoxAdapter(child: SizedBox(height: 96)),
+                ],
+              ),
+            ),
+
+            // The same search button again, pinned to the top once the header
+            // has gone. The feed is long — forty cards — and without this,
+            // searching from halfway down meant scrolling all the way back up
+            // first. It reads as glass rather than as a solid bar so it stays
+            // clearly on top of the feed rather than looking like a second
+            // header that has always been there.
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: _FloatingSearch(
+                visible: _searchPinned,
+                onSearch: _openSearch,
+                nearMe: _nearMe,
+                locating: _locating,
+                onNearMe: _locating ? null : _toggleNearMe,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The search button and the pin beside it.
+///
+/// One widget for both places it appears — in the header and in the bar that
+/// replaces it — so the two cannot drift apart.
+class _SearchRow extends StatelessWidget {
+  final double height;
+  final VoidCallback onSearch;
+  final bool nearMe;
+  final bool locating;
+  final VoidCallback? onNearMe;
+
+  const _SearchRow({
+    required this.height,
+    required this.onSearch,
+    required this.nearMe,
+    required this.locating,
+    this.onNearMe,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final radius = BorderRadius.circular(height / 3);
+    return Row(
+      children: [
+        Expanded(
+          child: InkWell(
+            onTap: onSearch,
+            borderRadius: radius,
+            child: Container(
+              height: height,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerLow,
+                borderRadius: radius,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(8),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
                   ),
-                ),
+                ],
               ),
-
-              // The way into search, and the way to say "near me".
-              //
-              // The field is a button rather than an input: search is its own
-              // screen now, with recents, filters, ordering and pages beyond
-              // the first, none of which fits under a feed.
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 12.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: InkWell(
-                          onTap: _openSearch,
-                          borderRadius: BorderRadius.circular(16),
-                          child: Container(
-                            height: 48,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: scheme.surfaceContainerLow,
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withAlpha(8),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.search_rounded,
-                                    color: scheme.primary, size: 22),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    context.l10n.homeSearchHint,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: scheme.onSurfaceVariant
-                                          .withAlpha(180),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Where the notification bell used to be — that one was
-                      // `onPressed: () {}`, a brightly filled button wired to
-                      // nothing. This one does something.
-                      const SizedBox(width: 10),
-                      _NearMeButton(
-                        active: _nearMe,
-                        busy: _locating,
-                        onPressed: _locating ? null : _toggleNearMe,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              SliverToBoxAdapter(
-                child: CategoryBar(
-                  categories: _categoryItems(context),
-                  onSelectCategory: _onCategoryTapped,
-                ),
-              ),
-
-              // Was a hardcoded picsum.photos placeholder — a random stock
-              // photo shown to every user since this screen was written. It is
-              // now whatever an admin published, and nothing at all when they
-              // have published nothing.
-              SliverToBoxAdapter(
-                child: HomeBoard(onCategory: _onCategorySlug),
-              ),
-
-              if (_isLoading)
-                const SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (_error != null)
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.cloud_off,
-                              size: 48, color: scheme.onSurfaceVariant),
-                          const SizedBox(height: 12),
-                          Text(
-                            _error == _networkErrorSentinel
-                                ? context.l10n.connectionError
-                                : _error!,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: scheme.onSurfaceVariant),
-                          ),
-                          const SizedBox(height: 16),
-                          OutlinedButton(
-                            onPressed: _loadListings,
-                            child: Text(context.l10n.retry),
-                          ),
-                        ],
+              child: Row(
+                children: [
+                  Icon(Icons.search_rounded, color: scheme.primary, size: 22),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      context.l10n.homeSearchHint,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: scheme.onSurfaceVariant.withAlpha(180),
                       ),
                     ),
                   ),
-                )
-              else if (_listings.isEmpty)
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.search_off,
-                                size: 48, color: scheme.onSurfaceVariant),
-                            const SizedBox(height: 12),
-                            Text(
-                              // Only ever a category now: a text query lives on
-                              // the search screen and never empties this one.
-                              context.l10n
-                                  .noListingsIn(_selectedLabel(context)),
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: scheme.onSurfaceVariant),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  )
-                else ...[
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                context.l10n
-                                    .galleryTitle(_selectedLabel(context)),
-                                style: const TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: _seeAll,
-                              style: TextButton.styleFrom(
-                                foregroundColor: context.tokens.accentInk,
-                                visualDensity: VisualDensity.compact,
-                              ),
-                              child: Text(context.l10n.homeSeeAll),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        // Where the notification bell used to be — that one was
+        // `onPressed: () {}`, a brightly filled button wired to nothing. This
+        // one does something.
+        const SizedBox(width: 10),
+        _NearMeButton(
+          size: height,
+          active: nearMe,
+          busy: locating,
+          onPressed: onNearMe,
+        ),
+      ],
+    );
+  }
+}
 
-                    SliverToBoxAdapter(
-                      child: SizedBox(
-                        height: 210,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: gallery.length,
-                          itemBuilder: (context, index) {
-                            final item = gallery[index];
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 12.0),
-                              child: ItemCard(
-                                imageUrl: item.primaryImageUrl,
-                                title: item.title,
-                                price: item.displayPrice,
-                                location: item.city,
-                                distanceMeters: item.distanceMeters,
-                                isCompact: true,
-                                onTap: () => _openItemDetail(item),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
+/// The pinned bar itself.
+///
+/// Slides rather than fades alone: appearing in place would look like a bar
+/// that was always there and only just decided to paint itself, whereas coming
+/// down from the top edge says where it came from — the header the user just
+/// scrolled past.
+class _FloatingSearch extends StatelessWidget {
+  final bool visible;
+  final VoidCallback onSearch;
+  final bool nearMe;
+  final bool locating;
+  final VoidCallback? onNearMe;
 
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 12.0),
-                        child: Text(
-                          context.l10n.recommendedForYou,
-                          key: _recommendedKey,
-                          style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
+  const _FloatingSearch({
+    required this.visible,
+    required this.onSearch,
+    required this.nearMe,
+    required this.locating,
+    this.onNearMe,
+  });
 
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      sliver: ValueListenableBuilder<Set<String>>(
-                        valueListenable: _favorites.favoriteIds,
-                        builder: (context, favIds, _) => SliverGrid(
-                          gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 16,
-                            crossAxisSpacing: 12,
-                            childAspectRatio: 0.72,
-                          ),
-                          delegate: SliverChildBuilderDelegate(
-                                (context, index) {
-                              final item = _listings[index];
-                              return ItemCard(
-                                imageUrl: item.primaryImageUrl,
-                                title: item.title,
-                                price: item.displayPrice,
-                                location: item.city,
-                                distanceMeters: item.distanceMeters,
-                                isFavorite: favIds.contains(item.id),
-                                onTap: () => _openItemDetail(item),
-                                onFavoriteToggle: () => _toggleFavorite(item),
-                              );
-                            },
-                            childCount: _listings.length,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-
-              // Clears the docked FAB, which overhangs the bar and would
-              // otherwise sit on top of the last row of cards.
-              const SliverToBoxAdapter(child: SizedBox(height: 96)),
-            ],
+  @override
+  Widget build(BuildContext context) {
+    const duration = Duration(milliseconds: 220);
+    return IgnorePointer(
+      // Hidden means gone: a transparent bar that still swallows taps would
+      // eat the first row of cards.
+      ignoring: !visible,
+      child: AnimatedSlide(
+        offset: visible ? Offset.zero : const Offset(0, -1),
+        duration: duration,
+        curve: Curves.easeOutCubic,
+        child: AnimatedOpacity(
+          opacity: visible ? 1 : 0,
+          duration: duration,
+          child: GlassSurface(
+            sigma: 20,
+            topBorder: false,
+            child: DecoratedBox(
+              // The bar meets the feed at its bottom edge, not its top, so
+              // that is the edge that needs a line — without it a pale card
+              // scrolling under a pale tint leaves the pill floating on
+              // nothing.
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: Theme.of(context)
+                        .dividerColor
+                        .withValues(alpha: 0.6),
+                  ),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+                child: _SearchRow(
+                  height: 44,
+                  onSearch: onSearch,
+                  nearMe: nearMe,
+                  locating: locating,
+                  onNearMe: onNearMe,
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -661,33 +814,36 @@ class _NearMeButton extends StatelessWidget {
   final bool active;
   final bool busy;
   final VoidCallback? onPressed;
+  final double size;
 
   const _NearMeButton({
     required this.active,
     required this.busy,
     required this.onPressed,
+    this.size = 48,
   });
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final scheme = Theme.of(context).colorScheme;
+    final radius = BorderRadius.circular(size / 3);
     return Tooltip(
       message: context.l10n.homeNearMe,
       child: Material(
         color: active ? tokens.accentFill : scheme.surfaceContainerLow,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: radius,
           side: active
               ? BorderSide.none
               : BorderSide(color: Theme.of(context).dividerColor),
         ),
         child: InkWell(
           onTap: onPressed,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: radius,
           child: SizedBox(
-            width: 48,
-            height: 48,
+            width: size,
+            height: size,
             child: Center(
               child: busy
                   ? SizedBox(
