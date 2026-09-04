@@ -25,6 +25,28 @@ class AppConfig {
     defaultValue: 'sb_publishable_ImOqFcjPQ4I7uwlf5UHeOA_ykbjOkgz',
   );
 
+  /// OAuth **Web** client ID from Google Cloud, used as `serverClientId`.
+  ///
+  /// Not a secret — it is the public half, and Google's own samples ship it in
+  /// the client. The secret that pairs with it lives only in Supabase.
+  ///
+  /// It is the *web* client on purpose, not the Android one: the Android client
+  /// is matched by package name and signing certificate and issues nothing you
+  /// can hand to a server, while `serverClientId` is what makes Google mint an
+  /// ID token audienced to the backend — which is exactly what Supabase
+  /// verifies.
+  ///
+  /// Empty means "not configured yet", and sign-in falls back to the hosted
+  /// browser flow. That fallback is deliberate: an unconfigured native flow
+  /// fails at the account picker with nothing to say, and this is the app's
+  /// only social sign-in.
+  static const String googleWebClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+    defaultValue: '',
+  );
+
+  static bool get hasNativeGoogleSignIn => googleWebClientId.isNotEmpty;
+
   /// Public base for images stored in Supabase Storage buckets.
   static String storagePublicUrl(String bucket, String path) =>
       '$supabaseUrl/storage/v1/object/public/$bucket/$path';

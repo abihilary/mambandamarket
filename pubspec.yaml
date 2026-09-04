@@ -82,6 +82,10 @@ dependencies:
   # drops every notification we send.
   flutter_local_notifications: ^22.3.0
   package_info_plus: ^10.2.1
+  # Native Google sign-in: the account picker Android already has, instead of
+  # a browser round trip to Supabase's hosted OAuth page.
+  google_sign_in: ^7.0.0
+
   # Coarse location, for "how far away is this?".
   #
   # geolocator only — it carries its own permission API, so permission_handler

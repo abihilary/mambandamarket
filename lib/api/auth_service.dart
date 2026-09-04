@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'api_client.dart';
+import 'config.dart';
 import 'remote_config.dart';
 import 'models.dart';
 import 'push_service.dart';
@@ -254,13 +256,86 @@ class AuthService {
   /// the session appearing.
   ///
   /// Returns false if the user dismissed the consent screen.
+  /// Sign in with Google.
+  ///
+  /// Native where it can be: Android already knows which accounts are on the
+  /// phone, so the right experience is the system account sheet, not a trip out
+  /// to a browser and back. The hosted flow also shows the raw Supabase
+  /// project host on the consent screen, which is the other reason to leave it.
+  ///
+  /// Falls back to the hosted flow when [AppConfig.hasNativeGoogleSignIn] is
+  /// false, when the platform has no native support (web), and when the native
+  /// attempt fails for any reason other than the user backing out. A broken
+  /// native path must never be the end of the road: this is the only social
+  /// sign-in the app has.
   Future<bool> signInWithGoogle() async {
+    if (!kIsWeb && AppConfig.hasNativeGoogleSignIn) {
+      try {
+        final signedIn = await _signInWithGoogleNatively();
+        // A cancel returns false and stops here rather than falling through to
+        // the browser: backing out of the account sheet means "no", not "try
+        // it the other way".
+        return signedIn;
+      } on _GoogleCancelled {
+        return false;
+      } catch (e, stack) {
+        debugPrint('[auth] native Google sign-in failed, falling back: $e');
+        debugPrintStack(stackTrace: stack, label: '[auth]');
+      }
+    }
     return _client.auth.signInWithOAuth(
       OAuthProvider.google,
       redirectTo: _redirectFor(kOAuthRedirect),
       authScreenLaunchMode:
           kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
     );
+  }
+
+  /// The system account sheet, exchanged for a Supabase session.
+  ///
+  /// Supabase verifies the ID token's signature and audience itself, so nothing
+  /// here has to be trusted: a forged token fails at the server.
+  Future<bool> _signInWithGoogleNatively() async {
+    final google = GoogleSignIn.instance;
+    if (!google.supportsAuthenticate()) {
+      throw StateError('platform has no native Google sign-in');
+    }
+    await google.initialize(serverClientId: AppConfig.googleWebClientId);
+
+    final GoogleSignInAccount account;
+    try {
+      account = await google.authenticate();
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        throw const _GoogleCancelled();
+      }
+      rethrow;
+    }
+
+    final idToken = account.authentication.idToken;
+    if (idToken == null) {
+      // Almost always a configuration fault rather than a runtime one: the
+      // signing certificate on the Android OAuth client not matching the build,
+      // or serverClientId pointing at something that is not the web client.
+      throw StateError('Google returned no ID token');
+    }
+
+    // Optional for Supabase, and requested separately because Google's own
+    // guidance is to keep authentication and authorization apart. Null is a
+    // normal answer, not a failure.
+    String? accessToken;
+    try {
+      final authorization = await account.authorizationClient
+          .authorizationForScopes(const ['email', 'profile']);
+      accessToken = authorization?.accessToken;
+    } catch (_) {}
+
+    await _client.auth.signInWithIdToken(
+      provider: OAuthProvider.google,
+      idToken: idToken,
+      accessToken: accessToken,
+    );
+    return true;
   }
 
   /// Email a password-recovery link.
@@ -422,4 +497,10 @@ class AuthService {
     final p = (json['profile'] as Map?)?.cast<String, dynamic>();
     return p == null ? null : Profile.fromJson(p);
   }
+}
+
+/// The user closed the account sheet. Not an error, and not a reason to open a
+/// browser at them instead.
+class _GoogleCancelled implements Exception {
+  const _GoogleCancelled();
 }
