@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'app_tokens.dart';
+
 /// The Mambanda Market palette.
 ///
 /// Sampled from the brand logo rather than guessed: the monogram's lime runs
@@ -11,6 +13,15 @@ abstract final class AppColors {
   static const lime = Color(0xFFC9E505);
   static const limeBright = Color(0xFFDDF106);
   static const limeDeep = Color(0xFF9DB404);
+
+  /// The accent, deepened until it can be read on a light ground.
+  ///
+  /// Measured: [lime] scores 1.43:1 against white and [limeDeep] 2.34:1, both
+  /// well under the 4.5:1 a label needs. This one is 5.97:1 on white and
+  /// 5.62:1 on [lightGround], and still reads as the brand rather than as an
+  /// unrelated olive. Light theme only — in the dark, plain [lime] is 12.9:1
+  /// on [darkSurface] and needs no help.
+  static const limeInk = Color(0xFF5C6A02);
 
   /// Lime is far too bright to carry white text — anything sitting on it uses
   /// near-black instead.
@@ -65,6 +76,7 @@ abstract final class AppTheme {
         surface: AppColors.lightSurface,
         line: AppColors.lightLine,
         muted: AppColors.lightMuted,
+        tokens: AppTokens.light,
       );
 
   static ThemeData dark() => _build(
@@ -87,6 +99,7 @@ abstract final class AppTheme {
         surface: AppColors.darkSurface,
         line: AppColors.darkLine,
         muted: AppColors.darkMuted,
+        tokens: AppTokens.dark,
       );
 
   static ThemeData _build({
@@ -96,6 +109,7 @@ abstract final class AppTheme {
     required Color surface,
     required Color line,
     required Color muted,
+    required AppTokens tokens,
   }) {
     final isDark = brightness == Brightness.dark;
     final base = ThemeData(brightness: brightness, useMaterial3: true);
@@ -104,6 +118,7 @@ abstract final class AppTheme {
 
     return base.copyWith(
       colorScheme: scheme,
+      extensions: [tokens],
       // copyWith(colorScheme:) does NOT recompute the legacy colour slots, so
       // anything still reading `theme.primaryColor` would keep painting the
       // Material baseline purple. Pin them to the scheme so old and new APIs
@@ -136,12 +151,15 @@ abstract final class AppTheme {
         ),
       ),
 
-      // Filled buttons are the lime CTA in dark, near-black in light. Either
-      // way the label colour comes from the scheme, so it stays legible.
+      // The primary CTA is lime in BOTH themes now, which is how the deck
+      // draws it. That is safe where a plain accent would not be, because a
+      // fill is judged by what sits on it: near-black on lime is 13.8:1. It is
+      // deliberately not `scheme.primary`, which stays `ink` in light so the
+      // many widgets reading it for *text* keep working.
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: scheme.primary,
-          foregroundColor: scheme.onPrimary,
+          backgroundColor: tokens.accentFill,
+          foregroundColor: tokens.onAccentFill,
           minimumSize: const Size.fromHeight(52),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
@@ -150,8 +168,8 @@ abstract final class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: scheme.primary,
-          foregroundColor: scheme.onPrimary,
+          backgroundColor: tokens.accentFill,
+          foregroundColor: tokens.onAccentFill,
           elevation: 0,
           minimumSize: const Size.fromHeight(52),
           shape:
@@ -170,7 +188,7 @@ abstract final class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: isDark ? AppColors.lime : scheme.primary,
+          foregroundColor: tokens.accentInk,
         ),
       ),
 
@@ -200,7 +218,7 @@ abstract final class AppTheme {
 
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: isDark ? AppColors.darkSurface : surface,
-        selectedItemColor: isDark ? AppColors.lime : scheme.primary,
+        selectedItemColor: tokens.accentInk,
         unselectedItemColor: muted,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
@@ -236,7 +254,7 @@ abstract final class AppTheme {
       ),
 
       listTileTheme: ListTileThemeData(
-        iconColor: isDark ? AppColors.lime : scheme.primary,
+        iconColor: tokens.accentInk,
         textColor: scheme.onSurface,
       ),
 
@@ -248,9 +266,9 @@ abstract final class AppTheme {
             (s) => s.contains(WidgetState.selected) ? scheme.primary : muted),
       ),
       tabBarTheme: TabBarThemeData(
-        labelColor: isDark ? AppColors.lime : scheme.primary,
+        labelColor: tokens.accentInk,
         unselectedLabelColor: muted,
-        indicatorColor: isDark ? AppColors.lime : scheme.primary,
+        indicatorColor: tokens.accentInk,
       ),
     );
   }

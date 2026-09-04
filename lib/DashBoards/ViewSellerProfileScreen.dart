@@ -3,6 +3,7 @@ import '../api/models.dart' as api;
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../Components/local_image.dart';
+import '../Components/image_placeholder.dart';
 
 class ViewSellerProfileScreen extends StatelessWidget {
   final api.SellerDashboard? sellerStats;
@@ -69,10 +70,9 @@ class ViewSellerProfileScreen extends StatelessWidget {
   }
 
   Widget _buildGridImage(String path) {
-    Widget placeholder() => Container(
-      color: Colors.grey.shade200,
-      child: const Icon(Icons.broken_image, color: Colors.grey),
-    );
+    // Themed, and shared with the other two profile screens that had the same
+    // grey slab pasted into them.
+    Widget placeholder() => const ImagePlaceholder();
 
     if (path.startsWith('http://') || path.startsWith('https://')) {
       return Image.network(

@@ -3,6 +3,8 @@ import '../api/models.dart' as api;
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../Components/local_image.dart';
+import '../Components/image_placeholder.dart';
+import '../Components/rating_badge.dart';
 
 class ViewProfileScreen extends StatelessWidget {
   final api.Store? store;
@@ -71,10 +73,9 @@ class ViewProfileScreen extends StatelessWidget {
   }
 
   Widget _buildGridImage(String path) {
-    Widget placeholder() => Container(
-      color: Colors.grey.shade200,
-      child: const Icon(Icons.broken_image, color: Colors.grey),
-    );
+    // Themed, and shared with the other two profile screens that had the same
+    // grey slab pasted into them.
+    Widget placeholder() => const ImagePlaceholder();
 
     if (path.startsWith('http://') || path.startsWith('https://')) {
       return Image.network(
@@ -196,34 +197,12 @@ class ViewProfileScreen extends StatelessWidget {
                               const SizedBox(height: 6),
                               Row(
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.amber.shade100,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.star_rounded,
-                                          size: 14,
-                                          color: Colors.amber,
-                                        ),
-                                        const SizedBox(width: 2),
-                                        Text(
-                                          store?.ratingAvg.toStringAsFixed(1) ??
-                                              "0.0",
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.amber.shade900,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                  // Shared, and legible on both grounds: raw
+                                  // amber label text is 2.3:1 on white.
+                                  RatingBadge(
+                                    rating: store?.ratingAvg ?? 0,
+                                    count: store?.ratingCount ?? 0,
+                                    compact: true,
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
