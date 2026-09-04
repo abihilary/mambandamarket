@@ -17,6 +17,8 @@ import '../Components/home_board.dart';
 import '../api/board_media_cache.dart';
 import '../api/board_repository.dart';
 import '../Components/category_icons.dart';
+import '../Components/category_picker.dart';
+import '../theme/app_tokens.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -39,6 +41,11 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _selectedSlug; // null == "For You"
   String _searchQuery = '';
   Timer? _searchDebounce;
+
+  /// Anchor for the gallery's "See all". The rail shows the first eight of
+  /// exactly the same list the grid below shows in full, so "all of them" is a
+  /// place on this page rather than another screen.
+  final GlobalKey _recommendedKey = GlobalKey();
 
   List<Listing> _listings = [];
   bool _isLoading = true;
@@ -157,10 +164,29 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onCategoryTapped(int index) {
     final bar = _barCategories;
+    // The last chip is "More", not a category: the strip shows the sixteen
+    // groups, and everything below them lives in the picker.
+    if (index == bar.length + 1) {
+      _openCategoryPicker();
+      return;
+    }
     setState(() {
       // Index 0 is the synthetic "For You" entry.
       _selectedSlug = index == 0 ? null : bar[index - 1].slug;
     });
+    _loadListings();
+  }
+
+  /// The full tree, reusing the sheet the publish form already uses.
+  Future<void> _openCategoryPicker() async {
+    if (_categories.isEmpty) return;
+    final picked = await showCategoryPicker(
+      context,
+      categories: _categories,
+      selectedSlug: _selectedSlug,
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _selectedSlug = picked);
     _loadListings();
   }
 
@@ -195,6 +221,34 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     }
+  }
+
+  /// "Good morning Hilary" — greeting by local hour, name when we have one.
+  ///
+  /// The name is appended rather than interpolated into each phrase so the
+  /// greeting still reads correctly in the moment before /me resolves, and for
+  /// an account that never set a display name.
+  String _greeting(BuildContext context, Me? me) {
+    final l10n = context.l10n;
+    final hour = DateTime.now().hour;
+    final greeting = hour < 12
+        ? l10n.homeGreetingMorning
+        : hour < 18
+            ? l10n.homeGreetingAfternoon
+            : l10n.homeGreetingEvening;
+    final name = me?.profile?.displayName?.trim() ?? '';
+    final first = name.isEmpty ? '' : name.split(' ').first;
+    return first.isEmpty ? '$greeting 👋' : '$greeting $first 👋';
+  }
+
+  void _seeAll() {
+    final ctx = _recommendedKey.currentContext;
+    if (ctx == null) return;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOut,
+    );
   }
 
   String _selectedLabel(BuildContext context) {
@@ -232,6 +286,12 @@ class _HomeScreenState extends State<HomeScreen> {
           isSelected: c.slug == selectedRoot,
         ),
       ),
+      // Never "selected" — it opens the picker rather than filtering.
+      CategoryItem(
+        label: context.l10n.homeMoreCategories,
+        icon: Icons.more_horiz,
+        isSelected: false,
+      ),
     ];
   }
 
@@ -248,6 +308,37 @@ class _HomeScreenState extends State<HomeScreen> {
           },
           child: CustomScrollView(
             slivers: [
+              // Greeting. The deck opens on the person rather than on the
+              // search field, which is what makes the feed read as "yours".
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: ValueListenableBuilder<Me?>(
+                    valueListenable: AuthService.instance.me,
+                    builder: (context, me, _) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _greeting(context, me),
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          context.l10n.homeGreetingSubtitle,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
               // Search Bar Row with Notification Icon integrated
               SliverToBoxAdapter(
                 child: Padding(
@@ -290,26 +381,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                 color: scheme.primary,
                                 size: 22,
                               ),
+                              // The pin that used to sit here was decoration
+                              // dressed as a control: a tappable-looking tile
+                              // in a text field, wired to nothing. The real
+                              // location control arrives with the distance
+                              // work; until then there is nothing to fake.
                               suffixIcon: _searchController.text.isNotEmpty
                                   ? IconButton(
-                                icon: const Icon(Icons.clear_rounded,
-                                    size: 18),
-                                onPressed: _clearSearch,
-                              )
-                                  : Container(
-                                margin: const EdgeInsets.all(8),
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: scheme.primaryContainer,
-                                  borderRadius:
-                                  BorderRadius.circular(10),
-                                ),
-                                child: Icon(
-                                  Icons.location_on_rounded,
-                                  size: 16,
-                                  color: scheme.onPrimaryContainer,
-                                ),
-                              ),
+                                      icon: const Icon(Icons.clear_rounded,
+                                          size: 18),
+                                      onPressed: _clearSearch,
+                                    )
+                                  : null,
                               border: InputBorder.none,
                               enabledBorder: InputBorder.none,
                               focusedBorder: InputBorder.none,
@@ -321,19 +404,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-
-                      // Notification Bell Button inside the same row
-                      IconButton.filledTonal(
-                        onPressed: () {},
-                        icon: const Icon(Icons.notifications_none_rounded),
-                        style: IconButton.styleFrom(
-                          padding: const EdgeInsets.all(14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                      ),
+                      // The notification bell that sat here was
+                      // `onPressed: () {}` — a prominent, brightly filled
+                      // button that did nothing at all. There is no
+                      // notifications screen to route it to, so it is gone
+                      // rather than left as a promise the app cannot keep.
                     ],
                   ),
                 ),
@@ -416,12 +491,26 @@ class _HomeScreenState extends State<HomeScreen> {
                 else ...[
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16.0, vertical: 8.0),
-                        child: Text(
-                          context.l10n.galleryTitle(_selectedLabel(context)),
-                          style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
+                        padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                context.l10n
+                                    .galleryTitle(_selectedLabel(context)),
+                                style: const TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: _seeAll,
+                              style: TextButton.styleFrom(
+                                foregroundColor: context.tokens.accentInk,
+                                visualDensity: VisualDensity.compact,
+                              ),
+                              child: Text(context.l10n.homeSeeAll),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -456,6 +545,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 12.0),
                         child: Text(
                           context.l10n.recommendedForYou,
+                          key: _recommendedKey,
                           style: const TextStyle(
                               fontSize: 18, fontWeight: FontWeight.bold),
                         ),

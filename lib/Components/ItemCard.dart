@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/app_tokens.dart';
 
 class ItemCard extends StatelessWidget {
   final String imageUrl;
@@ -104,22 +105,23 @@ class ItemCard extends StatelessWidget {
                     children: [
                       Text(
                         price,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          // Routed through the token so the price stays legible
-                          // on a dark ground as well as a light one.
-                          color: AppColors.success,
+                          // The deck prices in the brand accent, not in green.
+                          // accentInk rather than the fill, because this is
+                          // text on the page: raw lime is 1.4:1 on white.
+                          color: context.tokens.accentInk,
                         ),
                       ),
                       if (priceAddon != null) ...[
                         const SizedBox(width: 4),
                         Text(
                           priceAddon!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.success,
+                            color: context.tokens.accentInk,
                           ),
                         ),
                       ]

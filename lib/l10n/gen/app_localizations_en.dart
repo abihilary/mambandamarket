@@ -1991,6 +1991,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeSearchHint => 'Search items, brands, categories…';
 
   @override
+  String get homeGreetingMorning => 'Good morning';
+
+  @override
+  String get homeGreetingAfternoon => 'Good afternoon';
+
+  @override
+  String get homeGreetingEvening => 'Good evening';
+
+  @override
+  String get homeGreetingSubtitle => 'Find something amazing today';
+
+  @override
+  String get homeSeeAll => 'See all';
+
+  @override
+  String get homeMoreCategories => 'More';
+
+  @override
   String get splashTagline => 'Buy, Sell & Connect';
 
   @override

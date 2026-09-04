@@ -752,6 +752,12 @@
     }
   },
   "homeSearchHint": "Rechercher un article, une marque, une catégorie…",
+  "homeGreetingMorning": "Bonjour",
+  "homeGreetingAfternoon": "Bon après-midi",
+  "homeGreetingEvening": "Bonsoir",
+  "homeGreetingSubtitle": "Trouvez quelque chose de formidable aujourd'hui",
+  "homeSeeAll": "Tout voir",
+  "homeMoreCategories": "Plus",
   "splashTagline": "Acheter, vendre, échanger",
   "upgradeRequiredTitle": "Abonnement requis",
   "upgradeRequiredBody": "Publier de nouvelles annonces nécessite une formule premium. Voulez-vous passer à un abonnement supérieur maintenant ?",

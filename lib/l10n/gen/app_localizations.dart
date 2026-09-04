@@ -3638,6 +3638,42 @@ abstract class AppLocalizations {
   /// **'Search items, brands, categories…'**
   String get homeSearchHint;
 
+  /// No description provided for @homeGreetingMorning.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning'**
+  String get homeGreetingMorning;
+
+  /// No description provided for @homeGreetingAfternoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Good afternoon'**
+  String get homeGreetingAfternoon;
+
+  /// No description provided for @homeGreetingEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'Good evening'**
+  String get homeGreetingEvening;
+
+  /// No description provided for @homeGreetingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Find something amazing today'**
+  String get homeGreetingSubtitle;
+
+  /// No description provided for @homeSeeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all'**
+  String get homeSeeAll;
+
+  /// No description provided for @homeMoreCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get homeMoreCategories;
+
   /// No description provided for @splashTagline.
   ///
   /// In en, this message translates to:

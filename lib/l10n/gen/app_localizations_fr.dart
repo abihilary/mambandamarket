@@ -2026,6 +2026,25 @@ class AppLocalizationsFr extends AppLocalizations {
       'Rechercher un article, une marque, une catégorie…';
 
   @override
+  String get homeGreetingMorning => 'Bonjour';
+
+  @override
+  String get homeGreetingAfternoon => 'Bon après-midi';
+
+  @override
+  String get homeGreetingEvening => 'Bonsoir';
+
+  @override
+  String get homeGreetingSubtitle =>
+      'Trouvez quelque chose de formidable aujourd\'hui';
+
+  @override
+  String get homeSeeAll => 'Tout voir';
+
+  @override
+  String get homeMoreCategories => 'Plus';
+
+  @override
   String get splashTagline => 'Acheter, vendre, échanger';
 
   @override

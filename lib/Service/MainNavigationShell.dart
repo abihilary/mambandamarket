@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 
 // Screens imports
@@ -11,6 +12,7 @@ import '../Screens/ChatInboxScreen.dart';
 import '../Screens/FavoritesScreen.dart';
 import '../Screens/HomeScreen.dart';
 import '../l10n/l10n.dart';
+import '../theme/app_tokens.dart';
 
 class MainNavigationShell extends StatefulWidget {
   const MainNavigationShell({super.key});
@@ -116,12 +118,18 @@ class _MainNavigationShellState extends State<MainNavigationShell>
     const AccountScreen(),           // Index 4: Account
   ];
 
-  void _onTabTapped(int index) async {
-    // Index 2 corresponds to "Publish" (+) action
-    if (index == 2) {
-      if (!_canPublish) {
-        _showUpgradeDialog();
-      } else {
+  /// Open the create form.
+  ///
+  /// Was reached through tab index 2, which no longer exists as a tab: the
+  /// deck puts Publish on a disc straddling the bar, so it is a docked FAB and
+  /// this is what it calls. The quota gate is unchanged.
+  Future<void> _openPublish() async {
+    if (!_canPublish) {
+      _showUpgradeDialog();
+      return;
+    }
+    {
+      {
         // The result is the new listing, or null if the seller backed out.
         //
         // This used to be awaited and dropped. Both dashboards reload after
@@ -140,9 +148,10 @@ class _MainNavigationShellState extends State<MainNavigationShell>
         // leaving them on whatever one they pressed + from.
         setState(() => _currentBottomIndex = 0);
       }
-      return;
     }
+  }
 
+  void _onTabTapped(int index) {
     // Opening Messages re-reads the inbox. Without this it keeps showing
     // whatever was true when the app was opened.
     if (index == 3) _inboxKey.currentState?.reload();
@@ -183,45 +192,141 @@ class _MainNavigationShellState extends State<MainNavigationShell>
         index: _currentBottomIndex,
         children: _pages,
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentBottomIndex,
-        // Selected/unselected colours come from bottomNavigationBarTheme so the
-        // bar tracks the brand accent in both light and dark.
-        type: BottomNavigationBarType.fixed,
-        onTap: _onTabTapped,
-        items: [
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.search),
-            label: context.l10n.navSearch,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.favorite_border),
-            label: context.l10n.navFavorites,
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.add_circle_outline,
-                size: 30, color: Theme.of(context).colorScheme.primary),
-            label: context.l10n.navPublish,
-          ),
-          BottomNavigationBarItem(
-            // Unread count, so a message that arrives while you are on another
-            // tab says so. Until now nothing in the bar changed at all.
-            icon: ValueListenableBuilder<int>(
-              valueListenable: ChatRepository.instance.totalUnread,
-              builder: (context, unread, child) => Badge.count(
-                count: unread,
-                isLabelVisible: unread > 0,
-                child: child,
-              ),
-              child: const Icon(Icons.chat_bubble_outline),
+      // The deck puts Publish on a lime disc straddling the bar rather than in
+      // a fifth slot. BottomNavigationBar cannot cut a notch, so the bar is a
+      // BottomAppBar with four hand-rolled tabs and a docked FAB between them.
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: _PublishButton(onPressed: _openPublish),
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 7,
+        height: 68,
+        padding: EdgeInsets.zero,
+        color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
+        child: Row(
+          children: [
+            _NavItem(
+              icon: Icons.search,
+              label: context.l10n.navSearch,
+              selected: _currentBottomIndex == 0,
+              onTap: () => _onTabTapped(0),
             ),
-            label: context.l10n.navMessages,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.person_outline),
-            label: context.l10n.navAccount,
-          ),
-        ],
+            _NavItem(
+              icon: Icons.favorite_border,
+              label: context.l10n.navFavorites,
+              selected: _currentBottomIndex == 1,
+              onTap: () => _onTabTapped(1),
+            ),
+            // Room for the notch the FAB sits in.
+            const Spacer(),
+            _NavItem(
+              icon: Icons.chat_bubble_outline,
+              label: context.l10n.navMessages,
+              selected: _currentBottomIndex == 3,
+              onTap: () => _onTabTapped(3),
+              // Unread count, so a message that arrives while you are on
+              // another tab says so.
+              badgeListenable: ChatRepository.instance.totalUnread,
+            ),
+            _NavItem(
+              icon: Icons.person_outline,
+              label: context.l10n.navAccount,
+              selected: _currentBottomIndex == 4,
+              onTap: () => _onTabTapped(4),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+/// The lime disc in the middle of the bar.
+///
+/// Uses the brand tokens rather than `colorScheme.primary`: primary is `ink` in
+/// the light theme, which would render this as a black button in a design whose
+/// whole point is that it is lime. A fill can be lime on either ground because
+/// what sits on it is near-black.
+class _PublishButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _PublishButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return FloatingActionButton(
+      onPressed: onPressed,
+      backgroundColor: tokens.accentFill,
+      foregroundColor: tokens.onAccentFill,
+      elevation: 2,
+      shape: const CircleBorder(),
+      tooltip: context.l10n.navPublish,
+      child: const Icon(Icons.add, size: 30),
+    );
+  }
+}
+
+/// One tab in the bar.
+///
+/// Hand-rolled because BottomAppBar has no item model of its own. Colours come
+/// from bottomNavigationBarTheme so the bar still tracks the accent in both
+/// themes instead of hardcoding lime, which cannot be read on a light ground.
+class _NavItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final ValueListenable<int>? badgeListenable;
+
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.badgeListenable,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bar = Theme.of(context).bottomNavigationBarTheme;
+    final color = selected ? bar.selectedItemColor : bar.unselectedItemColor;
+
+    Widget glyph = Icon(icon, size: 24, color: color);
+    final badge = badgeListenable;
+    if (badge != null) {
+      glyph = ValueListenableBuilder<int>(
+        valueListenable: badge,
+        builder: (context, unread, child) => Badge.count(
+          count: unread,
+          isLabelVisible: unread > 0,
+          child: child,
+        ),
+        child: glyph,
+      );
+    }
+
+    return Expanded(
+      child: InkResponse(
+        onTap: onTap,
+        containedInkWell: false,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            glyph,
+            const SizedBox(height: 3),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11,
+                color: color,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

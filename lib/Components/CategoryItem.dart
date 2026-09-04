@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_tokens.dart';
+
 class CategoryItem {
   final String label;
   final IconData icon;
@@ -25,9 +27,10 @@ class CategoryBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final tokens = context.tokens;
 
     return SizedBox(
-      height: 95,
+      height: 97,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(), // Smooth mobile scroll physics
@@ -45,33 +48,27 @@ class CategoryBar extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // Selected is a solid lime pill with a near-black glyph,
+                  // as the deck draws it — not a tinted wash behind a lime
+                  // icon. A fill reads as "chosen" at a glance where a 14%
+                  // tint does not, and it works on either ground because what
+                  // sits on lime is always near-black.
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    width: 52,
-                    height: 52,
+                    width: 64,
+                    height: 54,
                     decoration: BoxDecoration(
                       color: cat.isSelected
-                          ? scheme.primary.withValues(alpha: 0.14)
+                          ? tokens.accentFill
                           : scheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(16),
-                      border: cat.isSelected
-                          ? Border.all(color: scheme.primary, width: 2.0)
-                          : Border.all(color: Colors.transparent),
-                      boxShadow: cat.isSelected
-                          ? [
-                        BoxShadow(
-                          color: scheme.primary.withValues(alpha: 0.15),
-                          blurRadius: 6,
-                          offset: const Offset(0, 3),
-                        )
-                      ]
-                          : [],
+                      borderRadius: BorderRadius.circular(22),
                     ),
                     child: Icon(
                       cat.icon,
                       size: 24,
-                      color:
-                          cat.isSelected ? scheme.primary : scheme.onSurface,
+                      color: cat.isSelected
+                          ? tokens.onAccentFill
+                          : scheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -83,9 +80,13 @@ class CategoryBar extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 11,
                       height: 1.1,
-                      fontWeight: cat.isSelected ? FontWeight.bold : FontWeight.w500,
-                      color:
-                          cat.isSelected ? scheme.primary : scheme.onSurface,
+                      fontWeight:
+                          cat.isSelected ? FontWeight.bold : FontWeight.w500,
+                      // accentInk, not the fill: the label sits on the page,
+                      // not on the pill, so it needs the readable variant.
+                      color: cat.isSelected
+                          ? tokens.accentInk
+                          : scheme.onSurfaceVariant,
                     ),
                   ),
                 ],

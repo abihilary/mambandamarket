@@ -902,6 +902,12 @@
     }
   },
   "homeSearchHint": "Search items, brands, categories…",
+  "homeGreetingMorning": "Good morning",
+  "homeGreetingAfternoon": "Good afternoon",
+  "homeGreetingEvening": "Good evening",
+  "homeGreetingSubtitle": "Find something amazing today",
+  "homeSeeAll": "See all",
+  "homeMoreCategories": "More",
   "splashTagline": "Buy, Sell & Connect",
   "upgradeRequiredTitle": "Upgrade required",
   "upgradeRequiredBody": "Posting new listings requires a premium plan. Would you like to upgrade your subscription now?",
