@@ -53,6 +53,9 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
     'category_slug': l.categorySlug,
     'condition': l.condition ?? '',
     'hasGuarantee': l.hasGuarantee,
+    // See the note in SellerDashboardScreen._fromListing: omitting this wiped
+    // the listing's location on every save from this dashboard.
+    'city': l.city,
     'views': l.viewCount,
     'inStock': l.quantity > 0,
     'status': l.status,

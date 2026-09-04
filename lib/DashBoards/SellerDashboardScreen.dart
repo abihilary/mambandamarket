@@ -56,6 +56,12 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     'category_slug': l.categorySlug,
     'condition': l.condition ?? '',
     'hasGuarantee': l.hasGuarantee,
+    // The edit form posts every field it holds, and it reads the location from
+    // this map. Leaving it out did not mean "unchanged" — the box opened
+    // empty and saving wrote the empty string back, which the API reads as
+    // "cleared". Editing anything about a listing silently deleted its
+    // location.
+    'city': l.city,
     'views': l.viewCount,
     'inquiries': l.inquiryCount,
     'quantity': l.quantity,
