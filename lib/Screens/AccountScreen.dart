@@ -15,6 +15,7 @@ import '../Components/menu_group.dart';
 import '../theme/app_theme.dart';
 import '../theme/theme_controller.dart';
 import 'EditProfileScreen.dart';
+import '../theme/app_tokens.dart';
 import 'ResetPasswordScreen.dart';
 
 class AccountScreen extends StatefulWidget {
@@ -310,70 +311,118 @@ class _AccountScreenState extends State<AccountScreen> {
               // and would otherwise sit on top of the last row.
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
               children: [
-                ListTile(
-                  leading: GestureDetector(
-                    onTap: _changeAvatar,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        CircleAvatar(
-                          radius: 28,
-                          backgroundColor: scheme.primary.withValues(alpha: 0.12),
-                          backgroundImage: (avatar != null && avatar.isNotEmpty)
-                              ? NetworkImage(avatar)
-                              : null,
-                          child: _uploadingAvatar
-                              ? SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2, color: scheme.primary),
-                                )
-                              : (avatar == null || avatar.isEmpty)
-                                  ? Text(
-                                      name.characters.first.toUpperCase(),
-                                      style: TextStyle(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                          color: scheme.primary),
-                                    )
-                                  : null,
-                        ),
-                        // Without this the picture looks like decoration; the
-                        // camera dot is the only thing that says it is a button.
-                        Positioned(
-                          right: -2,
-                          bottom: -2,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: scheme.primary,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: scheme.surface, width: 2),
+                // One card for the person, not two rows for the same thing.
+                //
+                // This was a header row and an "Edit profile" row directly
+                // under it, both opening the same editor — which reads as the
+                // screen not knowing which of them is the way in. The card is
+                // the way in; the camera dot is the one part of it that does
+                // something else.
+                MenuGroup(
+                  children: [
+                    InkWell(
+                      onTap: _openEditProfile,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                        child: Row(
+                          children: [
+                            GestureDetector(
+                              onTap: _changeAvatar,
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 26,
+                                    backgroundColor:
+                                        scheme.primary.withValues(alpha: 0.12),
+                                    backgroundImage:
+                                        (avatar != null && avatar.isNotEmpty)
+                                            ? NetworkImage(avatar)
+                                            : null,
+                                    child: _uploadingAvatar
+                                        ? SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: scheme.primary),
+                                          )
+                                        : (avatar == null || avatar.isEmpty)
+                                            ? Text(
+                                                name.characters.first
+                                                    .toUpperCase(),
+                                                style: TextStyle(
+                                                    fontSize: 22,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: scheme.primary),
+                                              )
+                                            : null,
+                                  ),
+                                  // Without this the picture looks like
+                                  // decoration; the camera dot is the only
+                                  // thing that says it is a button.
+                                  Positioned(
+                                    right: -2,
+                                    bottom: -2,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: scheme.primary,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                            color: scheme.surface, width: 2),
+                                      ),
+                                      child: Icon(Icons.photo_camera,
+                                          size: 12, color: scheme.onPrimary),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                            child: Icon(Icons.photo_camera,
-                                size: 12, color: scheme.onPrimary),
-                          ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    email,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        color: scheme.onSurfaceVariant),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  // The label the second row used to carry. It
+                                  // stays, because a name and an address alone
+                                  // do not say the card opens anything.
+                                  Text(
+                                    l10n.accountEditProfile,
+                                    style: TextStyle(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: context.tokens.accentInk),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(Icons.chevron_right,
+                                size: 22, color: context.tokens.accentInk),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                  title: Text(name,
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold)),
-                  subtitle: Text(email),
-                  // The name and details had no editor anywhere in the app —
-                  // only the picture was changeable, and only by tapping it.
-                  // Both the row and the explicit entry below lead to one now.
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: _openEditProfile,
-                ),
-
-                ListTile(
-                  leading: const Icon(Icons.edit_outlined),
-                  title: Text(l10n.accountEditProfile),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: _openEditProfile,
+                  ],
                 ),
 
                 // Unconfirmed accounts can hold a session, so surface it here —
