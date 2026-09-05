@@ -87,21 +87,44 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     });
   }
 
+  /// Press "Continue with Google" and hold the spinner until something
+  /// actually changes on screen.
+  ///
+  /// The old version cleared the flag in a `finally`, which meant the button
+  /// went back to normal the instant the token arrived — before the session had
+  /// resolved and routed anywhere. The screen sat there looking untouched, and
+  /// the natural thing to do with a button that looks untouched is press it
+  /// again. Now only the outcomes that leave the user on this screen release
+  /// it; a session keeps it spinning until the route changes underneath.
   Future<void> _handleGoogleSignIn() async {
     if (_isLoading) return;
     setState(() => _isLoading = true);
     final l10n = context.l10n;
+    GoogleAuthOutcome outcome;
     try {
-      await AuthService.instance.signInWithGoogle();
+      outcome = await AuthService.instance.signInWithGoogle();
     } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.googleSignInFailed)),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      outcome = GoogleAuthOutcome.failed;
     }
+    if (!mounted) return;
+    if (outcome == GoogleAuthOutcome.session) {
+      // Insurance, not the happy path: if the session somehow never resolves,
+      // the button must not stay dead for the rest of the app's life.
+      _releaseAfterTimeout();
+      return;
+    }
+    setState(() => _isLoading = false);
+    if (outcome == GoogleAuthOutcome.failed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.googleSignInFailed)),
+      );
+    }
+  }
+
+  void _releaseAfterTimeout() {
+    Future.delayed(const Duration(seconds: 12), () {
+      if (mounted && _isLoading) setState(() => _isLoading = false);
+    });
   }
 
   @override
@@ -262,7 +285,18 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                icon: const Icon(Icons.g_mobiledata, size: 28, color: Colors.red),
+                // The mark's own slot carries the spinner, so the button keeps
+                // its width and its label and simply looks busy.
+                icon: _isLoading
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      )
+                    : const Icon(Icons.g_mobiledata, size: 28, color: Colors.red),
                 label: Text(
                   l10n.continueWithGoogle,
                   style: TextStyle(

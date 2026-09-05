@@ -109,20 +109,42 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  /// The account sheet, then the wait for the session to resolve.
+  ///
+  /// The spinner is held across both. Clearing it as soon as the token came
+  /// back — which a `finally` did — put the button back to normal while the
+  /// screen was still deciding where to go, and a button that looks untouched
+  /// invites a second press.
   Future<void> _handleGoogleSignIn() async {
     if (_isLoading) return;
     setState(() => _isLoading = true);
+    final l10n = context.l10n;
     try {
-      // Opens the Google consent screen. On success the session arrives via
-      // onAuthStateChange; _onSignInResolved (see initState) then routes to the
-      // app, or to role selection if it's a brand-new account.
-      await AuthService.instance.signInWithGoogle();
+      // On success the session arrives via onAuthStateChange; _onSignInResolved
+      // (see initState) then routes to the app, or to role selection if it's a
+      // brand-new account.
+      final outcome = await AuthService.instance.signInWithGoogle();
+      if (!mounted) return;
+      if (outcome == GoogleAuthOutcome.session) {
+        // Insurance: a session that never resolves must not leave the button
+        // dead for good.
+        Future.delayed(const Duration(seconds: 12), () {
+          if (mounted && _isLoading) setState(() => _isLoading = false);
+        });
+        return;
+      }
+      setState(() => _isLoading = false);
+      if (outcome == GoogleAuthOutcome.failed) {
+        _showError(l10n.googleSignInFailed);
+      }
     } on AuthException catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
       _showError(e.message);
     } catch (_) {
-      _showError(context.l10n.googleSignInFailed);
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showError(l10n.googleSignInFailed);
     }
   }
 
@@ -257,6 +279,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      // The mark's slot doubles as the spinner's, so a busy
+                      // button keeps its size and its label.
+                      if (_isLoading)
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        )
+                      else
                       // Google 'G' Icon built with custom styling. Google's own
                       // mark keeps its brand colours in both themes.
                       Container(

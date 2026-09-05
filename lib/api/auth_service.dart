@@ -268,34 +268,34 @@ class AuthService {
   /// attempt fails for any reason other than the user backing out. A broken
   /// native path must never be the end of the road: this is the only social
   /// sign-in the app has.
-  Future<bool> signInWithGoogle() async {
+  Future<GoogleAuthOutcome> signInWithGoogle() async {
     if (!kIsWeb && AppConfig.hasNativeGoogleSignIn) {
       try {
-        final signedIn = await _signInWithGoogleNatively();
-        // A cancel returns false and stops here rather than falling through to
-        // the browser: backing out of the account sheet means "no", not "try
-        // it the other way".
-        return signedIn;
+        await _signInWithGoogleNatively();
+        return GoogleAuthOutcome.session;
       } on _GoogleCancelled {
-        return false;
+        // Backing out of the account sheet means "no", not "try it the other
+        // way", so this stops here rather than falling through to the browser.
+        return GoogleAuthOutcome.cancelled;
       } catch (e, stack) {
         debugPrint('[auth] native Google sign-in failed, falling back: $e');
         debugPrintStack(stackTrace: stack, label: '[auth]');
       }
     }
-    return _client.auth.signInWithOAuth(
+    final opened = await _client.auth.signInWithOAuth(
       OAuthProvider.google,
       redirectTo: _redirectFor(kOAuthRedirect),
       authScreenLaunchMode:
           kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
     );
+    return opened ? GoogleAuthOutcome.browserOpened : GoogleAuthOutcome.failed;
   }
 
   /// The system account sheet, exchanged for a Supabase session.
   ///
   /// Supabase verifies the ID token's signature and audience itself, so nothing
   /// here has to be trusted: a forged token fails at the server.
-  Future<bool> _signInWithGoogleNatively() async {
+  Future<void> _signInWithGoogleNatively() async {
     final google = GoogleSignIn.instance;
     if (!google.supportsAuthenticate()) {
       throw StateError('platform has no native Google sign-in');
@@ -335,7 +335,6 @@ class AuthService {
       idToken: idToken,
       accessToken: accessToken,
     );
-    return true;
   }
 
   /// Email a password-recovery link.
@@ -501,6 +500,16 @@ class AuthService {
 
 /// The user closed the account sheet. Not an error, and not a reason to open a
 /// browser at them instead.
+/// What a press of "Continue with Google" ended up doing.
+///
+/// A bool could not tell the caller which of these happened, and the three
+/// outcomes want three different things from the screen: [session] holds the
+/// spinner until the session resolves and routes away, [browserOpened] releases
+/// it because the user is no longer looking at the app, and [cancelled] releases
+/// it silently — a person who backed out of the sheet does not need to be told
+/// that they backed out of the sheet.
+enum GoogleAuthOutcome { session, browserOpened, cancelled, failed }
+
 class _GoogleCancelled implements Exception {
   const _GoogleCancelled();
 }
