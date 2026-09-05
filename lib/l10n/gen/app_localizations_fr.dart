@@ -82,6 +82,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get listingsPublished => 'Annonces publiées';
 
   @override
+  String get statTotalEarnings => 'Gains totaux';
+
+  @override
+  String get statActiveListings => 'Annonces actives';
+
+  @override
+  String get statMessages => 'Messages';
+
+  @override
   String get changePlan => 'Changer de formule';
 
   @override

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import 'package:image_picker/image_picker.dart';
@@ -33,6 +32,24 @@ class _AccountScreenState extends State<AccountScreen> {
     // failed refresh at startup hides every role-gated entry below — a verified
     // company would open this screen and find no Company dashboard at all.
     AuthService.instance.ensureMe();
+    _loadDashboard();
+  }
+
+  /// Totals for the stat strip: earnings and active listings from the seller
+  /// dashboard, the message count from the chat repository. Never throws — the
+  /// strip simply stays hidden until the numbers arrive, so a failed or slow
+  /// call costs a card, not the screen.
+  SellerDashboard? _dashboard;
+
+  Future<void> _loadDashboard() async {
+    final uid = AuthService.instance.userId;
+    if (uid == null) return;
+    try {
+      final d = await ListingsRepository.instance.dashboard(uid);
+      if (mounted) setState(() => _dashboard = d);
+    } catch (_) {
+      // Leave the strip hidden rather than showing zeros that look like fact.
+    }
   }
 
   /// True while a new picture is uploading, so the avatar can show progress
@@ -80,14 +97,20 @@ class _AccountScreenState extends State<AccountScreen> {
     // Downscaled on the way out: an avatar is rendered at 34pt, and shipping a
     // 12MP original over a mobile connection to draw a thumbnail is a cost the
     // user pays for nothing.
-    final picked = await ImagePicker()
-        .pickImage(source: source, imageQuality: 85, maxWidth: 512, maxHeight: 512);
+    final picked = await ImagePicker().pickImage(
+      source: source,
+      imageQuality: 85,
+      maxWidth: 512,
+      maxHeight: 512,
+    );
     if (picked == null) return;
 
     setState(() => _uploadingAvatar = true);
     try {
-      final path = await ListingsRepository.instance
-          .uploadImage(picked, bucket: 'avatars');
+      final path = await ListingsRepository.instance.uploadImage(
+        picked,
+        bucket: 'avatars',
+      );
       await AuthService.instance.updateProfile({
         'avatar_url': AppConfig.storagePublicUrl('avatars', path),
       });
@@ -127,14 +150,14 @@ class _AccountScreenState extends State<AccountScreen> {
     try {
       await AuthService.instance.resendConfirmation(email);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.confirmationEmailSent)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.confirmationEmailSent)));
     } on AuthException catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
     }
   }
 
@@ -188,8 +211,16 @@ class _AccountScreenState extends State<AccountScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             for (final entry in <(ThemeMode, String, IconData)>[
-              (ThemeMode.system, l10n.appearanceSystem, Icons.brightness_auto_outlined),
-              (ThemeMode.light, l10n.appearanceLight, Icons.light_mode_outlined),
+              (
+                ThemeMode.system,
+                l10n.appearanceSystem,
+                Icons.brightness_auto_outlined,
+              ),
+              (
+                ThemeMode.light,
+                l10n.appearanceLight,
+                Icons.light_mode_outlined,
+              ),
               (ThemeMode.dark, l10n.appearanceDark, Icons.dark_mode_outlined),
             ])
               ListTile(
@@ -228,8 +259,10 @@ class _AccountScreenState extends State<AccountScreen> {
             title: Text(label),
             subtitle: subtitle == null ? null : Text(subtitle),
             trailing: selected
-                ? Icon(Icons.check,
-                    color: Theme.of(sheetContext).colorScheme.primary)
+                ? Icon(
+                    Icons.check,
+                    color: Theme.of(sheetContext).colorScheme.primary,
+                  )
                 : null,
             onTap: () {
               controller.setLocale(code == null ? null : Locale(code));
@@ -249,12 +282,18 @@ class _AccountScreenState extends State<AccountScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Row(
                   children: [
-                    Icon(Icons.language,
-                        color: Theme.of(sheetContext).colorScheme.primary),
+                    Icon(
+                      Icons.language,
+                      color: Theme.of(sheetContext).colorScheme.primary,
+                    ),
                     const SizedBox(width: 12),
-                    Text(l10n.chooseLanguage,
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(
+                      l10n.chooseLanguage,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -291,8 +330,10 @@ class _AccountScreenState extends State<AccountScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.accountTitle,
-            style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          l10n.accountTitle,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
       body: ValueListenableBuilder<Me?>(
         valueListenable: auth.me,
@@ -321,95 +362,107 @@ class _AccountScreenState extends State<AccountScreen> {
                   onTap: _openEditProfile,
                   borderRadius: BorderRadius.circular(16),
                   child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          children: [
-                            GestureDetector(
-                              onTap: _changeAvatar,
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  CircleAvatar(
-                                    radius: 36,
-                                    backgroundColor:
-                                        scheme.primary.withValues(alpha: 0.12),
-                                    backgroundImage:
-                                        (avatar != null && avatar.isNotEmpty)
-                                            ? NetworkImage(avatar)
-                                            : null,
-                                    child: _uploadingAvatar
-                                        ? SizedBox(
-                                            height: 20,
-                                            width: 20,
-                                            child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                color: scheme.primary),
-                                          )
-                                        : (avatar == null || avatar.isEmpty)
-                                            ? Text(
-                                                name.characters.first
-                                                    .toUpperCase(),
-                                                style: TextStyle(
-                                                    fontSize: 28,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: scheme.primary),
-                                              )
-                                            : null,
-                                  ),
-                                  // Without this the picture looks like
-                                  // decoration; the camera dot is the only
-                                  // thing that says it is a button.
-                                  Positioned(
-                                    right: -2,
-                                    bottom: -2,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: scheme.primary,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                            color: scheme.surface, width: 2),
-                                      ),
-                                      child: Icon(Icons.photo_camera,
-                                          size: 12, color: scheme.onPrimary),
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          onTap: _changeAvatar,
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              CircleAvatar(
+                                radius: 36,
+                                backgroundColor: scheme.primary.withValues(
+                                  alpha: 0.12,
+                                ),
+                                backgroundImage:
+                                    (avatar != null && avatar.isNotEmpty)
+                                    ? NetworkImage(avatar)
+                                    : null,
+                                child: _uploadingAvatar
+                                    ? SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: scheme.primary,
+                                        ),
+                                      )
+                                    : (avatar == null || avatar.isEmpty)
+                                    ? Text(
+                                        name.characters.first.toUpperCase(),
+                                        style: TextStyle(
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.bold,
+                                          color: scheme.primary,
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                              // Without this the picture looks like
+                              // decoration; the camera dot is the only
+                              // thing that says it is a button.
+                              Positioned(
+                                right: -2,
+                                bottom: -2,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: scheme.primary,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: scheme.surface,
+                                      width: 2,
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    name,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                        fontSize: 22,
-                                        height: 1.15,
-                                        fontWeight: FontWeight.w800),
+                                  child: Icon(
+                                    Icons.photo_camera,
+                                    size: 12,
+                                    color: scheme.onPrimary,
                                   ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    email,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                        fontSize: 13.5,
-                                        color: scheme.onSurfaceVariant),
-                                  ),
-                                ],
+                                ),
                               ),
-                            ),
-                            Icon(Icons.chevron_right,
-                                size: 24, color: context.tokens.accentInk),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                name,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  height: 1.15,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                email,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.chevron_right,
+                          size: 24,
+                          color: context.tokens.accentInk,
+                        ),
+                      ],
                     ),
+                  ),
+                ),
                 const SizedBox(height: 20),
 
                 // Unconfirmed accounts can hold a session, so surface it here —
@@ -419,10 +472,14 @@ class _AccountScreenState extends State<AccountScreen> {
                     elevation: 0,
                     color: AppColors.warning.withValues(alpha: 0.12),
                     child: ListTile(
-                      leading: const Icon(Icons.warning_amber_rounded,
-                          color: AppColors.warning),
-                      title: Text(l10n.emailNotConfirmed,
-                          style: const TextStyle(fontWeight: FontWeight.w600)),
+                      leading: const Icon(
+                        Icons.warning_amber_rounded,
+                        color: AppColors.warning,
+                      ),
+                      title: Text(
+                        l10n.emailNotConfirmed,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
                       subtitle: Text(l10n.emailNotConfirmedBody),
                       trailing: TextButton(
                         onPressed: () => _resendConfirmation(context, email),
@@ -449,6 +506,23 @@ class _AccountScreenState extends State<AccountScreen> {
                     ),
                   ),
 
+                // Earnings, active listings, messages — the three numbers the
+                // deck puts under the progress card. Real: the first two come
+                // from the seller dashboard, the third from the chat inbox.
+                // Hidden until the dashboard resolves, so nothing shows a
+                // fabricated zero.
+                if (_dashboard != null) ...[
+                  const SizedBox(height: 4),
+                  _StatStrip(
+                    earnings: _dashboard!.displayEarnings,
+                    activeListings: _dashboard!.activeListings,
+                    messages: ChatRepository.instance.threads.value.length,
+                    earningsLabel: l10n.statTotalEarnings,
+                    activeLabel: l10n.statActiveListings,
+                    messagesLabel: l10n.statMessages,
+                  ),
+                ],
+
                 const SizedBox(height: 20),
 
                 // Grouped, as the deck arranges them. Previously these were
@@ -456,92 +530,99 @@ class _AccountScreenState extends State<AccountScreen> {
                 // said which rows belonged together, the trailing glyph
                 // alternated between two different chevrons, and Log out
                 // looked exactly like one more place to navigate to.
-                MenuGroup(children: [
-                  MenuRow(
-                    icon: Icons.receipt_long_outlined,
-                    title: l10n.myOrders,
-                    subtitle: l10n.myOrdersSubtitle,
-                    onTap: () => Navigator.pushNamed(context, '/my-orders'),
-                  ),
-                  MenuRow(
-                    icon: Icons.card_giftcard_outlined,
-                    title: l10n.inviteFriends,
-                    subtitle: l10n.inviteFriendsSubtitle,
-                    onTap: () => Navigator.pushNamed(context, '/invite'),
-                  ),
-                  // Verified merchants only — companies are provisioned by an
-                  // admin, so there is nothing to show anyone else.
-                  if (profile?.isCompany == true)
+                MenuGroup(
+                  children: [
                     MenuRow(
-                      icon: Icons.verified_outlined,
-                      title: l10n.companyDashboard,
-                      onTap: () =>
-                          Navigator.pushNamed(context, '/company-dashboard'),
+                      icon: Icons.receipt_long_outlined,
+                      title: l10n.myOrders,
+                      subtitle: l10n.myOrdersSubtitle,
+                      onTap: () => Navigator.pushNamed(context, '/my-orders'),
                     ),
-                  // The storefront belongs to accounts that have a store; the
-                  // seller area belongs to anybody who can publish, which is
-                  // everybody. Two different promises, gated separately.
-                  if (_showsBusinessDashboard(profile))
                     MenuRow(
-                      icon: Icons.storefront_outlined,
-                      title: l10n.businessDashboard,
-                      onTap: () =>
-                          Navigator.pushNamed(context, '/business-dashboard'),
+                      icon: Icons.card_giftcard_outlined,
+                      title: l10n.inviteFriends,
+                      subtitle: l10n.inviteFriendsSubtitle,
+                      onTap: () => Navigator.pushNamed(context, '/invite'),
                     ),
-                  if (_showsSellerDashboard(profile))
-                    MenuRow(
-                      icon: Icons.sell_outlined,
-                      title: l10n.sellerSpace,
-                      subtitle: l10n.sellerSpaceSubtitle,
-                      onTap: () =>
-                          Navigator.pushNamed(context, '/seller-dashboard'),
-                    ),
-                ]),
+                    // Verified merchants only — companies are provisioned by an
+                    // admin, so there is nothing to show anyone else.
+                    if (profile?.isCompany == true)
+                      MenuRow(
+                        icon: Icons.verified_outlined,
+                        title: l10n.companyDashboard,
+                        onTap: () =>
+                            Navigator.pushNamed(context, '/company-dashboard'),
+                      ),
+                    // The storefront belongs to accounts that have a store; the
+                    // seller area belongs to anybody who can publish, which is
+                    // everybody. Two different promises, gated separately.
+                    if (_showsBusinessDashboard(profile))
+                      MenuRow(
+                        icon: Icons.storefront_outlined,
+                        title: l10n.businessDashboard,
+                        onTap: () =>
+                            Navigator.pushNamed(context, '/business-dashboard'),
+                      ),
+                    if (_showsSellerDashboard(profile))
+                      MenuRow(
+                        icon: Icons.sell_outlined,
+                        title: l10n.sellerSpace,
+                        subtitle: l10n.sellerSpaceSubtitle,
+                        onTap: () =>
+                            Navigator.pushNamed(context, '/seller-dashboard'),
+                      ),
+                  ],
+                ),
 
-                MenuGroup(children: [
-                  MenuRow(
-                    icon: Icons.language,
-                    title: l10n.language,
-                    subtitle: _currentLanguageLabel(context),
-                    onTap: () => _pickLanguage(context),
-                  ),
-                  // Appearance sits beside language: both are "how the app
-                  // looks to me", and both persist across launches.
-                  ValueListenableBuilder<ThemeMode>(
-                    valueListenable: ThemeController.instance.mode,
-                    builder: (context, mode, _) => MenuRow(
-                      icon: switch (mode) {
-                        ThemeMode.dark => Icons.dark_mode_outlined,
-                        ThemeMode.light => Icons.light_mode_outlined,
-                        ThemeMode.system => Icons.brightness_auto_outlined,
-                      },
-                      title: l10n.appearance,
-                      subtitle: _themeLabel(context, mode),
-                      onTap: () => _pickTheme(context),
+                MenuGroup(
+                  children: [
+                    MenuRow(
+                      icon: Icons.language,
+                      title: l10n.language,
+                      subtitle: _currentLanguageLabel(context),
+                      onTap: () => _pickLanguage(context),
                     ),
-                  ),
-                  MenuRow(
-                    icon: Icons.lock_outline,
-                    title: l10n.changePassword,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const ResetPasswordScreen()),
+                    // Appearance sits beside language: both are "how the app
+                    // looks to me", and both persist across launches.
+                    ValueListenableBuilder<ThemeMode>(
+                      valueListenable: ThemeController.instance.mode,
+                      builder: (context, mode, _) => MenuRow(
+                        icon: switch (mode) {
+                          ThemeMode.dark => Icons.dark_mode_outlined,
+                          ThemeMode.light => Icons.light_mode_outlined,
+                          ThemeMode.system => Icons.brightness_auto_outlined,
+                        },
+                        title: l10n.appearance,
+                        subtitle: _themeLabel(context, mode),
+                        onTap: () => _pickTheme(context),
+                      ),
                     ),
-                  ),
-                ]),
+                    MenuRow(
+                      icon: Icons.lock_outline,
+                      title: l10n.changePassword,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ResetPasswordScreen(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
 
                 // "Settings & privacy" used to sit here with `onTap: () {}`.
                 // It went nowhere, so it is gone rather than left as a row
                 // that does nothing when pressed.
-                MenuGroup(children: [
-                  MenuRow(
-                    icon: Icons.logout,
-                    title: l10n.logOut,
-                    danger: true,
-                    onTap: () => _logOut(context),
-                  ),
-                ]),
+                MenuGroup(
+                  children: [
+                    MenuRow(
+                      icon: Icons.logout,
+                      title: l10n.logOut,
+                      danger: true,
+                      onTap: () => _logOut(context),
+                    ),
+                  ],
+                ),
               ],
             ),
           );
@@ -549,4 +630,140 @@ class _AccountScreenState extends State<AccountScreen> {
       ),
     );
   }
+}
+
+/// The three-number strip under the progress card: earnings, active listings,
+/// messages. One glass card, three columns split by hairline dividers — the
+/// deck's arrangement, and the same surface language as the groups around it.
+class _StatStrip extends StatelessWidget {
+  final String earnings;
+  final int activeListings;
+  final int messages;
+  final String earningsLabel;
+  final String activeLabel;
+  final String messagesLabel;
+
+  const _StatStrip({
+    required this.earnings,
+    required this.activeListings,
+    required this.messages,
+    required this.earningsLabel,
+    required this.activeLabel,
+    required this.messagesLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final tokens = context.tokens;
+    return Container(
+      decoration: BoxDecoration(
+        color: tokens.groupSurface,
+        borderRadius: BorderRadius.circular(20),
+        border: theme.brightness == Brightness.dark
+            ? Border.all(color: theme.dividerColor)
+            : null,
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _Stat(
+              icon: Icons.bar_chart_rounded,
+              value: earnings,
+              label: earningsLabel,
+            ),
+            _Divider(color: theme.dividerColor),
+            _Stat(
+              icon: Icons.sell_outlined,
+              value: '$activeListings',
+              label: activeLabel,
+            ),
+            _Divider(color: theme.dividerColor),
+            _Stat(
+              icon: Icons.chat_bubble_outline,
+              value: '$messages',
+              label: messagesLabel,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Stat extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+
+  const _Stat({required this.icon, required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final tokens = context.tokens;
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // The lit tile from the menu rows, at a smaller size, so the strip
+            // belongs to the same family as the groups beneath it.
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  radius: 0.85,
+                  colors: [tokens.iconTile, tokens.iconTileEdge],
+                ),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Icon(
+                icon,
+                size: 18,
+                color: tokens.accentInk,
+                shadows: [Shadow(color: tokens.iconGlow, blurRadius: 10)],
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Divider extends StatelessWidget {
+  final Color color;
+  const _Divider({required this.color});
+
+  @override
+  Widget build(BuildContext context) => VerticalDivider(
+    width: 1,
+    thickness: 1,
+    color: color,
+    indent: 4,
+    endIndent: 4,
+  );
 }

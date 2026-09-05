@@ -230,6 +230,24 @@ abstract class AppLocalizations {
   /// **'Listings published'**
   String get listingsPublished;
 
+  /// No description provided for @statTotalEarnings.
+  ///
+  /// In en, this message translates to:
+  /// **'Total earnings'**
+  String get statTotalEarnings;
+
+  /// No description provided for @statActiveListings.
+  ///
+  /// In en, this message translates to:
+  /// **'Active listings'**
+  String get statActiveListings;
+
+  /// No description provided for @statMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get statMessages;
+
   /// No description provided for @changePlan.
   ///
   /// In en, this message translates to:

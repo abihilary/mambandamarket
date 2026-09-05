@@ -82,6 +82,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get listingsPublished => 'Listings published';
 
   @override
+  String get statTotalEarnings => 'Total earnings';
+
+  @override
+  String get statActiveListings => 'Active listings';
+
+  @override
+  String get statMessages => 'Messages';
+
+  @override
   String get changePlan => 'Change plan';
 
   @override
