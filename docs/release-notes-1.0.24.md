@@ -20,9 +20,9 @@ Un nouveau design, et une vraie recherche.
 
 • La recherche a désormais son propre écran : filtrez par catégorie, prix et état, puis triez comme vous voulez.
 • La barre de recherche vous suit quand vous faites défiler.
-• Vos favoris sont classés par catégorie et s'ouvrent directement sur l'annonce.
-• Voyez à quelle distance se trouve une annonce, et triez par proximité.
-• Connectez-vous avec Google sans quitter l'application.
+• Vos favoris sont classés par catégorie et s'ouvrent directement.
+• Voyez la distance d'une annonce et triez par proximité.
+• Connexion Google sans quitter l'application.
 • Écrans d'accueil, de compte et de bienvenue redessinés.
 
 ## de-DE
