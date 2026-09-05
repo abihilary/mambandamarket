@@ -76,6 +76,12 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get sellerProgress => 'Votre activité';
+
+  @override
+  String get listingsPublished => 'Annonces publiées';
+
+  @override
   String get changePlan => 'Changer de formule';
 
   @override

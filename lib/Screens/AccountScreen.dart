@@ -311,19 +311,17 @@ class _AccountScreenState extends State<AccountScreen> {
               // and would otherwise sit on top of the last row.
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
               children: [
-                // One card for the person, not two rows for the same thing.
+                // The person, on the page itself — no card behind them.
                 //
-                // This was a header row and an "Edit profile" row directly
-                // under it, both opening the same editor — which reads as the
-                // screen not knowing which of them is the way in. The card is
-                // the way in; the camera dot is the one part of it that does
-                // something else.
-                MenuGroup(
-                  children: [
-                    InkWell(
-                      onTap: _openEditProfile,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                // A card here boxed the one thing the screen is about and made
+                // it look like just another row. Sitting on the ground, with a
+                // larger portrait and a heavier name, it reads as the header it
+                // is; the groups below carry the cards.
+                InkWell(
+                  onTap: _openEditProfile,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Row(
                           children: [
                             GestureDetector(
@@ -332,7 +330,7 @@ class _AccountScreenState extends State<AccountScreen> {
                                 clipBehavior: Clip.none,
                                 children: [
                                   CircleAvatar(
-                                    radius: 26,
+                                    radius: 36,
                                     backgroundColor:
                                         scheme.primary.withValues(alpha: 0.12),
                                     backgroundImage:
@@ -352,7 +350,7 @@ class _AccountScreenState extends State<AccountScreen> {
                                                 name.characters.first
                                                     .toUpperCase(),
                                                 style: TextStyle(
-                                                    fontSize: 22,
+                                                    fontSize: 28,
                                                     fontWeight: FontWeight.bold,
                                                     color: scheme.primary),
                                               )
@@ -379,7 +377,7 @@ class _AccountScreenState extends State<AccountScreen> {
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 14),
+                            const SizedBox(width: 16),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -387,43 +385,32 @@ class _AccountScreenState extends State<AccountScreen> {
                                 children: [
                                   Text(
                                     name,
-                                    maxLines: 1,
+                                    maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.bold),
+                                        fontSize: 22,
+                                        height: 1.15,
+                                        fontWeight: FontWeight.w800),
                                   ),
-                                  const SizedBox(height: 2),
+                                  const SizedBox(height: 3),
                                   Text(
                                     email,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
-                                        fontSize: 13,
+                                        fontSize: 13.5,
                                         color: scheme.onSurfaceVariant),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  // The label the second row used to carry. It
-                                  // stays, because a name and an address alone
-                                  // do not say the card opens anything.
-                                  Text(
-                                    l10n.accountEditProfile,
-                                    style: TextStyle(
-                                        fontSize: 12.5,
-                                        fontWeight: FontWeight.w600,
-                                        color: context.tokens.accentInk),
                                   ),
                                 ],
                               ),
                             ),
                             Icon(Icons.chevron_right,
-                                size: 22, color: context.tokens.accentInk),
+                                size: 24, color: context.tokens.accentInk),
                           ],
                         ),
                       ),
                     ),
-                  ],
-                ),
+                const SizedBox(height: 20),
 
                 // Unconfirmed accounts can hold a session, so surface it here —
                 // otherwise the user never learns why some things fail.
@@ -449,13 +436,13 @@ class _AccountScreenState extends State<AccountScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: PlanCard(
-                      title: me.subscription?['plan'] != null
+                      title: l10n.sellerProgress,
+                      planLabel: me.subscription?['plan'] != null
                           ? l10n.planLabel(me.subscription!['plan'].toString())
                           : l10n.freePlan,
-                      subtitle: me.listingLimit == null
-                          ? l10n.listingsUnlimited(me.activeListings)
-                          : l10n.listingsUsed(
-                              me.activeListings, me.listingLimit!),
+                      publishedLabel: l10n.listingsPublished,
+                      activeListings: me.activeListings,
+                      listingLimit: me.listingLimit,
                       actionLabel: l10n.changePlan,
                       onAction: () =>
                           Navigator.pushNamed(context, '/subscription'),

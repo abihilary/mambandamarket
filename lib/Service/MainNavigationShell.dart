@@ -58,6 +58,11 @@ class _MainNavigationShellState extends State<MainNavigationShell>
       // as stale as the moment the app was put down. The socket is also very
       // likely to have been closed while away, so it is re-established here.
       ChatRepository.instance.startLive();
+      // Refresh the badge directly, not only through the inbox. The inbox's
+      // reload is what repaints its list, but its State is null until that tab
+      // has been built — so relying on it alone meant a resume could leave the
+      // badge stuck on its pre-background value until the next 45s sweep.
+      unawaited(ChatRepository.instance.refresh());
       _inboxKey.currentState?.reload();
       _startSweep();
     } else if (state == AppLifecycleState.paused) {

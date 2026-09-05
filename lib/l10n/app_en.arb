@@ -42,6 +42,8 @@
       }
     }
   },
+  "sellerProgress": "Seller progress",
+  "listingsPublished": "Listings published",
   "changePlan": "Change plan",
   "businessDashboard": "Business dashboard",
   "sellerSpace": "Seller area",

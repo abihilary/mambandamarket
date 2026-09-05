@@ -218,6 +218,18 @@ abstract class AppLocalizations {
   /// **'{count} of {limit} listings used'**
   String listingsUsed(int count, int limit);
 
+  /// No description provided for @sellerProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Seller progress'**
+  String get sellerProgress;
+
+  /// No description provided for @listingsPublished.
+  ///
+  /// In en, this message translates to:
+  /// **'Listings published'**
+  String get listingsPublished;
+
   /// No description provided for @changePlan.
   ///
   /// In en, this message translates to:

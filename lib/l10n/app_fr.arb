@@ -42,6 +42,8 @@
       }
     }
   },
+  "sellerProgress": "Votre activité",
+  "listingsPublished": "Annonces publiées",
   "changePlan": "Changer de formule",
   "businessDashboard": "Tableau de bord entreprise",
   "sellerSpace": "Espace vendeur",

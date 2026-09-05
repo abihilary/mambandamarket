@@ -76,6 +76,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get sellerProgress => 'Seller progress';
+
+  @override
+  String get listingsPublished => 'Listings published';
+
+  @override
   String get changePlan => 'Change plan';
 
   @override
