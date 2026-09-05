@@ -326,6 +326,12 @@ class _SearchScreenState extends State<SearchScreen> {
             onSubmitted: _submit,
             decoration: InputDecoration(
               hintText: l10n.homeSearchHint,
+              // The theme fills fields with `surface`, which on the light
+              // theme is the same white as the AppBar behind this one — the
+              // pill disappeared and the text sat on nothing. A container
+              // shade reads on both grounds.
+              filled: true,
+              fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
               isDense: true,
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -409,8 +415,11 @@ class _SearchScreenState extends State<SearchScreen> {
           sliver: ValueListenableBuilder<Set<String>>(
             valueListenable: _favorites.favoriteIds,
             builder: (context, favIds, _) => SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
+              // See the note on the feed's grid: the count comes from the
+              // width so a wide screen gets more columns rather than bigger
+              // cards.
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 200,
                 crossAxisSpacing: 14,
                 mainAxisSpacing: 18,
                 childAspectRatio: 0.66,

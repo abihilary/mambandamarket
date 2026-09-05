@@ -645,8 +645,15 @@ class _HomeScreenState extends State<HomeScreen> {
                             valueListenable: _favorites.favoriteIds,
                             builder: (context, favIds, _) => SliverGrid(
                               gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
+                              // Column count from the width available, not a
+                              // fixed two. On a tablet, two columns stretched
+                              // each card to half a very wide screen: enormous
+                              // images, a third of the screen left empty
+                              // between rows. 200dp is the width a card was
+                              // drawn for, so a phone still gets two and a
+                              // tablet gets four.
+                              const SliverGridDelegateWithMaxCrossAxisExtent(
+                                maxCrossAxisExtent: 200,
                                 mainAxisSpacing: 16,
                                 crossAxisSpacing: 12,
                                 childAspectRatio: 0.72,
