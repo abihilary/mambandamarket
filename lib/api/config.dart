@@ -40,9 +40,12 @@ class AppConfig {
   /// browser flow. That fallback is deliberate: an unconfigured native flow
   /// fails at the account picker with nothing to say, and this is the app's
   /// only social sign-in.
+  /// Not a secret: it ships inside every copy of the app, and Google treats
+  /// it as public. The secret that pairs with it never leaves Supabase.
   static const String googleWebClientId = String.fromEnvironment(
     'GOOGLE_WEB_CLIENT_ID',
-    defaultValue: '',
+    defaultValue:
+        '649457496601-fu6aolhjuc4urbap4o5a5j0hqs6ivfmk.apps.googleusercontent.com',
   );
 
   static bool get hasNativeGoogleSignIn => googleWebClientId.isNotEmpty;
