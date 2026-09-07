@@ -220,9 +220,7 @@ class _CountdownDialog extends StatelessWidget {
         ),
         FilledButton(
           onPressed: onDownload,
-          child: Text(channel == UpdateChannel.play
-              ? l10n.updateOpenStore
-              : l10n.updateDownload),
+          child: Text(l10n.updateOpenStore),
         ),
       ],
     );
@@ -257,9 +255,7 @@ class _NudgeDialog extends StatelessWidget {
         TextButton(onPressed: onLater, child: Text(l10n.updateLater)),
         FilledButton(
           onPressed: onUpdate,
-          child: Text(channel == UpdateChannel.play
-              ? l10n.updateOpenStore
-              : l10n.updateDownload),
+          child: Text(l10n.updateOpenStore),
         ),
       ],
     );
@@ -317,9 +313,7 @@ class _BlockedScreen extends StatelessWidget {
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(52),
                     ),
-                    child: Text(channel == UpdateChannel.play
-                        ? l10n.updateOpenStore
-                        : l10n.updateDownload),
+                    child: Text(l10n.updateOpenStore),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -354,6 +348,10 @@ Future<void> maybeWarnAboutUpdate() async {
   // The web build is whatever was last deployed; there is nothing to update.
   if (kIsWeb) return;
   if (_warnedThisSession) return;
+  // Claimed before the first await: the splash and the gate's resume hook can
+  // both arrive here within the same second at launch, and a flag set only
+  // after an await lets both through.
+  _warnedThisSession = true;
 
   final cfg = RemoteConfig.instance;
   final build = await currentBuildNumber();
@@ -372,6 +370,8 @@ Future<void> maybeWarnAboutUpdate() async {
 
   switch (decision) {
     case UpdateDecision.none:
+      // Nothing to say now; a later resume may find a newer config.
+      _warnedThisSession = false;
       return;
     case UpdateDecision.blocked:
       // The gate itself is showing; a dialog over it would say the same thing
@@ -392,7 +392,6 @@ Future<void> _showCountdown(RemoteConfig cfg) async {
 
   final navigator = rootNavigatorKey.currentState;
   if (navigator == null || !navigator.mounted) return;
-  _warnedThisSession = true;
 
   final deadline = cfg.blocksAt;
   final left = deadline?.difference(cfg.serverNow);
@@ -411,7 +410,6 @@ Future<void> _showCountdown(RemoteConfig cfg) async {
 
 Future<void> _showNudge(RemoteConfig cfg) async {
   final channel = await currentUpdateChannel();
-  _warnedThisSession = true;
 
   if (channel == UpdateChannel.play) {
     // Play's own sheet first. It downloads in the background and we offer the
@@ -513,28 +511,29 @@ Future<UpdateChannel> currentUpdateChannel() async {
   return AppInfo.isPlayInstall ? UpdateChannel.play : UpdateChannel.sideload;
 }
 
-/// Send this install wherever its update actually lives.
+/// Send this install to the update: the Google Play listing, whatever the
+/// install channel.
+///
+/// The store is where the app lives now. A sideloaded copy used to be sent to
+/// the site's download page because that page handed out the APK; it hands
+/// out the Play link today, so going through it is one hop for nothing — and
+/// an old cached copy of that page still offered a file. Play first, the site
+/// only when this phone can open neither the Play app nor a browser to the
+/// listing, which leaves it with nothing better.
 Future<void> openUpdateDestination() async {
   final info = await AppInfo.packageInfo();
-  if (AppInfo.isPlayInstall && info != null) {
-    // market:// opens the Play app straight on the listing. The https form is
-    // the fallback for the rare device that has Play as an installer but no
-    // Play app to handle the scheme.
-    //
-    // The package name comes from the package itself rather than a constant,
-    // for the same reason the build number does: it cannot then drift from
-    // what was actually shipped.
-    final id = info.packageName;
-    if (await _tryLaunch(Uri.parse('market://details?id=$id'))) return;
-    await _tryLaunch(
-      Uri.parse('https://play.google.com/store/apps/details?id=$id'),
-    );
-    // Deliberately no fall-through to the site. If both of those failed there
-    // is no browser and no Play app on this phone, and the blocking screen
-    // still offers retry.
+  // The package name comes from the package itself rather than a constant,
+  // for the same reason the build number does: it cannot then drift from what
+  // was actually shipped.
+  final id = info?.packageName ?? 'com.mabanda.mambandamarket';
+  // market:// opens the Play app straight on the listing; the https form is
+  // the fallback for a phone with no Play app to handle the scheme.
+  if (await _tryLaunch(Uri.parse('market://details?id=$id'))) return;
+  if (await _tryLaunch(
+    Uri.parse('https://play.google.com/store/apps/details?id=$id'),
+  )) {
     return;
   }
-
   await _tryLaunch(Uri.parse('${ShareLinks.siteBase}/download'));
 }
 

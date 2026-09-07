@@ -603,7 +603,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
                         SliverToBoxAdapter(
                           child: SizedBox(
-                            height: 210,
+                            // A two-line title plus price plus a city line needs the
+                            // extra few pixels; at 210 the compact card overflowed by two.
+                            height: 218,
                             child: ListView.builder(
                               scrollDirection: Axis.horizontal,
                               padding: const EdgeInsets.symmetric(horizontal: 16),
