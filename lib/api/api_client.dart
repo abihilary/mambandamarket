@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
+import 'app_info.dart';
 import '../l10n/l10n.dart';
 
 /// A failed API call, carrying the server's machine-readable error code.
@@ -19,6 +20,7 @@ class ApiException implements Exception {
   bool get isUnauthorized => statusCode == 401;
   bool get isForbidden => statusCode == 403;
   bool get isNotFound => statusCode == 404;
+  bool get isRateLimited => statusCode == 429;
 
   @override
   String toString() => message;
@@ -37,9 +39,16 @@ class ApiClient {
 
   Map<String, String> _headers() {
     final token = Supabase.instance.client.auth.currentSession?.accessToken;
+    // Which build is talking. Cheap telemetry the server can log, and the
+    // precondition for ever raising the supported floor: without it nobody
+    // knows what people are actually running.
+    final info = AppInfo.cached;
     return {
       'Content-Type': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
+      if (info != null) 'X-App-Build': info.buildNumber,
+      if (info != null) 'X-App-Version': info.version,
+      'X-App-Platform': AppInfo.platform,
     };
   }
 

@@ -2273,10 +2273,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateRequiredBody =>
-      'A newer version of Mambanda Market is required to carry on. Download it to get back to your listings and messages.';
+      'A newer version of Mambanda Market is required to carry on. Get it to return to your listings and messages.';
 
   @override
-  String get updateDownload => 'Download the update';
+  String get updateDownload => 'Get the update';
 
   @override
   String get updateOpenStore => 'Update on Google Play';
@@ -2286,6 +2286,59 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateDismiss => 'Dismiss';
+
+  @override
+  String updateNudgeBody(String version) {
+    return 'Version $version is ready. Update to get the latest fixes and features.';
+  }
+
+  @override
+  String get updateLater => 'Later';
+
+  @override
+  String get updateDownloadedTitle => 'Update downloaded';
+
+  @override
+  String get updateRestart => 'Restart';
+
+  @override
+  String get contactSupport => 'Contact support';
+
+  @override
+  String get contactSupportSub => 'Questions, problems or feedback';
+
+  @override
+  String get supportTitle => 'Contact support';
+
+  @override
+  String get supportSubject => 'Subject';
+
+  @override
+  String get supportMessage => 'Message';
+
+  @override
+  String supportReplyTo(String email) {
+    return 'We will reply to $email.';
+  }
+
+  @override
+  String get supportSend => 'Send';
+
+  @override
+  String get supportSent => 'Thanks — your message has been sent.';
+
+  @override
+  String get supportFailed => 'Couldn’t send your message. Please try again.';
+
+  @override
+  String get supportTooMany =>
+      'You have sent several messages recently. Please try again in an hour.';
+
+  @override
+  String get supportTooShort => 'Please add a subject and a few more words.';
+
+  @override
+  String get supportSignInRequired => 'Sign in to contact support.';
 
   @override
   String get updateAvailableTitle => 'A new version is available';

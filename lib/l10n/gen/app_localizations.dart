@@ -4103,13 +4103,13 @@ abstract class AppLocalizations {
   /// No description provided for @updateRequiredBody.
   ///
   /// In en, this message translates to:
-  /// **'A newer version of Mambanda Market is required to carry on. Download it to get back to your listings and messages.'**
+  /// **'A newer version of Mambanda Market is required to carry on. Get it to return to your listings and messages.'**
   String get updateRequiredBody;
 
   /// No description provided for @updateDownload.
   ///
   /// In en, this message translates to:
-  /// **'Download the update'**
+  /// **'Get the update'**
   String get updateDownload;
 
   /// Update button for a copy installed from Google Play, which must send the user to the store listing rather than to an APK download.
@@ -4129,6 +4129,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dismiss'**
   String get updateDismiss;
+
+  /// No description provided for @updateNudgeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} is ready. Update to get the latest fixes and features.'**
+  String updateNudgeBody(String version);
+
+  /// No description provided for @updateLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get updateLater;
+
+  /// No description provided for @updateDownloadedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update downloaded'**
+  String get updateDownloadedTitle;
+
+  /// No description provided for @updateRestart.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart'**
+  String get updateRestart;
+
+  /// No description provided for @contactSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact support'**
+  String get contactSupport;
+
+  /// No description provided for @contactSupportSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Questions, problems or feedback'**
+  String get contactSupportSub;
+
+  /// No description provided for @supportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact support'**
+  String get supportTitle;
+
+  /// No description provided for @supportSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'Subject'**
+  String get supportSubject;
+
+  /// No description provided for @supportMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get supportMessage;
+
+  /// No description provided for @supportReplyTo.
+  ///
+  /// In en, this message translates to:
+  /// **'We will reply to {email}.'**
+  String supportReplyTo(String email);
+
+  /// No description provided for @supportSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get supportSend;
+
+  /// No description provided for @supportSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks — your message has been sent.'**
+  String get supportSent;
+
+  /// No description provided for @supportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t send your message. Please try again.'**
+  String get supportFailed;
+
+  /// No description provided for @supportTooMany.
+  ///
+  /// In en, this message translates to:
+  /// **'You have sent several messages recently. Please try again in an hour.'**
+  String get supportTooMany;
+
+  /// No description provided for @supportTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Please add a subject and a few more words.'**
+  String get supportTooShort;
+
+  /// No description provided for @supportSignInRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to contact support.'**
+  String get supportSignInRequired;
 
   /// No description provided for @updateAvailableTitle.
   ///

@@ -1,24 +1,27 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:package_info_plus/package_info_plus.dart';
+import 'package:in_app_update/in_app_update.dart' show InstallStatus;
 import 'package:url_launcher/url_launcher.dart';
 
+import '../api/app_info.dart';
+import '../api/play_updates.dart';
 import '../api/remote_config.dart';
 import '../api/share_links.dart';
+import '../api/update_policy.dart';
 import '../navigation.dart';
 import '../l10n/l10n.dart';
 
-/// Stops an old build once it is no longer supported, having said so first.
+/// Keeps installed copies current: suggests a newer build, and stops an old
+/// one once it is no longer supported — having said so first.
 ///
-/// The APK is sideloaded, so nothing updates itself — a build stays on a phone
-/// until somebody chooses to replace it. When a release has to reach people,
-/// this is what asks, and then insists.
-///
-/// A Play install is the exception and is asked the same question but sent
-/// somewhere else: see [UpdateChannel]. Play updates itself, and an app that
-/// hands its Play users an APK is breaking store policy as well as offering
-/// them a file they cannot install.
+/// Two numbers from RemoteConfig drive it. `latest_build` moves every release
+/// and produces a *nudge*: on a Play install, Google's own in-app update sheet;
+/// anywhere else, our dialog with a link to the store page. "Later" is
+/// remembered per build for three days. `min_supported_build` moves rarely
+/// and produces the *gate*: a warning with a countdown, then a screen that
+/// replaces the app once the deadline passes.
 ///
 /// Wrapped around the whole app through MaterialApp.builder rather than placed
 /// on a screen, so it covers every route including one opened from a shared
@@ -33,9 +36,11 @@ import '../l10n/l10n.dart';
 ///    brief API problem into every phone bricking at once, with no way back
 ///    except fixing the API.
 ///  * **It defaults to nothing.** mode 'off' and a floor of 0 ship inert.
-///  * **It is never a dead end.** The blocking screen offers the download and
+///  * **It is never a dead end.** The blocking screen offers the update and
 ///    a retry. A screen that only says "update required" with no working
 ///    button is indistinguishable from the app being broken.
+///  * **Play is asked first, never trusted alone.** Every call into Play's
+///    update API is guarded; when it cannot answer, the dialog does.
 class UpdateGate extends StatefulWidget {
   const UpdateGate({super.key, required this.child});
 
@@ -53,7 +58,6 @@ class _UpdateGateState extends State<UpdateGate> with WidgetsBindingObserver {
   /// Where this copy came from, which decides where the update button points
   /// and what it is allowed to say.
   UpdateChannel _channel = UpdateChannel.sideload;
-
 
   /// Drives the countdown text. One minute is enough for a deadline measured
   /// in days or hours, and cheap.
@@ -83,8 +87,15 @@ class _UpdateGateState extends State<UpdateGate> with WidgetsBindingObserver {
     if (state != AppLifecycleState.resumed) return;
     // A phone left open for a week would otherwise never learn that the
     // deadline has passed, or that an admin has lifted it.
-    unawaited(RemoteConfig.instance.load().then((_) {
+    unawaited(RemoteConfig.instance.load().then((_) async {
       if (mounted) setState(() {});
+      // A flexible download that finished while we were in the background is
+      // sitting there waiting; Play's own guidance is to offer the restart on
+      // resume rather than wait for the next launch.
+      if (await PlayUpdates.hasDownloadedUpdate()) {
+        offerRestart();
+        return;
+      }
       // No splash is about to clear the stack here, so this is safe to offer
       // directly.
       unawaited(maybeWarnAboutUpdate());
@@ -106,30 +117,37 @@ class _UpdateGateState extends State<UpdateGate> with WidgetsBindingObserver {
     }
   }
 
-  /// How this build stands against the configured floor.
-  _GateState get _state {
-    final build = _build;
+  /// How this build stands. The widget only acts on [UpdateDecision.blocked];
+  /// warnings and nudges are dialogs offered from [maybeWarnAboutUpdate].
+  UpdateDecision get _decision {
     final cfg = RemoteConfig.instance;
-    if (build == null) return _GateState.clear;
-    if (cfg.updateMode == 'off') return _GateState.clear;
-    if (cfg.minSupportedBuild <= 0) return _GateState.clear;
-    if (build >= cfg.minSupportedBuild) return _GateState.clear;
-
-    // Below the floor. In notify mode that is as far as it goes.
-    if (cfg.updateMode == 'notify') return _GateState.warn;
-
-    final deadline = cfg.blocksAt;
-    if (deadline == null) return _GateState.warn;
-    return cfg.serverNow.isBefore(deadline) ? _GateState.warn : _GateState.blocked;
+    return decideUpdate(
+      build: _build,
+      mode: cfg.updateMode,
+      latestBuild: cfg.latestBuild,
+      minSupportedBuild: cfg.minSupportedBuild,
+      blocksAt: cfg.blocksAt,
+      serverNow: cfg.serverNow,
+      snoozedBuild: null,
+      snoozedAt: null,
+      now: DateTime.now().toUtc(),
+    );
   }
 
-
-  Future<void> _download() => openUpdateDestination();
+  /// The blocked screen's button. A Play install gets Play's immediate flow —
+  /// the update installs without leaving the app — and falls back to the store
+  /// page when Play cannot run it.
+  Future<void> _download() async {
+    if (_channel == UpdateChannel.play && await PlayUpdates.performImmediate()) {
+      return;
+    }
+    await openUpdateDestination();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final state = _state;
-    if (state == _GateState.blocked) {
+    // Web is always current after a deploy; there is nothing to install.
+    if (!kIsWeb && _decision == UpdateDecision.blocked) {
       // Replaces the app rather than covering it: there is nothing behind this
       // worth reaching, and a dismissible "blocking" screen is not one.
       return _BlockedScreen(
@@ -157,8 +175,6 @@ class _UpdateGateState extends State<UpdateGate> with WidgetsBindingObserver {
   }
 }
 
-enum _GateState { clear, warn, blocked }
-
 /// Turns a duration into the coarsest unit that is still true.
 ///
 /// "2 days" is more use than "1 day 22 hours", and under an hour the minutes
@@ -172,6 +188,8 @@ String? formatRemaining(BuildContext context, Duration? left) {
   return l10n.updateVerySoon;
 }
 
+/// The floor warning: this build is on notice, with a countdown when there is
+/// a deadline.
 class _CountdownDialog extends StatelessWidget {
   const _CountdownDialog({
     required this.remaining,
@@ -211,6 +229,43 @@ class _CountdownDialog extends StatelessWidget {
   }
 }
 
+/// The nudge: something newer exists, and this build is still fine.
+///
+/// Only ever shown when Play could not show its own sheet — a sideload, an
+/// emulator, or a store that has not caught up with the config yet.
+class _NudgeDialog extends StatelessWidget {
+  const _NudgeDialog({
+    required this.version,
+    required this.channel,
+    required this.onLater,
+    required this.onUpdate,
+  });
+
+  final String version;
+  final UpdateChannel channel;
+  final VoidCallback onLater;
+  final VoidCallback onUpdate;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AlertDialog(
+      icon: const Icon(Icons.system_update),
+      title: Text(l10n.updateAvailableTitle, textAlign: TextAlign.center),
+      content: Text(l10n.updateNudgeBody(version), textAlign: TextAlign.center),
+      actions: [
+        TextButton(onPressed: onLater, child: Text(l10n.updateLater)),
+        FilledButton(
+          onPressed: onUpdate,
+          child: Text(channel == UpdateChannel.play
+              ? l10n.updateOpenStore
+              : l10n.updateDownload),
+        ),
+      ],
+    );
+  }
+}
+
 class _BlockedScreen extends StatelessWidget {
   const _BlockedScreen({
     required this.onDownload,
@@ -218,7 +273,7 @@ class _BlockedScreen extends StatelessWidget {
     required this.channel,
   });
 
-  final VoidCallback onDownload;
+  final Future<void> Function() onDownload;
   final Future<void> Function() onRetry;
   final UpdateChannel channel;
 
@@ -283,10 +338,9 @@ class _BlockedScreen extends StatelessWidget {
   }
 }
 
-
-/// Offer the countdown, once, if this build is on notice.
+/// Offer whatever the config says this build should hear, once per session.
 ///
-/// Deliberately not fired from UpdateGate.build. The dialog is a route on the
+/// Deliberately not fired from UpdateGate.build. The dialogs are routes on the
 /// app's Navigator, and at launch the splash finishes with
 /// pushNamedAndRemoveUntil(..., (_) => false) — which removes every route,
 /// including a dialog pushed a moment earlier. So it is offered *after* the
@@ -294,26 +348,43 @@ class _BlockedScreen extends StatelessWidget {
 /// notification, and on resume where nothing is about to clear the stack.
 ///
 /// Once per session: a launch should mention it, and by the next launch the
-/// deadline is closer than it was.
+/// deadline is closer than it was. The nudge additionally remembers "Later"
+/// across launches — see [RemoteConfig.snoozeBuild].
 Future<void> maybeWarnAboutUpdate() async {
+  // The web build is whatever was last deployed; there is nothing to update.
+  if (kIsWeb) return;
   if (_warnedThisSession) return;
 
   final cfg = RemoteConfig.instance;
-  if (cfg.updateMode == 'off') return;
-  if (cfg.minSupportedBuild <= 0) return;
-
   final build = await currentBuildNumber();
-  if (build == null || build >= cfg.minSupportedBuild) return;
+  final snooze = await cfg.readSnooze();
+  final decision = decideUpdate(
+    build: build,
+    mode: cfg.updateMode,
+    latestBuild: cfg.latestBuild,
+    minSupportedBuild: cfg.minSupportedBuild,
+    blocksAt: cfg.blocksAt,
+    serverNow: cfg.serverNow,
+    snoozedBuild: snooze.build,
+    snoozedAt: snooze.at,
+    now: DateTime.now().toUtc(),
+  );
 
-  // Past the deadline the gate itself is showing, and this would be a dialog
-  // over the top of it saying the same thing less firmly.
-  final deadline = cfg.blocksAt;
-  if (cfg.updateMode == 'block' &&
-      deadline != null &&
-      !cfg.serverNow.isBefore(deadline)) {
-    return;
+  switch (decision) {
+    case UpdateDecision.none:
+      return;
+    case UpdateDecision.blocked:
+      // The gate itself is showing; a dialog over it would say the same thing
+      // less firmly.
+      return;
+    case UpdateDecision.warn:
+      await _showCountdown(cfg);
+    case UpdateDecision.nudge:
+      await _showNudge(cfg);
   }
+}
 
+Future<void> _showCountdown(RemoteConfig cfg) async {
   // Resolved before the navigator is looked up, so nothing is awaited between
   // finding it and using its context. Both reads are cached after first call,
   // so this costs nothing on the resume path.
@@ -323,6 +394,7 @@ Future<void> maybeWarnAboutUpdate() async {
   if (navigator == null || !navigator.mounted) return;
   _warnedThisSession = true;
 
+  final deadline = cfg.blocksAt;
   final left = deadline?.difference(cfg.serverNow);
   await showDialog<void>(
     context: navigator.context,
@@ -337,67 +409,114 @@ Future<void> maybeWarnAboutUpdate() async {
   );
 }
 
+Future<void> _showNudge(RemoteConfig cfg) async {
+  final channel = await currentUpdateChannel();
+  _warnedThisSession = true;
+
+  if (channel == UpdateChannel.play) {
+    // Play's own sheet first. It downloads in the background and we offer the
+    // restart when it is done, which is the experience every other Play app
+    // gives — and Play, not us, decides whether this device may have it.
+    final outcome = await PlayUpdates.startFlexible();
+    switch (outcome) {
+      case PlayUpdateOutcome.started:
+        _listenForDownloaded();
+        return;
+      case PlayUpdateOutcome.declined:
+        // "No" in Play's sheet is "Later" in ours.
+        await cfg.snoozeBuild(cfg.latestBuild);
+        return;
+      case PlayUpdateOutcome.notAvailable:
+      case PlayUpdateOutcome.unavailable:
+        // The config is ahead of the store, or Play cannot be asked here.
+        // Fall through to the dialog, which sends them to the listing.
+        break;
+    }
+  }
+
+  final navigator = rootNavigatorKey.currentState;
+  if (navigator == null || !navigator.mounted) return;
+
+  final result = await showDialog<bool>(
+    context: navigator.context,
+    builder: (ctx) => _NudgeDialog(
+      version: cfg.latestVersion,
+      channel: channel,
+      onLater: () => Navigator.pop(ctx, false),
+      onUpdate: () => Navigator.pop(ctx, true),
+    ),
+  );
+  if (result == true) {
+    unawaited(openUpdateDestination());
+  } else {
+    // Later, or dismissed by tapping outside: both mean "not now", and
+    // neither should mean "ask again on the next launch".
+    await cfg.snoozeBuild(cfg.latestBuild);
+  }
+}
+
+StreamSubscription<InstallStatus>? _installSub;
+
+/// Watch a flexible download and offer the restart when it lands.
+void _listenForDownloaded() {
+  _installSub?.cancel();
+  _installSub = PlayUpdates.installStatus.listen((status) {
+    if (status == InstallStatus.downloaded) {
+      _installSub?.cancel();
+      _installSub = null;
+      offerRestart();
+    }
+  });
+}
+
+/// "Update downloaded — Restart", as a long-lived snackbar on whatever screen
+/// is up. Restarting installs the flexible update.
+void offerRestart() {
+  final navigator = rootNavigatorKey.currentState;
+  if (navigator == null || !navigator.mounted) return;
+  final context = navigator.context;
+  final messenger = ScaffoldMessenger.maybeOf(context);
+  if (messenger == null) return;
+  final l10n = context.l10n;
+  messenger.showSnackBar(
+    SnackBar(
+      content: Text(l10n.updateDownloadedTitle),
+      duration: const Duration(days: 1),
+      action: SnackBarAction(
+        label: l10n.updateRestart,
+        onPressed: () => unawaited(PlayUpdates.complete()),
+      ),
+    ),
+  );
+}
+
 bool _warnedThisSession = false;
 
-/// This build's own details, read once and remembered.
-///
-/// One read rather than one per question: the build number and where the
-/// install came from are both on the same object, and the platform channel is
-/// not free.
-PackageInfo? _cachedInfo;
-bool _infoRead = false;
-
-Future<PackageInfo?> _packageInfo() async {
-  if (_infoRead) return _cachedInfo;
-  try {
-    _cachedInfo = await PackageInfo.fromPlatform();
-  } catch (_) {
-    // Left null. Every caller below treats that as "assume the build most
-    // people have", which is the sideload.
-  }
-  _infoRead = true;
-  return _cachedInfo;
-}
-
-Future<int?> currentBuildNumber() async {
-  final info = await _packageInfo();
-  // Unknown build means no gate; guessing would risk locking out a phone we
-  // cannot even identify.
-  if (info == null) return null;
-  return int.tryParse(info.buildNumber);
-}
-
-/// Google Play's own package name, as the installer API reports it.
-const String _playStorePackage = 'com.android.vending';
+Future<int?> currentBuildNumber() => AppInfo.buildNumber();
 
 /// How this copy of the app arrived, which decides where "update" should send
 /// it.
 ///
-/// Not cosmetic. Play's Device and Network Abuse policy forbids an app
-/// distributing its own updates around the store it was installed from, and
-/// the download page hands out an APK — so pointing a Play install at it is
-/// both the wrong destination for the user and a policy problem for the
-/// listing. It is also simply broken: a Play build and a sideloaded build
-/// carry different signatures, so the APK cannot install over the Play one
-/// even if somebody tries.
+/// Not cosmetic. A Play install gets Play's own update flows, and its store
+/// page as the fallback; anything else is sent to the download page, which
+/// now explains the store and how to get in during closed testing. The two
+/// carry different signatures, so a Play build can never be updated by
+/// anything the site could offer anyway.
 ///
 /// Anything that is not Play is treated as a sideload. A sideload reports the
 /// installer's own package, or nothing at all when it came through adb, and
-/// the sideload is what the entire installed base is today — so it is the
-/// right answer when the question cannot be answered.
+/// that is the right answer when the question cannot be answered.
 enum UpdateChannel { play, sideload }
 
 Future<UpdateChannel> currentUpdateChannel() async {
-  final info = await _packageInfo();
-  return info?.installerStore == _playStorePackage
-      ? UpdateChannel.play
-      : UpdateChannel.sideload;
+  await AppInfo.packageInfo();
+  return AppInfo.isPlayInstall ? UpdateChannel.play : UpdateChannel.sideload;
 }
 
 /// Send this install wherever its update actually lives.
 Future<void> openUpdateDestination() async {
-  final info = await _packageInfo();
-  if (info?.installerStore == _playStorePackage) {
+  final info = await AppInfo.packageInfo();
+  if (AppInfo.isPlayInstall && info != null) {
     // market:// opens the Play app straight on the listing. The https form is
     // the fallback for the rare device that has Play as an installer but no
     // Play app to handle the scheme.
@@ -405,15 +524,14 @@ Future<void> openUpdateDestination() async {
     // The package name comes from the package itself rather than a constant,
     // for the same reason the build number does: it cannot then drift from
     // what was actually shipped.
-    final id = info!.packageName;
+    final id = info.packageName;
     if (await _tryLaunch(Uri.parse('market://details?id=$id'))) return;
     await _tryLaunch(
       Uri.parse('https://play.google.com/store/apps/details?id=$id'),
     );
-    // Deliberately no fall-through to the download page. If both of those
-    // failed there is no browser and no Play app on this phone, and handing a
-    // Play install an APK it cannot install over itself would be worse than
-    // the button doing nothing. The blocking screen still offers retry.
+    // Deliberately no fall-through to the site. If both of those failed there
+    // is no browser and no Play app on this phone, and the blocking screen
+    // still offers retry.
     return;
   }
 

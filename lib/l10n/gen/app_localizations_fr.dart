@@ -2313,10 +2313,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get updateRequiredBody =>
-      'Une version plus récente de Mambanda Market est nécessaire pour continuer. Téléchargez-la pour retrouver vos annonces et vos messages.';
+      'Une version plus récente de Mambanda Market est nécessaire pour continuer. Installez-la pour retrouver vos annonces et vos messages.';
 
   @override
-  String get updateDownload => 'Télécharger la mise à jour';
+  String get updateDownload => 'Obtenir la mise à jour';
 
   @override
   String get updateOpenStore => 'Mettre à jour sur Google Play';
@@ -2326,6 +2326,62 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get updateDismiss => 'Ignorer';
+
+  @override
+  String updateNudgeBody(String version) {
+    return 'La version $version est prête. Mettez à jour pour profiter des dernières corrections et nouveautés.';
+  }
+
+  @override
+  String get updateLater => 'Plus tard';
+
+  @override
+  String get updateDownloadedTitle => 'Mise à jour téléchargée';
+
+  @override
+  String get updateRestart => 'Redémarrer';
+
+  @override
+  String get contactSupport => 'Contacter l’assistance';
+
+  @override
+  String get contactSupportSub => 'Questions, problèmes ou remarques';
+
+  @override
+  String get supportTitle => 'Contacter l’assistance';
+
+  @override
+  String get supportSubject => 'Objet';
+
+  @override
+  String get supportMessage => 'Message';
+
+  @override
+  String supportReplyTo(String email) {
+    return 'Nous vous répondrons à $email.';
+  }
+
+  @override
+  String get supportSend => 'Envoyer';
+
+  @override
+  String get supportSent => 'Merci — votre message a été envoyé.';
+
+  @override
+  String get supportFailed =>
+      'Impossible d’envoyer votre message. Veuillez réessayer.';
+
+  @override
+  String get supportTooMany =>
+      'Vous avez envoyé plusieurs messages récemment. Réessayez dans une heure.';
+
+  @override
+  String get supportTooShort =>
+      'Veuillez ajouter un objet et quelques mots de plus.';
+
+  @override
+  String get supportSignInRequired =>
+      'Connectez-vous pour contacter l’assistance.';
 
   @override
   String get updateAvailableTitle => 'Une nouvelle version est disponible';

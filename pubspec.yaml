@@ -82,6 +82,10 @@ dependencies:
   # drops every notification we send.
   flutter_local_notifications: ^22.3.0
   package_info_plus: ^10.2.1
+  # Play's own update flows (flexible + immediate) for copies installed from
+  # Play. Android-only; every call is guarded, and a copy that did not come
+  # from Play falls back to the dialog + store link.
+  in_app_update: ^5.0.0
   # Native Google sign-in: the account picker Android already has, instead of
   # a browser round trip to Supabase's hosted OAuth page.
   google_sign_in: ^7.0.0

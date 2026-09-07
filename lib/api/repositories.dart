@@ -839,6 +839,34 @@ class ReportsRepository {
       });
 }
 
+/// A message to the team.
+///
+/// Goes through the API, which attaches the caller's user_id from the bearer
+/// and rate-limits per address, so the app sends only what the person typed
+/// plus who they are.
+class SupportRepository {
+  SupportRepository._();
+  static final SupportRepository instance = SupportRepository._();
+
+  final _api = ApiClient.instance;
+
+  Future<void> send({
+    required String email,
+    String? name,
+    required String subject,
+    required String message,
+    required String locale,
+  }) =>
+      _api.post('/support', {
+        'email': email,
+        if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
+        'subject': subject.trim(),
+        'message': message.trim(),
+        'locale': locale,
+        'source': 'app',
+      });
+}
+
 /// Referrals: the caller's own code and claiming someone else's.
 ///
 /// Claiming deliberately goes through the API rather than writing the profile

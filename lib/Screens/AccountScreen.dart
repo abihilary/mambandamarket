@@ -11,6 +11,7 @@ import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../Components/plan_card.dart';
 import '../Components/menu_group.dart';
+import '../Components/support_sheet.dart';
 import '../theme/app_theme.dart';
 import '../theme/theme_controller.dart';
 import 'EditProfileScreen.dart';
@@ -606,6 +607,15 @@ class _AccountScreenState extends State<AccountScreen> {
                           builder: (_) => const ResetPasswordScreen(),
                         ),
                       ),
+                    ),
+                    // A way to reach a person. The site has a contact form;
+                    // this is the same inbox, with the account attached so the
+                    // reply lands without anyone typing their address.
+                    MenuRow(
+                      icon: Icons.support_agent_outlined,
+                      title: l10n.contactSupport,
+                      subtitle: l10n.contactSupportSub,
+                      onTap: () => showSupportSheet(context),
                     ),
                   ],
                 ),

@@ -132,6 +132,37 @@ class RemoteConfig {
     return DateTime.tryParse(raw)?.toUtc();
   }
 
+  static const _kSnoozeBuild = 'update_snoozed_build';
+  static const _kSnoozeAt = 'update_snoozed_at';
+
+  /// The build the user last said "Later" to, and when.
+  ///
+  /// Device clock, not server clock: this suppresses a nag, it does not enforce
+  /// a deadline, so a phone with the wrong date only nags itself a little
+  /// early or late.
+  Future<({int? build, DateTime? at})> readSnooze() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final build = prefs.getInt(_kSnoozeBuild);
+      final at = DateTime.tryParse(prefs.getString(_kSnoozeAt) ?? '');
+      return (build: build, at: at?.toUtc());
+    } catch (_) {
+      return (build: null, at: null);
+    }
+  }
+
+  /// Remember "Later" for [build]. A newer latest_build makes it moot without
+  /// anything having to clear it.
+  Future<void> snoozeBuild(int build) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_kSnoozeBuild, build);
+      await prefs.setString(_kSnoozeAt, DateTime.now().toUtc().toIso8601String());
+    } catch (_) {
+      // Storage unavailable — the in-session guard still holds until relaunch.
+    }
+  }
+
   Future<void> _readCache() async {
     try {
       final prefs = await SharedPreferences.getInstance();

@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'api/auth_service.dart';
 import 'Components/update_gate.dart';
 import 'api/config.dart';
+import 'api/app_info.dart';
 import 'api/push_service.dart';
 import 'l10n/l10n.dart';
 import 'navigation.dart';
@@ -41,6 +42,9 @@ Future<void> main() async {
     url: AppConfig.supabaseUrl,
     publishableKey: AppConfig.supabasePublishableKey,
   );
+
+  // Read once so the very first API request already says which build it is.
+  await AppInfo.warm();
 
   await LocaleController.instance.load();
   await ThemeController.instance.load();
