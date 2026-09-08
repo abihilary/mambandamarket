@@ -3,15 +3,18 @@ import 'package:share_plus/share_plus.dart';
 
 import '../Screens/CheckoutScreen.dart';
 import '../Screens/PublicProfileScreen.dart';
+import '../Screens/ShippingRequestScreen.dart';
 import '../Service/ChatRoomScreen.dart';
 import '../api/api_client.dart';
 import '../api/auth_service.dart';
 import '../api/models.dart' as api;
 import '../api/repositories.dart';
 import '../api/share_links.dart';
+import '../api/shipping_repository.dart';
 import '../l10n/l10n.dart';
 import 'glass_surface.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_tokens.dart';
 import 'ItemCard.dart';
 import 'VerifiedBadge.dart';
 import 'report_sheet.dart';
@@ -1318,6 +1321,13 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     Expanded(flex: 2, child: _chatButton(primary: false)),
                   ] else
                     Expanded(child: _chatButton(primary: true)),
+                  // The way in sits with the other actions rather than
+                  // somewhere they would have to go looking for. Icon-only and
+                  // last, so it never competes with buying or messaging.
+                  if (_showsShipping) ...[
+                    const SizedBox(width: 10),
+                    _shipButton(),
+                  ],
                 ],
               ),
             ],
@@ -1335,6 +1345,56 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     if (difference.inMinutes < 60) return context.l10n.detailPostedMinutes(difference.inMinutes);
     if (difference.inHours < 24) return context.l10n.detailPostedHours(difference.inHours);
     return context.l10n.detailPostedDays(difference.inDays);
+  }
+
+  /// Shown on every product, not only the ones payable here.
+  ///
+  /// Restricting it to company products meant the one place somebody is
+  /// already looking at a thing they want was also the place the option was
+  /// usually missing — and "can I pay for this on the platform" is a different
+  /// question from "can you get this to me". Only the server-side switch gates
+  /// it now.
+  bool get _showsShipping => _listing != null && ShippingRepository.instance.enabled;
+
+  Widget _shipButton() {
+    final scheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      width: 50,
+      height: 50,
+      child: OutlinedButton(
+        onPressed: _shipThis,
+        style: OutlinedButton.styleFrom(
+          padding: EdgeInsets.zero,
+          shape: const CircleBorder(),
+          side: BorderSide(color: scheme.outlineVariant),
+        ),
+        child: Tooltip(
+          message: context.l10n.shipFabLabel,
+          child: Icon(Icons.local_shipping_outlined,
+              size: 22, color: context.tokens.accentInk),
+        ),
+      ),
+    );
+  }
+
+  /// Straight into the request with this product already chosen — the picker
+  /// and the "what would you like shipped" question are both already answered
+  /// by being here.
+  void _shipThis() {
+    final listing = _listing;
+    if (listing == null) return;
+    if (AuthService.instance.session == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.shipSignInRequired)),
+      );
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ShippingRequestScreen(initialListing: listing),
+      ),
+    );
   }
 
   Widget _buyButton() {
