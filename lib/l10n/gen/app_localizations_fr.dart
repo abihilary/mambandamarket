@@ -2671,7 +2671,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get shipNewRequest => 'Demander une expédition';
 
   @override
-  String get shipNoneYet => 'Rien pour l\'instant';
+  String get shipNoneYet => 'Aucune expédition';
 
   @override
   String get shipNoneYetBody =>
@@ -2743,7 +2743,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get trendViews => 'vues';
 
   @override
-  String get trendMessage => 'Écrire';
+  String get trendMakeOffer => 'Faire une offre';
 
   @override
   String get trendBuy => 'Acheter';

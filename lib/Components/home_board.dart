@@ -47,19 +47,57 @@ class HomeBoard extends StatelessWidget {
         // No board is the common case. Take up no room at all rather than
         // leaving a gap where one used to be.
         if (board == null) return const SizedBox.shrink();
+        final style = board.style;
+        final brightness = Theme.of(context).brightness;
+        final radius = BorderRadius.circular(style.radius);
+        final border = style.border;
+        final borderColor = border?.color?.resolve(brightness);
+
+        Widget content = ClipRRect(
+          borderRadius: radius,
+          // The stack template sizes to its words instead of to a ratio: a
+          // headline, a line of body and two buttons do not fit inside a
+          // 21:9 banner once the labels are in French.
+          child: board.template == 'stack'
+              ? _Stack(board: board, onCategory: onCategory)
+              : AspectRatio(
+                  aspectRatio: style.aspect,
+                  child: _BoardBody(board: board, onCategory: onCategory),
+                ),
+        );
+
+        if (style.textScale != 1) {
+          content = MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              textScaler: _ScaledBy(
+                MediaQuery.textScalerOf(context),
+                style.textScale,
+              ),
+            ),
+            child: content,
+          );
+        }
+
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(board.style.radius),
-            // The stack template sizes to its words instead of to a ratio: a
-            // headline, a line of body and two buttons do not fit inside a
-            // 21:9 banner once the labels are in French.
-            child: board.template == 'stack'
-                ? _Stack(board: board, onCategory: onCategory)
-                : AspectRatio(
-                    aspectRatio: board.style.aspect,
-                    child: _BoardBody(board: board, onCategory: onCategory),
-                  ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: style.background?.resolve(brightness),
+              borderRadius: radius,
+            ),
+            // The border goes in front so it draws over the clipped edge of
+            // the artwork instead of being covered by it.
+            foregroundDecoration: border != null && border.isVisible
+                ? BoxDecoration(
+                    borderRadius: radius,
+                    border: Border.all(
+                      color: borderColor ??
+                          Theme.of(context).colorScheme.outlineVariant,
+                      width: border.width,
+                    ),
+                  )
+                : null,
+            child: content,
           ),
         );
       },
@@ -81,8 +119,8 @@ class _Stack extends StatelessWidget {
     final locale = Localizations.localeOf(context);
     final title = pickLocalised(slide.title, locale);
     final body = pickLocalised(slide.body, locale);
-    final bg = _hex(slide.background) ?? theme.colorScheme.surfaceContainerHighest;
-    final fg = _hex(slide.foreground) ?? theme.colorScheme.onSurface;
+    final bg = slide.background?.resolve(theme.brightness) ?? theme.colorScheme.surfaceContainerHighest;
+    final fg = slide.foreground?.resolve(theme.brightness) ?? theme.colorScheme.onSurface;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -654,8 +692,8 @@ class _Text extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final locale = Localizations.localeOf(context);
-    final bg = _hex(slide.background) ?? theme.colorScheme.primaryContainer;
-    final fg = _hex(slide.foreground) ?? theme.colorScheme.onPrimaryContainer;
+    final bg = slide.background?.resolve(theme.brightness) ?? theme.colorScheme.primaryContainer;
+    final fg = slide.foreground?.resolve(theme.brightness) ?? theme.colorScheme.onPrimaryContainer;
 
     final title = pickLocalised(slide.title, locale);
     final body = pickLocalised(slide.body, locale);
@@ -719,12 +757,6 @@ class _Text extends StatelessWidget {
     );
   }
 
-}
-
-/// A slide's own colour, or null when it did not set a usable one.
-Color? _hex(String? value) {
-  if (value == null || !RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(value)) return null;
-  return Color(int.parse(value.substring(1), radix: 16) | 0xFF000000);
 }
 
 /// Media on one side, words on the other.
@@ -820,4 +852,27 @@ Future<void> openBoardLink(
       if (!allowedBoardScreens.contains(value)) return;
       await Navigator.of(context, rootNavigator: true).pushNamed(value);
   }
+}
+
+/// The board's own text scale, multiplied into the device's rather than
+/// replacing it.
+///
+/// Replacing it is the tempting one-liner and it is wrong: somebody who has
+/// turned their system text up has done so because they need it, and a banner
+/// is not the place to overrule that. This composes, so a board set to 1.2
+/// reads 20% larger than the rest of that person's app, whatever size that is.
+class _ScaledBy extends TextScaler {
+  const _ScaledBy(this._inner, this._factor);
+
+  final TextScaler _inner;
+  final double _factor;
+
+  @override
+  double scale(double fontSize) => _inner.scale(fontSize * _factor);
+
+  // Abstract on TextScaler and deprecated in the same breath, so it has to be
+  // implemented and cannot be implemented without the warning.
+  @override
+  // ignore: deprecated_member_use
+  double get textScaleFactor => _inner.textScaleFactor * _factor;
 }

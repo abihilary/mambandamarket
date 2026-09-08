@@ -1,4 +1,4 @@
-import 'dart:ui' show Locale;
+import 'dart:ui' show Brightness, Color, Locale;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mambandamarket/api/board_media_cache.dart';
@@ -33,6 +33,7 @@ Map<String, dynamic> action(Map<String, dynamic> link, {String label = 'Go'}) =>
     };
 
 void main() {
+  _themedColourTests();
   const locale = Locale('en');
 
   group('back-compatibility', () {
@@ -208,6 +209,69 @@ void main() {
       expect(boardMediaKeepSet([a]), isNot(contains('uuid-b/clip.mp4')));
       // A placement that has not loaded contributes nothing and evicts nothing.
       expect(boardMediaKeepSet([a, null]), {'uuid-a/clip.mp4'});
+    });
+  });
+}
+
+void _themedColourTests() {
+  group('themed colours', () {
+    test('a bare hex is that colour in both themes', () {
+      // Every board published before this existed stores a plain string, and
+      // must keep rendering exactly as it did.
+      final c = BoardColor.fromJson('#112233')!;
+      expect(c.resolve(Brightness.light), const Color(0xFF112233));
+      expect(c.resolve(Brightness.dark), const Color(0xFF112233));
+    });
+
+    test('light and dark can differ', () {
+      final c = BoardColor.fromJson({'light': '#ffffff', 'dark': '#000000'})!;
+      expect(c.resolve(Brightness.light), const Color(0xFFFFFFFF));
+      expect(c.resolve(Brightness.dark), const Color(0xFF000000));
+    });
+
+    test('a missing side is null, not the other side', () {
+      // Reusing a light-mode colour on a dark card is how you get black on
+      // black. Null means "use the app's own colour", which is readable.
+      final c = BoardColor.fromJson({'light': '#ffffff'})!;
+      expect(c.resolve(Brightness.light), const Color(0xFFFFFFFF));
+      expect(c.resolve(Brightness.dark), isNull);
+    });
+
+    test('a typo is no colour at all', () {
+      expect(BoardColor.fromJson('red'), isNull);
+      expect(BoardColor.fromJson('#fff'), isNull);
+      expect(BoardColor.fromJson('#12345g'), isNull);
+      expect(BoardColor.fromJson(42), isNull);
+      expect(BoardColor.fromJson({'light': 'nope'}), isNull);
+    });
+
+    test('a zero-width border is no border', () {
+      expect(BoardBorder.fromJson({'width': 0, 'color': '#000000'}), isNull);
+      expect(BoardBorder.fromJson(null), isNull);
+      expect(BoardBorder.fromJson({'width': 2})!.width, 2);
+    });
+
+    test('style defaults leave an untouched board unchanged', () {
+      final s = BoardStyle.fromJson(<String, dynamic>{});
+      expect(s.border, isNull);
+      expect(s.background, isNull);
+      expect(s.textScale, 1);
+    });
+
+    test('text scale is clamped to what still fits', () {
+      expect(BoardStyle.fromJson(<String, dynamic>{'textScale': 9}).textScale, 1.6);
+      expect(BoardStyle.fromJson(<String, dynamic>{'textScale': 0.1}).textScale, 0.8);
+    });
+
+    test('a slide keeps its own colours per theme', () {
+      final slide = BoardSlide.fromJson(<String, dynamic>{
+        'type': 'text',
+        'title': {'en': 'Hi'},
+        'background': {'light': '#eeeeee', 'dark': '#222222'},
+        'foreground': '#ff0000',
+      })!;
+      expect(slide.background!.resolve(Brightness.dark), const Color(0xFF222222));
+      expect(slide.foreground!.resolve(Brightness.dark), const Color(0xFFFF0000));
     });
   });
 }

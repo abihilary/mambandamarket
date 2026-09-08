@@ -2620,7 +2620,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shipNewRequest => 'Ask us to ship something';
 
   @override
-  String get shipNoneYet => 'Nothing here yet';
+  String get shipNoneYet => 'No shipments yet';
 
   @override
   String get shipNoneYetBody =>
@@ -2692,7 +2692,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trendViews => 'views';
 
   @override
-  String get trendMessage => 'Message';
+  String get trendMakeOffer => 'Make an offer';
 
   @override
   String get trendBuy => 'Buy';

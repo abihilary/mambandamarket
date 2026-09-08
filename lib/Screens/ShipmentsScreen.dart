@@ -49,8 +49,20 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
     final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.shipMyShipments,
-            style: const TextStyle(fontWeight: FontWeight.bold)),
+        // Deliberately larger than the house app-bar title. This screen is
+        // reached from a floating button rather than the tab bar, so it has to
+        // say what it is the moment it lands — the default weight read as
+        // chrome and people did not register they had arrived somewhere.
+        titleSpacing: 20,
+        toolbarHeight: 72,
+        title: Text(
+          l10n.shipMyShipments,
+          style: const TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.4,
+          ),
+        ),
       ),
       body: ValueListenableBuilder<List<ShippingRequest>>(
         valueListenable: _repo.shipments,

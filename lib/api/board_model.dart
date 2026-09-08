@@ -1,4 +1,4 @@
-import 'dart:ui' show Locale;
+import 'dart:ui' show Brightness, Color, Locale;
 
 /// The home board, as the server describes it.
 ///
@@ -83,6 +83,65 @@ class Board {
       };
 }
 
+/// A colour the board chose, which may differ between light and dark.
+///
+/// The API sends either a bare `"#RRGGBB"` — meaning that colour in both
+/// themes, which is every board published before this existed — or
+/// `{"light": ..., "dark": ...}`. Either side may be absent, and an absent
+/// side deliberately resolves to null rather than to the other theme's value:
+/// "no colour set for dark" means the app's own colour, which is readable,
+/// where a light-mode colour reused on a dark card usually is not.
+class BoardColor {
+  const BoardColor({this.light, this.dark});
+
+  final Color? light;
+  final Color? dark;
+
+  bool get isEmpty => light == null && dark == null;
+
+  Color? resolve(Brightness brightness) =>
+      brightness == Brightness.dark ? dark : light;
+
+  static BoardColor? fromJson(Object? json) {
+    if (json is String) {
+      final c = _hexColor(json);
+      return c == null ? null : BoardColor(light: c, dark: c);
+    }
+    if (json is Map) {
+      final light = _hexColor(json['light']);
+      final dark = _hexColor(json['dark']);
+      if (light == null && dark == null) return null;
+      return BoardColor(light: light, dark: dark);
+    }
+    return null;
+  }
+}
+
+/// A hairline around the whole board. Width zero draws nothing.
+class BoardBorder {
+  const BoardBorder({required this.width, this.color});
+
+  final double width;
+  final BoardColor? color;
+
+  bool get isVisible => width > 0;
+
+  static BoardBorder? fromJson(Object? json) {
+    if (json is! Map) return null;
+    final width = ((json['width'] as num?)?.toDouble() ?? 0).clamp(0.0, 8.0);
+    if (width <= 0) return null;
+    return BoardBorder(width: width, color: BoardColor.fromJson(json['color']));
+  }
+}
+
+/// `#RRGGBB`, or null for anything else. Anything else is a typo, and a typo
+/// must fall back to the app's colour rather than paint something arbitrary.
+Color? _hexColor(Object? value) {
+  if (value is! String) return null;
+  if (!RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(value)) return null;
+  return Color(int.parse(value.substring(1), radix: 16) | 0xFF000000);
+}
+
 class BoardStyle {
   const BoardStyle({
     required this.aspect,
@@ -90,6 +149,9 @@ class BoardStyle {
     required this.interval,
     required this.showDots,
     required this.scrim,
+    this.border,
+    this.background,
+    this.textScale = 1,
   });
 
   final double aspect;
@@ -100,6 +162,17 @@ class BoardStyle {
   /// Darkens the foot of a media slide so overlaid words stay readable. Only
   /// drawn where there is something to keep readable.
   final bool scrim;
+
+  /// Null when the board asked for no border, which is the default.
+  final BoardBorder? border;
+
+  /// Behind the slides, where one does not cover the board.
+  final BoardColor? background;
+
+  /// Multiplies the overlaid words. Composed with the device's own text-size
+  /// setting rather than replacing it — someone who has turned text up has
+  /// done so for a reason.
+  final double textScale;
 
   factory BoardStyle.fromJson(Map<String, dynamic> json) {
     final ratio = switch (json['aspect'] as String?) {
@@ -116,6 +189,9 @@ class BoardStyle {
       ),
       showDots: json['showDots'] as bool? ?? true,
       scrim: json['scrim'] as bool? ?? true,
+      border: BoardBorder.fromJson(json['border']),
+      background: BoardColor.fromJson(json['background']),
+      textScale: ((json['textScale'] as num?)?.toDouble() ?? 1).clamp(0.8, 1.6),
     );
   }
 }
@@ -168,8 +244,8 @@ class BoardSlide {
   /// asks for more is a config somebody got wrong.
   final List<BoardAction> actions;
 
-  final String? background;
-  final String? foreground;
+  final BoardColor? background;
+  final BoardColor? foreground;
 
   /// Null for anything this build cannot draw, so the caller can drop it.
   static BoardSlide? fromJson(
@@ -210,8 +286,8 @@ class BoardSlide {
             promos: promos,
           ),
       actions: BoardAction.listFrom(json['actions'], promos: promos),
-      background: json['background'] as String?,
-      foreground: json['foreground'] as String?,
+      background: BoardColor.fromJson(json['background']),
+      foreground: BoardColor.fromJson(json['foreground']),
     );
   }
 

@@ -350,7 +350,7 @@ class _TrendingCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: _CardButton(
-                            label: item.isBuyable ? l10n.trendBuy : l10n.trendMessage,
+                            label: item.isBuyable ? l10n.trendBuy : l10n.trendMakeOffer,
                             filled: item.isBuyable,
                             onTap: item.isBuyable ? onTap : (onMessage ?? onTap),
                           ),

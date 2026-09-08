@@ -4727,7 +4727,7 @@ abstract class AppLocalizations {
   /// No description provided for @shipNoneYet.
   ///
   /// In en, this message translates to:
-  /// **'Nothing here yet'**
+  /// **'No shipments yet'**
   String get shipNoneYet;
 
   /// No description provided for @shipNoneYetBody.
@@ -4856,11 +4856,11 @@ abstract class AppLocalizations {
   /// **'views'**
   String get trendViews;
 
-  /// No description provided for @trendMessage.
+  /// No description provided for @trendMakeOffer.
   ///
   /// In en, this message translates to:
-  /// **'Message'**
-  String get trendMessage;
+  /// **'Make an offer'**
+  String get trendMakeOffer;
 
   /// No description provided for @trendBuy.
   ///
