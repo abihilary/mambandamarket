@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../api/auth_service.dart';
 import '../api/live_location.dart';
 import '../api/location_share.dart';
+import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 
 /// A shared location, inside a chat bubble.
@@ -35,17 +36,28 @@ class _LocationBubbleState extends State<LocationBubble> {
       valueListenable: LiveLocation.instance.active,
       builder: (context, live, _) {
         final share = (live != null && live.id == widget.share.id) ? live : widget.share;
-        final running = share.isRunning;
+        final running = share.isRunning && !_stopped;
         final mine = widget.mine ||
             share.senderId == (AuthService.instance.userId ?? '');
 
+        // Your own messages are drawn on the accent colour, so a card with its
+        // own background nested inside one reads as a box in a box. On your
+        // side it merges instead and borrows the bubble's ink.
+        final onAccent = mine;
+        final fg = onAccent ? cs.onPrimary : cs.onSurface;
+        final muted = onAccent
+            ? cs.onPrimary.withValues(alpha: 0.75)
+            : cs.onSurfaceVariant;
+
         return Container(
           constraints: const BoxConstraints(maxWidth: 260),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: cs.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(12),
-          ),
+          padding: onAccent ? EdgeInsets.zero : const EdgeInsets.all(12),
+          decoration: onAccent
+              ? null
+              : BoxDecoration(
+                  color: cs.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -55,13 +67,14 @@ class _LocationBubbleState extends State<LocationBubble> {
                   Icon(
                     running ? Icons.my_location : Icons.location_on_outlined,
                     size: 18,
-                    color: running ? cs.primary : cs.onSurfaceVariant,
+                    color: running && !onAccent ? cs.primary : muted,
                   ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       _headline(l10n, share),
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 13, color: fg),
                     ),
                   ),
                 ],
@@ -69,17 +82,19 @@ class _LocationBubbleState extends State<LocationBubble> {
               const SizedBox(height: 6),
               Text(
                 _detail(l10n, share),
-                style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                style: TextStyle(fontSize: 12, color: muted),
               ),
               const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
-                    child: FilledButton.tonalIcon(
+                    child: OutlinedButton.icon(
                       onPressed: () => _openMap(share),
                       icon: const Icon(Icons.map_outlined, size: 16),
                       label: Text(l10n.locOpenInMaps, style: const TextStyle(fontSize: 12)),
-                      style: FilledButton.styleFrom(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: fg,
+                        side: BorderSide(color: fg.withValues(alpha: 0.4)),
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         minimumSize: const Size(0, 34),
                       ),
@@ -88,12 +103,9 @@ class _LocationBubbleState extends State<LocationBubble> {
                   if (running && mine) ...[
                     const SizedBox(width: 8),
                     TextButton(
-                      onPressed: () {
-                        LiveLocation.instance.stop();
-                        setState(() {});
-                      },
+                      onPressed: _stopping ? null : () => _stop(share),
                       style: TextButton.styleFrom(
-                        foregroundColor: cs.error,
+                        foregroundColor: onAccent ? cs.onPrimary : cs.error,
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         minimumSize: const Size(0, 34),
                       ),
@@ -131,6 +143,39 @@ class _LocationBubbleState extends State<LocationBubble> {
 
   static String _clock(DateTime t) =>
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+  bool _stopping = false;
+
+  /// End the share.
+  ///
+  /// Talks to the server directly rather than only to [LiveLocation], because
+  /// the controller only knows about a share it is currently following — and
+  /// after the app has been restarted it is following nothing, while the row is
+  /// still live for the person watching. Routing "stop" through the controller
+  /// alone made the off switch do nothing in exactly the case where somebody
+  /// would most want it.
+  Future<void> _stop(LocationShare share) async {
+    setState(() => _stopping = true);
+    if (LiveLocation.instance.isRunningFor(share.id)) {
+      LiveLocation.instance.stop();
+    } else {
+      try {
+        await ChatRepository.instance.stopShare(share.conversationId, share.id);
+      } catch (_) {
+        // It expires on its own regardless; a failed stop must not leave the
+        // button stuck looking like it is still working.
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _stopping = false;
+      _stopped = true;
+    });
+  }
+
+  /// Set once this bubble's own Stop has been pressed, so the card stops
+  /// claiming the share is running without waiting for a refetch.
+  bool _stopped = false;
 
   Future<void> _openMap(LocationShare share) async {
     // geo: first — it opens whichever map app the phone actually uses. The web

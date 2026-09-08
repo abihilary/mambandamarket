@@ -530,12 +530,11 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
 
     return [
       const SizedBox(height: 18),
+      // No separate label above these: a DropdownButtonFormField carries its
+      // own, and on screen the two read as the question asked twice.
       Container(
         key: _keys[ShippingField.category],
-        child: _Label(l10n.shipCategoryLabel),
-      ),
-      const SizedBox(height: 8),
-      DropdownButtonFormField<String>(
+        child: DropdownButtonFormField<String>(
         initialValue: selected?.slug,
         isExpanded: true,
         decoration: _field(l10n.shipCategoryLabel),
@@ -555,10 +554,10 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
                   _sizeCode = '';
                 });
               },
+        ),
       ),
       const SizedBox(height: 18),
-      Container(key: _keys[ShippingField.size], child: _Label(l10n.shipSizeLabel)),
-      const SizedBox(height: 8),
+      Container(key: _keys[ShippingField.size], child: const SizedBox.shrink()),
       if (sizes.isEmpty)
         // No catalogue, or a category nothing was written for. Never a wall:
         // they describe it and we sort it out in the conversation.
@@ -835,11 +834,3 @@ class _SectionTitle extends StatelessWidget {
       Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold));
 }
 
-class _Label extends StatelessWidget {
-  const _Label(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) =>
-      Text(text, style: const TextStyle(fontWeight: FontWeight.w600));
-}

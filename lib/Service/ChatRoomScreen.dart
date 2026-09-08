@@ -469,9 +469,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     });
   }
 
-  String _time(DateTime? at) => at == null
-      ? ''
-      : '${at.hour.toString().padLeft(2, '0')}:${at.minute.toString().padLeft(2, '0')}';
+  /// created_at arrives as UTC, so it has to be converted before the hour is
+  /// read off it. Without the toLocal() every message in the app was stamped an
+  /// hour early in Cameroon, which nobody noticed until a location bubble
+  /// printed the correct time directly beneath one that had not been.
+  String _time(DateTime? at) {
+    if (at == null) return '';
+    final t = at.toLocal();
+    return '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+  }
 
   // ── Attachment rendering ──────────────────────────────────────────────────
 
@@ -607,8 +613,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                         (widget.conversation.isShipping
                             ? shippingStatusLabel(
                                 l10n, widget.conversation.shipping?.status)
-                            : widget.conversation.subjectTitle ??
-                                l10n.chatDefaultListing),
+                            // A support thread has no listing and no subject, so
+                            // without this it fell through to the word
+                            // "Listing" — under the support desk's own name.
+                            : widget.conversation.isSupport
+                                ? l10n.supportThreadTitle
+                                : widget.conversation.subjectTitle ??
+                                    l10n.chatDefaultListing),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
