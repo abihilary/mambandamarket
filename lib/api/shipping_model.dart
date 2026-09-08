@@ -53,6 +53,12 @@ class ShippingPlace {
 
   String labelFor(Locale locale) => pickLocalised(label, locale) ?? code;
 
+  /// What gets stored on the request, and therefore what the desk reads in the
+  /// queue. English rather than the customer's language, because one person
+  /// dispatches every request and a route that arrives half in French and half
+  /// in English is harder to scan than one that is consistently either.
+  String get storedLabel => label['en'] ?? label.values.firstOrNull ?? code;
+
   static ShippingPlace? fromJson(Map<String, dynamic> json) {
     final code = json['code']?.toString();
     final label = _localised(json, 'label');

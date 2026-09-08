@@ -133,9 +133,26 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
         contactPhone: _phone.text,
       );
 
-  String get _fromLocation =>
-      _fromCode == 'other' ? _fromOther.text.trim() : _fromCode;
-  String get _toLocation => _toCode == 'other' ? _toOther.text.trim() : _toCode;
+  // The label, not the code. These columns are free text either way — the
+  // "somewhere else" path has always written prose into them — and the desk
+  // reads them raw in the queue, where "douala-akwa" and "cn" are worse than
+  // useless once there are forty-six of them.
+  String get _fromLocation => _fromCode == 'other'
+      ? _fromOther.text.trim()
+      : _placeLabel(_options.from, _fromCode);
+  String get _toLocation => _toCode == 'other'
+      ? _toOther.text.trim()
+      : _placeLabel(_options.to, _toCode);
+
+  String _placeLabel(List<ShippingPlace> places, String code) {
+    if (code.isEmpty) return '';
+    for (final place in places) {
+      if (place.code == code) return place.storedLabel;
+    }
+    // A code the catalogue no longer carries. The code itself is still a
+    // truthful answer, and refusing to submit over it would not be.
+    return code;
+  }
 
   void _takeListing(Listing listing) {
     _listing = listing;
