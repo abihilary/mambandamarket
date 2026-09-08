@@ -207,7 +207,7 @@ class ChatInboxScreenState extends State<ChatInboxScreen> {
       leading: chat.isShipping
           ? CircleAvatar(
               backgroundColor: context.tokens.accentFill.withValues(alpha: 0.16),
-              child: Icon(Icons.inventory_2_outlined,
+              child: Icon(Icons.local_shipping_outlined,
                   size: 20, color: context.tokens.accentInk),
             )
           : CircleAvatar(

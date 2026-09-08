@@ -19,9 +19,10 @@ double shippingButtonClearance(BuildContext context) =>
 ///   * **Not lime.** `tokens.accentFill` is the publish disc's whole identity —
 ///     the lime circle is how you post. A second lime object sixteen pixels
 ///     away would make both of them mean less.
-///   * **Not a lorry glyph.** `category_icons.dart` already maps one to the
-///     Vehicles branch, and order fulfilment uses the same one. A parcel is
-///     free of both.
+///   * **A lorry, chosen deliberately.** `category_icons.dart` maps the same
+///     glyph to the Vehicles branch and order fulfilment uses it too, so it is
+///     not unique to this — but it is what people read as "shipping" without
+///     being told, and that matters more here than the collision does.
 ///   * **Words at rest.** Nothing in this app has ever mentioned shipping, so
 ///     a bare icon in the corner is a thing nobody taps. It keeps its label
 ///     until the feed starts moving, then collapses rather than disappearing,
@@ -57,7 +58,7 @@ class ShippingButton extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.inventory_2_outlined,
+                  Icon(Icons.local_shipping_outlined,
                       size: 22, color: context.tokens.accentInk),
                   if (extended) ...[
                     const SizedBox(width: 8),
