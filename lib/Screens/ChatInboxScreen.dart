@@ -4,6 +4,7 @@ import '../Service/ChatRoomScreen.dart';
 import '../api/auth_service.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
+import '../api/shipping_model.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_tokens.dart';
 
@@ -103,7 +104,7 @@ class ChatInboxScreenState extends State<ChatInboxScreen> {
       if (_unreadOnly && c.unread <= 0) return false;
       if (q.isEmpty) return true;
       final name = c.counterparty?.displayName ?? '';
-      final title = c.listing?.title ?? '';
+      final title = c.listing?.title ?? c.shipping?.title ?? c.subjectTitle ?? '';
       return name.toLowerCase().contains(q) || title.toLowerCase().contains(q);
     }).toList();
   }
@@ -195,11 +196,21 @@ class ChatInboxScreenState extends State<ChatInboxScreen> {
   Widget _buildRow(BuildContext context, Conversation chat) {
     final cs = Theme.of(context).colorScheme;
     final l10n = context.l10n;
-    final name = chat.counterparty?.displayName ?? l10n.chatUnknownUser;
-    final avatar = chat.counterparty?.avatarUrl;
+    // Every shipping thread has the same counterparty, so the desk's name is a
+    // useless thing to scan a column of them by. The request is the title.
+    final name = chat.isShipping
+        ? (chat.shipping?.title ?? chat.subjectTitle ?? l10n.shipThreadTitle)
+        : chat.counterparty?.displayName ?? l10n.chatUnknownUser;
+    final avatar = chat.isShipping ? null : chat.counterparty?.avatarUrl;
 
     return ListTile(
-      leading: CircleAvatar(
+      leading: chat.isShipping
+          ? CircleAvatar(
+              backgroundColor: context.tokens.accentFill.withValues(alpha: 0.16),
+              child: Icon(Icons.inventory_2_outlined,
+                  size: 20, color: context.tokens.accentInk),
+            )
+          : CircleAvatar(
         backgroundColor: cs.primary.withValues(alpha: 0.12),
         backgroundImage:
             (avatar != null && avatar.isNotEmpty) ? NetworkImage(avatar) : null,
@@ -224,7 +235,13 @@ class ChatInboxScreenState extends State<ChatInboxScreen> {
         ],
       ),
       subtitle: Text(
-        chat.listing?.title ?? l10n.chatUnknownListing,
+        // A shipping thread says where it has got to; that is the line somebody
+        // opening Messages actually wants. Everything else says what it is
+        // about — falling back to what the server resolved, so a thread with no
+        // listing never reads as "Unknown listing".
+        chat.isShipping
+            ? shippingStatusLabel(l10n, chat.shipping?.status)
+            : chat.listing?.title ?? chat.subjectTitle ?? l10n.chatUnknownListing,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(color: cs.onSurfaceVariant),

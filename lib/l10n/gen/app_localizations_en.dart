@@ -2392,4 +2392,218 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get promoClose => 'Close';
+
+  @override
+  String get shipFabLabel => 'Ship for me';
+
+  @override
+  String get shipTitle => 'Ship something for me';
+
+  @override
+  String get shipIntro =>
+      'Tell us what you want and where it has to go. We will come back to you with a price in this chat.';
+
+  @override
+  String get shipSignInRequired => 'Sign in to ask us to ship something.';
+
+  @override
+  String get shipPathQuestion => 'What would you like shipped?';
+
+  @override
+  String get shipPathMarketTitle => 'From Mambanda';
+
+  @override
+  String get shipPathMarketBody => 'Pick something already listed here';
+
+  @override
+  String get shipPathOtherTitle => 'Something else';
+
+  @override
+  String get shipPathOtherBody => 'Paste a link or describe it';
+
+  @override
+  String get shipChange => 'Change';
+
+  @override
+  String get shipPickProduct => 'Choose a product';
+
+  @override
+  String get shipLinkLabel => 'Link to the product';
+
+  @override
+  String get shipLinkHint => 'Where you saw it — https://…';
+
+  @override
+  String get shipDescriptionLabel => 'What is it?';
+
+  @override
+  String get shipDescriptionHint =>
+      'Make, model, colour, size — whatever helps us find the right one';
+
+  @override
+  String get shipItemRequired => 'Add a link or describe what you want';
+
+  @override
+  String get shipPhotosLabel => 'Photos';
+
+  @override
+  String get shipPhotosHint => 'Optional. A screenshot counts.';
+
+  @override
+  String get shipPhotoLimit => 'Six photos is the most we need.';
+
+  @override
+  String get shipCategoryLabel => 'What kind of thing is it?';
+
+  @override
+  String get shipCategoryRequired => 'Choose a category';
+
+  @override
+  String get shipChooseCategory => 'Choose a category';
+
+  @override
+  String get shipSizeLabel => 'How big is it?';
+
+  @override
+  String get shipSizeRequired => 'Choose a size';
+
+  @override
+  String get shipSizeCustomLabel => 'Describe the size';
+
+  @override
+  String get shipSizeCustomHint => 'Roughly how big and how heavy';
+
+  @override
+  String get shipSizeCustomRequired => 'Tell us roughly how big it is';
+
+  @override
+  String get shipSizeNoPresets =>
+      'Tell us roughly how big and how heavy it is.';
+
+  @override
+  String get shipSizeOther => 'Something else';
+
+  @override
+  String get shipRouteTitle => 'Where it travels';
+
+  @override
+  String get shipFromLabel => 'Coming from';
+
+  @override
+  String get shipFromRequired => 'Where is it coming from?';
+
+  @override
+  String get shipToLabel => 'Going to';
+
+  @override
+  String get shipToRequired => 'Where should we deliver it?';
+
+  @override
+  String get shipOther => 'Somewhere else';
+
+  @override
+  String get shipOtherPlace => 'Where?';
+
+  @override
+  String get shipQuantityLabel => 'How many';
+
+  @override
+  String get shipBudgetLabel => 'Your budget';
+
+  @override
+  String get shipBudgetHint =>
+      'Optional — it helps us tell you quickly if it is doable';
+
+  @override
+  String get shipContactTitle => 'How we reach you';
+
+  @override
+  String get shipNameLabel => 'Your name';
+
+  @override
+  String get shipPhoneLabel => 'Phone number';
+
+  @override
+  String get shipPhoneRequired => 'We need a number to reach you on';
+
+  @override
+  String get shipAddressLabel => 'Delivery address';
+
+  @override
+  String get shipAddressHint => 'Optional — a landmark is fine';
+
+  @override
+  String get shipNoteLabel => 'Anything else we should know?';
+
+  @override
+  String get shipSubmit => 'Send the request';
+
+  @override
+  String get shipFixFields => 'A few things still need filling in.';
+
+  @override
+  String get shipUploadFailed => 'Your photos would not upload. Try again.';
+
+  @override
+  String get shipFailed => 'Could not send your request. Try again.';
+
+  @override
+  String get shipCreated => 'Sent. We will reply here.';
+
+  @override
+  String get shipUnavailable => 'Shipping requests are not open yet.';
+
+  @override
+  String get shipTooMany => 'You already have requests waiting for a reply.';
+
+  @override
+  String get shipListingGone => 'That product is no longer available.';
+
+  @override
+  String get shipPickerTitle => 'Choose a product';
+
+  @override
+  String get shipPickerSearchHint => 'Search by name…';
+
+  @override
+  String get shipPickerFavorites => 'Your saved items';
+
+  @override
+  String get shipPickerSuggested => 'On the marketplace';
+
+  @override
+  String get shipPickerNoMatch => 'Nothing matches that.';
+
+  @override
+  String get shipThreadTitle => 'Shipping request';
+
+  @override
+  String get shipStatusNew => 'Waiting for a reply';
+
+  @override
+  String get shipStatusReviewing => 'We are looking at it';
+
+  @override
+  String get shipStatusQuoted => 'You have a price';
+
+  @override
+  String get shipStatusAccepted => 'Accepted';
+
+  @override
+  String get shipStatusSourcing => 'We are getting it';
+
+  @override
+  String get shipStatusInTransit => 'On the way';
+
+  @override
+  String get shipStatusDelivered => 'Delivered';
+
+  @override
+  String get shipStatusCancelled => 'Cancelled';
+
+  @override
+  String get shipStatusDeclined => 'We could not take this on';
+
+  @override
+  String get shipStatusExpired => 'The price has expired';
 }

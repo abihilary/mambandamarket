@@ -4279,6 +4279,426 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close'**
   String get promoClose;
+
+  /// No description provided for @shipFabLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ship for me'**
+  String get shipFabLabel;
+
+  /// No description provided for @shipTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ship something for me'**
+  String get shipTitle;
+
+  /// No description provided for @shipIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us what you want and where it has to go. We will come back to you with a price in this chat.'**
+  String get shipIntro;
+
+  /// No description provided for @shipSignInRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to ask us to ship something.'**
+  String get shipSignInRequired;
+
+  /// No description provided for @shipPathQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'What would you like shipped?'**
+  String get shipPathQuestion;
+
+  /// No description provided for @shipPathMarketTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'From Mambanda'**
+  String get shipPathMarketTitle;
+
+  /// No description provided for @shipPathMarketBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick something already listed here'**
+  String get shipPathMarketBody;
+
+  /// No description provided for @shipPathOtherTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Something else'**
+  String get shipPathOtherTitle;
+
+  /// No description provided for @shipPathOtherBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste a link or describe it'**
+  String get shipPathOtherBody;
+
+  /// No description provided for @shipChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get shipChange;
+
+  /// No description provided for @shipPickProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a product'**
+  String get shipPickProduct;
+
+  /// No description provided for @shipLinkLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Link to the product'**
+  String get shipLinkLabel;
+
+  /// No description provided for @shipLinkHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Where you saw it — https://…'**
+  String get shipLinkHint;
+
+  /// No description provided for @shipDescriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'What is it?'**
+  String get shipDescriptionLabel;
+
+  /// No description provided for @shipDescriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Make, model, colour, size — whatever helps us find the right one'**
+  String get shipDescriptionHint;
+
+  /// No description provided for @shipItemRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a link or describe what you want'**
+  String get shipItemRequired;
+
+  /// No description provided for @shipPhotosLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get shipPhotosLabel;
+
+  /// No description provided for @shipPhotosHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional. A screenshot counts.'**
+  String get shipPhotosHint;
+
+  /// No description provided for @shipPhotoLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Six photos is the most we need.'**
+  String get shipPhotoLimit;
+
+  /// No description provided for @shipCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'What kind of thing is it?'**
+  String get shipCategoryLabel;
+
+  /// No description provided for @shipCategoryRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a category'**
+  String get shipCategoryRequired;
+
+  /// No description provided for @shipChooseCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a category'**
+  String get shipChooseCategory;
+
+  /// No description provided for @shipSizeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'How big is it?'**
+  String get shipSizeLabel;
+
+  /// No description provided for @shipSizeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a size'**
+  String get shipSizeRequired;
+
+  /// No description provided for @shipSizeCustomLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the size'**
+  String get shipSizeCustomLabel;
+
+  /// No description provided for @shipSizeCustomHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Roughly how big and how heavy'**
+  String get shipSizeCustomHint;
+
+  /// No description provided for @shipSizeCustomRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us roughly how big it is'**
+  String get shipSizeCustomRequired;
+
+  /// No description provided for @shipSizeNoPresets.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us roughly how big and how heavy it is.'**
+  String get shipSizeNoPresets;
+
+  /// No description provided for @shipSizeOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Something else'**
+  String get shipSizeOther;
+
+  /// No description provided for @shipRouteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Where it travels'**
+  String get shipRouteTitle;
+
+  /// No description provided for @shipFromLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming from'**
+  String get shipFromLabel;
+
+  /// No description provided for @shipFromRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Where is it coming from?'**
+  String get shipFromRequired;
+
+  /// No description provided for @shipToLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Going to'**
+  String get shipToLabel;
+
+  /// No description provided for @shipToRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Where should we deliver it?'**
+  String get shipToRequired;
+
+  /// No description provided for @shipOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Somewhere else'**
+  String get shipOther;
+
+  /// No description provided for @shipOtherPlace.
+  ///
+  /// In en, this message translates to:
+  /// **'Where?'**
+  String get shipOtherPlace;
+
+  /// No description provided for @shipQuantityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'How many'**
+  String get shipQuantityLabel;
+
+  /// No description provided for @shipBudgetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Your budget'**
+  String get shipBudgetLabel;
+
+  /// No description provided for @shipBudgetHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional — it helps us tell you quickly if it is doable'**
+  String get shipBudgetHint;
+
+  /// No description provided for @shipContactTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How we reach you'**
+  String get shipContactTitle;
+
+  /// No description provided for @shipNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Your name'**
+  String get shipNameLabel;
+
+  /// No description provided for @shipPhoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number'**
+  String get shipPhoneLabel;
+
+  /// No description provided for @shipPhoneRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'We need a number to reach you on'**
+  String get shipPhoneRequired;
+
+  /// No description provided for @shipAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery address'**
+  String get shipAddressLabel;
+
+  /// No description provided for @shipAddressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional — a landmark is fine'**
+  String get shipAddressHint;
+
+  /// No description provided for @shipNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Anything else we should know?'**
+  String get shipNoteLabel;
+
+  /// No description provided for @shipSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Send the request'**
+  String get shipSubmit;
+
+  /// No description provided for @shipFixFields.
+  ///
+  /// In en, this message translates to:
+  /// **'A few things still need filling in.'**
+  String get shipFixFields;
+
+  /// No description provided for @shipUploadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Your photos would not upload. Try again.'**
+  String get shipUploadFailed;
+
+  /// No description provided for @shipFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not send your request. Try again.'**
+  String get shipFailed;
+
+  /// No description provided for @shipCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent. We will reply here.'**
+  String get shipCreated;
+
+  /// No description provided for @shipUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipping requests are not open yet.'**
+  String get shipUnavailable;
+
+  /// No description provided for @shipTooMany.
+  ///
+  /// In en, this message translates to:
+  /// **'You already have requests waiting for a reply.'**
+  String get shipTooMany;
+
+  /// No description provided for @shipListingGone.
+  ///
+  /// In en, this message translates to:
+  /// **'That product is no longer available.'**
+  String get shipListingGone;
+
+  /// No description provided for @shipPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a product'**
+  String get shipPickerTitle;
+
+  /// No description provided for @shipPickerSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name…'**
+  String get shipPickerSearchHint;
+
+  /// No description provided for @shipPickerFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Your saved items'**
+  String get shipPickerFavorites;
+
+  /// No description provided for @shipPickerSuggested.
+  ///
+  /// In en, this message translates to:
+  /// **'On the marketplace'**
+  String get shipPickerSuggested;
+
+  /// No description provided for @shipPickerNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing matches that.'**
+  String get shipPickerNoMatch;
+
+  /// No description provided for @shipThreadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipping request'**
+  String get shipThreadTitle;
+
+  /// No description provided for @shipStatusNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for a reply'**
+  String get shipStatusNew;
+
+  /// No description provided for @shipStatusReviewing.
+  ///
+  /// In en, this message translates to:
+  /// **'We are looking at it'**
+  String get shipStatusReviewing;
+
+  /// No description provided for @shipStatusQuoted.
+  ///
+  /// In en, this message translates to:
+  /// **'You have a price'**
+  String get shipStatusQuoted;
+
+  /// No description provided for @shipStatusAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted'**
+  String get shipStatusAccepted;
+
+  /// No description provided for @shipStatusSourcing.
+  ///
+  /// In en, this message translates to:
+  /// **'We are getting it'**
+  String get shipStatusSourcing;
+
+  /// No description provided for @shipStatusInTransit.
+  ///
+  /// In en, this message translates to:
+  /// **'On the way'**
+  String get shipStatusInTransit;
+
+  /// No description provided for @shipStatusDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered'**
+  String get shipStatusDelivered;
+
+  /// No description provided for @shipStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get shipStatusCancelled;
+
+  /// No description provided for @shipStatusDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not take this on'**
+  String get shipStatusDeclined;
+
+  /// No description provided for @shipStatusExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'The price has expired'**
+  String get shipStatusExpired;
 }
 
 class _AppLocalizationsDelegate

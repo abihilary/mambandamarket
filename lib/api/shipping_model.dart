@@ -1,6 +1,7 @@
 import 'dart:ui' show Locale;
 
 import 'board_model.dart' show pickLocalised;
+import '../l10n/l10n.dart';
 import 'models.dart';
 
 /// One size somebody can pick, as the server describes it.
@@ -211,3 +212,23 @@ Map<String, String> _localised(Map<String, dynamic> json, String prefix) {
   }
   return out;
 }
+
+/// The status, in words somebody who is not us would use.
+///
+/// Lives here rather than in a screen because both the inbox row and the thread
+/// header show it, and two copies of a switch over ten statuses is two copies
+/// that drift.
+String shippingStatusLabel(AppLocalizations l10n, String? status) => switch (status) {
+      'reviewing' => l10n.shipStatusReviewing,
+      'quoted' => l10n.shipStatusQuoted,
+      'accepted' => l10n.shipStatusAccepted,
+      'sourcing' => l10n.shipStatusSourcing,
+      'in_transit' => l10n.shipStatusInTransit,
+      'delivered' => l10n.shipStatusDelivered,
+      'cancelled' => l10n.shipStatusCancelled,
+      'declined' => l10n.shipStatusDeclined,
+      'expired' => l10n.shipStatusExpired,
+      // Anything a later server invents reads as "we have it", which is true of
+      // every state this list does not know about yet.
+      _ => l10n.shipStatusNew,
+    };

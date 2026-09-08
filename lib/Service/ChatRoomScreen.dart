@@ -12,6 +12,7 @@ import '../api/api_client.dart';
 import '../api/auth_service.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
+import '../api/shipping_model.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import 'document_picker.dart';
@@ -472,7 +473,12 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                     ],
                   ),
                   Text(
-                    listing?.title ?? l10n.chatDefaultListing,
+                    listing?.title ??
+                        (widget.conversation.isShipping
+                            ? shippingStatusLabel(
+                                l10n, widget.conversation.shipping?.status)
+                            : widget.conversation.subjectTitle ??
+                                l10n.chatDefaultListing),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(

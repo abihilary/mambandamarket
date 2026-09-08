@@ -14,6 +14,7 @@ import '../api/models.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../Components/home_board.dart';
+import '../Components/shipping_button.dart';
 import '../Components/trending_rail.dart';
 import '../api/board_media_cache.dart';
 import '../api/board_repository.dart';
@@ -716,8 +717,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
 
                   // Clears the docked FAB, which overhangs the bar and would
-                  // otherwise sit on top of the last row of cards.
-                  const SliverToBoxAdapter(child: SizedBox(height: 96)),
+                  // otherwise sit on top of the last row of cards — and the
+                  // shipping button above it, which the 96 was never sized for.
+                  SliverToBoxAdapter(
+                      child: SizedBox(height: shippingButtonClearance(context))),
                 ],
               ),
             ),

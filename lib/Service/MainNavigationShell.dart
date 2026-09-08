@@ -12,6 +12,9 @@ import '../Screens/AccountScreen.dart';
 import '../Screens/ChatInboxScreen.dart';
 import '../Screens/FavoritesScreen.dart';
 import '../Screens/HomeScreen.dart';
+import '../Screens/ShippingRequestScreen.dart';
+import '../Components/shipping_button.dart';
+import '../api/shipping_repository.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_tokens.dart';
 
@@ -38,6 +41,12 @@ class _MainNavigationShellState extends State<MainNavigationShell>
   @override
   void initState() {
     super.initState();
+    // The button only exists when the server says the feature is open, so the
+    // catalogue is fetched once at launch. It is cached on the device, so this
+    // is a no-op on every launch after the first.
+    ShippingRepository.instance.loadOptions().then((_) {
+      if (mounted) setState(() {});
+    });
     WidgetsBinding.instance.addObserver(this);
     ChatRepository.instance.startLive();
     _startSweep();
@@ -124,6 +133,41 @@ class _MainNavigationShellState extends State<MainNavigationShell>
     const AccountScreen(),           // Index 4: Account
   ];
 
+  /// Home and Favourites: the two places somebody is looking at things they
+  /// might want shipped. Not Messages or Account, where it would just be
+  /// furniture on top of somebody's private screens.
+  bool get _showsShippingButton =>
+      (_currentBottomIndex == 0 || _currentBottomIndex == 1) &&
+      ShippingRepository.instance.enabled;
+
+  /// Whether the button is still showing its label.
+  bool _shipExtended = true;
+  static const double _shipCollapseAt = 132;
+  static const double _shipExpandAt = 104;
+
+  /// Collapse to a disc once the feed is moving, and never swallow the
+  /// notification: RefreshIndicator and both feeds are listening too.
+  bool _onFeedScroll(ScrollNotification n) {
+    if (n.metrics.axis != Axis.vertical) return false;
+    final extended =
+        _shipExtended ? n.metrics.pixels < _shipCollapseAt : n.metrics.pixels < _shipExpandAt;
+    if (extended != _shipExtended) setState(() => _shipExtended = extended);
+    return false;
+  }
+
+  Future<void> _openShippingRequest() async {
+    if (AuthService.instance.session == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.shipSignInRequired)),
+      );
+      return;
+    }
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ShippingRequestScreen()),
+    );
+  }
+
   /// Open the create form.
   ///
   /// Was reached through tab index 2, which no longer exists as a tab: the
@@ -200,9 +244,33 @@ class _MainNavigationShellState extends State<MainNavigationShell>
       // scrollable in the tabs already carries 96px of bottom padding for the
       // publish button, which is also what keeps the last row reachable here.
       extendBody: true,
-      body: IndexedStack(
-        index: _currentBottomIndex,
-        children: _pages,
+      // StackFit.expand is load-bearing, not tidiness: a Stack is loose by
+      // default for non-positioned children, and without it the IndexedStack
+      // would shrink-wrap its tallest page instead of filling the body.
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          NotificationListener<ScrollNotification>(
+            onNotification: _onFeedScroll,
+            child: IndexedStack(
+              index: _currentBottomIndex,
+              children: _pages,
+            ),
+          ),
+          // Browsing surfaces only. It sits above the bar rather than in the
+          // Scaffold's FAB slot, which is taken — and a nested tab Scaffold's
+          // endFloat measures from the physical screen bottom under
+          // extendBody, so it would land inside the glass.
+          if (_showsShippingButton)
+            Positioned(
+              right: 16,
+              bottom: MediaQuery.viewPaddingOf(context).bottom + 80,
+              child: ShippingButton(
+                extended: _shipExtended,
+                onPressed: _openShippingRequest,
+              ),
+            ),
+        ],
       ),
       // The deck puts Publish on a lime disc straddling the bar rather than in
       // a fifth slot. BottomNavigationBar cannot cut a notch, so the bar is a

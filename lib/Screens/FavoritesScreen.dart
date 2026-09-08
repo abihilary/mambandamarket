@@ -4,6 +4,7 @@ import '../Components/ItemDetailScreen.dart';
 import '../api/auth_service.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
+import '../Components/shipping_button.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_tokens.dart';
@@ -169,8 +170,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     return RefreshIndicator(
                       onRefresh: _load,
                       child: ListView(
-                        // Clearance for the docked publish button.
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                        // Clearance for the docked publish button, and for
+                        // the shipping button sitting above it.
+                        padding: EdgeInsets.fromLTRB(
+                            16, 8, 16, shippingButtonClearance(context)),
                         children: [
                           for (final (slug, items) in sections) ...[
                             _SectionHeading(
