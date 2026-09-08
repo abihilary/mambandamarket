@@ -72,6 +72,12 @@ class _MainNavigationShellState extends State<MainNavigationShell>
       // has been built — so relying on it alone meant a resume could leave the
       // badge stuck on its pre-background value until the next 45s sweep.
       unawaited(ChatRepository.instance.refresh());
+      // And ask again whether shipping is open. It is a kill switch, and one
+      // that only answers at cold start is a switch that takes days to reach
+      // somebody who never fully closes the app — which is most people.
+      unawaited(ShippingRepository.instance.loadOptions().then((_) {
+        if (mounted) setState(() {});
+      }));
       _inboxKey.currentState?.reload();
       _startSweep();
     } else if (state == AppLifecycleState.paused) {
