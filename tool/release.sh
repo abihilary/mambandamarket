@@ -29,10 +29,19 @@ AAB=build/app/outputs/bundle/release/app-release.aab
 
 # The bundle's manifest is protobuf, so the version string is checked as a
 # string; bundletool gives the exact fields when it is installed.
-if ! unzip -p "$AAB" base/manifest/AndroidManifest.xml | strings | grep -q "$VERSION"; then
-  echo "The bundle manifest does not carry $VERSION — refusing to stage it." >&2
-  exit 1
-fi
+# Read it into a variable and match with a glob rather than piping into
+# `grep -q`: grep exits the moment it matches, upstream takes SIGPIPE, and
+# `set -o pipefail` turns that into a failed check. It passed for months and
+# then refused a perfectly good 1.0.26 bundle, which is the worst way for a
+# race to introduce itself.
+MANIFEST=$(unzip -p "$AAB" base/manifest/AndroidManifest.xml | strings)
+case "$MANIFEST" in
+  *"$VERSION"*) ;;
+  *)
+    echo "The bundle manifest does not carry $VERSION — refusing to stage it." >&2
+    exit 1
+    ;;
+esac
 if command -v bundletool >/dev/null 2>&1; then
   bundletool dump manifest --bundle "$AAB" | grep -E 'versionCode|versionName' || true
 fi
