@@ -636,21 +636,12 @@ class ChatRepository {
     await _api.post('/conversations/$conversationId/read');
     // Reflect it locally so the badge updates without a full refresh.
     threads.value = [
+      // copyWith, not a rebuild. Listing every field by hand meant that
+      // anything added to Conversation later was quietly dropped the moment a
+      // thread was opened — which turned a shipping thread back into a listing
+      // one with no listing.
       for (final t in threads.value)
-        if (t.id == conversationId)
-          Conversation(
-            id: t.id,
-            listingId: t.listingId,
-            buyerId: t.buyerId,
-            sellerId: t.sellerId,
-            role: t.role,
-            unread: 0,
-            lastMessageAt: t.lastMessageAt,
-            counterparty: t.counterparty,
-            listing: t.listing,
-          )
-        else
-          t,
+        if (t.id == conversationId) t.copyWith(unread: 0) else t,
     ];
     totalUnread.value = threads.value.fold(0, (s, t) => s + t.unread);
   }

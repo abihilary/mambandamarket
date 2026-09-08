@@ -600,6 +600,39 @@ class ListingImage {
 /// The API shapes this from the caller's side, so `counterparty` and `unread`
 /// already mean "the other person" and "my unread" without the client having to
 /// work out which side it is on.
+/// What a thread is about.
+///
+/// A conversation used to be one thing: a buyer and a seller talking about a
+/// listing. It can now also be somebody talking to the shipping desk about
+/// something they asked us to ship. Anything a later server invents parses as
+/// [listing], which is what an older build already assumed.
+enum ConversationKind { listing, shipping }
+
+/// The shipping request a thread is about, in the three fields a row needs.
+///
+/// Deliberately not the whole request: the inbox draws a title and a status,
+/// and sending the rest on every /conversations response is payload nobody
+/// reads.
+class ShippingThread {
+  const ShippingThread({required this.id, this.title, this.status = 'new'});
+
+  final String id;
+  final String? title;
+  final String status;
+
+  static ShippingThread? fromJson(Map<String, dynamic>? json) {
+    if (json == null) return null;
+    final id = json['id']?.toString();
+    if (id == null || id.isEmpty) return null;
+    final title = json['item_title']?.toString();
+    return ShippingThread(
+      id: id,
+      title: (title == null || title.isEmpty) ? null : title,
+      status: json['status']?.toString() ?? 'new',
+    );
+  }
+}
+
 class Conversation {
   final String id;
   final String listingId;
@@ -611,6 +644,18 @@ class Conversation {
   final Profile? counterparty;
   final Listing? listing;
 
+  /// What the thread is about. Defaults to [ConversationKind.listing], so a
+  /// response from a server that does not send it reads exactly as before.
+  final ConversationKind kind;
+
+  /// Set only on a shipping thread.
+  final ShippingThread? shipping;
+
+  /// What the thread is about in one string, as the server resolved it — the
+  /// listing's title, or the shipping request's. Present so the row has
+  /// something true to show even before this build knew about shipping.
+  final String? subjectTitle;
+
   const Conversation({
     required this.id,
     required this.listingId,
@@ -621,11 +666,18 @@ class Conversation {
     this.lastMessageAt,
     this.counterparty,
     this.listing,
+    this.kind = ConversationKind.listing,
+    this.shipping,
+    this.subjectTitle,
   });
+
+  bool get isShipping => kind == ConversationKind.shipping;
 
   factory Conversation.fromJson(Map<String, dynamic> json) {
     final cp = (json['counterparty'] as Map?)?.cast<String, dynamic>();
     final l = (json['listing'] as Map?)?.cast<String, dynamic>();
+    final sh = (json['shipping'] as Map?)?.cast<String, dynamic>();
+    final subject = json['subject_title']?.toString();
     return Conversation(
       id: json['id'].toString(),
       listingId: json['listing_id']?.toString() ?? '',
@@ -636,8 +688,38 @@ class Conversation {
       lastMessageAt: DateTime.tryParse(json['last_message_at']?.toString() ?? ''),
       counterparty: cp == null ? null : Profile.fromJson(cp),
       listing: l == null ? null : Listing.fromJson(l),
+      kind: json['kind'] == 'shipping' ? ConversationKind.shipping : ConversationKind.listing,
+      shipping: ShippingThread.fromJson(sh),
+      subjectTitle: (subject == null || subject.isEmpty) ? null : subject,
     );
   }
+
+  /// A copy with some fields replaced.
+  ///
+  /// Exists because the alternative — rebuilding the object field by field —
+  /// silently drops whatever was added since that code was written, and
+  /// marking a thread read did exactly that.
+  Conversation copyWith({
+    int? unread,
+    DateTime? lastMessageAt,
+    Profile? counterparty,
+    Listing? listing,
+    ShippingThread? shipping,
+  }) =>
+      Conversation(
+        id: id,
+        listingId: listingId,
+        buyerId: buyerId,
+        sellerId: sellerId,
+        role: role,
+        unread: unread ?? this.unread,
+        lastMessageAt: lastMessageAt ?? this.lastMessageAt,
+        counterparty: counterparty ?? this.counterparty,
+        listing: listing ?? this.listing,
+        kind: kind,
+        shipping: shipping ?? this.shipping,
+        subjectTitle: subjectTitle,
+      );
 }
 
 /// Delivery state of a chat message.
