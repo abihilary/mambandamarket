@@ -4825,6 +4825,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delayed'**
   String get trackDelayed;
+
+  /// No description provided for @trendTabNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Trending now'**
+  String get trendTabNow;
+
+  /// No description provided for @trendTabNear.
+  ///
+  /// In en, this message translates to:
+  /// **'Near you'**
+  String get trendTabNear;
+
+  /// No description provided for @trendTabForYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Because you like'**
+  String get trendTabForYou;
+
+  /// No description provided for @trendSaves.
+  ///
+  /// In en, this message translates to:
+  /// **'saves'**
+  String get trendSaves;
+
+  /// No description provided for @trendViews.
+  ///
+  /// In en, this message translates to:
+  /// **'views'**
+  String get trendViews;
+
+  /// No description provided for @trendMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get trendMessage;
+
+  /// No description provided for @trendBuy.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy'**
+  String get trendBuy;
+
+  /// No description provided for @trendJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'just now'**
+  String get trendJustNow;
+
+  /// No description provided for @trendHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h ago'**
+  String trendHoursAgo(int hours);
+
+  /// No description provided for @trendDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{days}d ago'**
+  String trendDaysAgo(int days);
 }
 
 class _AppLocalizationsDelegate

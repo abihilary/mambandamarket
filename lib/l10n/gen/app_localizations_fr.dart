@@ -2726,4 +2726,38 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get trackDelayed => 'Retardé';
+
+  @override
+  String get trendTabNow => 'Tendances';
+
+  @override
+  String get trendTabNear => 'Près de vous';
+
+  @override
+  String get trendTabForYou => 'Pour vous';
+
+  @override
+  String get trendSaves => 'favoris';
+
+  @override
+  String get trendViews => 'vues';
+
+  @override
+  String get trendMessage => 'Écrire';
+
+  @override
+  String get trendBuy => 'Acheter';
+
+  @override
+  String get trendJustNow => 'à l\'instant';
+
+  @override
+  String trendHoursAgo(int hours) {
+    return 'il y a $hours h';
+  }
+
+  @override
+  String trendDaysAgo(int days) {
+    return 'il y a $days j';
+  }
 }

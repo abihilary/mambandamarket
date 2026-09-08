@@ -991,5 +991,15 @@
   "trackArrived": "Arrivé dans le pays",
   "trackOutForDelivery": "En cours de livraison",
   "trackDelivered": "Livré",
-  "trackDelayed": "Retardé"
+  "trackDelayed": "Retardé",
+  "trendTabNow": "Tendances",
+  "trendTabNear": "Près de vous",
+  "trendTabForYou": "Pour vous",
+  "trendSaves": "favoris",
+  "trendViews": "vues",
+  "trendMessage": "Écrire",
+  "trendBuy": "Acheter",
+  "trendJustNow": "à l'instant",
+  "trendHoursAgo": "il y a {hours} h",
+  "trendDaysAgo": "il y a {days} j"
 }

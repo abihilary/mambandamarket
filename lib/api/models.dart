@@ -81,6 +81,10 @@ class Listing {
   final bool hasGuarantee;
   final String? city;
   final int viewCount;
+
+  /// How many people have saved it. Only present on trending rows, which are
+  /// the one place a count of other people's favourites is worth the join.
+  final int favoriteCount;
   final DateTime? createdAt;
   final double? distanceMeters;
 
@@ -146,6 +150,7 @@ class Listing {
     this.hasGuarantee = false,
     this.city,
     this.viewCount = 0,
+    this.favoriteCount = 0,
     this.createdAt,
     this.distanceMeters,
     this.hasLocation = false,
@@ -229,6 +234,7 @@ class Listing {
       hasGuarantee: json['has_guarantee'] == true,
       city: json['city']?.toString(),
       viewCount: _asInt(json['view_count']),
+      favoriteCount: _asInt(json['favorite_count']),
       createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
       distanceMeters: (json['distance_m'] as num?)?.toDouble(),
       hasLocation: json['location'] != null,

@@ -226,8 +226,13 @@ class _HomeScreenState extends State<HomeScreen> {
   ///
   /// Never throws — see TrendingRepository. No setState either: the row listens
   /// for itself, so refreshing it does not rebuild forty grid cells.
-  Future<void> _loadTrending() =>
-      TrendingRepository.instance.load(categorySlug: _selectedSlug);
+  Future<void> _loadTrending() {
+    // "Near you" needs an origin, and the feed already has one whenever the
+    // person has shared a location. The rail never asks for one itself.
+    final here = LocationService.instance.cached;
+    TrendingRepository.instance.origin = here == null ? null : (here.lat, here.lng);
+    return TrendingRepository.instance.load(categorySlug: _selectedSlug);
+  }
 
   Future<void> _loadBoards() async {
     await BoardRepository.instance.loadAll();
@@ -547,6 +552,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: TrendingRail(
                       onOpen: _openItemDetail,
                       onCategory: _onCategorySlug,
+                      categorySlug: _selectedSlug,
+                      // Messaging the seller is how a price is actually
+                      // negotiated here; there is no offers feature to send
+                      // somebody to.
+                      onMessage: _openItemDetail,
                     ),
                   ),
 

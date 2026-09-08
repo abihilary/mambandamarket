@@ -1208,5 +1208,29 @@
       "from": {},
       "to": {}
     }
+  },
+  "trendTabNow": "Trending now",
+  "trendTabNear": "Near you",
+  "trendTabForYou": "Because you like",
+  "trendSaves": "saves",
+  "trendViews": "views",
+  "trendMessage": "Message",
+  "trendBuy": "Buy",
+  "trendJustNow": "just now",
+  "trendHoursAgo": "{hours}h ago",
+  "trendDaysAgo": "{days}d ago",
+  "@trendHoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "@trendDaysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
   }
 }
