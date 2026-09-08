@@ -551,26 +551,19 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
       // own, and on screen the two read as the question asked twice.
       Container(
         key: _keys[ShippingField.category],
-        child: DropdownButtonFormField<String>(
-        initialValue: selected?.slug,
-        isExpanded: true,
-        decoration: _field(l10n.shipCategoryLabel),
-        hint: Text(l10n.shipChooseCategory),
-        items: [
-          for (final c in _categories)
-            DropdownMenuItem(value: c.slug, child: Text(c.displayLabel(locale))),
-        ],
-        onChanged: _categories.isEmpty
-            ? null
-            : (slug) {
-                if (slug == null) return;
-                setState(() {
-                  _categorySlug = slug;
-                  // The sizes are per category, so a code chosen under the old
-                  // one is not necessarily on the new list.
-                  _sizeCode = '';
-                });
-              },
+        child: _SearchableDropdown(
+          label: l10n.shipCategoryLabel,
+          hint: l10n.shipChooseCategory,
+          selected: selected?.slug ?? '',
+          entries: [
+            for (final c in _categories) (c.slug, c.displayLabel(locale)),
+          ],
+          onPick: (slug) => setState(() {
+            _categorySlug = slug;
+            // The sizes are per category, so a code chosen under the old one is
+            // not necessarily on the new list.
+            _sizeCode = '';
+          }),
         ),
       ),
       const SizedBox(height: 18),
@@ -770,18 +763,13 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
     required void Function(String code) onPick,
   }) {
     if (places.isEmpty) return const SizedBox.shrink();
-    final codes = places.map((p) => p.code).toSet();
-    return DropdownButtonFormField<String>(
-      initialValue: codes.contains(selected) ? selected : null,
-      isExpanded: true,
-      decoration: _field(label),
-      items: [
-        for (final place in places)
-          DropdownMenuItem(value: place.code, child: Text(place.labelFor(locale))),
+    return _SearchableDropdown(
+      label: label,
+      selected: selected,
+      entries: [
+        for (final place in places) (place.code, place.labelFor(locale)),
       ],
-      onChanged: (code) {
-        if (code != null) onPick(code);
-      },
+      onPick: onPick,
     );
   }
 
@@ -851,3 +839,87 @@ class _SectionTitle extends StatelessWidget {
       Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold));
 }
 
+/// A dropdown you can type into.
+///
+/// Once a list is thirty entries long, picking from it by scrolling is worse
+/// than typing three letters — and both places and the category list are past
+/// that. Material's [DropdownMenu] does the filtering itself, so this is a
+/// wrapper for the styling and for the one behaviour it does not give free:
+/// keeping the visible text in step when the chosen value is changed from
+/// outside, which happens when a listing prefills the form.
+class _SearchableDropdown extends StatefulWidget {
+  const _SearchableDropdown({
+    required this.label,
+    required this.selected,
+    required this.entries,
+    required this.onPick,
+    this.hint,
+  });
+
+  final String label;
+  final String? hint;
+
+  /// The chosen code, or empty for nothing chosen.
+  final String selected;
+
+  /// (code, label) in the order they should appear.
+  final List<(String, String)> entries;
+
+  final void Function(String code) onPick;
+
+  @override
+  State<_SearchableDropdown> createState() => _SearchableDropdownState();
+}
+
+class _SearchableDropdownState extends State<_SearchableDropdown> {
+  late final TextEditingController _text = TextEditingController(text: _labelFor(widget.selected));
+
+  String _labelFor(String code) {
+    for (final (value, label) in widget.entries) {
+      if (value == code) return label;
+    }
+    return '';
+  }
+
+  @override
+  void didUpdateWidget(covariant _SearchableDropdown old) {
+    super.didUpdateWidget(old);
+    // The field is editable, so DropdownMenu will not correct it on its own.
+    // Without this, prefilling from a listing left the old text on screen.
+    if (widget.selected != old.selected || widget.entries.length != old.entries.length) {
+      final label = _labelFor(widget.selected);
+      if (label.isNotEmpty && label != _text.text) _text.text = label;
+    }
+  }
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownMenu<String>(
+      controller: _text,
+      initialSelection: widget.selected.isEmpty ? null : widget.selected,
+      enableFilter: true,
+      requestFocusOnTap: true,
+      // Fill the column like every other field on this form does.
+      expandedInsets: EdgeInsets.zero,
+      menuHeight: 320,
+      label: Text(widget.label),
+      hintText: widget.hint,
+      inputDecorationTheme: InputDecorationTheme(
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      dropdownMenuEntries: [
+        for (final (value, label) in widget.entries)
+          DropdownMenuEntry(value: value, label: label),
+      ],
+      onSelected: (code) {
+        if (code != null) widget.onPick(code);
+      },
+    );
+  }
+}
