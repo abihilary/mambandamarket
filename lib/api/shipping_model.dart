@@ -1,6 +1,8 @@
 import 'dart:ui' show Locale;
 
 import 'board_model.dart' show pickLocalised;
+import 'package:flutter/material.dart' show IconData, Icons;
+
 import '../l10n/l10n.dart';
 import 'models.dart';
 
@@ -152,6 +154,64 @@ class ShippingOptions {
   }
 }
 
+/// One checkpoint on a shipment's journey.
+///
+/// [code] is deliberately a plain string. The server treats it the same way, so
+/// a driver app inventing a checkpoint kind nobody has heard of shows up here
+/// without either side needing a release — an unrecognised code falls back to
+/// its own [note]. Everything about where is optional and independent: a
+/// customs office has a name and no coordinates, a phone ping has coordinates
+/// and no name, and a plain status change has neither.
+class TrackingEvent {
+  const TrackingEvent({
+    required this.id,
+    required this.code,
+    required this.happenedAt,
+    this.note,
+    this.placeName,
+    this.lat,
+    this.lng,
+    this.source = 'staff',
+    this.carrierRef,
+  });
+
+  final String id;
+  final String code;
+  final DateTime happenedAt;
+  final String? note;
+  final String? placeName;
+  final double? lat;
+  final double? lng;
+  final String source;
+  final String? carrierRef;
+
+  bool get hasPosition => lat != null && lng != null;
+
+  /// Somewhere to show, whichever way it was given.
+  String? get where => placeName ??
+      (hasPosition ? '${lat!.toStringAsFixed(4)}, ${lng!.toStringAsFixed(4)}' : null);
+
+  static TrackingEvent? fromJson(Map<String, dynamic>? json) {
+    if (json == null) return null;
+    final id = json['id']?.toString();
+    final code = json['code']?.toString();
+    final at = DateTime.tryParse(json['happened_at']?.toString() ?? '');
+    // Without a code or a time there is nothing to put on a timeline.
+    if (id == null || code == null || code.isEmpty || at == null) return null;
+    return TrackingEvent(
+      id: id,
+      code: code,
+      happenedAt: at,
+      note: _text(json['note']),
+      placeName: _text(json['place_name']),
+      lat: (json['lat'] as num?)?.toDouble(),
+      lng: (json['lng'] as num?)?.toDouble(),
+      source: json['source']?.toString() ?? 'staff',
+      carrierRef: _text(json['carrier_ref']),
+    );
+  }
+}
+
 /// A request the customer has already sent.
 class ShippingRequest {
   const ShippingRequest({
@@ -165,7 +225,15 @@ class ShippingRequest {
     this.quotedTotalCents,
     this.currency = 'XAF',
     this.conversationId,
+    this.unread = 0,
     this.createdAt,
+    this.lastEventCode,
+    this.lastEventNote,
+    this.lastPlaceName,
+    this.lastLat,
+    this.lastLng,
+    this.lastEventAt,
+    this.tracking = const [],
   });
 
   final String id;
@@ -178,12 +246,35 @@ class ShippingRequest {
   final int? quotedTotalCents;
   final String currency;
   final String? conversationId;
+  final int unread;
   final DateTime? createdAt;
+
+  /// Where it was last seen, denormalised onto the request so a list of
+  /// shipments needs one call and the live subscription has a row to fire on.
+  final String? lastEventCode;
+  final String? lastEventNote;
+  final String? lastPlaceName;
+  final double? lastLat;
+  final double? lastLng;
+  final DateTime? lastEventAt;
+
+  /// The full journey. Only loaded on the detail call.
+  final List<TrackingEvent> tracking;
+
+  bool get isMoving => const {'in_transit', 'sourcing'}.contains(status);
+  bool get isFinished =>
+      const {'delivered', 'cancelled', 'declined'}.contains(status);
+  bool get hasPosition => lastLat != null && lastLng != null;
+
+  String? get lastSeen => lastPlaceName ??
+      (hasPosition
+          ? '${lastLat!.toStringAsFixed(4)}, ${lastLng!.toStringAsFixed(4)}'
+          : null);
 
   String? get quotedPrice =>
       quotedTotalCents == null ? null : formatPrice(quotedTotalCents!, currency: currency);
 
-  static ShippingRequest? fromJson(Map<String, dynamic>? json) {
+  static ShippingRequest? fromJson(Map<String, dynamic>? json, {List<dynamic>? tracking}) {
     if (json == null) return null;
     final id = json['id']?.toString();
     if (id == null || id.isEmpty) return null;
@@ -192,16 +283,33 @@ class ShippingRequest {
       id: id,
       status: json['status']?.toString() ?? 'new',
       source: json['source']?.toString() ?? 'external',
-      itemTitle: json['item_title']?.toString(),
+      itemTitle: _text(json['item_title']),
       fromLocation: json['from_location']?.toString() ?? '',
       toLocation: json['to_location']?.toString() ?? '',
       quantity: (json['quantity'] as num?)?.toInt() ?? 1,
       quotedTotalCents: (json['quoted_total_cents'] as num?)?.toInt(),
       currency: json['currency']?.toString() ?? 'XAF',
       conversationId: conv?['id']?.toString(),
+      unread: (conv?['buyer_unread'] as num?)?.toInt() ?? 0,
       createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
+      lastEventCode: _text(json['last_event_code']),
+      lastEventNote: _text(json['last_event_note']),
+      lastPlaceName: _text(json['last_place_name']),
+      lastLat: (json['last_lat'] as num?)?.toDouble(),
+      lastLng: (json['last_lng'] as num?)?.toDouble(),
+      lastEventAt: DateTime.tryParse(json['last_event_at']?.toString() ?? ''),
+      tracking: (tracking ?? const [])
+          .whereType<Map>()
+          .map((m) => TrackingEvent.fromJson(m.cast<String, dynamic>()))
+          .whereType<TrackingEvent>()
+          .toList(growable: false),
     );
   }
+}
+
+String? _text(dynamic value) {
+  final s = value?.toString();
+  return (s == null || s.isEmpty) ? null : s;
 }
 
 Map<String, String> _localised(Map<String, dynamic> json, String prefix) {
@@ -231,4 +339,36 @@ String shippingStatusLabel(AppLocalizations l10n, String? status) => switch (sta
       // Anything a later server invents reads as "we have it", which is true of
       // every state this list does not know about yet.
       _ => l10n.shipStatusNew,
+    };
+
+/// A checkpoint in words.
+///
+/// Only the codes this build knows are translated; anything else shows its own
+/// note, and failing that the code itself. That is what lets a driver app add a
+/// kind of checkpoint without waiting for an app release.
+String trackingLabel(AppLocalizations l10n, TrackingEvent event) => switch (event.code) {
+      'received' => l10n.trackReceived,
+      'sourcing' => l10n.trackSourcing,
+      'picked_up' => l10n.trackPickedUp,
+      'in_transit' => l10n.trackInTransit,
+      'customs' => l10n.trackCustoms,
+      'arrived' => l10n.trackArrived,
+      'out_for_delivery' => l10n.trackOutForDelivery,
+      'delivered' => l10n.trackDelivered,
+      'delayed' => l10n.trackDelayed,
+      _ => event.note ?? event.code,
+    };
+
+/// The dot on the timeline.
+IconData trackingIcon(String code) => switch (code) {
+      'received' => Icons.inventory_2_outlined,
+      'sourcing' => Icons.shopping_bag_outlined,
+      'picked_up' => Icons.local_shipping_outlined,
+      'in_transit' => Icons.local_shipping_outlined,
+      'customs' => Icons.gavel_outlined,
+      'arrived' => Icons.flight_land_outlined,
+      'out_for_delivery' => Icons.directions_bike_outlined,
+      'delivered' => Icons.check_circle_outline,
+      'delayed' => Icons.schedule_outlined,
+      _ => Icons.circle_outlined,
     };

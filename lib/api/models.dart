@@ -606,7 +606,7 @@ class ListingImage {
 /// listing. It can now also be somebody talking to the shipping desk about
 /// something they asked us to ship. Anything a later server invents parses as
 /// [listing], which is what an older build already assumed.
-enum ConversationKind { listing, shipping }
+enum ConversationKind { listing, shipping, support }
 
 /// The shipping request a thread is about, in the three fields a row needs.
 ///
@@ -672,6 +672,7 @@ class Conversation {
   });
 
   bool get isShipping => kind == ConversationKind.shipping;
+  bool get isSupport => kind == ConversationKind.support;
 
   factory Conversation.fromJson(Map<String, dynamic> json) {
     final cp = (json['counterparty'] as Map?)?.cast<String, dynamic>();
@@ -688,7 +689,13 @@ class Conversation {
       lastMessageAt: DateTime.tryParse(json['last_message_at']?.toString() ?? ''),
       counterparty: cp == null ? null : Profile.fromJson(cp),
       listing: l == null ? null : Listing.fromJson(l),
-      kind: json['kind'] == 'shipping' ? ConversationKind.shipping : ConversationKind.listing,
+      kind: switch (json['kind']) {
+        'shipping' => ConversationKind.shipping,
+        'support' => ConversationKind.support,
+        // Anything a later server invents reads as a listing thread, which is
+        // what every build before this one already assumed.
+        _ => ConversationKind.listing,
+      },
       shipping: ShippingThread.fromJson(sh),
       subjectTitle: (subject == null || subject.isEmpty) ? null : subject,
     );

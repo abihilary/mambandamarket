@@ -2606,4 +2606,73 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shipStatusExpired => 'The price has expired';
+
+  @override
+  String get supportUnavailable => 'Support chat is not open yet.';
+
+  @override
+  String get supportThreadTitle => 'Support';
+
+  @override
+  String get shipMyShipments => 'My shipments';
+
+  @override
+  String get shipNewRequest => 'Ask us to ship something';
+
+  @override
+  String get shipNoneYet => 'Nothing here yet';
+
+  @override
+  String get shipNoneYetBody =>
+      'Ask us to ship a product and you will be able to follow it from here.';
+
+  @override
+  String get shipTrackingTitle => 'Where it is';
+
+  @override
+  String get shipNoTrackingYet =>
+      'Nothing to follow yet. We will update this as it moves.';
+
+  @override
+  String get shipLastSeen => 'Last seen';
+
+  @override
+  String get shipChatAbout => 'Chat about this';
+
+  @override
+  String shipQuotedAt(Object price) {
+    return 'Quoted at $price';
+  }
+
+  @override
+  String shipRoute(Object from, Object to) {
+    return '$from → $to';
+  }
+
+  @override
+  String get trackReceived => 'We have your request';
+
+  @override
+  String get trackSourcing => 'Getting the item';
+
+  @override
+  String get trackPickedUp => 'Picked up';
+
+  @override
+  String get trackInTransit => 'On the way';
+
+  @override
+  String get trackCustoms => 'At customs';
+
+  @override
+  String get trackArrived => 'Arrived in the country';
+
+  @override
+  String get trackOutForDelivery => 'Out for delivery';
+
+  @override
+  String get trackDelivered => 'Delivered';
+
+  @override
+  String get trackDelayed => 'Delayed';
 }

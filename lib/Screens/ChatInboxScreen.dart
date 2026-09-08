@@ -198,16 +198,22 @@ class ChatInboxScreenState extends State<ChatInboxScreen> {
     final l10n = context.l10n;
     // Every shipping thread has the same counterparty, so the desk's name is a
     // useless thing to scan a column of them by. The request is the title.
+    final isDesk = chat.isShipping || chat.isSupport;
+    // Every desk thread has the same counterparty, so its name is a useless
+    // thing to scan a column of them by. What it is about is the title.
     final name = chat.isShipping
         ? (chat.shipping?.title ?? chat.subjectTitle ?? l10n.shipThreadTitle)
-        : chat.counterparty?.displayName ?? l10n.chatUnknownUser;
-    final avatar = chat.isShipping ? null : chat.counterparty?.avatarUrl;
+        : chat.isSupport
+            ? l10n.supportThreadTitle
+            : chat.counterparty?.displayName ?? l10n.chatUnknownUser;
+    final avatar = isDesk ? null : chat.counterparty?.avatarUrl;
 
     return ListTile(
-      leading: chat.isShipping
+      leading: isDesk
           ? CircleAvatar(
               backgroundColor: context.tokens.accentFill.withValues(alpha: 0.16),
-              child: Icon(Icons.local_shipping_outlined,
+              child: Icon(
+                  chat.isShipping ? Icons.local_shipping_outlined : Icons.support_agent_outlined,
                   size: 20, color: context.tokens.accentInk),
             )
           : CircleAvatar(
@@ -241,7 +247,9 @@ class ChatInboxScreenState extends State<ChatInboxScreen> {
         // listing never reads as "Unknown listing".
         chat.isShipping
             ? shippingStatusLabel(l10n, chat.shipping?.status)
-            : chat.listing?.title ?? chat.subjectTitle ?? l10n.chatUnknownListing,
+            : chat.isSupport
+                ? l10n.contactSupportSub
+                : chat.listing?.title ?? chat.subjectTitle ?? l10n.chatUnknownListing,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(color: cs.onSurfaceVariant),

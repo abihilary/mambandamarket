@@ -856,6 +856,16 @@ class SupportRepository {
         'locale': locale,
         'source': 'app',
       });
+
+  /// Open — or come back to — this person's support conversation.
+  ///
+  /// One thread per person, so a second question next month lands in the same
+  /// place as the first and whoever answers can see what was already said.
+  Future<Conversation?> openThread() async {
+    final json = await _api.post('/support/thread', const {}) as Map<String, dynamic>;
+    final conv = (json['conversation'] as Map?)?.cast<String, dynamic>();
+    return conv == null ? null : Conversation.fromJson(conv);
+  }
 }
 
 /// Referrals: the caller's own code and claiming someone else's.

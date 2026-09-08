@@ -1176,5 +1176,37 @@
   "shipStatusDelivered": "Delivered",
   "shipStatusCancelled": "Cancelled",
   "shipStatusDeclined": "We could not take this on",
-  "shipStatusExpired": "The price has expired"
+  "shipStatusExpired": "The price has expired",
+  "supportUnavailable": "Support chat is not open yet.",
+  "supportThreadTitle": "Support",
+  "shipMyShipments": "My shipments",
+  "shipNewRequest": "Ask us to ship something",
+  "shipNoneYet": "Nothing here yet",
+  "shipNoneYetBody": "Ask us to ship a product and you will be able to follow it from here.",
+  "shipTrackingTitle": "Where it is",
+  "shipNoTrackingYet": "Nothing to follow yet. We will update this as it moves.",
+  "shipLastSeen": "Last seen",
+  "shipChatAbout": "Chat about this",
+  "shipQuotedAt": "Quoted at {price}",
+  "shipRoute": "{from} → {to}",
+  "trackReceived": "We have your request",
+  "trackSourcing": "Getting the item",
+  "trackPickedUp": "Picked up",
+  "trackInTransit": "On the way",
+  "trackCustoms": "At customs",
+  "trackArrived": "Arrived in the country",
+  "trackOutForDelivery": "Out for delivery",
+  "trackDelivered": "Delivered",
+  "trackDelayed": "Delayed",
+  "@shipQuotedAt": {
+    "placeholders": {
+      "price": {}
+    }
+  },
+  "@shipRoute": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  }
 }

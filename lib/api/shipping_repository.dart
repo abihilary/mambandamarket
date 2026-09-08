@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'api_client.dart';
+import 'auth_service.dart';
 import 'models.dart';
 import 'shipping_model.dart';
 
@@ -96,20 +99,79 @@ class ShippingRepository {
     );
   }
 
-  /// The caller's own requests.
-  Future<List<ShippingRequest>> mine() async {
+  /// The caller's own shipments, newest first.
+  final ValueNotifier<List<ShippingRequest>> shipments = ValueNotifier(const []);
+
+  Future<void> refreshMine() async {
     try {
       final json = await ApiClient.instance.get('/shipping-requests') as Map<String, dynamic>;
-      return (json['items'] as List? ?? const [])
+      shipments.value = (json['items'] as List? ?? const [])
           .whereType<Map>()
           .map((m) => ShippingRequest.fromJson(m.cast<String, dynamic>()))
           .whereType<ShippingRequest>()
-          .toList();
+          .toList(growable: false);
     } catch (e) {
-      debugPrint('[shipping] could not load requests ($e)');
-      return const [];
+      debugPrint('[shipping] could not load shipments, keeping what we had ($e)');
     }
   }
+
+  /// One shipment, with its whole journey.
+  Future<ShippingRequest?> detail(String id) async {
+    final json = await ApiClient.instance.get('/shipping-requests/$id') as Map<String, dynamic>;
+    return ShippingRequest.fromJson(
+      (json['request'] as Map?)?.cast<String, dynamic>(),
+      tracking: json['tracking'] as List?,
+    );
+  }
+
+  /// Follow the caller's shipments as they move.
+  ///
+  /// Subscribed to the request row rather than the checkpoint log, because a
+  /// trigger touches the row on every checkpoint — so one row per shipment is
+  /// enough to know something happened, and no location travels over the
+  /// socket. The detail comes back over the authenticated call, where the read
+  /// rules already are. Exactly the shape chat uses, for the same reasons.
+  void startLive() {
+    final uid = AuthService.instance.userId;
+    if (uid == null || _live != null) return;
+    _live = Supabase.instance.client
+        .channel('shipping:$uid')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'shipping_requests',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'user_id',
+            value: uid,
+          ),
+          callback: (_) => _onLiveChange(),
+        )
+        .subscribe();
+  }
+
+  Future<void> stopLive() async {
+    final channel = _live;
+    _live = null;
+    _debounce?.cancel();
+    if (channel != null) await Supabase.instance.client.removeChannel(channel);
+  }
+
+  RealtimeChannel? _live;
+  Timer? _debounce;
+
+  /// A single checkpoint writes several columns, which arrive as several
+  /// events. Collapse them so the list is fetched once.
+  void _onLiveChange() {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      refreshMine();
+      pulse.value++;
+    });
+  }
+
+  /// Bumped whenever something moved, so an open detail screen can refetch.
+  final ValueNotifier<int> pulse = ValueNotifier(0);
 
   Future<void> _readFromDisk() async {
     try {

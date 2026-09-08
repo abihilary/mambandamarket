@@ -4699,6 +4699,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The price has expired'**
   String get shipStatusExpired;
+
+  /// No description provided for @supportUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Support chat is not open yet.'**
+  String get supportUnavailable;
+
+  /// No description provided for @supportThreadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Support'**
+  String get supportThreadTitle;
+
+  /// No description provided for @shipMyShipments.
+  ///
+  /// In en, this message translates to:
+  /// **'My shipments'**
+  String get shipMyShipments;
+
+  /// No description provided for @shipNewRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask us to ship something'**
+  String get shipNewRequest;
+
+  /// No description provided for @shipNoneYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet'**
+  String get shipNoneYet;
+
+  /// No description provided for @shipNoneYetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask us to ship a product and you will be able to follow it from here.'**
+  String get shipNoneYetBody;
+
+  /// No description provided for @shipTrackingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Where it is'**
+  String get shipTrackingTitle;
+
+  /// No description provided for @shipNoTrackingYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to follow yet. We will update this as it moves.'**
+  String get shipNoTrackingYet;
+
+  /// No description provided for @shipLastSeen.
+  ///
+  /// In en, this message translates to:
+  /// **'Last seen'**
+  String get shipLastSeen;
+
+  /// No description provided for @shipChatAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat about this'**
+  String get shipChatAbout;
+
+  /// No description provided for @shipQuotedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Quoted at {price}'**
+  String shipQuotedAt(Object price);
+
+  /// No description provided for @shipRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} → {to}'**
+  String shipRoute(Object from, Object to);
+
+  /// No description provided for @trackReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'We have your request'**
+  String get trackReceived;
+
+  /// No description provided for @trackSourcing.
+  ///
+  /// In en, this message translates to:
+  /// **'Getting the item'**
+  String get trackSourcing;
+
+  /// No description provided for @trackPickedUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Picked up'**
+  String get trackPickedUp;
+
+  /// No description provided for @trackInTransit.
+  ///
+  /// In en, this message translates to:
+  /// **'On the way'**
+  String get trackInTransit;
+
+  /// No description provided for @trackCustoms.
+  ///
+  /// In en, this message translates to:
+  /// **'At customs'**
+  String get trackCustoms;
+
+  /// No description provided for @trackArrived.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrived in the country'**
+  String get trackArrived;
+
+  /// No description provided for @trackOutForDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Out for delivery'**
+  String get trackOutForDelivery;
+
+  /// No description provided for @trackDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered'**
+  String get trackDelivered;
+
+  /// No description provided for @trackDelayed.
+  ///
+  /// In en, this message translates to:
+  /// **'Delayed'**
+  String get trackDelayed;
 }
 
 class _AppLocalizationsDelegate

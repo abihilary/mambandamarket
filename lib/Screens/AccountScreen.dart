@@ -615,7 +615,7 @@ class _AccountScreenState extends State<AccountScreen> {
                       icon: Icons.support_agent_outlined,
                       title: l10n.contactSupport,
                       subtitle: l10n.contactSupportSub,
-                      onTap: () => showSupportSheet(context),
+                      onTap: () => openSupportThread(context),
                     ),
                   ],
                 ),
