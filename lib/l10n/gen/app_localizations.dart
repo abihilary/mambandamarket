@@ -4267,6 +4267,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 minute} other{{count} minutes}}'**
   String updateInMinutes(int count);
+
+  /// No description provided for @trendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Trending'**
+  String get trendingTitle;
+
+  /// No description provided for @promoClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get promoClose;
 }
 
 class _AppLocalizationsDelegate

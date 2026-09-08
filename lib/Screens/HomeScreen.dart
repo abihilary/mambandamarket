@@ -14,8 +14,10 @@ import '../api/models.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../Components/home_board.dart';
+import '../Components/trending_rail.dart';
 import '../api/board_media_cache.dart';
 import '../api/board_repository.dart';
+import '../api/trending_repository.dart';
 import '../api/location_service.dart';
 import '../Components/category_icons.dart';
 import '../Components/category_picker.dart';
@@ -83,7 +85,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _scroll.addListener(_onScroll);
     _loadCategories();
     _loadListings();
-    _loadBoard();
+    _loadBoards();
+    _loadTrending();
     AuthService.instance.me.addListener(_onMeChanged);
   }
 
@@ -218,9 +221,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Refresh the board, then let the media cache drop anything it no longer
   /// refers to. Never throws — see BoardRepository.
-  Future<void> _loadBoard() async {
-    await BoardRepository.instance.load();
-    await BoardMediaCache.instance.reconcile(BoardRepository.instance.board.value);
+  /// The trending row, for whatever category the feed is showing.
+  ///
+  /// Never throws — see TrendingRepository. No setState either: the row listens
+  /// for itself, so refreshing it does not rebuild forty grid cells.
+  Future<void> _loadTrending() =>
+      TrendingRepository.instance.load(categorySlug: _selectedSlug);
+
+  Future<void> _loadBoards() async {
+    await BoardRepository.instance.loadAll();
+    // Against every board at once: reconciling one at a time would have each
+    // delete the other's cached video.
+    await BoardMediaCache.instance.reconcileAll(BoardRepository.instance.live);
   }
 
   void _onCatalogueChanged() {
@@ -244,6 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!_categories.any((c) => c.slug == slug)) return; // since removed
     setState(() => _selectedSlug = slug);
     _loadListings();
+    _loadTrending();
   }
 
   void _onCategoryTapped(int index) {
@@ -259,6 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _selectedSlug = index == 0 ? null : bar[index - 1].slug;
     });
     _loadListings();
+    _loadTrending();
   }
 
   /// The full tree, reusing the sheet the publish form already uses.
@@ -272,6 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (picked == null || !mounted) return;
     setState(() => _selectedSlug = picked);
     _loadListings();
+    _loadTrending();
   }
 
   void _openItemDetail(Listing listing) {
@@ -400,7 +415,7 @@ class _HomeScreenState extends State<HomeScreen> {
             RefreshIndicator(
               onRefresh: () async {
                 await Future.wait(
-                    [_loadListings(), _favorites.refresh(), _loadBoard()]);
+                    [_loadListings(), _favorites.refresh(), _loadBoards(), _loadTrending()]);
               },
               child: CustomScrollView(
                 controller: _scroll,
@@ -513,6 +528,25 @@ class _HomeScreenState extends State<HomeScreen> {
                   // have published nothing.
                   SliverToBoxAdapter(
                     child: HomeBoard(onCategory: _onCategorySlug),
+                  ),
+
+                  // The promotional section, and the trending row under it.
+                  // Both sit here rather than after the block below because the
+                  // loading, error and empty branches are SliverFillRemaining —
+                  // anything after them is pushed under the fold in exactly the
+                  // three states where the feed has least to show.
+                  SliverToBoxAdapter(
+                    child: HomeBoard(
+                      slug: BoardRepository.promoSlug,
+                      onCategory: _onCategorySlug,
+                    ),
+                  ),
+
+                  SliverToBoxAdapter(
+                    child: TrendingRail(
+                      onOpen: _openItemDetail,
+                      onCategory: _onCategorySlug,
+                    ),
                   ),
 
                   if (_isLoading)

@@ -5,6 +5,16 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 import 'board_model.dart';
 
+/// Every file the boards currently on screen refer to.
+///
+/// Pulled out as a plain function so the rule can be tested without a cache
+/// manager, a temp directory or a network — the bug it closes was invisible
+/// precisely because exercising it needed all three.
+Set<String> boardMediaKeepSet(Iterable<Board?> boards) => {
+      for (final b in boards)
+        if (b != null) ...b.mediaPaths,
+    };
+
 /// Board video, downloaded once and kept.
 ///
 /// Autoplaying video in the home feed is a real cost to somebody on mobile data
@@ -17,7 +27,7 @@ import 'board_model.dart';
 /// seen — the new video is fetched, and the old one is no longer referenced by
 /// any board.
 ///
-/// [reconcile] is what actually removes it. Leaving that to the cache's own LRU
+/// [reconcileAll] is what actually removes it. Leaving that to the cache's own LRU
 /// would mean a replaced video lingering until enough others pushed it out,
 /// which on a device that sees one board a month is indefinitely.
 class BoardMediaCache {
@@ -29,9 +39,10 @@ class BoardMediaCache {
   final CacheManager _manager = CacheManager(
     Config(
       _key,
-      // A backstop, not the policy. reconcile() is the policy.
+      // A backstop, not the policy. reconcileAll() is the policy.
       stalePeriod: const Duration(days: 60),
-      maxNrOfCacheObjects: 20,
+      // Two boards share this store now.
+      maxNrOfCacheObjects: 40,
     ),
   );
 
@@ -61,12 +72,18 @@ class BoardMediaCache {
     }
   }
 
-  /// Drop anything the live board no longer refers to.
+  /// Drop anything the live boards no longer refer to.
   ///
   /// Called after every successful board load. A board that swapped its video
   /// yesterday should not still be costing storage today.
-  Future<void> reconcile(Board? board) async {
-    final keep = board?.mediaPaths ?? const <String>{};
+  ///
+  /// Takes every board on screen, not one. There are two now, and reconciling
+  /// against a single one would delete the other's clip on every refresh —
+  /// turning the one-off download this class exists to guarantee into a charge
+  /// somebody pays each time they pull the feed, and popping the other board
+  /// back to its poster mid-scroll.
+  Future<void> reconcileAll(Iterable<Board?> boards) async {
+    final keep = boardMediaKeepSet(boards);
     final stale = _held.difference(keep);
     for (final path in stale) {
       try {

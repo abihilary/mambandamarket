@@ -578,7 +578,7 @@
   "searchRecent": "Recent searches",
   "searchClearRecents": "Clear",
   "searchEmptyPrompt": "Search for anything on Mambanda Market.",
-  "searchNoResults": "Nothing matches \u201c{query}\u201d.",
+  "searchNoResults": "Nothing matches “{query}”.",
   "@searchNoResults": {
     "placeholders": {
       "query": {}
@@ -1041,7 +1041,13 @@
   "updateRetry": "I have already updated",
   "updateDismiss": "Dismiss",
   "updateNudgeBody": "Version {version} is ready. Update to get the latest fixes and features.",
-  "@updateNudgeBody": {"placeholders": {"version": {"type": "String"}}},
+  "@updateNudgeBody": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "updateLater": "Later",
   "updateDownloadedTitle": "Update downloaded",
   "updateRestart": "Restart",
@@ -1051,7 +1057,13 @@
   "supportSubject": "Subject",
   "supportMessage": "Message",
   "supportReplyTo": "We will reply to {email}.",
-  "@supportReplyTo": {"placeholders": {"email": {"type": "String"}}},
+  "@supportReplyTo": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
   "supportSend": "Send",
   "supportSent": "Thanks — your message has been sent.",
   "supportFailed": "Couldn’t send your message. Please try again.",
@@ -1092,5 +1104,7 @@
         "type": "int"
       }
     }
-  }
+  },
+  "trendingTitle": "Trending",
+  "promoClose": "Close"
 }

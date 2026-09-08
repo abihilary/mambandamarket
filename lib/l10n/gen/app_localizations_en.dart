@@ -2386,4 +2386,10 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get trendingTitle => 'Trending';
+
+  @override
+  String get promoClose => 'Close';
 }

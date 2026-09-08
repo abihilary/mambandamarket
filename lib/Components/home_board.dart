@@ -10,6 +10,8 @@ import '../api/board_media_cache.dart';
 import '../api/board_model.dart';
 import '../api/board_repository.dart';
 import '../navigation.dart';
+import '../theme/app_tokens.dart';
+import 'board_promo_sheet.dart';
 
 /// The dashboard-authored board in the home feed.
 ///
@@ -23,7 +25,15 @@ import '../navigation.dart';
 /// template this build has never heard of must all reduce to "less board", never
 /// to a broken home feed.
 class HomeBoard extends StatelessWidget {
-  const HomeBoard({super.key, this.onCategory});
+  const HomeBoard({
+    super.key,
+    this.slug = BoardRepository.homeSlug,
+    this.onCategory,
+  });
+
+  /// Which placement to draw. One widget for both, so a change to the carousel
+  /// or the video lifecycle cannot apply to one board and not the other.
+  final String slug;
 
   /// How a `category` link asks the feed to filter. Supplied by HomeScreen so
   /// the board reuses the same path a tap on the category bar takes.
@@ -32,7 +42,7 @@ class HomeBoard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<Board?>(
-      valueListenable: BoardRepository.instance.board,
+      valueListenable: BoardRepository.instance.notifier(slug),
       builder: (context, board, _) {
         // No board is the common case. Take up no room at all rather than
         // leaving a gap where one used to be.
@@ -41,13 +51,85 @@ class HomeBoard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(board.style.radius),
-            child: AspectRatio(
-              aspectRatio: board.style.aspect,
-              child: _BoardBody(board: board, onCategory: onCategory),
-            ),
+            // The stack template sizes to its words instead of to a ratio: a
+            // headline, a line of body and two buttons do not fit inside a
+            // 21:9 banner once the labels are in French.
+            child: board.template == 'stack'
+                ? _Stack(board: board, onCategory: onCategory)
+                : AspectRatio(
+                    aspectRatio: board.style.aspect,
+                    child: _BoardBody(board: board, onCategory: onCategory),
+                  ),
           ),
         );
       },
+    );
+  }
+}
+
+/// Media on top, words and buttons underneath.
+class _Stack extends StatelessWidget {
+  const _Stack({required this.board, this.onCategory});
+
+  final Board board;
+  final void Function(String slug)? onCategory;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final slide = board.slides.first;
+    final locale = Localizations.localeOf(context);
+    final title = pickLocalised(slide.title, locale);
+    final body = pickLocalised(slide.body, locale);
+    final bg = _hex(slide.background) ?? theme.colorScheme.surfaceContainerHighest;
+    final fg = _hex(slide.foreground) ?? theme.colorScheme.onSurface;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AspectRatio(
+          aspectRatio: board.style.aspect,
+          child: _Slide(slide: slide, active: true, onCategory: onCategory, overlay: false),
+        ),
+        Container(
+          width: double.infinity,
+          color: bg,
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (title != null)
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(color: fg, fontWeight: FontWeight.w800),
+                ),
+              if (body != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  body,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: fg.withValues(alpha: 0.8)),
+                ),
+              ],
+              if (slide.actions.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _ActionBar(
+                  actions: slide.actions,
+                  onMedia: false,
+                  foreground: fg,
+                  onCategory: onCategory,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -67,7 +149,7 @@ class _BoardBody extends StatelessWidget {
     if (board.template == 'split' && slide.kind != SlideKind.text) {
       return _Split(slide: slide, onCategory: onCategory);
     }
-    return _Slide(slide: slide, active: true, onCategory: onCategory);
+    return _Slide(slide: slide, active: true, onCategory: onCategory, scrim: board.style.scrim);
   }
 }
 
@@ -137,6 +219,7 @@ class _CarouselState extends State<_Carousel> {
               // nothing.
               active: i == _index,
               onCategory: widget.onCategory,
+              scrim: widget.board.style.scrim,
             ),
           ),
         ),
@@ -168,24 +251,235 @@ class _CarouselState extends State<_Carousel> {
 }
 
 class _Slide extends StatelessWidget {
-  const _Slide({required this.slide, required this.active, this.onCategory});
+  const _Slide({
+    required this.slide,
+    required this.active,
+    this.onCategory,
+    this.scrim = true,
+    this.overlay = true,
+  });
 
   final BoardSlide slide;
   final bool active;
   final void Function(String slug)? onCategory;
+  final bool scrim;
+
+  /// Whether words and buttons are drawn over the media. False on the stack
+  /// template, which puts them underneath instead.
+  final bool overlay;
 
   @override
   Widget build(BuildContext context) {
-    final child = switch (slide.kind) {
+    final media = switch (slide.kind) {
       SlideKind.image => _Image(slide: slide),
       SlideKind.video => _Video(slide: slide, active: active),
-      SlideKind.text => _Text(slide: slide),
+      SlideKind.text => _Text(slide: slide, onCategory: onCategory),
     };
 
+    Widget child = media;
+
+    // Text slides draw their own words; over media, they go in an overlay.
+    if (overlay && slide.kind != SlideKind.text) {
+      final locale = Localizations.localeOf(context);
+      final title = pickLocalised(slide.title, locale);
+      final body = pickLocalised(slide.body, locale);
+      if (title != null || body != null || slide.actions.isNotEmpty) {
+        child = Stack(
+          fit: StackFit.expand,
+          children: [
+            media,
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _Overlay(
+                title: title,
+                body: body,
+                actions: slide.actions,
+                scrim: scrim,
+                onCategory: onCategory,
+              ),
+            ),
+          ],
+        );
+      }
+    }
+
     if (!(slide.link?.isActionable ?? false)) return child;
+    // The buttons sit above this in the stack and take their own taps, so the
+    // slide's link is what is left over — tapping the picture, not the button.
     return GestureDetector(
       onTap: () => openBoardLink(context, slide.link!, onCategory: onCategory),
       child: child,
+    );
+  }
+}
+
+/// Words and buttons over a picture.
+///
+/// A gradient scrim, not a [GlassSurface]: a BackdropFilter over a playing
+/// video inside a scrolling feed is the exact case that file warns about, and
+/// a linear gradient is a single cheap paint.
+class _Overlay extends StatelessWidget {
+  const _Overlay({
+    this.title,
+    this.body,
+    required this.actions,
+    required this.scrim,
+    this.onCategory,
+  });
+
+  final String? title;
+  final String? body;
+  final List<BoardAction> actions;
+  final bool scrim;
+  final void Function(String slug)? onCategory;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return DecoratedBox(
+      decoration: scrim
+          ? const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [Color(0xA6000000), Color(0x00000000)],
+              ),
+            )
+          : const BoxDecoration(),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (title != null)
+              Text(
+                title!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            if (body != null) ...[
+              const SizedBox(height: 3),
+              Text(
+                body!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: Colors.white.withValues(alpha: 0.9)),
+              ),
+            ],
+            if (actions.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              _ActionBar(
+                actions: actions,
+                onMedia: true,
+                foreground: Colors.white,
+                onCategory: onCategory,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The buttons themselves.
+///
+/// A [Wrap], not a Row: "En savoir plus" beside "Voir la boutique" does not fit
+/// across a 360dp phone, and a Row would overflow rather than move one down.
+class _ActionBar extends StatelessWidget {
+  const _ActionBar({
+    required this.actions,
+    required this.onMedia,
+    required this.foreground,
+    this.onCategory,
+  });
+
+  final List<BoardAction> actions;
+  final bool onMedia;
+  final Color foreground;
+  final void Function(String slug)? onCategory;
+
+  @override
+  Widget build(BuildContext context) {
+    final locale = Localizations.localeOf(context);
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final action in actions)
+          _ActionButton(
+            label: pickLocalised(action.label, locale) ?? '',
+            style: action.style,
+            onMedia: onMedia,
+            foreground: foreground,
+            onTap: () => openBoardLink(context, action.link, onCategory: onCategory),
+          ),
+      ],
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({
+    required this.label,
+    required this.style,
+    required this.onMedia,
+    required this.foreground,
+    required this.onTap,
+  });
+
+  final String label;
+  final BoardActionStyle style;
+  final bool onMedia;
+  final Color foreground;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    if (label.isEmpty) return const SizedBox.shrink();
+    final tokens = context.tokens;
+    final theme = Theme.of(context);
+
+    // accentFill is a background and never ink — lime reads at 1.43:1 on white.
+    final isPrimary = style == BoardActionStyle.primary;
+    final background = isPrimary ? tokens.accentFill : Colors.transparent;
+    final ink = isPrimary
+        ? tokens.onAccentFill
+        : (onMedia ? Colors.white : foreground);
+
+    return Material(
+      color: background,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: isPrimary
+            ? BorderSide.none
+            : BorderSide(color: ink.withValues(alpha: 0.7)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 180),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelLarge
+                  ?.copyWith(color: ink, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -352,8 +646,9 @@ class _VideoState extends State<_Video> with WidgetsBindingObserver {
 }
 
 class _Text extends StatelessWidget {
-  const _Text({required this.slide});
+  const _Text({required this.slide, this.onCategory});
   final BoardSlide slide;
+  final void Function(String slug)? onCategory;
 
   @override
   Widget build(BuildContext context) {
@@ -393,7 +688,18 @@ class _Text extends StatelessWidget {
               ),
             ),
           ],
-          if (cta != null) ...[
+          // Real buttons where there are any; the old decorative pill only
+          // where there are not, so boards written before buttons existed are
+          // untouched.
+          if (slide.actions.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            _ActionBar(
+              actions: slide.actions,
+              onMedia: false,
+              foreground: fg,
+              onCategory: onCategory,
+            ),
+          ] else if (cta != null) ...[
             const SizedBox(height: 10),
             DecoratedBox(
               decoration: BoxDecoration(
@@ -413,10 +719,12 @@ class _Text extends StatelessWidget {
     );
   }
 
-  static Color? _hex(String? value) {
-    if (value == null || !RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(value)) return null;
-    return Color(int.parse(value.substring(1), radix: 16) | 0xFF000000);
-  }
+}
+
+/// A slide's own colour, or null when it did not set a usable one.
+Color? _hex(String? value) {
+  if (value == null || !RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(value)) return null;
+  return Color(int.parse(value.substring(1), radix: 16) | 0xFF000000);
 }
 
 /// Media on one side, words on the other.
@@ -435,7 +743,8 @@ class _Split extends StatelessWidget {
 
     final content = Row(
       children: [
-        Expanded(child: _Slide(slide: slide, active: true, onCategory: onCategory)),
+        // No overlay inside a split: the words already have their own half.
+        Expanded(child: _Slide(slide: slide, active: true, onCategory: onCategory, overlay: false)),
         Expanded(
           child: Container(
             color: theme.colorScheme.surfaceContainerHighest,
@@ -499,5 +808,16 @@ Future<void> openBoardLink(
       await openSharedListing(value);
     case BoardLinkKind.category:
       onCategory?.call(value);
+    case BoardLinkKind.promo:
+      final promo = link.promo;
+      if (promo == null) return;
+      await showBoardPromoSheet(context, promo: promo, onCategory: onCategory);
+    case BoardLinkKind.screen:
+      // Checked again here, not only when the link was parsed. onGenerateRoute
+      // falls through to SplashScreen, which re-roots the navigator — so an
+      // unrecognised route would not be a dead button, it would eject whoever
+      // tapped it out of whatever they were doing.
+      if (!allowedBoardScreens.contains(value)) return;
+      await Navigator.of(context, rootNavigator: true).pushNamed(value);
   }
 }
