@@ -66,12 +66,13 @@ class LiveLocation {
 
   /// How precisely a share reports.
   ///
-  /// The manifest removes ACCESS_FINE_LOCATION on purpose — a precise point on
-  /// a listing is a private seller's doorstep — so this is the coarse tier and
-  /// asking for more here would only be a lie. It is a single constant because
-  /// raising it is a one-line change once the manifest and Play's data-safety
-  /// form say precise location is collected.
-  static const shareAccuracy = LocationAccuracy.medium;
+  /// High, and only here. Sharing a location is something a person does on
+  /// purpose, to a named counterparty, for a bounded time — a pin half a
+  /// kilometre out would not be worth sending. Listing distances are a
+  /// different question with a different answer: location_service.dart still
+  /// asks for the coarse tier and rounds before storing, because that one is
+  /// inferred from people who never chose to be located.
+  static const shareAccuracy = LocationAccuracy.high;
 
   /// Begin following [share], posting each movement to its conversation.
   void follow(LocationShare share) {
