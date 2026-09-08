@@ -13,6 +13,11 @@ import '../api/auth_service.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
 import '../api/shipping_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../api/live_location.dart';
+import '../api/location_share.dart';
+import '../Components/location_bubble.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import 'document_picker.dart';
@@ -51,6 +56,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   final _chat = ChatRepository.instance;
 
   List<Message> _messages = [];
+  RealtimeChannel? _shares;
 
   /// Local files for messages still in flight, keyed by their temporary id, so
   /// an outgoing photo can be previewed before the server has ever seen it.
@@ -76,6 +82,40 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     // used to run now that it is no longer the only thing arriving.
     ChatRepository.instance.pulse.addListener(_onLivePulse);
     _poll = Timer.periodic(const Duration(seconds: 45), (_) => _load());
+    _watchShares();
+  }
+
+  /// Follow the location shares in this thread as they move.
+  ///
+  /// A share that moves writes no message, so nothing else in the app would
+  /// notice: the pulse fires on conversation rows and the poll refetches a
+  /// history that has not changed. Without this the other person's pin would
+  /// sit wherever it was when the thread was opened, which is worse than not
+  /// showing it at all.
+  void _watchShares() {
+    _shares = Supabase.instance.client
+        .channel('loc:${widget.conversation.id}')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'location_shares',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'conversation_id',
+            value: widget.conversation.id,
+          ),
+          callback: (payload) {
+            final share = LocationShare.fromJson(payload.newRecord);
+            if (share == null || !mounted) return;
+            setState(() {
+              _messages = [
+                for (final m in _messages)
+                  if (m.location?.id == share.id) m.copyWith(location: share) else m,
+              ];
+            });
+          },
+        )
+        .subscribe();
   }
 
   /// Something changed in one of this account's threads. It is usually this
@@ -91,6 +131,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       PushService.activeConversationId = null;
     }
     ChatRepository.instance.pulse.removeListener(_onLivePulse);
+    final shares = _shares;
+    if (shares != null) Supabase.instance.client.removeChannel(shares);
     _poll?.cancel();
     _messageController.dispose();
     _scrollController.dispose();
@@ -238,6 +280,78 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   // ── Attaching ─────────────────────────────────────────────────────────────
 
+  /// Share where we are — once, or live for a while.
+  Future<void> _shareLocation({required bool live}) async {
+    final l10n = context.l10n;
+
+    int minutes = 60;
+    if (live) {
+      final chosen = await showModalBottomSheet<int>(
+        context: context,
+        builder: (sheetContext) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Text(l10n.locChooseDuration,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+              ),
+              for (final option in [(15, l10n.locFor15), (60, l10n.locFor1h), (480, l10n.locFor8h)])
+                ListTile(
+                  title: Text(option.$2),
+                  onTap: () => Navigator.pop(sheetContext, option.$1),
+                ),
+            ],
+          ),
+        ),
+      );
+      if (chosen == null) return;
+      minutes = chosen;
+    }
+
+    final read = await LiveLocation.currentPosition();
+    if (!mounted) return;
+    final position = read.position;
+    if (position == null) {
+      _toastLocation(read.outcome);
+      return;
+    }
+
+    try {
+      final message = await ChatRepository.instance.shareLocation(
+        widget.conversation.id,
+        lat: position.latitude,
+        lng: position.longitude,
+        accuracyM: position.accuracy,
+        live: live,
+        minutes: minutes,
+        locale: Localizations.localeOf(context).languageCode == 'fr' ? 'fr' : 'en',
+      );
+      if (!mounted) return;
+      setState(() => _messages = [..._messages, message]);
+      _scrollToBottom();
+      final share = message.location;
+      if (live && share != null) LiveLocation.instance.follow(share);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.chatSendFailed)),
+      );
+    }
+  }
+
+  void _toastLocation(ShareOutcome outcome) {
+    final l10n = context.l10n;
+    final text = switch (outcome) {
+      ShareOutcome.servicesOff => l10n.locServicesOff,
+      ShareOutcome.denied => l10n.locDenied,
+      ShareOutcome.deniedForever => l10n.locDeniedForever,
+      _ => l10n.locFailed,
+    };
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+
   Future<void> _openAttachSheet() async {
     final l10n = context.l10n;
     final choice = await showModalBottomSheet<String>(
@@ -264,6 +378,17 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               ),
             const Divider(height: 1),
             ListTile(
+              leading: const Icon(Icons.location_on_outlined),
+              title: Text(l10n.locShareOnce),
+              onTap: () => Navigator.pop(sheetContext, 'location'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.my_location),
+              title: Text(l10n.locShareLive),
+              onTap: () => Navigator.pop(sheetContext, 'location-live'),
+            ),
+            const Divider(height: 1),
+            ListTile(
               leading: const Icon(Icons.close),
               title: Text(l10n.chatAttachCancel),
               onTap: () => Navigator.pop(sheetContext),
@@ -273,6 +398,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       ),
     );
     if (choice == null) return;
+
+    if (choice == 'location' || choice == 'location-live') {
+      await _shareLocation(live: choice == 'location-live');
+      return;
+    }
 
     if (choice == 'document') {
       try {
@@ -606,6 +736,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
+                                              if (m.location != null)
+                                                LocationBubble(
+                                                    share: m.location!,
+                                                    mine: mine),
                                               if (m.hasAttachment)
                                                 _attachment(m, mine),
                                               if ((m.body ?? '').isNotEmpty)

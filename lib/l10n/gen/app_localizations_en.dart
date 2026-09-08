@@ -2533,6 +2533,69 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shipNoteLabel => 'Anything else we should know?';
 
   @override
+  String get locOpenInMaps => 'Open in Maps';
+
+  @override
+  String get locStop => 'Stop';
+
+  @override
+  String get locPinTitle => 'Location';
+
+  @override
+  String get locLiveTitle => 'Live location';
+
+  @override
+  String get locLiveEnded => 'Live location ended';
+
+  @override
+  String get locLiveStopped => 'Sharing stopped';
+
+  @override
+  String locUntil(String time) {
+    return 'until $time';
+  }
+
+  @override
+  String locUpdated(String time) {
+    return 'updated $time';
+  }
+
+  @override
+  String get locShareOnce => 'Send my location';
+
+  @override
+  String get locShareLive => 'Share live location';
+
+  @override
+  String get locChooseDuration => 'How long should we share it?';
+
+  @override
+  String get locFor15 => '15 minutes';
+
+  @override
+  String get locFor1h => '1 hour';
+
+  @override
+  String get locFor8h => '8 hours';
+
+  @override
+  String get locSharingBanner => 'Sharing your live location';
+
+  @override
+  String get locServicesOff => 'Turn on location to share where you are.';
+
+  @override
+  String get locDenied =>
+      'Mambanda needs location permission to share where you are.';
+
+  @override
+  String get locDeniedForever =>
+      'Location is blocked for Mambanda. Turn it on in Settings.';
+
+  @override
+  String get locFailed => 'We could not read your location just now.';
+
+  @override
   String get shipPickupTitle => 'Pickup';
 
   @override

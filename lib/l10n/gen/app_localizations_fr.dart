@@ -2580,6 +2580,70 @@ class AppLocalizationsFr extends AppLocalizations {
   String get shipNoteLabel => 'Autre chose à nous dire ?';
 
   @override
+  String get locOpenInMaps => 'Ouvrir dans Maps';
+
+  @override
+  String get locStop => 'Arrêter';
+
+  @override
+  String get locPinTitle => 'Position';
+
+  @override
+  String get locLiveTitle => 'Position en direct';
+
+  @override
+  String get locLiveEnded => 'Partage terminé';
+
+  @override
+  String get locLiveStopped => 'Partage arrêté';
+
+  @override
+  String locUntil(String time) {
+    return 'jusqu’à $time';
+  }
+
+  @override
+  String locUpdated(String time) {
+    return 'mis à jour $time';
+  }
+
+  @override
+  String get locShareOnce => 'Envoyer ma position';
+
+  @override
+  String get locShareLive => 'Partager ma position en direct';
+
+  @override
+  String get locChooseDuration => 'Pendant combien de temps ?';
+
+  @override
+  String get locFor15 => '15 minutes';
+
+  @override
+  String get locFor1h => '1 heure';
+
+  @override
+  String get locFor8h => '8 heures';
+
+  @override
+  String get locSharingBanner => 'Vous partagez votre position en direct';
+
+  @override
+  String get locServicesOff =>
+      'Activez la localisation pour partager votre position.';
+
+  @override
+  String get locDenied =>
+      'Mambanda a besoin de l’autorisation de localisation.';
+
+  @override
+  String get locDeniedForever =>
+      'La localisation est bloquée. Activez-la dans les Réglages.';
+
+  @override
+  String get locFailed => 'Nous n’avons pas pu lire votre position.';
+
+  @override
   String get shipPickupTitle => 'Enlèvement';
 
   @override

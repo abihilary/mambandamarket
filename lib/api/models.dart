@@ -3,6 +3,7 @@ import 'dart:ui' show Locale;
 import 'package:intl/intl.dart';
 
 import 'config.dart';
+import 'location_share.dart';
 import '../l10n/l10n.dart';
 
 /// Domain models mirroring the Core API's JSON payloads.
@@ -757,6 +758,9 @@ class Message {
   final DateTime? readAt;
   final MessageSendState sendState;
 
+  /// Set when this message is somebody sharing where they are.
+  final LocationShare? location;
+
   const Message({
     required this.id,
     required this.conversationId,
@@ -767,6 +771,7 @@ class Message {
     this.createdAt,
     this.readAt,
     this.sendState = MessageSendState.sent,
+    this.location,
   });
 
   bool get isRead => readAt != null;
@@ -800,6 +805,7 @@ class Message {
     DateTime? createdAt,
     DateTime? readAt,
     MessageSendState? sendState,
+    LocationShare? location,
   }) =>
       Message(
         id: id ?? this.id,
@@ -811,6 +817,7 @@ class Message {
         createdAt: createdAt ?? this.createdAt,
         readAt: readAt ?? this.readAt,
         sendState: sendState ?? this.sendState,
+        location: location ?? this.location,
       );
 
   factory Message.fromJson(Map<String, dynamic> json) => Message(
@@ -822,6 +829,9 @@ class Message {
         attachmentUrl: json['attachment_url']?.toString(),
         createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
         readAt: DateTime.tryParse(json['read_at']?.toString() ?? ''),
+        location: LocationShare.fromJson(
+          (json['location'] as Map?)?.cast<String, dynamic>(),
+        ),
       );
 }
 

@@ -4550,6 +4550,120 @@ abstract class AppLocalizations {
   /// **'Anything else we should know?'**
   String get shipNoteLabel;
 
+  /// No description provided for @locOpenInMaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in Maps'**
+  String get locOpenInMaps;
+
+  /// No description provided for @locStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get locStop;
+
+  /// No description provided for @locPinTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get locPinTitle;
+
+  /// No description provided for @locLiveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Live location'**
+  String get locLiveTitle;
+
+  /// No description provided for @locLiveEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'Live location ended'**
+  String get locLiveEnded;
+
+  /// No description provided for @locLiveStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing stopped'**
+  String get locLiveStopped;
+
+  /// No description provided for @locUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'until {time}'**
+  String locUntil(String time);
+
+  /// No description provided for @locUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'updated {time}'**
+  String locUpdated(String time);
+
+  /// No description provided for @locShareOnce.
+  ///
+  /// In en, this message translates to:
+  /// **'Send my location'**
+  String get locShareOnce;
+
+  /// No description provided for @locShareLive.
+  ///
+  /// In en, this message translates to:
+  /// **'Share live location'**
+  String get locShareLive;
+
+  /// No description provided for @locChooseDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'How long should we share it?'**
+  String get locChooseDuration;
+
+  /// No description provided for @locFor15.
+  ///
+  /// In en, this message translates to:
+  /// **'15 minutes'**
+  String get locFor15;
+
+  /// No description provided for @locFor1h.
+  ///
+  /// In en, this message translates to:
+  /// **'1 hour'**
+  String get locFor1h;
+
+  /// No description provided for @locFor8h.
+  ///
+  /// In en, this message translates to:
+  /// **'8 hours'**
+  String get locFor8h;
+
+  /// No description provided for @locSharingBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing your live location'**
+  String get locSharingBanner;
+
+  /// No description provided for @locServicesOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on location to share where you are.'**
+  String get locServicesOff;
+
+  /// No description provided for @locDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Mambanda needs location permission to share where you are.'**
+  String get locDenied;
+
+  /// No description provided for @locDeniedForever.
+  ///
+  /// In en, this message translates to:
+  /// **'Location is blocked for Mambanda. Turn it on in Settings.'**
+  String get locDeniedForever;
+
+  /// No description provided for @locFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not read your location just now.'**
+  String get locFailed;
+
   /// No description provided for @shipPickupTitle.
   ///
   /// In en, this message translates to:

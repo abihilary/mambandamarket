@@ -3,6 +3,7 @@ import 'dart:ui' show Locale;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mambandamarket/api/shipping_draft.dart';
 import 'package:mambandamarket/api/shipping_model.dart';
+import 'package:mambandamarket/api/location_share.dart';
 
 Map<String, dynamic> catalogue() => {
       'enabled': true,
@@ -35,6 +36,7 @@ Map<String, dynamic> catalogue() => {
     };
 
 void main() {
+  _locationShareTests();
   const en = Locale('en');
   const fr = Locale('fr');
 
@@ -189,6 +191,66 @@ void main() {
         ShippingField.to,
         ShippingField.phone,
       ]);
+    });
+  });
+}
+
+void _locationShareTests() {
+  group('location shares', () {
+    Map<String, dynamic> base(Map<String, dynamic> over) => <String, dynamic>{
+          'id': 's1',
+          'conversation_id': 'c1',
+          'sender_id': 'u1',
+          'mode': 'live',
+          'lat': 4.05,
+          'lng': 9.7,
+          ...over,
+        };
+
+    test('a share with no position is dropped, not drawn on Null Island', () {
+      expect(LocationShare.fromJson(base({'lat': null})), isNull);
+      expect(LocationShare.fromJson(base({'id': ''})), isNull);
+      expect(LocationShare.fromJson(null), isNull);
+    });
+
+    test('a pin is never running', () {
+      final pin = LocationShare.fromJson(base({'mode': 'pin', 'expires_at': null}))!;
+      expect(pin.isLive, isFalse);
+      expect(pin.isRunning, isFalse);
+      expect(pin.hasExpired, isFalse);
+    });
+
+    test('a live share runs only inside its window', () {
+      final future = DateTime.now().add(const Duration(minutes: 30)).toIso8601String();
+      final past = DateTime.now().subtract(const Duration(minutes: 1)).toIso8601String();
+      expect(LocationShare.fromJson(base({'expires_at': future}))!.isRunning, isTrue);
+      expect(LocationShare.fromJson(base({'expires_at': past}))!.isRunning, isFalse);
+    });
+
+    test('stopped and expired are told apart', () {
+      final future = DateTime.now().add(const Duration(minutes: 30)).toIso8601String();
+      final past = DateTime.now().subtract(const Duration(minutes: 1)).toIso8601String();
+
+      final stopped = LocationShare.fromJson(
+          base({'expires_at': future, 'stopped_at': DateTime.now().toIso8601String()}))!;
+      expect(stopped.isRunning, isFalse);
+      // It did not run out — somebody ended it, and the bubble says so.
+      expect(stopped.hasExpired, isFalse);
+
+      final expired = LocationShare.fromJson(base({'expires_at': past}))!;
+      expect(expired.hasExpired, isTrue);
+    });
+
+    test('a live share with no expiry cannot run', () {
+      // The table refuses to store one, so this only happens if something
+      // upstream changes. It must fail closed rather than broadcast forever.
+      expect(LocationShare.fromJson(base({'expires_at': null}))!.isRunning, isFalse);
+    });
+
+    test('the map link carries the point', () {
+      final s = LocationShare.fromJson(base({'expires_at': null, 'mode': 'pin'}))!;
+      expect(s.mapUri.toString(), contains('4.05,9.7'));
+      expect(s.webMapUri.toString(), contains('query=4.05,9.7'));
     });
   });
 }

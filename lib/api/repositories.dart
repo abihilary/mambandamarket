@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'api_client.dart';
 import 'auth_service.dart';
+import 'location_share.dart';
 import 'models.dart';
 
 /// Browse, publish and manage listings.
@@ -629,6 +630,62 @@ class ChatRepository {
       if (attachmentPath != null) 'attachment_path': attachmentPath,
     }) as Map<String, dynamic>;
     return Message.fromJson((json['message'] as Map).cast<String, dynamic>());
+  }
+
+  // ── Location sharing ──────────────────────────────────────────────────────
+
+  /// Drop a pin, or start sharing live for [minutes].
+  ///
+  /// Returns the message so the caller can put the bubble on screen at once,
+  /// exactly as sending text does.
+  Future<Message> shareLocation(
+    String conversationId, {
+    required double lat,
+    required double lng,
+    double? accuracyM,
+    bool live = false,
+    int minutes = 60,
+    String locale = 'en',
+  }) async {
+    final json = await _api.post('/conversations/$conversationId/location', {
+      'mode': live ? 'live' : 'pin',
+      'lat': lat,
+      'lng': lng,
+      if (accuracyM != null) 'accuracy_m': accuracyM,
+      if (live) 'minutes': minutes,
+      'locale': locale,
+    }) as Map<String, dynamic>;
+    return Message.fromJson((json['message'] as Map).cast<String, dynamic>());
+  }
+
+  /// The share moved. Returns null when the server says it is no longer
+  /// running — expired, or stopped from somewhere else — which is the signal
+  /// to stop the timer rather than an error worth showing anybody.
+  Future<LocationShare?> moveShare(
+    String conversationId,
+    String shareId, {
+    required double lat,
+    required double lng,
+    double? accuracyM,
+  }) async {
+    try {
+      final json = await _api.patch(
+        '/conversations/$conversationId/location/$shareId',
+        {
+          'lat': lat,
+          'lng': lng,
+          if (accuracyM != null) 'accuracy_m': accuracyM,
+        },
+      ) as Map<String, dynamic>;
+      return LocationShare.fromJson((json['share'] as Map?)?.cast<String, dynamic>());
+    } catch (e) {
+      debugPrint('[location] could not move share ($e)');
+      return null;
+    }
+  }
+
+  Future<void> stopShare(String conversationId, String shareId) async {
+    await _api.post('/conversations/$conversationId/location/$shareId/stop');
   }
 
   /// Clears the caller's unread and stamps read_at on the other side.
