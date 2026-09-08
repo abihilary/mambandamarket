@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../Components/category_picker.dart';
 import '../Components/listing_picker.dart';
 import '../api/api_client.dart';
 import '../api/models.dart';
@@ -52,6 +51,9 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
   final _phone = TextEditingController();
   final _address = TextEditingController();
   final _note = TextEditingController();
+  final _pickupAddress = TextEditingController();
+  final _pickupName = TextEditingController();
+  final _pickupPhone = TextEditingController();
 
   // One key per field the form can scroll to, in the order they appear.
   final _keys = <ShippingField, GlobalKey>{
@@ -64,7 +66,6 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
   String _sizeCode = '';
   String _fromCode = '';
   String _toCode = '';
-  int _quantity = 1;
   final List<XFile> _photos = [];
 
   List<Category> _categories = const [];
@@ -88,6 +89,7 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
     for (final c in [
       _url, _description, _sizeCustom, _fromOther, _toOther,
       _budget, _name, _phone, _address, _note,
+      _pickupAddress, _pickupName, _pickupPhone,
     ]) {
       c.dispose();
     }
@@ -152,21 +154,6 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
     setState(() {
       _sizeCode = '';
       _takeListing(chosen);
-    });
-  }
-
-  Future<void> _pickCategory() async {
-    if (_categories.isEmpty) return;
-    final slug = await showCategoryPicker(
-      context,
-      categories: _categories,
-      selectedSlug: _categorySlug,
-    );
-    if (slug == null || !mounted) return;
-    // A new category means a new size list, so the old choice is meaningless.
-    setState(() {
-      _categorySlug = slug;
-      _sizeCode = '';
     });
   }
 
@@ -258,13 +245,15 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
         sizeCustom: _sizeCode == ShippingDraft.customSize || _sizeCode.isEmpty
             ? (_sizeCustom.text.trim().isEmpty ? l10n.shipSizeNoPresets : _sizeCustom.text.trim())
             : null,
-        quantity: _quantity,
         budgetCents: budget.isEmpty ? null : toMinorUnits(num.tryParse(budget) ?? 0, currency: 'XAF'),
         fromLocation: _fromLocation,
         toLocation: _toLocation,
         contactName: _name.text.trim(),
         contactPhone: _phone.text.trim(),
         deliveryAddress: _address.text.trim(),
+        pickupAddress: _pickupAddress.text.trim(),
+        pickupContactName: _pickupName.text.trim(),
+        pickupPhone: _pickupPhone.text.trim(),
         note: _note.text.trim(),
         photoPaths: paths,
         locale: locale,
@@ -325,8 +314,9 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
               const SizedBox(height: 8),
               ..._itemSection(),
               ..._sizeSection(),
-              ..._routeSection(),
-              ..._contactSection(),
+              ..._pickupSection(),
+              ..._deliverySection(),
+              ..._detailsSection(),
             ],
           ],
         ),
@@ -458,18 +448,13 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
     return [
       const SizedBox(height: 18),
       TextFormField(
+        key: _keys[ShippingField.item],
         controller: _url,
         keyboardType: TextInputType.url,
         onChanged: (_) => setState(() {}),
         decoration: _field(l10n.shipLinkLabel, hint: l10n.shipLinkHint),
-      ),
-      const SizedBox(height: 12),
-      TextFormField(
-        controller: _description,
-        maxLines: 3,
-        maxLength: 2000,
-        onChanged: (_) => setState(() {}),
-        decoration: _field(l10n.shipDescriptionLabel, hint: l10n.shipDescriptionHint),
+        // A link or a description will do, and the description lives further
+        // down now — so the message says so rather than naming this box.
         validator: (_) =>
             _draft.missing.contains(ShippingField.item) ? l10n.shipItemRequired : null,
       ),
@@ -550,13 +535,26 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
         child: _Label(l10n.shipCategoryLabel),
       ),
       const SizedBox(height: 8),
-      OutlinedButton(
-        onPressed: _categories.isEmpty ? null : _pickCategory,
-        style: OutlinedButton.styleFrom(
-          minimumSize: const Size(double.infinity, 50),
-          alignment: Alignment.centerLeft,
-        ),
-        child: Text(selected?.displayLabel(locale) ?? l10n.shipChooseCategory),
+      DropdownButtonFormField<String>(
+        initialValue: selected?.slug,
+        isExpanded: true,
+        decoration: _field(l10n.shipCategoryLabel),
+        hint: Text(l10n.shipChooseCategory),
+        items: [
+          for (final c in _categories)
+            DropdownMenuItem(value: c.slug, child: Text(c.displayLabel(locale))),
+        ],
+        onChanged: _categories.isEmpty
+            ? null
+            : (slug) {
+                if (slug == null) return;
+                setState(() {
+                  _categorySlug = slug;
+                  // The sizes are per category, so a code chosen under the old
+                  // one is not necessarily on the new list.
+                  _sizeCode = '';
+                });
+              },
       ),
       const SizedBox(height: 18),
       Container(key: _keys[ShippingField.size], child: _Label(l10n.shipSizeLabel)),
@@ -571,22 +569,22 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
           decoration: _field(l10n.shipSizeCustomLabel, hint: l10n.shipSizeNoPresets),
         )
       else ...[
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
+        DropdownButtonFormField<String>(
+          initialValue: _sizeCode.isEmpty ? null : _sizeCode,
+          isExpanded: true,
+          decoration: _field(l10n.shipSizeLabel),
+          hint: Text(l10n.shipSizeChoose),
+          items: [
             for (final size in sizes)
-              ChoiceChip(
-                label: Text(size.labelFor(locale)),
-                selected: _sizeCode == size.code,
-                onSelected: (_) => setState(() => _sizeCode = size.code),
-              ),
-            ChoiceChip(
-              label: Text(l10n.shipSizeOther),
-              selected: _sizeCode == ShippingDraft.customSize,
-              onSelected: (_) => setState(() => _sizeCode = ShippingDraft.customSize),
+              DropdownMenuItem(value: size.code, child: Text(size.labelFor(locale))),
+            DropdownMenuItem(
+              value: ShippingDraft.customSize,
+              child: Text(l10n.shipSizeOther),
             ),
           ],
+          onChanged: (code) {
+            if (code != null) setState(() => _sizeCode = code);
+          },
         ),
         // The hint is the whole point of the presets: "medium box" means
         // nothing, "medium box — about a microwave" is a decision.
@@ -617,92 +615,89 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
     return _options.sizes[code]?.hintFor(locale);
   }
 
-  // ── Where it travels ───────────────────────────────────────────────────────
+  // ── Where we collect it ────────────────────────────────────────────────────
 
-  List<Widget> _routeSection() {
+  List<Widget> _pickupSection() {
     final l10n = context.l10n;
     final locale = Localizations.localeOf(context);
     return [
-      const SizedBox(height: 22),
-      _SectionTitle(l10n.shipRouteTitle),
+      const SizedBox(height: 24),
+      _SectionTitle(l10n.shipPickupTitle),
       const SizedBox(height: 10),
-      Container(key: _keys[ShippingField.from], child: _Label(l10n.shipFromLabel)),
-      const SizedBox(height: 8),
-      _places(_options.from, _fromCode, locale, (code) => setState(() => _fromCode = code)),
+      Container(
+        key: _keys[ShippingField.from],
+        child: _placeDropdown(
+          label: l10n.shipFromLabel,
+          places: _options.from,
+          selected: _fromCode,
+          locale: locale,
+          onPick: (code) => setState(() => _fromCode = code),
+        ),
+      ),
       if (_fromCode == 'other') ...[
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         TextFormField(
           controller: _fromOther,
           onChanged: (_) => setState(() {}),
           decoration: _field(l10n.shipOtherPlace),
         ),
       ],
-      const SizedBox(height: 16),
-      Container(key: _keys[ShippingField.to], child: _Label(l10n.shipToLabel)),
-      const SizedBox(height: 8),
-      _places(_options.to, _toCode, locale, (code) => setState(() => _toCode = code)),
+      const SizedBox(height: 12),
+      TextFormField(
+        controller: _pickupAddress,
+        decoration: _field(l10n.shipPickupAddressLabel, hint: l10n.shipPickupAddressHint),
+      ),
+      const SizedBox(height: 12),
+      TextFormField(
+        controller: _pickupName,
+        decoration: _field(l10n.shipPickupNameLabel, hint: l10n.shipPickupNameHint),
+      ),
+      const SizedBox(height: 12),
+      TextFormField(
+        controller: _pickupPhone,
+        keyboardType: TextInputType.phone,
+        decoration: _field(l10n.shipPickupPhoneLabel),
+      ),
+    ];
+  }
+
+  // ── Where it goes ──────────────────────────────────────────────────────────
+
+  List<Widget> _deliverySection() {
+    final l10n = context.l10n;
+    final locale = Localizations.localeOf(context);
+    return [
+      const SizedBox(height: 24),
+      _SectionTitle(l10n.shipDeliveryTitle),
+      const SizedBox(height: 10),
+      Container(
+        key: _keys[ShippingField.to],
+        child: _placeDropdown(
+          label: l10n.shipToLabel,
+          places: _options.to,
+          selected: _toCode,
+          locale: locale,
+          onPick: (code) => setState(() => _toCode = code),
+        ),
+      ),
       if (_toCode == 'other') ...[
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         TextFormField(
           controller: _toOther,
           onChanged: (_) => setState(() {}),
           decoration: _field(l10n.shipOtherPlace),
         ),
       ],
-      const SizedBox(height: 18),
-      Row(
-        children: [
-          Expanded(child: _Label(l10n.shipQuantityLabel)),
-          IconButton(
-            onPressed: _quantity > 1 ? () => setState(() => _quantity--) : null,
-            icon: const Icon(Icons.remove_circle_outline),
-          ),
-          Text('$_quantity', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          IconButton(
-            onPressed: _quantity < 999 ? () => setState(() => _quantity++) : null,
-            icon: const Icon(Icons.add_circle_outline),
-          ),
-        ],
-      ),
-      const SizedBox(height: 8),
+      const SizedBox(height: 12),
       TextFormField(
-        controller: _budget,
-        keyboardType: TextInputType.number,
-        decoration: _field(l10n.shipBudgetLabel, hint: l10n.shipBudgetHint),
+        controller: _address,
+        decoration: _field(l10n.shipAddressLabel, hint: l10n.shipAddressHint),
       ),
-    ];
-  }
-
-  Widget _places(
-    List<ShippingPlace> places,
-    String selected,
-    Locale locale,
-    void Function(String code) onPick,
-  ) {
-    if (places.isEmpty) return const SizedBox.shrink();
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final place in places)
-          ChoiceChip(
-            label: Text(place.labelFor(locale)),
-            selected: selected == place.code,
-            onSelected: (_) => onPick(place.code),
-          ),
-      ],
-    );
-  }
-
-  // ── How we reach you ───────────────────────────────────────────────────────
-
-  List<Widget> _contactSection() {
-    final l10n = context.l10n;
-    return [
-      const SizedBox(height: 22),
-      _SectionTitle(l10n.shipContactTitle),
-      const SizedBox(height: 10),
-      TextFormField(controller: _name, decoration: _field(l10n.shipNameLabel)),
+      const SizedBox(height: 12),
+      TextFormField(
+        controller: _name,
+        decoration: _field(l10n.shipNameLabel, hint: l10n.shipDeliveryNameHint),
+      ),
       const SizedBox(height: 12),
       TextFormField(
         key: _keys[ShippingField.phone],
@@ -713,10 +708,29 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
         validator: (_) =>
             _draft.missing.contains(ShippingField.phone) ? l10n.shipPhoneRequired : null,
       ),
-      const SizedBox(height: 12),
+    ];
+  }
+
+  // ── Anything else ──────────────────────────────────────────────────────────
+
+  List<Widget> _detailsSection() {
+    final l10n = context.l10n;
+    return [
+      const SizedBox(height: 24),
+      _SectionTitle(l10n.shipDetailsTitle),
+      const SizedBox(height: 10),
       TextFormField(
-        controller: _address,
-        decoration: _field(l10n.shipAddressLabel, hint: l10n.shipAddressHint),
+        controller: _description,
+        maxLines: 4,
+        maxLength: 2000,
+        onChanged: (_) => setState(() {}),
+        decoration: _field(l10n.shipDescriptionLabel, hint: l10n.shipDescriptionHint),
+      ),
+      const SizedBox(height: 4),
+      TextFormField(
+        controller: _budget,
+        keyboardType: TextInputType.number,
+        decoration: _field(l10n.shipBudgetLabel, hint: l10n.shipBudgetHint),
       ),
       const SizedBox(height: 12),
       TextFormField(
@@ -725,6 +739,34 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
         decoration: _field(l10n.shipNoteLabel),
       ),
     ];
+  }
+
+  /// A place, as a dropdown.
+  ///
+  /// Chips were a wrap of fifteen destinations that pushed everything below
+  /// them off the screen and looked like an answer already given. A dropdown
+  /// is one line whether the list holds six entries or sixty.
+  Widget _placeDropdown({
+    required String label,
+    required List<ShippingPlace> places,
+    required String selected,
+    required Locale locale,
+    required void Function(String code) onPick,
+  }) {
+    if (places.isEmpty) return const SizedBox.shrink();
+    final codes = places.map((p) => p.code).toSet();
+    return DropdownButtonFormField<String>(
+      initialValue: codes.contains(selected) ? selected : null,
+      isExpanded: true,
+      decoration: _field(label),
+      items: [
+        for (final place in places)
+          DropdownMenuItem(value: place.code, child: Text(place.labelFor(locale))),
+      ],
+      onChanged: (code) {
+        if (code != null) onPick(code);
+      },
+    );
   }
 
   InputDecoration _field(String label, {String? hint}) => InputDecoration(

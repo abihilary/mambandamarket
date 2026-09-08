@@ -4496,12 +4496,6 @@ abstract class AppLocalizations {
   /// **'Where?'**
   String get shipOtherPlace;
 
-  /// No description provided for @shipQuantityLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'How many'**
-  String get shipQuantityLabel;
-
   /// No description provided for @shipBudgetLabel.
   ///
   /// In en, this message translates to:
@@ -4555,6 +4549,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Anything else we should know?'**
   String get shipNoteLabel;
+
+  /// No description provided for @shipPickupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup'**
+  String get shipPickupTitle;
+
+  /// No description provided for @shipDeliveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery'**
+  String get shipDeliveryTitle;
+
+  /// No description provided for @shipDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get shipDetailsTitle;
+
+  /// No description provided for @shipPickupAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup address'**
+  String get shipPickupAddressLabel;
+
+  /// No description provided for @shipPickupAddressHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop, street or landmark — whatever we should look for'**
+  String get shipPickupAddressHint;
+
+  /// No description provided for @shipPickupNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Who we collect from'**
+  String get shipPickupNameLabel;
+
+  /// No description provided for @shipPickupNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The seller, the shop, a friend'**
+  String get shipPickupNameHint;
+
+  /// No description provided for @shipPickupPhoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Their phone'**
+  String get shipPickupPhoneLabel;
+
+  /// No description provided for @shipDeliveryNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave yours, or whoever receives it'**
+  String get shipDeliveryNameHint;
+
+  /// No description provided for @shipSizeChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a size'**
+  String get shipSizeChoose;
 
   /// No description provided for @shipSubmit.
   ///

@@ -2505,9 +2505,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shipOtherPlace => 'Where?';
 
   @override
-  String get shipQuantityLabel => 'How many';
-
-  @override
   String get shipBudgetLabel => 'Your budget';
 
   @override
@@ -2534,6 +2531,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shipNoteLabel => 'Anything else we should know?';
+
+  @override
+  String get shipPickupTitle => 'Pickup';
+
+  @override
+  String get shipDeliveryTitle => 'Delivery';
+
+  @override
+  String get shipDetailsTitle => 'Details';
+
+  @override
+  String get shipPickupAddressLabel => 'Pickup address';
+
+  @override
+  String get shipPickupAddressHint =>
+      'Shop, street or landmark — whatever we should look for';
+
+  @override
+  String get shipPickupNameLabel => 'Who we collect from';
+
+  @override
+  String get shipPickupNameHint => 'The seller, the shop, a friend';
+
+  @override
+  String get shipPickupPhoneLabel => 'Their phone';
+
+  @override
+  String get shipDeliveryNameHint => 'Leave yours, or whoever receives it';
+
+  @override
+  String get shipSizeChoose => 'Choose a size';
 
   @override
   String get shipSubmit => 'Send the request';

@@ -2552,9 +2552,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get shipOtherPlace => 'Où ?';
 
   @override
-  String get shipQuantityLabel => 'Quantité';
-
-  @override
   String get shipBudgetLabel => 'Votre budget';
 
   @override
@@ -2581,6 +2578,37 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get shipNoteLabel => 'Autre chose à nous dire ?';
+
+  @override
+  String get shipPickupTitle => 'Enlèvement';
+
+  @override
+  String get shipDeliveryTitle => 'Livraison';
+
+  @override
+  String get shipDetailsTitle => 'Détails';
+
+  @override
+  String get shipPickupAddressLabel => 'Adresse d’enlèvement';
+
+  @override
+  String get shipPickupAddressHint =>
+      'Boutique, rue ou point de repère — ce que nous devons chercher';
+
+  @override
+  String get shipPickupNameLabel => 'Chez qui nous récupérons';
+
+  @override
+  String get shipPickupNameHint => 'Le vendeur, la boutique, un ami';
+
+  @override
+  String get shipPickupPhoneLabel => 'Son téléphone';
+
+  @override
+  String get shipDeliveryNameHint => 'Le vôtre, ou celui qui réceptionne';
+
+  @override
+  String get shipSizeChoose => 'Choisissez une taille';
 
   @override
   String get shipSubmit => 'Envoyer la demande';
