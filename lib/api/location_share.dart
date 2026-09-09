@@ -46,11 +46,10 @@ class LocationShare {
 
   /// What a map app needs. `geo:` is understood by every Android map app and
   /// the `q=` label is what makes the pin show rather than just re-centring.
-  Uri get mapUri => Uri.parse('geo:$lat,$lng?q=$lat,$lng');
+  Uri get mapUri => mapUriFor(lat, lng);
 
   /// The fallback for a device with no app registered for `geo:`.
-  Uri get webMapUri =>
-      Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+  Uri get webMapUri => webMapUriFor(lat, lng);
 
   static double? _double(Object? v) =>
       v is num ? v.toDouble() : double.tryParse(v?.toString() ?? '');
@@ -99,3 +98,10 @@ class LocationShare {
         stoppedAt: stoppedAt ?? this.stoppedAt,
       );
 }
+
+/// A point, for whichever map app the phone uses. Shared with the shipment
+/// screen, which shows where a parcel was last seen the same way.
+Uri mapUriFor(double lat, double lng) => Uri.parse('geo:$lat,$lng?q=$lat,$lng');
+
+Uri webMapUriFor(double lat, double lng) =>
+    Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');

@@ -36,6 +36,7 @@ Map<String, dynamic> catalogue() => {
     };
 
 void main() {
+  _rateCardTests();
   _locationShareTests();
   const en = Locale('en');
   const fr = Locale('fr');
@@ -251,6 +252,233 @@ void _locationShareTests() {
       final s = LocationShare.fromJson(base({'expires_at': null, 'mode': 'pin'}))!;
       expect(s.mapUri.toString(), contains('4.05,9.7'));
       expect(s.webMapUri.toString(), contains('query=4.05,9.7'));
+    });
+  });
+}
+
+void _rateCardTests() {
+  group('rate card', () {
+    test('a catalogue without tiers still parses as before', () {
+      final o = ShippingOptions.fromJson(<String, dynamic>{
+        'enabled': true,
+        'sizes': {'custom': {'label_en': 'Other', 'label_fr': 'Autre', 'kg_min': null, 'kg_max': null}},
+        'default': ['custom'],
+        'by_category': <String, dynamic>{},
+        'from_locations': [{'code': 'a', 'label_en': 'A', 'label_fr': 'A'}],
+        'to_locations': [{'code': 'b', 'label_en': 'B', 'label_fr': 'B', 'zone': 'z'}],
+      });
+      expect(o.tiers, isEmpty);
+      expect(o.currency, 'XAF');
+      expect(o.from.single.zone, isNull);
+      expect(o.from.single.isPriced, isFalse);
+      expect(o.to.single.zone, 'z');
+    });
+
+    test('tiers and bands parse', () {
+      final o = ShippingOptions.fromJson(<String, dynamic>{
+        'sizes': {
+          'custom': {'label_en': 'Other', 'label_fr': 'Autre', 'kg_min': null, 'kg_max': null},
+          'small_box': {'label_en': 'Small', 'label_fr': 'Petit', 'kg_min': 0, 'kg_max': 2, 'band': 's'},
+        },
+        'default': ['small_box'],
+        'by_category': <String, dynamic>{},
+        'from_locations': [{'code': 'a', 'label_en': 'A', 'label_fr': 'A'}],
+        'to_locations': [{'code': 'b', 'label_en': 'B', 'label_fr': 'B'}],
+        'tiers': [
+          {'code': 'standard', 'label_en': 'Standard', 'label_fr': 'Standard', 'eta_days_min': 1, 'eta_days_max': 2},
+          {'code': 'bad'},
+        ],
+      });
+      expect(o.sizes['small_box']!.band, 's');
+      expect(o.tiers.map((t) => t.code), ['standard']);
+      expect(o.tier('standard')!.etaDaysMax, 2);
+      expect(o.tier('nope'), isNull);
+    });
+  });
+
+  group('quote', () {
+    test('quotable with options, cheapest first on a tie', () {
+      final q = ShippingQuote.fromJson(<String, dynamic>{
+        'quotable': true,
+        'currency': 'XAF',
+        'options': [
+          {'tier': 'express', 'label_en': 'Express', 'price_cents': 4500, 'eta_days_min': 0, 'eta_days_max': 0},
+          {'tier': 'standard', 'label_en': 'Standard', 'price_cents': 2500, 'eta_days_min': 1, 'eta_days_max': 2},
+          {'tier': 'economy', 'label_en': 'Economy', 'price_cents': 2500, 'eta_days_min': 3, 'eta_days_max': 5},
+        ],
+      });
+      expect(q.quotable, isTrue);
+      expect(q.options.length, 3);
+      expect(q.cheapest!.tier, 'standard');
+    });
+
+    test('not quotable carries its reason and no options', () {
+      final q = ShippingQuote.fromJson(<String, dynamic>{'quotable': false, 'reason': 'no_rate', 'options': []});
+      expect(q.quotable, isFalse);
+      expect(q.reason, 'no_rate');
+      expect(q.cheapest, isNull);
+    });
+
+    test('quotable with nothing to choose is not quotable', () {
+      final q = ShippingQuote.fromJson(<String, dynamic>{'quotable': true, 'options': []});
+      expect(q.quotable, isFalse);
+    });
+
+    test('an option without a price is dropped', () {
+      final q = ShippingQuote.fromJson(<String, dynamic>{
+        'quotable': true,
+        'options': [{'tier': 'x'}, {'tier': 'y', 'price_cents': 100}],
+      });
+      expect(q.options.map((o) => o.tier), ['y']);
+    });
+
+    test('null is not quotable', () {
+      expect(ShippingQuote.fromJson(null).quotable, isFalse);
+      expect(ShippingQuote.manual.quotable, isFalse);
+    });
+  });
+
+  group('documents', () {
+    test('parse in order; one without a url is dropped', () {
+      final items = [
+        {'kind': 'confirmation', 'number': 'MB-10023-C', 'url': 'https://x/y.pdf', 'created_at': '2026-09-09T10:00:00Z'},
+        {'kind': 'receipt', 'number': 'MB-10023-R', 'url': null},
+      ].map((m) => ShippingDocument.fromJson(m)).whereType<ShippingDocument>().toList();
+      expect(items.length, 1);
+      expect(items.single.isReceipt, isFalse);
+      expect(items.single.number, 'MB-10023-C');
+    });
+  });
+
+  group('request fields', () {
+    Map<String, dynamic> row(Map<String, dynamic> over) => <String, dynamic>{
+          'id': 'r1',
+          'status': 'accepted',
+          'reference': 'MB-10023',
+          'tier': 'standard',
+          'eta_days_min': 1,
+          'eta_days_max': 2,
+          'quoted_total_cents': 2500,
+          'currency': 'XAF',
+          'accepted_at': '2026-09-09T10:00:00Z',
+          'created_at': '2026-09-09T09:00:00Z',
+          ...over,
+        };
+
+    test('everything new is parsed', () {
+      final r = ShippingRequest.fromJson(row({
+        'collected_cents': 3000,
+        'delivered_at': '2026-09-10T10:00:00Z',
+        'paid_at': '2026-09-10T10:00:00Z',
+        'from_place': 'douala-akwa',
+        'to_place': 'douala-bonaberi',
+        'pickup_address': 'Shop',
+        'contact_phone': '+237',
+        'locale': 'fr',
+      }))!;
+      expect(r.reference, 'MB-10023');
+      expect(r.displayRef, '#MB-10023');
+      expect(r.tier, 'standard');
+      expect(r.etaDaysMax, 2);
+      expect(r.collectedCents, 3000);
+      // What was taken beats what was quoted.
+      expect(r.codCents, 3000);
+      expect(r.deliveredAt, isNotNull);
+      expect(r.fromPlace, 'douala-akwa');
+      expect(r.locale, 'fr');
+    });
+
+    test('cod falls back to the quote', () {
+      expect(ShippingRequest.fromJson(row({}))!.codCents, 2500);
+    });
+
+    test('a pending quote is one that is quoted and not yet expired', () {
+      final future = DateTime.now().add(const Duration(days: 1)).toIso8601String();
+      final past = DateTime.now().subtract(const Duration(days: 1)).toIso8601String();
+      expect(ShippingRequest.fromJson(row({'status': 'quoted', 'quote_expires_at': future}))!.isQuotePending, isTrue);
+      expect(ShippingRequest.fromJson(row({'status': 'quoted', 'quote_expires_at': past}))!.isQuotePending, isFalse);
+      expect(ShippingRequest.fromJson(row({'status': 'accepted', 'quote_expires_at': future}))!.isQuotePending, isFalse);
+    });
+
+    test('no reference reads as nothing, not "#null"', () {
+      expect(ShippingRequest.fromJson(row({'reference': null}))!.displayRef, '');
+    });
+  });
+
+  group('eta window', () {
+    final base = DateTime.utc(2026, 9, 9, 10);
+    ShippingRequest r({int? min = 2, int? max = 3, DateTime? accepted}) => ShippingRequest(
+          id: 'r',
+          status: 'accepted',
+          source: 'external',
+          etaDaysMin: min,
+          etaDaysMax: max,
+          acceptedAt: accepted ?? base,
+          createdAt: base.subtract(const Duration(hours: 1)),
+        );
+
+    test('counted from acceptance', () {
+      final w = r().eta(now: base)!;
+      expect(w.kind, EtaKind.range);
+      expect(w.minDays, 2);
+      expect(w.maxDays, 3);
+    });
+
+    test('shrinks as days pass', () {
+      final w = r().eta(now: base.add(const Duration(days: 2, hours: 12)))!;
+      expect(w.kind, EtaKind.range);
+      expect(w.minDays, 0);
+      expect(w.maxDays, 1);
+    });
+
+    test('today when the latest day is this one', () {
+      expect(r().eta(now: base.add(const Duration(days: 2, hours: 23)))!.kind, EtaKind.today);
+    });
+
+    test('late a day after the latest', () {
+      expect(r().eta(now: base.add(const Duration(days: 4, hours: 1)))!.kind, EtaKind.late);
+    });
+
+    test('same-day tier on the day is today', () {
+      expect(r(min: 0, max: 0).eta(now: base.add(const Duration(hours: 5)))!.kind, EtaKind.today);
+    });
+
+    test('no eta is no window', () {
+      expect(r(min: null, max: null).eta(now: base), isNull);
+    });
+
+    test('falls back to creation when nothing was accepted', () {
+      final w = ShippingRequest(
+        id: 'r', status: 'new', source: 'external', etaDaysMin: 1, etaDaysMax: 1, createdAt: base,
+      ).eta(now: base)!;
+      expect(w.maxDays, 1);
+    });
+  });
+
+  group('steps', () {
+    test('every field belongs to exactly one step', () {
+      final all = stepFields.values.expand((f) => f).toList();
+      expect(all.toSet(), ShippingField.values.toSet());
+      expect(all.length, ShippingField.values.length, reason: 'a field in two steps');
+    });
+
+    test('the route step wants the route and nothing else', () {
+      const d = ShippingDraft(source: ShippingSource.external);
+      expect(d.missingIn(ShippingStep.route), [ShippingField.from, ShippingField.to]);
+      expect(d.missingIn(ShippingStep.quote), isEmpty);
+      expect(d.isStepReady(ShippingStep.quote), isTrue);
+    });
+
+    test('a description alone lets the item step continue', () {
+      const d = ShippingDraft(
+        source: ShippingSource.external,
+        description: 'a box of books',
+        categorySlug: 'books',
+        sizeCode: 'small_box',
+        categoryHasPresets: true,
+      );
+      expect(d.isStepReady(ShippingStep.item), isTrue);
+      expect(d.isStepReady(ShippingStep.confirm), isFalse);
     });
   });
 }

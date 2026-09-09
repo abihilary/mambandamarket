@@ -4550,6 +4550,390 @@ abstract class AppLocalizations {
   /// **'Anything else we should know?'**
   String get shipNoteLabel;
 
+  /// No description provided for @shipStepItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get shipStepItem;
+
+  /// No description provided for @shipStepRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Route'**
+  String get shipStepRoute;
+
+  /// No description provided for @shipStepQuote.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get shipStepQuote;
+
+  /// No description provided for @shipStepConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get shipStepConfirm;
+
+  /// No description provided for @shipBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get shipBack;
+
+  /// No description provided for @shipContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get shipContinue;
+
+  /// No description provided for @shipConfirmRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm request'**
+  String get shipConfirmRequest;
+
+  /// No description provided for @shipRouteIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Where do we collect it, and where does it go?'**
+  String get shipRouteIntro;
+
+  /// No description provided for @shipQuoteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a delivery option'**
+  String get shipQuoteTitle;
+
+  /// No description provided for @shipQuoteIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Prices for {route}. You pay the courier when it arrives.'**
+  String shipQuoteIntro(String route);
+
+  /// No description provided for @shipQuoteLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Working out your price…'**
+  String get shipQuoteLoading;
+
+  /// No description provided for @shipQuoteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not get a price right now.'**
+  String get shipQuoteFailed;
+
+  /// No description provided for @shipRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get shipRetry;
+
+  /// No description provided for @shipQuoteManualTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We’ll quote you in the chat'**
+  String get shipQuoteManualTitle;
+
+  /// No description provided for @shipQuoteManualBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This route or size isn’t on our price list yet. Send the request and we’ll come back with a price.'**
+  String get shipQuoteManualBody;
+
+  /// No description provided for @shipEtaDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{min}–{max} days'**
+  String shipEtaDays(int min, int max);
+
+  /// No description provided for @shipEtaDaysOne.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{1 day} other{{n} days}}'**
+  String shipEtaDaysOne(int n);
+
+  /// No description provided for @shipEtaUpTo.
+  ///
+  /// In en, this message translates to:
+  /// **'up to {n} days'**
+  String shipEtaUpTo(int n);
+
+  /// No description provided for @shipEtaSameDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Same day'**
+  String get shipEtaSameDay;
+
+  /// No description provided for @shipPayOnDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay on delivery'**
+  String get shipPayOnDelivery;
+
+  /// No description provided for @shipPayOnDeliveryAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'{price} · pay on delivery'**
+  String shipPayOnDeliveryAmount(String price);
+
+  /// No description provided for @shipCollected.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid {price} on delivery'**
+  String shipCollected(String price);
+
+  /// No description provided for @shipCodBannerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay {price} to the courier'**
+  String shipCodBannerTitle(String price);
+
+  /// No description provided for @shipCodBannerBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash on delivery. Nothing to pay before it arrives.'**
+  String get shipCodBannerBody;
+
+  /// No description provided for @shipSummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your request'**
+  String get shipSummaryTitle;
+
+  /// No description provided for @shipSummaryItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get shipSummaryItem;
+
+  /// No description provided for @shipSummaryRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Route'**
+  String get shipSummaryRoute;
+
+  /// No description provided for @shipSummarySize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get shipSummarySize;
+
+  /// No description provided for @shipSummaryTier.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery'**
+  String get shipSummaryTier;
+
+  /// No description provided for @shipSummaryPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get shipSummaryPrice;
+
+  /// No description provided for @shipSummaryPriceManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Quoted in the chat'**
+  String get shipSummaryPriceManual;
+
+  /// No description provided for @shipConfirmedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipment confirmed!'**
+  String get shipConfirmedTitle;
+
+  /// No description provided for @shipConfirmedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We’ve booked it. Pay {price} to the courier when it arrives.'**
+  String shipConfirmedBody(String price);
+
+  /// No description provided for @shipRequestSentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Request sent'**
+  String get shipRequestSentTitle;
+
+  /// No description provided for @shipRequestSentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We’ll come back with a price in the chat.'**
+  String get shipRequestSentBody;
+
+  /// No description provided for @shipReferenceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference'**
+  String get shipReferenceLabel;
+
+  /// No description provided for @shipViewTracking.
+  ///
+  /// In en, this message translates to:
+  /// **'View tracking'**
+  String get shipViewTracking;
+
+  /// No description provided for @shipDownloadConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Download confirmation'**
+  String get shipDownloadConfirmation;
+
+  /// No description provided for @shipBackToHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to home'**
+  String get shipBackToHome;
+
+  /// No description provided for @shipOpenChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the chat'**
+  String get shipOpenChat;
+
+  /// No description provided for @shipTabActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get shipTabActive;
+
+  /// No description provided for @shipTabPast.
+  ///
+  /// In en, this message translates to:
+  /// **'Past'**
+  String get shipTabPast;
+
+  /// No description provided for @shipNoneActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing on the way'**
+  String get shipNoneActive;
+
+  /// No description provided for @shipNonePast.
+  ///
+  /// In en, this message translates to:
+  /// **'No past shipments'**
+  String get shipNonePast;
+
+  /// No description provided for @shipArrivingToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Arriving today'**
+  String get shipArrivingToday;
+
+  /// No description provided for @shipArrivingIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Arriving in {days}'**
+  String shipArrivingIn(String days);
+
+  /// No description provided for @shipArrivingLate.
+  ///
+  /// In en, this message translates to:
+  /// **'Running late — check the chat'**
+  String get shipArrivingLate;
+
+  /// No description provided for @shipCurrentLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Current location'**
+  String get shipCurrentLocation;
+
+  /// No description provided for @shipOpenInMaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in maps'**
+  String get shipOpenInMaps;
+
+  /// No description provided for @shipNewPriceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New price: {price}'**
+  String shipNewPriceTitle(String price);
+
+  /// No description provided for @shipNewPriceBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We adjusted the price for this request. Accept it to go ahead.'**
+  String get shipNewPriceBody;
+
+  /// No description provided for @shipNewPriceUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid until {date}'**
+  String shipNewPriceUntil(String date);
+
+  /// No description provided for @shipAcceptPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept price'**
+  String get shipAcceptPrice;
+
+  /// No description provided for @shipAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted. We’re on it.'**
+  String get shipAccepted;
+
+  /// No description provided for @shipAcceptFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not accept the price. Try again.'**
+  String get shipAcceptFailed;
+
+  /// No description provided for @shipDocumentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get shipDocumentsTitle;
+
+  /// No description provided for @shipDocConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking confirmation'**
+  String get shipDocConfirmation;
+
+  /// No description provided for @shipDocReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery receipt'**
+  String get shipDocReceipt;
+
+  /// No description provided for @shipDocOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get shipDocOpen;
+
+  /// No description provided for @shipDocShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get shipDocShare;
+
+  /// No description provided for @shipDocNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Your confirmation will appear here shortly.'**
+  String get shipDocNone;
+
+  /// No description provided for @shipDocNotReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Not ready yet — try again in a moment.'**
+  String get shipDocNotReady;
+
+  /// No description provided for @shipDocOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the document.'**
+  String get shipDocOpenFailed;
+
+  /// No description provided for @shipDocEmailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Also sent to {email}'**
+  String shipDocEmailed(String email);
+
   /// No description provided for @locOpenInMaps.
   ///
   /// In en, this message translates to:

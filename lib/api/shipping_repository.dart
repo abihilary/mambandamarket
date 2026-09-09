@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -61,6 +64,9 @@ class ShippingRepository {
     int? budgetCents,
     required String fromLocation,
     required String toLocation,
+    String? fromPlace,
+    String? toPlace,
+    String? tier,
     String? contactName,
     required String contactPhone,
     String? deliveryAddress,
@@ -83,6 +89,11 @@ class ShippingRepository {
       if (budgetCents != null) 'budget_cents': budgetCents,
       'from_location': fromLocation,
       'to_location': toLocation,
+      // The codes, so the server can price the route; the labels above stay
+      // for the desk. Only the tier's code travels — never a price.
+      if (fromPlace != null && fromPlace.isNotEmpty) 'from_place': fromPlace,
+      if (toPlace != null && toPlace.isNotEmpty) 'to_place': toPlace,
+      if (tier != null && tier.isNotEmpty) 'tier': tier,
       if (contactName != null && contactName.isNotEmpty) 'contact_name': contactName,
       'contact_phone': contactPhone,
       if (deliveryAddress != null && deliveryAddress.isNotEmpty) 'delivery_address': deliveryAddress,
@@ -103,6 +114,52 @@ class ShippingRepository {
       conversation: conv == null ? null : Conversation.fromJson(conv),
     );
   }
+
+  /// What a route costs, per service tier — or that the catalogue cannot say.
+  ///
+  /// Throws on a network failure, unlike most of this class: the form shows a
+  /// retry rather than silently offering the manual path for a bad connection.
+  Future<ShippingQuote> quote({
+    required String fromPlace,
+    required String toPlace,
+    required String sizeKey,
+  }) async {
+    final path = '/shipping/quote?from=${Uri.encodeQueryComponent(fromPlace)}'
+        '&to=${Uri.encodeQueryComponent(toPlace)}'
+        '&size=${Uri.encodeQueryComponent(sizeKey)}';
+    final json = await ApiClient.instance.get(path) as Map<String, dynamic>;
+    return ShippingQuote.fromJson(json);
+  }
+
+  /// Say yes to a price the desk set.
+  Future<ShippingRequest?> accept(String id) async {
+    final json = await ApiClient.instance.post('/shipping-requests/$id/accept') as Map<String, dynamic>;
+    return ShippingRequest.fromJson((json['request'] as Map?)?.cast<String, dynamic>());
+  }
+
+  /// The confirmation, and the receipt once delivered. Reading makes a missing
+  /// one exist, so this is safe to call the moment a request is created.
+  Future<List<ShippingDocument>> documents(String id) async {
+    final json = await ApiClient.instance.get('/shipping-requests/$id/documents') as Map<String, dynamic>;
+    return (json['items'] as List? ?? const [])
+        .whereType<Map>()
+        .map((m) => ShippingDocument.fromJson(m.cast<String, dynamic>()))
+        .whereType<ShippingDocument>()
+        .toList(growable: false);
+  }
+
+  /// A document's own cache: keyed on its number, which does not rotate the
+  /// way its signed URL does every ten minutes, and separate from the board
+  /// media cache so a sweep there can never evict somebody's receipt.
+  static final _docs = CacheManager(Config(
+    'shipping_docs',
+    stalePeriod: const Duration(days: 7),
+    maxNrOfCacheObjects: 20,
+  ));
+
+  /// The PDF on disk, for sharing.
+  Future<File> documentFile(ShippingDocument doc) =>
+      _docs.getSingleFile(doc.url.toString(), key: 'shipdoc:${doc.number}');
 
   /// The caller's own shipments, newest first.
   final ValueNotifier<List<ShippingRequest>> shipments = ValueNotifier(const []);

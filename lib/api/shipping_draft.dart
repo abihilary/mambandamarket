@@ -126,3 +126,35 @@ class ShippingDraft {
         categoryHasPresets: categoryHasPresets ?? this.categoryHasPresets,
       );
 }
+
+/// The four screens the form is split across.
+enum ShippingStep { item, route, quote, confirm }
+
+/// Which fields each step is responsible for.
+///
+/// Every [ShippingField] appears here exactly once — a test holds that — so
+/// the step you are on and [ShippingDraft.missing] can never disagree about
+/// whether you may continue. The quote step owns nothing: it is a choice, and
+/// a route the catalogue cannot price is still allowed through.
+const stepFields = <ShippingStep, List<ShippingField>>{
+  ShippingStep.item: [
+    ShippingField.source,
+    ShippingField.item,
+    ShippingField.category,
+    ShippingField.size,
+    ShippingField.sizeCustom,
+  ],
+  ShippingStep.route: [ShippingField.from, ShippingField.to],
+  ShippingStep.quote: [],
+  ShippingStep.confirm: [ShippingField.phone],
+};
+
+extension ShippingDraftSteps on ShippingDraft {
+  /// What this step still needs, in on-screen order.
+  List<ShippingField> missingIn(ShippingStep step) {
+    final own = stepFields[step] ?? const [];
+    return missing.where(own.contains).toList(growable: false);
+  }
+
+  bool isStepReady(ShippingStep step) => missingIn(step).isEmpty;
+}

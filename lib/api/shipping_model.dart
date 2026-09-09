@@ -18,6 +18,7 @@ class ShippingSize {
     this.hint = const {},
     this.kgMin,
     this.kgMax,
+    this.band,
   });
 
   final String code;
@@ -25,6 +26,9 @@ class ShippingSize {
   final Map<String, String> hint;
   final double? kgMin;
   final double? kgMax;
+
+  /// Which price band this size is in. Null means the desk quotes it.
+  final String? band;
 
   String labelFor(Locale locale) => pickLocalised(label, locale) ?? code;
   String? hintFor(Locale locale) => pickLocalised(hint, locale);
@@ -40,16 +44,23 @@ class ShippingSize {
       hint: _localised(json, 'hint'),
       kgMin: (json['kg_min'] as num?)?.toDouble(),
       kgMax: (json['kg_max'] as num?)?.toDouble(),
+      band: _text(json['band']),
     );
   }
 }
 
 /// Somewhere a shipment can start or end.
 class ShippingPlace {
-  const ShippingPlace({required this.code, required this.label});
+  const ShippingPlace({required this.code, required this.label, this.zone});
 
   final String code;
   final Map<String, String> label;
+
+  /// Which zone it is priced as. Null means the desk quotes routes through it.
+  final String? zone;
+
+  /// Whether the catalogue can put an instant price on a route through here.
+  bool get isPriced => zone != null;
 
   String labelFor(Locale locale) => pickLocalised(label, locale) ?? code;
 
@@ -63,7 +74,189 @@ class ShippingPlace {
     final code = json['code']?.toString();
     final label = _localised(json, 'label');
     if (code == null || code.isEmpty || label.isEmpty) return null;
-    return ShippingPlace(code: code, label: label);
+    return ShippingPlace(code: code, label: label, zone: _text(json['zone']));
+  }
+}
+
+/// A service level: how fast, in words and in days.
+class ShippingTier {
+  const ShippingTier({
+    required this.code,
+    required this.label,
+    this.etaDaysMin,
+    this.etaDaysMax,
+  });
+
+  final String code;
+  final Map<String, String> label;
+  final int? etaDaysMin;
+  final int? etaDaysMax;
+
+  String labelFor(Locale locale) => pickLocalised(label, locale) ?? code;
+
+  static ShippingTier? fromJson(Map<String, dynamic> json) {
+    final code = json['code']?.toString();
+    final label = _localised(json, 'label');
+    if (code == null || code.isEmpty || label.isEmpty) return null;
+    return ShippingTier(
+      code: code,
+      label: label,
+      etaDaysMin: (json['eta_days_min'] as num?)?.toInt(),
+      etaDaysMax: (json['eta_days_max'] as num?)?.toInt(),
+    );
+  }
+}
+
+/// One way to have it delivered, priced.
+class ShippingQuoteOption {
+  const ShippingQuoteOption({
+    required this.tier,
+    required this.label,
+    required this.priceCents,
+    this.etaDaysMin,
+    this.etaDaysMax,
+  });
+
+  final String tier;
+  final Map<String, String> label;
+  final int priceCents;
+  final int? etaDaysMin;
+  final int? etaDaysMax;
+
+  String labelFor(Locale locale) => pickLocalised(label, locale) ?? tier;
+
+  static ShippingQuoteOption? fromJson(Map<String, dynamic> json) {
+    final tier = json['tier']?.toString();
+    final price = (json['price_cents'] as num?)?.toInt();
+    // An option with no price is not an option.
+    if (tier == null || tier.isEmpty || price == null) return null;
+    return ShippingQuoteOption(
+      tier: tier,
+      label: _localised(json, 'label'),
+      priceCents: price,
+      etaDaysMin: (json['eta_days_min'] as num?)?.toInt(),
+      etaDaysMax: (json['eta_days_max'] as num?)?.toInt(),
+    );
+  }
+}
+
+/// What the catalogue says a route costs — or that it cannot say.
+///
+/// Not being able to price a route is an answer, not an error: it is the
+/// form's cue to say "we'll quote you in the chat", which is how every request
+/// travelled before the rate card existed.
+class ShippingQuote {
+  const ShippingQuote({
+    required this.quotable,
+    this.currency = 'XAF',
+    this.options = const [],
+    this.reason,
+  });
+
+  /// The answer when the form already knows not to ask: "somewhere else" on
+  /// either end, or a custom size.
+  static const manual = ShippingQuote(quotable: false, reason: 'local');
+
+  final bool quotable;
+  final String currency;
+  final List<ShippingQuoteOption> options;
+  final String? reason;
+
+  /// The one preselected: cheapest, first on a tie.
+  ShippingQuoteOption? get cheapest {
+    ShippingQuoteOption? best;
+    for (final o in options) {
+      if (best == null || o.priceCents < best.priceCents) best = o;
+    }
+    return best;
+  }
+
+  static ShippingQuote fromJson(Map<String, dynamic>? json) {
+    if (json == null) return const ShippingQuote(quotable: false, reason: 'empty');
+    final options = (json['options'] as List? ?? const [])
+        .whereType<Map>()
+        .map((m) => ShippingQuoteOption.fromJson(m.cast<String, dynamic>()))
+        .whereType<ShippingQuoteOption>()
+        .toList(growable: false);
+    final quotable = json['quotable'] == true && options.isNotEmpty;
+    return ShippingQuote(
+      quotable: quotable,
+      currency: json['currency']?.toString() ?? 'XAF',
+      options: quotable ? options : const [],
+      reason: quotable ? null : (_text(json['reason']) ?? 'no_options'),
+    );
+  }
+}
+
+/// The paperwork: a booking confirmation, and a receipt once delivered.
+class ShippingDocument {
+  const ShippingDocument({
+    required this.kind,
+    required this.number,
+    required this.url,
+    this.createdAt,
+    this.emailedTo,
+  });
+
+  /// `confirmation` or `receipt`.
+  final String kind;
+
+  /// Stable across re-issues, e.g. `MB-10023-C`. Key any cache on this; the
+  /// URL is signed and rotates.
+  final String number;
+  final Uri url;
+  final DateTime? createdAt;
+  final String? emailedTo;
+
+  bool get isReceipt => kind == 'receipt';
+
+  static ShippingDocument? fromJson(Map<String, dynamic> json) {
+    final kind = _text(json['kind']);
+    final number = _text(json['number']);
+    final url = Uri.tryParse(json['url']?.toString() ?? '');
+    if (kind == null || number == null || url == null || !url.hasScheme) return null;
+    return ShippingDocument(
+      kind: kind,
+      number: number,
+      url: url,
+      createdAt: DateTime.tryParse(json['updated_at']?.toString() ?? json['created_at']?.toString() ?? ''),
+      emailedTo: _text(json['emailed_to']),
+    );
+  }
+}
+
+enum EtaKind { today, range, late }
+
+/// When a shipment should land, counted from now.
+class EtaWindow {
+  const EtaWindow({required this.kind, required this.minDays, required this.maxDays});
+
+  final EtaKind kind;
+
+  /// Whole days from now. Zero means today.
+  final int minDays;
+  final int maxDays;
+
+  /// Null when the request carries no ETA, or no date to count from.
+  static EtaWindow? of(ShippingRequest r, {DateTime? now}) {
+    final base = r.acceptedAt ?? r.createdAt;
+    final min = r.etaDaysMin;
+    final max = r.etaDaysMax;
+    if (base == null || min == null || max == null) return null;
+    final at = (now ?? DateTime.now()).toLocal();
+    final earliest = base.add(Duration(days: min)).toLocal();
+    final latest = base.add(Duration(days: max)).toLocal();
+    // Calendar days, not 24-hour chunks: something due at ten tonight is
+    // arriving today, not "in up to one day".
+    final today = DateTime(at.year, at.month, at.day);
+    int dayDiff(DateTime d) => DateTime(d.year, d.month, d.day).difference(today).inDays;
+    if (dayDiff(latest) < 0) {
+      return const EtaWindow(kind: EtaKind.late, minDays: 0, maxDays: 0);
+    }
+    final lo = dayDiff(earliest).clamp(0, 1 << 20);
+    final hi = dayDiff(latest);
+    if (hi == 0) return const EtaWindow(kind: EtaKind.today, minDays: 0, maxDays: 0);
+    return EtaWindow(kind: EtaKind.range, minDays: lo, maxDays: hi);
   }
 }
 
@@ -79,6 +272,8 @@ class ShippingOptions {
     this.byCategory = const {},
     this.from = const [],
     this.to = const [],
+    this.tiers = const [],
+    this.currency = 'XAF',
   });
 
   final bool enabled;
@@ -87,6 +282,14 @@ class ShippingOptions {
   final Map<String, List<String>> byCategory;
   final List<ShippingPlace> from;
   final List<ShippingPlace> to;
+
+  /// The service levels on offer. Empty on a catalogue from before the rate
+  /// card existed — which a cached copy may well be — and the form copes.
+  final List<ShippingTier> tiers;
+  final String currency;
+
+  ShippingTier? tier(String? code) =>
+      code == null ? null : tiers.where((t) => t.code == code).firstOrNull;
 
   bool get isUsable => sizes.isNotEmpty && from.isNotEmpty && to.isNotEmpty;
 
@@ -147,6 +350,12 @@ class ShippingOptions {
       byCategory: byCategory,
       from: _places(json['from_locations']),
       to: _places(json['to_locations']),
+      tiers: (json['tiers'] is List ? json['tiers'] as List : const [])
+          .whereType<Map>()
+          .map((m) => ShippingTier.fromJson(m.cast<String, dynamic>()))
+          .whereType<ShippingTier>()
+          .toList(growable: false),
+      currency: json['currency']?.toString() ?? 'XAF',
     );
   }
 
@@ -240,12 +449,60 @@ class ShippingRequest {
     this.lastLng,
     this.lastEventAt,
     this.tracking = const [],
+    this.reference,
+    this.tier,
+    this.etaDaysMin,
+    this.etaDaysMax,
+    this.quoteExpiresAt,
+    this.acceptedAt,
+    this.paidAt,
+    this.collectedCents,
+    this.deliveredAt,
+    this.sizeKey,
+    this.sizeCustom,
+    this.itemDescription,
+    this.pickupAddress,
+    this.pickupContactName,
+    this.pickupPhone,
+    this.deliveryAddress,
+    this.contactName,
+    this.contactPhone,
+    this.note,
+    this.fromPlace,
+    this.toPlace,
+    this.locale,
   });
 
   final String id;
   final String status;
   final String source;
   final String? itemTitle;
+
+  /// `MB-10023`. What a receipt, a phone call and a chat message all use.
+  final String? reference;
+  final String? tier;
+  final int? etaDaysMin;
+  final int? etaDaysMax;
+  final DateTime? quoteExpiresAt;
+  final DateTime? acceptedAt;
+  final DateTime? paidAt;
+
+  /// What the courier actually took at the door. Francs.
+  final int? collectedCents;
+  final DateTime? deliveredAt;
+  final String? sizeKey;
+  final String? sizeCustom;
+  final String? itemDescription;
+  final String? pickupAddress;
+  final String? pickupContactName;
+  final String? pickupPhone;
+  final String? deliveryAddress;
+  final String? contactName;
+  final String? contactPhone;
+  final String? note;
+  final String? fromPlace;
+  final String? toPlace;
+  final String? locale;
   final String fromLocation;
   final String toLocation;
   final int quantity;
@@ -280,6 +537,23 @@ class ShippingRequest {
   String? get quotedPrice =>
       quotedTotalCents == null ? null : formatPrice(quotedTotalCents!, currency: currency);
 
+  /// A price the desk has set that the customer has not yet said yes to.
+  bool get isQuotePending {
+    if (status != 'quoted') return false;
+    final until = quoteExpiresAt;
+    return until == null || until.isAfter(DateTime.now());
+  }
+
+  /// What is paid at the door: what was collected once it has been, else
+  /// what was quoted.
+  int? get codCents => collectedCents ?? quotedTotalCents;
+  String? get codPrice => codCents == null ? null : formatPrice(codCents!, currency: currency);
+
+  /// `#MB-10023`, or empty for a row from before references existed.
+  String get displayRef => reference == null ? '' : '#$reference';
+
+  EtaWindow? eta({DateTime? now}) => EtaWindow.of(this, now: now);
+
   static ShippingRequest? fromJson(Map<String, dynamic>? json, {List<dynamic>? tracking}) {
     if (json == null) return null;
     final id = json['id']?.toString();
@@ -304,6 +578,28 @@ class ShippingRequest {
       lastLat: (json['last_lat'] as num?)?.toDouble(),
       lastLng: (json['last_lng'] as num?)?.toDouble(),
       lastEventAt: DateTime.tryParse(json['last_event_at']?.toString() ?? ''),
+      reference: _text(json['reference']),
+      tier: _text(json['tier']),
+      etaDaysMin: (json['eta_days_min'] as num?)?.toInt(),
+      etaDaysMax: (json['eta_days_max'] as num?)?.toInt(),
+      quoteExpiresAt: DateTime.tryParse(json['quote_expires_at']?.toString() ?? ''),
+      acceptedAt: DateTime.tryParse(json['accepted_at']?.toString() ?? ''),
+      paidAt: DateTime.tryParse(json['paid_at']?.toString() ?? ''),
+      collectedCents: (json['collected_cents'] as num?)?.toInt(),
+      deliveredAt: DateTime.tryParse(json['delivered_at']?.toString() ?? ''),
+      sizeKey: _text(json['size_key']),
+      sizeCustom: _text(json['size_custom']),
+      itemDescription: _text(json['item_description']),
+      pickupAddress: _text(json['pickup_address']),
+      pickupContactName: _text(json['pickup_contact_name']),
+      pickupPhone: _text(json['pickup_phone']),
+      deliveryAddress: _text(json['delivery_address']),
+      contactName: _text(json['contact_name']),
+      contactPhone: _text(json['contact_phone']),
+      note: _text(json['note']),
+      fromPlace: _text(json['from_place']),
+      toPlace: _text(json['to_place']),
+      locale: _text(json['locale']),
       tracking: (tracking ?? const [])
           .whereType<Map>()
           .map((m) => TrackingEvent.fromJson(m.cast<String, dynamic>()))
@@ -378,3 +674,12 @@ IconData trackingIcon(String code) => switch (code) {
       'delayed' => Icons.schedule_outlined,
       _ => Icons.circle_outlined,
     };
+
+/// An ETA range in words: "same day", "2 days", "1–2 days".
+String etaText(AppLocalizations l10n, int? min, int? max) {
+  if (min == null || max == null) return '';
+  if (min == 0 && max == 0) return l10n.shipEtaSameDay;
+  if (min == max) return l10n.shipEtaDaysOne(max);
+  if (min == 0) return l10n.shipEtaUpTo(max);
+  return l10n.shipEtaDays(min, max);
+}

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import '../Components/listing_picker.dart';
 import '../api/api_client.dart';
 import '../api/models.dart';
 import '../Service/ChatRoomScreen.dart';
+import 'ShipmentConfirmedScreen.dart';
 import '../api/auth_service.dart';
 import '../api/repositories.dart';
 import '../api/shipping_draft.dart';
@@ -22,10 +24,21 @@ import '../theme/app_tokens.dart';
 /// nested modal pickers here, and a sheet holding a sheet is where that comes
 /// apart.
 ///
-/// The shape of the thing is one decision followed by a form. Until somebody
-/// has said whether this is a product from here or something else, the screen
-/// shows exactly two cards and nothing else — a wall of ten fields is how you
-/// lose somebody on the first screen of a feature they have never used.
+/// Four steps — item, route, price, confirm — over one form and one draft.
+/// The steps are how the same fields are dealt out, not a second model: every
+/// field belongs to exactly one step (a test holds that), so "may I continue"
+/// is [ShippingDraft.missingIn] and nothing else.
+///
+/// Item first rather than the mockup's location-first, deliberately: the form
+/// hangs off the source chooser, a listing that arrives pre-picked already
+/// answers the item, size depends on category, and "link or description" is
+/// one requirement in the draft — so the description must sit with the item
+/// or a request with no link could never leave the first step.
+///
+/// Until somebody has said whether this is a product from here or something
+/// else, the first step shows exactly two cards and nothing else — a wall of
+/// ten fields is how you lose somebody on the first screen of a feature they
+/// have never used.
 class ShippingRequestScreen extends StatefulWidget {
   const ShippingRequestScreen({super.key, this.initialListing});
 
@@ -70,6 +83,18 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
 
   List<Category> _categories = const [];
   bool _submitting = false;
+
+  ShippingStep _step = ShippingStep.item;
+  /// How far they have been, so the header lets them tap back but not skip.
+  ShippingStep _furthest = ShippingStep.item;
+
+  ShippingQuote? _quote;
+  bool _quoteLoading = false;
+  bool _quoteFailed = false;
+  /// `from|to|size` the current quote answers, so re-entering the step with
+  /// nothing changed does not ask again.
+  String? _quoteKey;
+  String? _tier;
 
   @override
   void initState() {
@@ -159,9 +184,19 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
     _source = ShippingSource.mambanda;
     // The listing already answers these; leave them editable but filled.
     _categorySlug ??= listing.categorySlug;
-    if (_fromCode.isEmpty && (listing.city ?? '').isNotEmpty) {
-      _fromCode = 'other';
-      _fromOther.text = listing.city!;
+    final city = (listing.city ?? '').trim();
+    if (_fromCode.isEmpty && city.isNotEmpty) {
+      // A city that is a place in the catalogue is a route we can price;
+      // "somewhere else" with the city typed in is one the desk quotes.
+      final match = _options.from
+          .where((p) => p.label.values.any((l) => l.trim().toLowerCase() == city.toLowerCase()))
+          .firstOrNull;
+      if (match != null) {
+        _fromCode = match.code;
+      } else {
+        _fromCode = 'other';
+        _fromOther.text = city;
+      }
     }
   }
 
@@ -223,13 +258,106 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
   /// Scroll to the first thing still missing, rather than naming it in a
   /// snackbar and leaving them to hunt for it.
   void _revealFirstMissing() {
-    final first = _draft.missing.firstOrNull;
+    final first = _draft.missingIn(_step).firstOrNull;
     if (first == null) return;
     final ctx = _keys[first]?.currentContext;
     if (ctx == null) return;
     Scrollable.ensureVisible(ctx,
         alignment: 0.2, duration: const Duration(milliseconds: 300));
   }
+
+  // ── Steps ──────────────────────────────────────────────────────────────────
+
+  void _goTo(ShippingStep step) {
+    setState(() {
+      _step = step;
+      if (step.index > _furthest.index) _furthest = step;
+    });
+    if (_scroll.hasClients) _scroll.jumpTo(0);
+    if (step == ShippingStep.quote) _fetchQuote();
+  }
+
+  void _next() {
+    _formKey.currentState?.validate();
+    final missing = _draft.missingIn(_step);
+    if (missing.isNotEmpty) {
+      _toast(context.l10n.shipFixFields, error: true);
+      _revealFirstMissing();
+      return;
+    }
+    if (_step == ShippingStep.confirm) {
+      _submit();
+      return;
+    }
+    _goTo(ShippingStep.values[_step.index + 1]);
+  }
+
+  void _back() {
+    if (_step == ShippingStep.item) {
+      Navigator.maybePop(context);
+      return;
+    }
+    _goTo(ShippingStep.values[_step.index - 1]);
+  }
+
+  /// Whether the catalogue could even be asked. "Somewhere else" on either end
+  /// or a size of "other" is the desk's to price, and asking would only round
+  /// trip to be told so.
+  bool get _canQuote =>
+      _fromCode.isNotEmpty &&
+      _fromCode != 'other' &&
+      _toCode.isNotEmpty &&
+      _toCode != 'other' &&
+      _sizeCode.isNotEmpty &&
+      _sizeCode != ShippingDraft.customSize;
+
+  Future<void> _fetchQuote({bool force = false}) async {
+    if (!_canQuote) {
+      setState(() {
+        _quote = ShippingQuote.manual;
+        _quoteKey = null;
+        _tier = null;
+      });
+      return;
+    }
+    final key = '$_fromCode|$_toCode|$_sizeCode';
+    if (!force && key == _quoteKey && _quote != null) return;
+    setState(() {
+      _quoteLoading = true;
+      _quoteFailed = false;
+    });
+    try {
+      final q = await ShippingRepository.instance.quote(
+        fromPlace: _fromCode,
+        toPlace: _toCode,
+        sizeKey: _sizeCode,
+      );
+      if (!mounted) return;
+      setState(() {
+        _quote = q;
+        _quoteKey = key;
+        _quoteLoading = false;
+        // Keep their pick if it is still on offer; otherwise the cheapest.
+        _tier = q.options.any((o) => o.tier == _tier) ? _tier : q.cheapest?.tier;
+      });
+    } catch (e) {
+      debugPrint('[shipping] quote failed ($e)');
+      if (!mounted) return;
+      setState(() {
+        _quoteLoading = false;
+        _quoteFailed = true;
+        _quote = null;
+        _quoteKey = null;
+        _tier = null;
+      });
+    }
+  }
+
+  ShippingQuoteOption? get _selected =>
+      _quote?.options.where((o) => o.tier == _tier).firstOrNull;
+
+  /// A price is on the table and one option is chosen.
+  bool get _isQuoted => _quote?.quotable == true && _selected != null;
 
   Future<void> _submit() async {
     if (_submitting) return;
@@ -265,6 +393,9 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
         budgetCents: budget.isEmpty ? null : toMinorUnits(num.tryParse(budget) ?? 0, currency: 'XAF'),
         fromLocation: _fromLocation,
         toLocation: _toLocation,
+        fromPlace: _fromCode == 'other' ? null : _fromCode,
+        toPlace: _toCode == 'other' ? null : _toCode,
+        tier: _isQuoted ? _tier : null,
         contactName: _name.text.trim(),
         contactPhone: _phone.text.trim(),
         deliveryAddress: _address.text.trim(),
@@ -277,20 +408,32 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
       );
 
       if (!mounted) return;
-      // Land them in the conversation: the whole point of this being a thread
-      // rather than a form is that a conversation starts.
+      // The thread exists now; make sure the inbox knows before they can tap
+      // into it. The shipments list refreshes on its own — no need to wait.
+      await ChatRepository.instance.refresh();
+      unawaited(ShippingRepository.instance.refreshMine());
+      if (!mounted) return;
+      final request = result.request;
       final thread = result.conversation;
-      if (thread != null) {
-        await ChatRepository.instance.refresh();
-        if (!mounted) return;
+      if (request != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ShipmentConfirmedScreen(request: request, conversation: thread),
+          ),
+        );
+      } else if (thread != null) {
+        // The request came back without its row: the thread still exists,
+        // and landing in it is better than a dead end.
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => ChatRoomScreen(conversation: thread)),
         );
+        _toast(l10n.shipCreated);
       } else {
         Navigator.pop(context);
+        _toast(l10n.shipCreated);
       }
-      _toast(l10n.shipCreated);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _submitting = false);
@@ -313,54 +456,206 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.shipTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          controller: _scroll,
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          children: [
-            Text(l10n.shipIntro,
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-            const SizedBox(height: 18),
-            _chooser(),
-            if (_source != null) ...[
-              const SizedBox(height: 8),
-              ..._itemSection(),
-              ..._sizeSection(),
-              ..._pickupSection(),
-              ..._deliverySection(),
-              ..._detailsSection(),
-            ],
-          ],
+    final showsBar = !(_step == ShippingStep.item && _source == null);
+    return PopScope(
+      canPop: _step == ShippingStep.item,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _back();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(l10n.shipTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
         ),
-      ),
-      bottomNavigationBar: _source == null
-          ? null
-          : SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: ElevatedButton(
-                  onPressed: _submitting ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 52),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+        body: Form(
+          key: _formKey,
+          child: ListView(
+            controller: _scroll,
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            children: [
+              _StepHeader(
+                current: _step,
+                furthest: _furthest,
+                onTap: _goTo,
+              ),
+              const SizedBox(height: 18),
+              ..._stepBody(),
+            ],
+          ),
+        ),
+        bottomNavigationBar: !showsBar
+            ? null
+            : SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      if (_step != ShippingStep.item) ...[
+                        OutlinedButton(
+                          onPressed: _submitting ? null : _back,
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(0, 52),
+                            padding: const EdgeInsets.symmetric(horizontal: 18),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                          ),
+                          child: Text(l10n.shipBack),
+                        ),
+                        const SizedBox(width: 10),
+                      ],
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _submitting ? null : _next,
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 52),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                          ),
+                          child: _submitting
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : Text(
+                                  _step != ShippingStep.confirm
+                                      ? l10n.shipContinue
+                                      : _isQuoted
+                                          ? l10n.shipConfirmRequest
+                                          : l10n.shipSubmit,
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                        ),
+                      ),
+                    ],
                   ),
-                  child: _submitting
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(l10n.shipSubmit,
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
-            ),
+      ),
     );
+  }
+
+  List<Widget> _stepBody() {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    switch (_step) {
+      case ShippingStep.item:
+        return [
+          _chooser(),
+          if (_source != null) ...[
+            const SizedBox(height: 8),
+            ..._itemSection(),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: _description,
+              maxLines: 4,
+              maxLength: 2000,
+              onChanged: (_) => setState(() {}),
+              decoration: _field(l10n.shipDescriptionLabel, hint: l10n.shipDescriptionHint),
+            ),
+            ..._sizeSection(),
+          ],
+        ];
+
+      case ShippingStep.route:
+        return [
+          Text(l10n.shipRouteIntro,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          _SectionTitle(l10n.shipPickupTitle),
+          const SizedBox(height: 10),
+          ..._fromPlaceFields(),
+          const SizedBox(height: 24),
+          _SectionTitle(l10n.shipDeliveryTitle),
+          const SizedBox(height: 10),
+          ..._toPlaceFields(),
+        ];
+
+      case ShippingStep.quote:
+        final locale = Localizations.localeOf(context);
+        if (_quoteLoading) {
+          return [
+            const SizedBox(height: 40),
+            const Center(child: CircularProgressIndicator()),
+            const SizedBox(height: 16),
+            Center(child: Text(l10n.shipQuoteLoading, style: TextStyle(color: scheme.onSurfaceVariant))),
+          ];
+        }
+        if (_quoteFailed) {
+          return [
+            const SizedBox(height: 24),
+            Text(l10n.shipQuoteFailed, style: TextStyle(color: scheme.onSurfaceVariant)),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => _fetchQuote(force: true),
+              icon: const Icon(Icons.refresh),
+              label: Text(l10n.shipRetry),
+            ),
+            const SizedBox(height: 20),
+            const _ManualQuoteCard(),
+          ];
+        }
+        final q = _quote;
+        if (q == null || !q.quotable) return const [_ManualQuoteCard()];
+        return [
+          Text(l10n.shipQuoteTitle,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text(l10n.shipQuoteIntro(l10n.shipRoute(_fromLocation, _toLocation)),
+              style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant)),
+          const SizedBox(height: 14),
+          for (final o in q.options) ...[
+            _TierCard(
+              option: o,
+              locale: locale,
+              currency: q.currency,
+              selected: o.tier == _tier,
+              onTap: () => setState(() => _tier = o.tier),
+            ),
+            const SizedBox(height: 10),
+          ],
+        ];
+
+      case ShippingStep.confirm:
+        final locale = Localizations.localeOf(context);
+        final size = _options.sizes[_sizeCode];
+        final sizeLabel = _sizeCode == ShippingDraft.customSize || size == null
+            ? (_sizeCustom.text.trim().isEmpty ? l10n.shipSizeOther : _sizeCustom.text.trim())
+            : size.labelFor(locale);
+        final chosen = _selected;
+        return [
+          _SummaryCard(rows: [
+            (l10n.shipSummaryItem, _listing?.title ?? (_description.text.trim().isNotEmpty ? _description.text.trim() : _url.text.trim())),
+            (l10n.shipSummaryRoute, l10n.shipRoute(_fromLocation, _toLocation)),
+            (l10n.shipSummarySize, sizeLabel),
+            if (chosen != null)
+              (l10n.shipSummaryTier, '${chosen.labelFor(locale)} · ${etaText(l10n, chosen.etaDaysMin, chosen.etaDaysMax)}'),
+          ], price: chosen == null ? null : formatPrice(chosen.priceCents, currency: _quote?.currency ?? 'XAF')),
+          const SizedBox(height: 24),
+          _SectionTitle(l10n.shipPickupTitle),
+          const SizedBox(height: 10),
+          ..._pickupContactFields(),
+          const SizedBox(height: 24),
+          _SectionTitle(l10n.shipDeliveryTitle),
+          const SizedBox(height: 10),
+          ..._deliveryContactFields(),
+          const SizedBox(height: 24),
+          _SectionTitle(l10n.shipDetailsTitle),
+          const SizedBox(height: 10),
+          TextFormField(
+            controller: _note,
+            maxLines: 3,
+            decoration: _field(l10n.shipNoteLabel),
+          ),
+          // A budget beside a firm price is a contradiction; it only means
+          // something when the desk is going to name the price.
+          if (chosen == null) ...[
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _budget,
+              keyboardType: TextInputType.number,
+              decoration: _field(l10n.shipBudgetLabel, hint: l10n.shipBudgetHint),
+            ),
+          ],
+        ];
+    }
   }
 
   // ── The one decision the rest of the form hangs off ─────────────────────────
@@ -624,15 +919,12 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
     return _options.sizes[code]?.hintFor(locale);
   }
 
-  // ── Where we collect it ────────────────────────────────────────────────────
+  // ── Where we collect it, and where it goes ─────────────────────────────────
 
-  List<Widget> _pickupSection() {
+  List<Widget> _fromPlaceFields() {
     final l10n = context.l10n;
     final locale = Localizations.localeOf(context);
     return [
-      const SizedBox(height: 24),
-      _SectionTitle(l10n.shipPickupTitle),
-      const SizedBox(height: 10),
       Container(
         key: _keys[ShippingField.from],
         child: _placeDropdown(
@@ -651,34 +943,13 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
           decoration: _field(l10n.shipOtherPlace),
         ),
       ],
-      const SizedBox(height: 12),
-      TextFormField(
-        controller: _pickupAddress,
-        decoration: _field(l10n.shipPickupAddressLabel, hint: l10n.shipPickupAddressHint),
-      ),
-      const SizedBox(height: 12),
-      TextFormField(
-        controller: _pickupName,
-        decoration: _field(l10n.shipPickupNameLabel, hint: l10n.shipPickupNameHint),
-      ),
-      const SizedBox(height: 12),
-      TextFormField(
-        controller: _pickupPhone,
-        keyboardType: TextInputType.phone,
-        decoration: _field(l10n.shipPickupPhoneLabel),
-      ),
     ];
   }
 
-  // ── Where it goes ──────────────────────────────────────────────────────────
-
-  List<Widget> _deliverySection() {
+  List<Widget> _toPlaceFields() {
     final l10n = context.l10n;
     final locale = Localizations.localeOf(context);
     return [
-      const SizedBox(height: 24),
-      _SectionTitle(l10n.shipDeliveryTitle),
-      const SizedBox(height: 10),
       Container(
         key: _keys[ShippingField.to],
         child: _placeDropdown(
@@ -697,7 +968,33 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
           decoration: _field(l10n.shipOtherPlace),
         ),
       ],
+    ];
+  }
+
+  List<Widget> _pickupContactFields() {
+    final l10n = context.l10n;
+    return [
+      TextFormField(
+        controller: _pickupAddress,
+        decoration: _field(l10n.shipPickupAddressLabel, hint: l10n.shipPickupAddressHint),
+      ),
       const SizedBox(height: 12),
+      TextFormField(
+        controller: _pickupName,
+        decoration: _field(l10n.shipPickupNameLabel, hint: l10n.shipPickupNameHint),
+      ),
+      const SizedBox(height: 12),
+      TextFormField(
+        controller: _pickupPhone,
+        keyboardType: TextInputType.phone,
+        decoration: _field(l10n.shipPickupPhoneLabel),
+      ),
+    ];
+  }
+
+  List<Widget> _deliveryContactFields() {
+    final l10n = context.l10n;
+    return [
       TextFormField(
         controller: _address,
         decoration: _field(l10n.shipAddressLabel, hint: l10n.shipAddressHint),
@@ -716,36 +1013,6 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
         decoration: _field(l10n.shipPhoneLabel),
         validator: (_) =>
             _draft.missing.contains(ShippingField.phone) ? l10n.shipPhoneRequired : null,
-      ),
-    ];
-  }
-
-  // ── Anything else ──────────────────────────────────────────────────────────
-
-  List<Widget> _detailsSection() {
-    final l10n = context.l10n;
-    return [
-      const SizedBox(height: 24),
-      _SectionTitle(l10n.shipDetailsTitle),
-      const SizedBox(height: 10),
-      TextFormField(
-        controller: _description,
-        maxLines: 4,
-        maxLength: 2000,
-        onChanged: (_) => setState(() {}),
-        decoration: _field(l10n.shipDescriptionLabel, hint: l10n.shipDescriptionHint),
-      ),
-      const SizedBox(height: 4),
-      TextFormField(
-        controller: _budget,
-        keyboardType: TextInputType.number,
-        decoration: _field(l10n.shipBudgetLabel, hint: l10n.shipBudgetHint),
-      ),
-      const SizedBox(height: 12),
-      TextFormField(
-        controller: _note,
-        maxLines: 3,
-        decoration: _field(l10n.shipNoteLabel),
       ),
     ];
   }
@@ -779,6 +1046,266 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
         counterText: '',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       );
+}
+
+/// Four dots and their names. Done ones are filled, the current one is lit,
+/// and only a step already reached can be tapped — back, never a skip.
+class _StepHeader extends StatelessWidget {
+  const _StepHeader({required this.current, required this.furthest, required this.onTap});
+
+  final ShippingStep current;
+  final ShippingStep furthest;
+  final void Function(ShippingStep) onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final tokens = context.tokens;
+    final labels = {
+      ShippingStep.item: l10n.shipStepItem,
+      ShippingStep.route: l10n.shipStepRoute,
+      ShippingStep.quote: l10n.shipStepQuote,
+      ShippingStep.confirm: l10n.shipStepConfirm,
+    };
+    return Row(
+      children: [
+        for (final step in ShippingStep.values) ...[
+          if (step != ShippingStep.item)
+            Expanded(
+              child: Container(
+                height: 2,
+                margin: const EdgeInsets.only(bottom: 18),
+                color: step.index <= current.index ? tokens.accentFill : scheme.outlineVariant,
+              ),
+            ),
+          GestureDetector(
+            onTap: step.index <= furthest.index && step != current ? () => onTap(step) : null,
+            behavior: HitTestBehavior.opaque,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: step.index <= current.index ? tokens.accentFill : scheme.surfaceContainerHighest,
+                    border: step == current ? Border.all(color: tokens.accentInk, width: 2) : null,
+                  ),
+                  alignment: Alignment.center,
+                  child: step.index < current.index
+                      ? Icon(Icons.check_rounded, size: 16, color: tokens.onAccentFill)
+                      : Text('${step.index + 1}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: step.index <= current.index ? tokens.onAccentFill : scheme.onSurfaceVariant,
+                          )),
+                ),
+                const SizedBox(height: 4),
+                Text(labels[step]!,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: step == current ? FontWeight.w700 : FontWeight.w500,
+                      color: step == current ? tokens.accentInk : scheme.onSurfaceVariant,
+                    )),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// One way to have it delivered.
+class _TierCard extends StatelessWidget {
+  const _TierCard({
+    required this.option,
+    required this.locale,
+    required this.currency,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final ShippingQuoteOption option;
+  final Locale locale;
+  final String currency;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final tokens = context.tokens;
+    return Material(
+      color: scheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: selected ? tokens.accentInk : Colors.transparent,
+              width: 2,
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(option.labelFor(locale),
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 3),
+                    Text(etaText(l10n, option.etaDaysMin, option.etaDaysMax),
+                        style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant)),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(formatPrice(option.priceCents, currency: currency),
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w800, color: tokens.accentInk)),
+                  Text(l10n.shipPayOnDelivery,
+                      style: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant)),
+                ],
+              ),
+              const SizedBox(width: 12),
+              Icon(
+                selected ? Icons.check_circle : Icons.circle_outlined,
+                color: selected ? tokens.accentInk : scheme.outlineVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// What the price step shows when the catalogue cannot price the route.
+class _ManualQuoteCard extends StatelessWidget {
+  const _ManualQuoteCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.chat_bubble_outline, size: 28, color: context.tokens.accentInk),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.shipQuoteManualTitle,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text(l10n.shipQuoteManualBody,
+                    style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The request, read back before it is sent.
+class _SummaryCard extends StatelessWidget {
+  const _SummaryCard({required this.rows, this.price});
+
+  final List<(String, String)> rows;
+  /// Null on the manual path, where the desk names the price later.
+  final String? price;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final tokens = context.tokens;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.shipSummaryTitle,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          for (final (label, value) in rows)
+            if (value.trim().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 84,
+                      child: Text(label,
+                          style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+                    ),
+                    Expanded(
+                      child: Text(value,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    ),
+                  ],
+                ),
+              ),
+          const Divider(height: 18),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 84,
+                child: Text(l10n.shipSummaryPrice,
+                    style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+              ),
+              Expanded(
+                child: price == null
+                    ? Text(l10n.shipSummaryPriceManual,
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600))
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(price!,
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: tokens.accentInk)),
+                          Text(l10n.shipCodBannerBody,
+                              style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+                        ],
+                      ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _PathCard extends StatelessWidget {

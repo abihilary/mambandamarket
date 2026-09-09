@@ -2533,6 +2533,231 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shipNoteLabel => 'Anything else we should know?';
 
   @override
+  String get shipStepItem => 'Item';
+
+  @override
+  String get shipStepRoute => 'Route';
+
+  @override
+  String get shipStepQuote => 'Price';
+
+  @override
+  String get shipStepConfirm => 'Confirm';
+
+  @override
+  String get shipBack => 'Back';
+
+  @override
+  String get shipContinue => 'Continue';
+
+  @override
+  String get shipConfirmRequest => 'Confirm request';
+
+  @override
+  String get shipRouteIntro => 'Where do we collect it, and where does it go?';
+
+  @override
+  String get shipQuoteTitle => 'Choose a delivery option';
+
+  @override
+  String shipQuoteIntro(String route) {
+    return 'Prices for $route. You pay the courier when it arrives.';
+  }
+
+  @override
+  String get shipQuoteLoading => 'Working out your price…';
+
+  @override
+  String get shipQuoteFailed => 'We could not get a price right now.';
+
+  @override
+  String get shipRetry => 'Try again';
+
+  @override
+  String get shipQuoteManualTitle => 'We’ll quote you in the chat';
+
+  @override
+  String get shipQuoteManualBody =>
+      'This route or size isn’t on our price list yet. Send the request and we’ll come back with a price.';
+
+  @override
+  String shipEtaDays(int min, int max) {
+    return '$min–$max days';
+  }
+
+  @override
+  String shipEtaDaysOne(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shipEtaUpTo(int n) {
+    return 'up to $n days';
+  }
+
+  @override
+  String get shipEtaSameDay => 'Same day';
+
+  @override
+  String get shipPayOnDelivery => 'Pay on delivery';
+
+  @override
+  String shipPayOnDeliveryAmount(String price) {
+    return '$price · pay on delivery';
+  }
+
+  @override
+  String shipCollected(String price) {
+    return 'Paid $price on delivery';
+  }
+
+  @override
+  String shipCodBannerTitle(String price) {
+    return 'Pay $price to the courier';
+  }
+
+  @override
+  String get shipCodBannerBody =>
+      'Cash on delivery. Nothing to pay before it arrives.';
+
+  @override
+  String get shipSummaryTitle => 'Your request';
+
+  @override
+  String get shipSummaryItem => 'Item';
+
+  @override
+  String get shipSummaryRoute => 'Route';
+
+  @override
+  String get shipSummarySize => 'Size';
+
+  @override
+  String get shipSummaryTier => 'Delivery';
+
+  @override
+  String get shipSummaryPrice => 'Price';
+
+  @override
+  String get shipSummaryPriceManual => 'Quoted in the chat';
+
+  @override
+  String get shipConfirmedTitle => 'Shipment confirmed!';
+
+  @override
+  String shipConfirmedBody(String price) {
+    return 'We’ve booked it. Pay $price to the courier when it arrives.';
+  }
+
+  @override
+  String get shipRequestSentTitle => 'Request sent';
+
+  @override
+  String get shipRequestSentBody => 'We’ll come back with a price in the chat.';
+
+  @override
+  String get shipReferenceLabel => 'Reference';
+
+  @override
+  String get shipViewTracking => 'View tracking';
+
+  @override
+  String get shipDownloadConfirmation => 'Download confirmation';
+
+  @override
+  String get shipBackToHome => 'Back to home';
+
+  @override
+  String get shipOpenChat => 'Open the chat';
+
+  @override
+  String get shipTabActive => 'Active';
+
+  @override
+  String get shipTabPast => 'Past';
+
+  @override
+  String get shipNoneActive => 'Nothing on the way';
+
+  @override
+  String get shipNonePast => 'No past shipments';
+
+  @override
+  String get shipArrivingToday => 'Arriving today';
+
+  @override
+  String shipArrivingIn(String days) {
+    return 'Arriving in $days';
+  }
+
+  @override
+  String get shipArrivingLate => 'Running late — check the chat';
+
+  @override
+  String get shipCurrentLocation => 'Current location';
+
+  @override
+  String get shipOpenInMaps => 'Open in maps';
+
+  @override
+  String shipNewPriceTitle(String price) {
+    return 'New price: $price';
+  }
+
+  @override
+  String get shipNewPriceBody =>
+      'We adjusted the price for this request. Accept it to go ahead.';
+
+  @override
+  String shipNewPriceUntil(String date) {
+    return 'Valid until $date';
+  }
+
+  @override
+  String get shipAcceptPrice => 'Accept price';
+
+  @override
+  String get shipAccepted => 'Accepted. We’re on it.';
+
+  @override
+  String get shipAcceptFailed => 'Could not accept the price. Try again.';
+
+  @override
+  String get shipDocumentsTitle => 'Documents';
+
+  @override
+  String get shipDocConfirmation => 'Booking confirmation';
+
+  @override
+  String get shipDocReceipt => 'Delivery receipt';
+
+  @override
+  String get shipDocOpen => 'Open';
+
+  @override
+  String get shipDocShare => 'Share';
+
+  @override
+  String get shipDocNone => 'Your confirmation will appear here shortly.';
+
+  @override
+  String get shipDocNotReady => 'Not ready yet — try again in a moment.';
+
+  @override
+  String get shipDocOpenFailed => 'Could not open the document.';
+
+  @override
+  String shipDocEmailed(String email) {
+    return 'Also sent to $email';
+  }
+
+  @override
   String get locOpenInMaps => 'Open in Maps';
 
   @override
