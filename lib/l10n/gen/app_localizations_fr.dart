@@ -2477,6 +2477,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get shipLinkLabel => 'Lien vers le produit';
 
   @override
+  String get shipLinkLabelOptional => 'Lien vers le produit (facultatif)';
+
+  @override
   String get shipLinkHint => 'Où vous l\'avez vu — https://…';
 
   @override
@@ -2487,8 +2490,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Marque, modèle, couleur, taille — tout ce qui nous aide à trouver le bon';
 
   @override
-  String get shipItemRequired =>
-      'Ajoutez un lien ou décrivez ce que vous voulez';
+  String get shipItemRequired => 'Décrivez-le, ou collez un lien au-dessus';
 
   @override
   String get shipPhotosLabel => 'Photos';

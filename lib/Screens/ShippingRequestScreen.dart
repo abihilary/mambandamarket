@@ -543,12 +543,20 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
             const SizedBox(height: 8),
             ..._itemSection(),
             const SizedBox(height: 14),
+            // The link above is optional — it can be absolutely anything, and
+            // most of it has no link. A description is the normal answer, so
+            // the "one or the other" message lives here.
             TextFormField(
+              key: _source == ShippingSource.external ? _keys[ShippingField.item] : null,
               controller: _description,
               maxLines: 4,
               maxLength: 2000,
               onChanged: (_) => setState(() {}),
               decoration: _field(l10n.shipDescriptionLabel, hint: l10n.shipDescriptionHint),
+              validator: (_) => _source == ShippingSource.external &&
+                      _draft.missing.contains(ShippingField.item)
+                  ? l10n.shipItemRequired
+                  : null,
             ),
             ..._sizeSection(),
           ],
@@ -760,15 +768,10 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
     return [
       const SizedBox(height: 18),
       TextFormField(
-        key: _keys[ShippingField.item],
         controller: _url,
         keyboardType: TextInputType.url,
         onChanged: (_) => setState(() {}),
-        decoration: _field(l10n.shipLinkLabel, hint: l10n.shipLinkHint),
-        // A link or a description will do, and the description lives further
-        // down now — so the message says so rather than naming this box.
-        validator: (_) =>
-            _draft.missing.contains(ShippingField.item) ? l10n.shipItemRequired : null,
+        decoration: _field(l10n.shipLinkLabelOptional, hint: l10n.shipLinkHint),
       ),
       _photoRail(),
     ];
@@ -1400,6 +1403,24 @@ class _SearchableDropdown extends StatefulWidget {
 
 class _SearchableDropdownState extends State<_SearchableDropdown> {
   late final TextEditingController _text = TextEditingController(text: _labelFor(widget.selected));
+  final _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    // A field that already holds a value selects it all on focus, so typing
+    // replaces rather than appends. Without this "TV & audio" + "phone" is
+    // "TV & audiophone", which matches nothing, so the menu shows nothing —
+    // and the next tap lands on whatever sits underneath.
+    _focus.addListener(() {
+      if (!_focus.hasFocus || _text.text.isEmpty) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_focus.hasFocus) {
+          _text.selection = TextSelection(baseOffset: 0, extentOffset: _text.text.length);
+        }
+      });
+    });
+  }
 
   String _labelFor(String code) {
     for (final (value, label) in widget.entries) {
@@ -1422,6 +1443,7 @@ class _SearchableDropdownState extends State<_SearchableDropdown> {
   @override
   void dispose() {
     _text.dispose();
+    _focus.dispose();
     super.dispose();
   }
 
@@ -1429,6 +1451,7 @@ class _SearchableDropdownState extends State<_SearchableDropdown> {
   Widget build(BuildContext context) {
     return DropdownMenu<String>(
       controller: _text,
+      focusNode: _focus,
       initialSelection: widget.selected.isEmpty ? null : widget.selected,
       enableFilter: true,
       requestFocusOnTap: true,

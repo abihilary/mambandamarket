@@ -4352,6 +4352,12 @@ abstract class AppLocalizations {
   /// **'Link to the product'**
   String get shipLinkLabel;
 
+  /// No description provided for @shipLinkLabelOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Link to the product (optional)'**
+  String get shipLinkLabelOptional;
+
   /// No description provided for @shipLinkHint.
   ///
   /// In en, this message translates to:
@@ -4373,7 +4379,7 @@ abstract class AppLocalizations {
   /// No description provided for @shipItemRequired.
   ///
   /// In en, this message translates to:
-  /// **'Add a link or describe what you want'**
+  /// **'Describe it, or paste a link above'**
   String get shipItemRequired;
 
   /// No description provided for @shipPhotosLabel.
