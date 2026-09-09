@@ -558,7 +558,14 @@ class ShippingRequest {
     if (json == null) return null;
     final id = json['id']?.toString();
     if (id == null || id.isEmpty) return null;
-    final conv = (json['conversation'] as Map?)?.cast<String, dynamic>();
+    // The embed is an object, but was an array before the unique constraint
+    // on the thread existed — and a cached row from then must still parse.
+    final rawConv = json['conversation'];
+    final conv = rawConv is Map
+        ? rawConv.cast<String, dynamic>()
+        : rawConv is List && rawConv.isNotEmpty && rawConv.first is Map
+            ? (rawConv.first as Map).cast<String, dynamic>()
+            : null;
     return ShippingRequest(
       id: id,
       status: json['status']?.toString() ?? 'new',

@@ -36,6 +36,7 @@ Map<String, dynamic> catalogue() => {
     };
 
 void main() {
+  _embedShapeTests();
   _rateCardTests();
   _locationShareTests();
   const en = Locale('en');
@@ -479,6 +480,27 @@ void _rateCardTests() {
       );
       expect(d.isStepReady(ShippingStep.item), isTrue);
       expect(d.isStepReady(ShippingStep.confirm), isFalse);
+    });
+  });
+}
+
+void _embedShapeTests() {
+  group('conversation embed', () {
+    test('an object embed parses', () {
+      final r = ShippingRequest.fromJson(<String, dynamic>{
+        'id': 'r', 'status': 'new', 'conversation': {'id': 'c1', 'buyer_unread': 2},
+      })!;
+      expect(r.conversationId, 'c1');
+      expect(r.unread, 2);
+    });
+    test('a one-element array embed (pre-constraint rows, cached payloads) parses', () {
+      final r = ShippingRequest.fromJson(<String, dynamic>{
+        'id': 'r', 'status': 'new', 'conversation': [{'id': 'c1', 'buyer_unread': 1}],
+      })!;
+      expect(r.conversationId, 'c1');
+    });
+    test('no thread is no thread', () {
+      expect(ShippingRequest.fromJson(<String, dynamic>{'id': 'r', 'status': 'new', 'conversation': []})!.conversationId, isNull);
     });
   });
 }

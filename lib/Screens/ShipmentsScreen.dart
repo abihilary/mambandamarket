@@ -6,7 +6,6 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../Service/ChatRoomScreen.dart';
-import '../api/auth_service.dart';
 import '../api/location_share.dart';
 import '../api/repositories.dart';
 import '../api/shipping_model.dart';
@@ -82,7 +81,18 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
           if (_loading && all.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (all.isEmpty) return _empty(context);
+          // Pull-to-refresh on the empty state too: a list that failed to load
+          // looks exactly like a list with nothing in it, and the only way out
+          // of that must not be leaving the screen.
+          if (all.isEmpty) {
+            return RefreshIndicator(
+              onRefresh: _repo.refreshMine,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [SizedBox(height: MediaQuery.of(context).size.height * 0.2), _empty(context)],
+              ),
+            );
+          }
           final items = all.where((s) => s.isFinished == _past).toList(growable: false);
           return Column(
             children: [
@@ -208,7 +218,7 @@ class _ShipmentCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      shipment.itemTitle ?? l10n.shipThreadTitle,
+                      shipment.itemTitle ?? shipment.itemDescription ?? l10n.shipThreadTitle,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
@@ -473,7 +483,7 @@ class _ShipmentDetailScreenState extends State<ShipmentDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(s?.itemTitle ?? l10n.shipThreadTitle,
+        title: Text(s?.itemTitle ?? s?.itemDescription ?? l10n.shipThreadTitle,
             style: const TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: _loading && s == null
@@ -555,10 +565,14 @@ class _ShipmentDetailScreenState extends State<ShipmentDetailScreen> {
                             onOpen: () => _openDoc(doc),
                             onShare: () => _shareDoc(doc),
                           ),
-                      if (!_docsLoading && _docs.isNotEmpty && (AuthService.instance.user?.email ?? '').isNotEmpty)
+                      // Only once a document has actually gone out. The address
+                      // comes from the document, not the account: the claim is
+                      // about what happened, not what could.
+                      if (_docs.any((d) => d.emailedTo != null))
                         Padding(
                           padding: const EdgeInsets.only(top: 6),
-                          child: Text(l10n.shipDocEmailed(AuthService.instance.user!.email!),
+                          child: Text(
+                              l10n.shipDocEmailed(_docs.firstWhere((d) => d.emailedTo != null).emailedTo!),
                               style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
                         ),
                     ],
