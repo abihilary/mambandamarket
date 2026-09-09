@@ -787,7 +787,6 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
 
     final scheme = Theme.of(context).colorScheme;
     return Container(
-      key: _keys[ShippingField.item],
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest,
@@ -851,6 +850,7 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
       return [
         const SizedBox(height: 14),
         OutlinedButton.icon(
+          key: _keys[ShippingField.item],
           onPressed: _pickListing,
           icon: const Icon(Icons.search_rounded),
           label: Text(l10n.shipPickProduct),
