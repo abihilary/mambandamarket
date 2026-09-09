@@ -85,12 +85,14 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
   bool _submitting = false;
 
   ShippingStep _step = ShippingStep.item;
+
   /// How far they have been, so the header lets them tap back but not skip.
   ShippingStep _furthest = ShippingStep.item;
 
   ShippingQuote? _quote;
   bool _quoteLoading = false;
   bool _quoteFailed = false;
+
   /// `from|to|size` the current quote answers, so re-entering the step with
   /// nothing changed does not ask again.
   String? _quoteKey;
@@ -112,9 +114,19 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
   void dispose() {
     _scroll.dispose();
     for (final c in [
-      _url, _description, _sizeCustom, _fromOther, _toOther,
-      _budget, _name, _phone, _address, _note,
-      _pickupAddress, _pickupName, _pickupPhone,
+      _url,
+      _description,
+      _sizeCustom,
+      _fromOther,
+      _toOther,
+      _budget,
+      _name,
+      _phone,
+      _address,
+      _note,
+      _pickupAddress,
+      _pickupName,
+      _pickupPhone,
     ]) {
       c.dispose();
     }
@@ -145,18 +157,18 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
   }
 
   ShippingDraft get _draft => ShippingDraft(
-        source: _source,
-        listing: _listing,
-        productUrl: _url.text,
-        description: _description.text,
-        categorySlug: _categorySlug ?? '',
-        sizeCode: _sizeCode,
-        sizeCustom: _sizeCustom.text,
-        categoryHasPresets: _sizes.isNotEmpty,
-        fromLocation: _fromLocation,
-        toLocation: _toLocation,
-        contactPhone: _phone.text,
-      );
+    source: _source,
+    listing: _listing,
+    productUrl: _url.text,
+    description: _description.text,
+    categorySlug: _categorySlug ?? '',
+    sizeCode: _sizeCode,
+    sizeCustom: _sizeCustom.text,
+    categoryHasPresets: _sizes.isNotEmpty,
+    fromLocation: _fromLocation,
+    toLocation: _toLocation,
+    contactPhone: _phone.text,
+  );
 
   // The label, not the code. These columns are free text either way — the
   // "somewhere else" path has always written prose into them — and the desk
@@ -189,7 +201,11 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
       // A city that is a place in the catalogue is a route we can price;
       // "somewhere else" with the city typed in is one the desk quotes.
       final match = _options.from
-          .where((p) => p.label.values.any((l) => l.trim().toLowerCase() == city.toLowerCase()))
+          .where(
+            (p) => p.label.values.any(
+              (l) => l.trim().toLowerCase() == city.toLowerCase(),
+            ),
+          )
           .firstOrNull;
       if (match != null) {
         _fromCode = match.code;
@@ -238,21 +254,29 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
 
     if (source == ImageSource.camera) {
       final shot = await _picker.pickImage(
-          source: ImageSource.camera, imageQuality: 85, maxWidth: 1200);
+        source: ImageSource.camera,
+        imageQuality: 85,
+        maxWidth: 1200,
+      );
       if (shot != null && mounted) setState(() => _photos.add(shot));
       return;
     }
-    final picked = await _picker.pickMultiImage(imageQuality: 85, maxWidth: 1200);
+    final picked = await _picker.pickMultiImage(
+      imageQuality: 85,
+      maxWidth: 1200,
+    );
     if (picked.isEmpty || !mounted) return;
     setState(() => _photos.addAll(picked.take(6 - _photos.length)));
   }
 
   void _toast(String message, {bool error = false}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(message),
-      backgroundColor: error ? AppColors.danger : null,
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: error ? AppColors.danger : null,
+      ),
+    );
   }
 
   /// Scroll to the first thing still missing, rather than naming it in a
@@ -262,8 +286,11 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
     if (first == null) return;
     final ctx = _keys[first]?.currentContext;
     if (ctx == null) return;
-    Scrollable.ensureVisible(ctx,
-        alignment: 0.2, duration: const Duration(milliseconds: 300));
+    Scrollable.ensureVisible(
+      ctx,
+      alignment: 0.2,
+      duration: const Duration(milliseconds: 300),
+    );
   }
 
   // ── Steps ──────────────────────────────────────────────────────────────────
@@ -338,7 +365,9 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
         _quoteKey = key;
         _quoteLoading = false;
         // Keep their pick if it is still on offer; otherwise the cheapest.
-        _tier = q.options.any((o) => o.tier == _tier) ? _tier : q.cheapest?.tier;
+        _tier = q.options.any((o) => o.tier == _tier)
+            ? _tier
+            : q.cheapest?.tier;
       });
     } catch (e) {
       debugPrint('[shipping] quote failed ($e)');
@@ -370,7 +399,9 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
 
     setState(() => _submitting = true);
     final l10n = context.l10n;
-    final locale = Localizations.localeOf(context).languageCode == 'fr' ? 'fr' : 'en';
+    final locale = Localizations.localeOf(context).languageCode == 'fr'
+        ? 'fr'
+        : 'en';
 
     try {
       final paths = <String>[];
@@ -388,9 +419,13 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
         categorySlug: _categorySlug,
         sizeKey: _sizeCode.isEmpty ? ShippingDraft.customSize : _sizeCode,
         sizeCustom: _sizeCode == ShippingDraft.customSize || _sizeCode.isEmpty
-            ? (_sizeCustom.text.trim().isEmpty ? l10n.shipSizeNoPresets : _sizeCustom.text.trim())
+            ? (_sizeCustom.text.trim().isEmpty
+                  ? l10n.shipSizeNoPresets
+                  : _sizeCustom.text.trim())
             : null,
-        budgetCents: budget.isEmpty ? null : toMinorUnits(num.tryParse(budget) ?? 0, currency: 'XAF'),
+        budgetCents: budget.isEmpty
+            ? null
+            : toMinorUnits(num.tryParse(budget) ?? 0, currency: 'XAF'),
         fromLocation: _fromLocation,
         toLocation: _toLocation,
         fromPlace: _fromCode == 'other' ? null : _fromCode,
@@ -419,7 +454,8 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => ShipmentConfirmedScreen(request: request, conversation: thread),
+            builder: (_) =>
+                ShipmentConfirmedScreen(request: request, conversation: thread),
           ),
         );
       } else if (thread != null) {
@@ -427,7 +463,9 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
         // and landing in it is better than a dead end.
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => ChatRoomScreen(conversation: thread)),
+          MaterialPageRoute(
+            builder: (_) => ChatRoomScreen(conversation: thread),
+          ),
         );
         _toast(l10n.shipCreated);
       } else {
@@ -437,15 +475,12 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _submitting = false);
-      _toast(
-        switch (e.code) {
-          'shipping_unavailable' => l10n.shipUnavailable,
-          'rate_limited' => l10n.shipTooMany,
-          'listing_unavailable' => l10n.shipListingGone,
-          _ => e.message,
-        },
-        error: true,
-      );
+      _toast(switch (e.code) {
+        'shipping_unavailable' => l10n.shipUnavailable,
+        'rate_limited' => l10n.shipTooMany,
+        'listing_unavailable' => l10n.shipListingGone,
+        _ => e.message,
+      }, error: true);
     } catch (_) {
       if (!mounted) return;
       setState(() => _submitting = false);
@@ -464,7 +499,10 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(l10n.shipTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(
+            l10n.shipTitle,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
         body: Form(
           key: _formKey,
@@ -472,11 +510,7 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
             controller: _scroll,
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
-              _StepHeader(
-                current: _step,
-                furthest: _furthest,
-                onTap: _goTo,
-              ),
+              _StepHeader(current: _step, furthest: _furthest, onTap: _goTo),
               const SizedBox(height: 18),
               ..._stepBody(),
             ],
@@ -495,7 +529,9 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
                           style: OutlinedButton.styleFrom(
                             minimumSize: const Size(0, 52),
                             padding: const EdgeInsets.symmetric(horizontal: 18),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
                           ),
                           child: Text(l10n.shipBack),
                         ),
@@ -506,21 +542,27 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
                           onPressed: _submitting ? null : _next,
                           style: ElevatedButton.styleFrom(
                             minimumSize: const Size(double.infinity, 52),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
                           ),
                           child: _submitting
                               ? const SizedBox(
                                   width: 20,
                                   height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
                                 )
                               : Text(
                                   _step != ShippingStep.confirm
                                       ? l10n.shipContinue
                                       : _isQuoted
-                                          ? l10n.shipConfirmRequest
-                                          : l10n.shipSubmit,
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                      ? l10n.shipConfirmRequest
+                                      : l10n.shipSubmit,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                         ),
                       ),
@@ -547,13 +589,19 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
             // most of it has no link. A description is the normal answer, so
             // the "one or the other" message lives here.
             TextFormField(
-              key: _source == ShippingSource.external ? _keys[ShippingField.item] : null,
+              key: _source == ShippingSource.external
+                  ? _keys[ShippingField.item]
+                  : null,
               controller: _description,
               maxLines: 4,
               maxLength: 2000,
               onChanged: (_) => setState(() {}),
-              decoration: _field(l10n.shipDescriptionLabel, hint: l10n.shipDescriptionHint),
-              validator: (_) => _source == ShippingSource.external &&
+              decoration: _field(
+                l10n.shipDescriptionLabel,
+                hint: l10n.shipDescriptionHint,
+              ),
+              validator: (_) =>
+                  _source == ShippingSource.external &&
                       _draft.missing.contains(ShippingField.item)
                   ? l10n.shipItemRequired
                   : null,
@@ -564,8 +612,10 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
 
       case ShippingStep.route:
         return [
-          Text(l10n.shipRouteIntro,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            l10n.shipRouteIntro,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 16),
           _SectionTitle(l10n.shipPickupTitle),
           const SizedBox(height: 10),
@@ -583,13 +633,21 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
             const SizedBox(height: 40),
             const Center(child: CircularProgressIndicator()),
             const SizedBox(height: 16),
-            Center(child: Text(l10n.shipQuoteLoading, style: TextStyle(color: scheme.onSurfaceVariant))),
+            Center(
+              child: Text(
+                l10n.shipQuoteLoading,
+                style: TextStyle(color: scheme.onSurfaceVariant),
+              ),
+            ),
           ];
         }
         if (_quoteFailed) {
           return [
             const SizedBox(height: 24),
-            Text(l10n.shipQuoteFailed, style: TextStyle(color: scheme.onSurfaceVariant)),
+            Text(
+              l10n.shipQuoteFailed,
+              style: TextStyle(color: scheme.onSurfaceVariant),
+            ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: () => _fetchQuote(force: true),
@@ -603,11 +661,15 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
         final q = _quote;
         if (q == null || !q.quotable) return const [_ManualQuoteCard()];
         return [
-          Text(l10n.shipQuoteTitle,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            l10n.shipQuoteTitle,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 4),
-          Text(l10n.shipQuoteIntro(l10n.shipRoute(_fromLocation, _toLocation)),
-              style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant)),
+          Text(
+            l10n.shipQuoteIntro(l10n.shipRoute(_fromLocation, _toLocation)),
+            style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant),
+          ),
           const SizedBox(height: 14),
           for (final o in q.options) ...[
             _TierCard(
@@ -625,17 +687,39 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
         final locale = Localizations.localeOf(context);
         final size = _options.sizes[_sizeCode];
         final sizeLabel = _sizeCode == ShippingDraft.customSize || size == null
-            ? (_sizeCustom.text.trim().isEmpty ? l10n.shipSizeOther : _sizeCustom.text.trim())
+            ? (_sizeCustom.text.trim().isEmpty
+                  ? l10n.shipSizeOther
+                  : _sizeCustom.text.trim())
             : size.labelFor(locale);
         final chosen = _selected;
         return [
-          _SummaryCard(rows: [
-            (l10n.shipSummaryItem, _listing?.title ?? (_description.text.trim().isNotEmpty ? _description.text.trim() : _url.text.trim())),
-            (l10n.shipSummaryRoute, l10n.shipRoute(_fromLocation, _toLocation)),
-            (l10n.shipSummarySize, sizeLabel),
-            if (chosen != null)
-              (l10n.shipSummaryTier, '${chosen.labelFor(locale)} · ${etaText(l10n, chosen.etaDaysMin, chosen.etaDaysMax)}'),
-          ], price: chosen == null ? null : formatPrice(chosen.priceCents, currency: _quote?.currency ?? 'XAF')),
+          _SummaryCard(
+            rows: [
+              (
+                l10n.shipSummaryItem,
+                _listing?.title ??
+                    (_description.text.trim().isNotEmpty
+                        ? _description.text.trim()
+                        : _url.text.trim()),
+              ),
+              (
+                l10n.shipSummaryRoute,
+                l10n.shipRoute(_fromLocation, _toLocation),
+              ),
+              (l10n.shipSummarySize, sizeLabel),
+              if (chosen != null)
+                (
+                  l10n.shipSummaryTier,
+                  '${chosen.labelFor(locale)} · ${etaText(l10n, chosen.etaDaysMin, chosen.etaDaysMax)}',
+                ),
+            ],
+            price: chosen == null
+                ? null
+                : formatPrice(
+                    chosen.priceCents,
+                    currency: _quote?.currency ?? 'XAF',
+                  ),
+          ),
           const SizedBox(height: 24),
           _SectionTitle(l10n.shipPickupTitle),
           const SizedBox(height: 10),
@@ -659,7 +743,10 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
             TextFormField(
               controller: _budget,
               keyboardType: TextInputType.number,
-              decoration: _field(l10n.shipBudgetLabel, hint: l10n.shipBudgetHint),
+              decoration: _field(
+                l10n.shipBudgetLabel,
+                hint: l10n.shipBudgetHint,
+              ),
             ),
           ],
         ];
@@ -675,8 +762,10 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
         key: _keys[ShippingField.source],
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.shipPathQuestion,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            l10n.shipPathQuestion,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 12),
           _PathCard(
             icon: Icons.storefront_outlined,
@@ -707,7 +796,9 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
       child: Row(
         children: [
           Icon(
-            _source == ShippingSource.mambanda ? Icons.storefront_outlined : Icons.link_rounded,
+            _source == ShippingSource.mambanda
+                ? Icons.storefront_outlined
+                : Icons.link_rounded,
             color: context.tokens.accentInk,
           ),
           const SizedBox(width: 12),
@@ -725,11 +816,14 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 if (_listing != null)
-                  Text(_listing!.displayPrice,
-                      style: TextStyle(
-                          color: context.tokens.accentInk,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13)),
+                  Text(
+                    _listing!.displayPrice,
+                    style: TextStyle(
+                      color: context.tokens.accentInk,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -760,7 +854,9 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
           onPressed: _pickListing,
           icon: const Icon(Icons.search_rounded),
           label: Text(l10n.shipPickProduct),
-          style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 48)),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(double.infinity, 48),
+          ),
         ),
       ];
     }
@@ -782,10 +878,17 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l10n.shipPhotosLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
-        Text(l10n.shipPhotosHint,
-            style: TextStyle(
-                fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        Text(
+          l10n.shipPhotosLabel,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        Text(
+          l10n.shipPhotosHint,
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
         const SizedBox(height: 10),
         SizedBox(
           height: 100,
@@ -798,7 +901,9 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
                   width: 100,
                   margin: const EdgeInsets.only(right: 10),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.add_a_photo_outlined),
@@ -810,9 +915,14 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
                     Container(
                       width: 100,
                       margin: const EdgeInsets.only(right: 10),
-                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       clipBehavior: Clip.antiAlias,
-                      child: Image.file(File(_photos[i].path), fit: BoxFit.cover),
+                      child: Image.file(
+                        File(_photos[i].path),
+                        fit: BoxFit.cover,
+                      ),
                     ),
                     Positioned(
                       top: 4,
@@ -822,7 +932,11 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
                         child: const CircleAvatar(
                           radius: 12,
                           backgroundColor: Colors.black54,
-                          child: Icon(Icons.close, size: 14, color: Colors.white),
+                          child: Icon(
+                            Icons.close,
+                            size: 14,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -841,7 +955,9 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
     final l10n = context.l10n;
     final locale = Localizations.localeOf(context);
     final sizes = _sizes;
-    final selected = _categories.where((c) => c.slug == _categorySlug).firstOrNull;
+    final selected = _categories
+        .where((c) => c.slug == _categorySlug)
+        .firstOrNull;
 
     return [
       const SizedBox(height: 18),
@@ -873,7 +989,10 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
           key: _keys[ShippingField.sizeCustom],
           controller: _sizeCustom,
           onChanged: (_) => setState(() {}),
-          decoration: _field(l10n.shipSizeCustomLabel, hint: l10n.shipSizeNoPresets),
+          decoration: _field(
+            l10n.shipSizeCustomLabel,
+            hint: l10n.shipSizeNoPresets,
+          ),
         )
       else ...[
         DropdownButtonFormField<String>(
@@ -883,7 +1002,10 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
           hint: Text(l10n.shipSizeChoose),
           items: [
             for (final size in sizes)
-              DropdownMenuItem(value: size.code, child: Text(size.labelFor(locale))),
+              DropdownMenuItem(
+                value: size.code,
+                child: Text(size.labelFor(locale)),
+              ),
             DropdownMenuItem(
               value: ShippingDraft.customSize,
               child: Text(l10n.shipSizeOther),
@@ -897,9 +1019,13 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
         // nothing, "medium box — about a microwave" is a decision.
         if (_hintFor(_sizeCode, locale) != null) ...[
           const SizedBox(height: 6),
-          Text(_hintFor(_sizeCode, locale)!,
-              style: TextStyle(
-                  fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+          Text(
+            _hintFor(_sizeCode, locale)!,
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
         ],
         if (_sizeCode == ShippingDraft.customSize) ...[
           const SizedBox(height: 10),
@@ -907,7 +1033,10 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
             key: _keys[ShippingField.sizeCustom],
             controller: _sizeCustom,
             onChanged: (_) => setState(() {}),
-            decoration: _field(l10n.shipSizeCustomLabel, hint: l10n.shipSizeCustomHint),
+            decoration: _field(
+              l10n.shipSizeCustomLabel,
+              hint: l10n.shipSizeCustomHint,
+            ),
             validator: (_) => _draft.missing.contains(ShippingField.sizeCustom)
                 ? l10n.shipSizeCustomRequired
                 : null,
@@ -979,12 +1108,18 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
     return [
       TextFormField(
         controller: _pickupAddress,
-        decoration: _field(l10n.shipPickupAddressLabel, hint: l10n.shipPickupAddressHint),
+        decoration: _field(
+          l10n.shipPickupAddressLabel,
+          hint: l10n.shipPickupAddressHint,
+        ),
       ),
       const SizedBox(height: 12),
       TextFormField(
         controller: _pickupName,
-        decoration: _field(l10n.shipPickupNameLabel, hint: l10n.shipPickupNameHint),
+        decoration: _field(
+          l10n.shipPickupNameLabel,
+          hint: l10n.shipPickupNameHint,
+        ),
       ),
       const SizedBox(height: 12),
       TextFormField(
@@ -1014,8 +1149,9 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
         keyboardType: TextInputType.phone,
         onChanged: (_) => setState(() {}),
         decoration: _field(l10n.shipPhoneLabel),
-        validator: (_) =>
-            _draft.missing.contains(ShippingField.phone) ? l10n.shipPhoneRequired : null,
+        validator: (_) => _draft.missing.contains(ShippingField.phone)
+            ? l10n.shipPhoneRequired
+            : null,
       ),
     ];
   }
@@ -1044,17 +1180,21 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
   }
 
   InputDecoration _field(String label, {String? hint}) => InputDecoration(
-        labelText: label,
-        hintText: hint,
-        counterText: '',
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      );
+    labelText: label,
+    hintText: hint,
+    counterText: '',
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+  );
 }
 
 /// Four dots and their names. Done ones are filled, the current one is lit,
 /// and only a step already reached can be tapped — back, never a skip.
 class _StepHeader extends StatelessWidget {
-  const _StepHeader({required this.current, required this.furthest, required this.onTap});
+  const _StepHeader({
+    required this.current,
+    required this.furthest,
+    required this.onTap,
+  });
 
   final ShippingStep current;
   final ShippingStep furthest;
@@ -1079,11 +1219,15 @@ class _StepHeader extends StatelessWidget {
               child: Container(
                 height: 2,
                 margin: const EdgeInsets.only(bottom: 18),
-                color: step.index <= current.index ? tokens.accentFill : scheme.outlineVariant,
+                color: step.index <= current.index
+                    ? tokens.accentFill
+                    : scheme.outlineVariant,
               ),
             ),
           GestureDetector(
-            onTap: step.index <= furthest.index && step != current ? () => onTap(step) : null,
+            onTap: step.index <= furthest.index && step != current
+                ? () => onTap(step)
+                : null,
             behavior: HitTestBehavior.opaque,
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1093,26 +1237,44 @@ class _StepHeader extends StatelessWidget {
                   height: 30,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: step.index <= current.index ? tokens.accentFill : scheme.surfaceContainerHighest,
-                    border: step == current ? Border.all(color: tokens.accentInk, width: 2) : null,
+                    color: step.index <= current.index
+                        ? tokens.accentFill
+                        : scheme.surfaceContainerHighest,
+                    border: step == current
+                        ? Border.all(color: tokens.accentInk, width: 2)
+                        : null,
                   ),
                   alignment: Alignment.center,
                   child: step.index < current.index
-                      ? Icon(Icons.check_rounded, size: 16, color: tokens.onAccentFill)
-                      : Text('${step.index + 1}',
+                      ? Icon(
+                          Icons.check_rounded,
+                          size: 16,
+                          color: tokens.onAccentFill,
+                        )
+                      : Text(
+                          '${step.index + 1}',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w800,
-                            color: step.index <= current.index ? tokens.onAccentFill : scheme.onSurfaceVariant,
-                          )),
+                            color: step.index <= current.index
+                                ? tokens.onAccentFill
+                                : scheme.onSurfaceVariant,
+                          ),
+                        ),
                 ),
                 const SizedBox(height: 4),
-                Text(labels[step]!,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: step == current ? FontWeight.w700 : FontWeight.w500,
-                      color: step == current ? tokens.accentInk : scheme.onSurfaceVariant,
-                    )),
+                Text(
+                  labels[step]!,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: step == current
+                        ? FontWeight.w700
+                        : FontWeight.w500,
+                    color: step == current
+                        ? tokens.accentInk
+                        : scheme.onSurfaceVariant,
+                  ),
+                ),
               ],
             ),
           ),
@@ -1164,22 +1326,42 @@ class _TierCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(option.labelFor(locale),
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                    Text(
+                      option.labelFor(locale),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 3),
-                    Text(etaText(l10n, option.etaDaysMin, option.etaDaysMax),
-                        style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant)),
+                    Text(
+                      etaText(l10n, option.etaDaysMin, option.etaDaysMax),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
                   ],
                 ),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(formatPrice(option.priceCents, currency: currency),
-                      style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w800, color: tokens.accentInk)),
-                  Text(l10n.shipPayOnDelivery,
-                      style: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant)),
+                  Text(
+                    formatPrice(option.priceCents, currency: currency),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: tokens.accentInk,
+                    ),
+                  ),
+                  Text(
+                    l10n.shipPayOnDelivery,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(width: 12),
@@ -1211,17 +1393,31 @@ class _ManualQuoteCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.chat_bubble_outline, size: 28, color: context.tokens.accentInk),
+          Icon(
+            Icons.chat_bubble_outline,
+            size: 28,
+            color: context.tokens.accentInk,
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n.shipQuoteManualTitle,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text(
+                  l10n.shipQuoteManualTitle,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(l10n.shipQuoteManualBody,
-                    style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant)),
+                Text(
+                  l10n.shipQuoteManualBody,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
               ],
             ),
           ),
@@ -1236,6 +1432,7 @@ class _SummaryCard extends StatelessWidget {
   const _SummaryCard({required this.rows, this.price});
 
   final List<(String, String)> rows;
+
   /// Null on the manual path, where the desk names the price later.
   final String? price;
 
@@ -1253,8 +1450,10 @@ class _SummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.shipSummaryTitle,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            l10n.shipSummaryTitle,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 10),
           for (final (label, value) in rows)
             if (value.trim().isNotEmpty)
@@ -1265,14 +1464,24 @@ class _SummaryCard extends StatelessWidget {
                   children: [
                     SizedBox(
                       width: 84,
-                      child: Text(label,
-                          style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
                     ),
                     Expanded(
-                      child: Text(value,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                      child: Text(
+                        value,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -1283,23 +1492,41 @@ class _SummaryCard extends StatelessWidget {
             children: [
               SizedBox(
                 width: 84,
-                child: Text(l10n.shipSummaryPrice,
-                    style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+                child: Text(
+                  l10n.shipSummaryPrice,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
               ),
               Expanded(
                 child: price == null
-                    ? Text(l10n.shipSummaryPriceManual,
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600))
+                    ? Text(
+                        l10n.shipSummaryPriceManual,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      )
                     : Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(price!,
-                              style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: tokens.accentInk)),
-                          Text(l10n.shipCodBannerBody,
-                              style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+                          Text(
+                            price!,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: tokens.accentInk,
+                            ),
+                          ),
+                          Text(
+                            l10n.shipCodBannerBody,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
                         ],
                       ),
               ),
@@ -1343,11 +1570,21 @@ class _PathCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 3),
-                    Text(body,
-                        style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant)),
+                    Text(
+                      body,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -1365,8 +1602,10 @@ class _SectionTitle extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) =>
-      Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold));
+  Widget build(BuildContext context) => Text(
+    text,
+    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+  );
 }
 
 /// A dropdown you can type into.
@@ -1402,24 +1641,34 @@ class _SearchableDropdown extends StatefulWidget {
 }
 
 class _SearchableDropdownState extends State<_SearchableDropdown> {
-  late final TextEditingController _text = TextEditingController(text: _labelFor(widget.selected));
+  late final TextEditingController _text = TextEditingController(
+    text: _labelFor(widget.selected),
+  );
   final _focus = FocusNode();
 
   @override
   void initState() {
     super.initState();
-    // A field that already holds a value selects it all on focus, so typing
-    // replaces rather than appends. Without this "TV & audio" + "phone" is
-    // "TV & audiophone", which matches nothing, so the menu shows nothing —
-    // and the next tap lands on whatever sits underneath.
-    _focus.addListener(() {
-      if (!_focus.hasFocus || _text.text.isEmpty) return;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_focus.hasFocus) {
-          _text.selection = TextSelection(baseOffset: 0, extentOffset: _text.text.length);
-        }
-      });
-    });
+    _focus.addListener(_onFocus);
+  }
+
+  /// Leaving the field with a half-typed search puts the chosen label back,
+  /// so the box never reads "pho" for something that is still "Phones".
+  void _onFocus() {
+    if (_focus.hasFocus) return;
+    final label = _labelFor(widget.selected);
+    if (label.isNotEmpty && _text.text != label) _text.text = label;
+  }
+
+  /// A field that already holds a value starts empty when tapped, so typing
+  /// replaces rather than appends: "TV & audio" + "phone" is "TV & audiophone",
+  /// which matches nothing, shows no menu, and lets the next tap land on
+  /// whatever sits underneath. Clearing rather than selecting-all on purpose —
+  /// a programmatic selection range on an unfocused field pulled focus back
+  /// to it on the next rebuild, which sent keystrokes meant for another box
+  /// into this one.
+  void _onPointerDown(PointerDownEvent _) {
+    if (!_focus.hasFocus && _text.text.isNotEmpty) _text.clear();
   }
 
   String _labelFor(String code) {
@@ -1434,7 +1683,8 @@ class _SearchableDropdownState extends State<_SearchableDropdown> {
     super.didUpdateWidget(old);
     // The field is editable, so DropdownMenu will not correct it on its own.
     // Without this, prefilling from a listing left the old text on screen.
-    if (widget.selected != old.selected || widget.entries.length != old.entries.length) {
+    if (widget.selected != old.selected ||
+        widget.entries.length != old.entries.length) {
       final label = _labelFor(widget.selected);
       if (label.isNotEmpty && label != _text.text) _text.text = label;
     }
@@ -1442,6 +1692,7 @@ class _SearchableDropdownState extends State<_SearchableDropdown> {
 
   @override
   void dispose() {
+    _focus.removeListener(_onFocus);
     _text.dispose();
     _focus.dispose();
     super.dispose();
@@ -1449,27 +1700,30 @@ class _SearchableDropdownState extends State<_SearchableDropdown> {
 
   @override
   Widget build(BuildContext context) {
-    return DropdownMenu<String>(
-      controller: _text,
-      focusNode: _focus,
-      initialSelection: widget.selected.isEmpty ? null : widget.selected,
-      enableFilter: true,
-      requestFocusOnTap: true,
-      // Fill the column like every other field on this form does.
-      expandedInsets: EdgeInsets.zero,
-      menuHeight: 320,
-      label: Text(widget.label),
-      hintText: widget.hint,
-      inputDecorationTheme: InputDecorationTheme(
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+    return Listener(
+      onPointerDown: _onPointerDown,
+      child: DropdownMenu<String>(
+        controller: _text,
+        focusNode: _focus,
+        initialSelection: widget.selected.isEmpty ? null : widget.selected,
+        enableFilter: true,
+        requestFocusOnTap: true,
+        // Fill the column like every other field on this form does.
+        expandedInsets: EdgeInsets.zero,
+        menuHeight: 320,
+        label: Text(widget.label),
+        hintText: widget.hint,
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        dropdownMenuEntries: [
+          for (final (value, label) in widget.entries)
+            DropdownMenuEntry(value: value, label: label),
+        ],
+        onSelected: (code) {
+          if (code != null) widget.onPick(code);
+        },
       ),
-      dropdownMenuEntries: [
-        for (final (value, label) in widget.entries)
-          DropdownMenuEntry(value: value, label: label),
-      ],
-      onSelected: (code) {
-        if (code != null) widget.onPick(code);
-      },
     );
   }
 }
