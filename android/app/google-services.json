@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "691482422579",
+    "project_id": "victoi-453208",
+    "storage_bucket": "victoi-453208.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:691482422579:android:c6fbe5949747c65aef2246",
+        "android_client_info": {
+          "package_name": "com.mabanda.mambandamarket"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-M6C0OGGkaTciMzBCKQcc3JRqaSqi2v8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
