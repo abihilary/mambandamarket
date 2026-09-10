@@ -255,17 +255,26 @@ class AuthService {
     return SignUpOutcome.confirmationRequired;
   }
 
+  /// Google sign-in. Opens the consent screen; on mobile the user returns to
+  /// the app through the deep link and `onAuthStateChange` finishes the job
+  /// (profile sync + entitlements), so callers just await this and react to
+  /// the session appearing.
+  ///
+  /// Returns false if the user dismissed the consent screen.
   /// Sign in with Google.
   ///
   /// Native where it can be: Android already knows which accounts are on the
   /// phone, so the right experience is the system account sheet, not a trip out
-  /// to a browser and back.
+  /// to a browser and back. The hosted flow also shows the raw Supabase
+  /// project host on the consent screen, which is the other reason to leave it.
   ///
-  /// Bypasses native sign-in during local debug builds (`!kDebugMode`) to avoid
-  /// local SHA-1 key configuration issues. In production release builds, it will
-  /// attempt the native account sheet first.
+  /// Falls back to the hosted flow when [AppConfig.hasNativeGoogleSignIn] is
+  /// false, when the platform has no native support (web), and when the native
+  /// attempt fails for any reason other than the user backing out. A broken
+  /// native path must never be the end of the road: this is the only social
+  /// sign-in the app has.
   Future<GoogleAuthOutcome> signInWithGoogle() async {
-    if (!kIsWeb && AppConfig.hasNativeGoogleSignIn && !kDebugMode) {
+    if (!kIsWeb && AppConfig.hasNativeGoogleSignIn) {
       try {
         await _signInWithGoogleNatively();
         return GoogleAuthOutcome.session;
@@ -282,7 +291,7 @@ class AuthService {
       OAuthProvider.google,
       redirectTo: _redirectFor(kOAuthRedirect),
       authScreenLaunchMode:
-      kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
+          kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
     );
     return opened ? GoogleAuthOutcome.browserOpened : GoogleAuthOutcome.failed;
   }
@@ -392,15 +401,10 @@ class AuthService {
       me.value = null;
       return null;
     }
-    try {
-      final json = await ApiClient.instance.get('/me') as Map<String, dynamic>;
-      final value = Me.fromJson(json);
-      me.value = value;
-      return value;
-    } catch (e) {
-      debugPrint('[auth] refreshMe failed: $e');
-      rethrow;
-    }
+    final json = await ApiClient.instance.get('/me') as Map<String, dynamic>;
+    final value = Me.fromJson(json);
+    me.value = value;
+    return value;
   }
 
   // ── Referral held over from sign-up ────────────────────────────────────────
@@ -492,13 +496,15 @@ class AuthService {
 
   Future<Profile?> updateProfile(Map<String, dynamic> fields) async {
     final json =
-    await ApiClient.instance.patch('/me', fields) as Map<String, dynamic>;
+        await ApiClient.instance.patch('/me', fields) as Map<String, dynamic>;
     await refreshMe();
     final p = (json['profile'] as Map?)?.cast<String, dynamic>();
     return p == null ? null : Profile.fromJson(p);
   }
 }
 
+/// The user closed the account sheet. Not an error, and not a reason to open a
+/// browser at them instead.
 /// What a press of "Continue with Google" ended up doing.
 ///
 /// A bool could not tell the caller which of these happened, and the three
