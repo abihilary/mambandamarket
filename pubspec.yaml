@@ -152,6 +152,7 @@ flutter:
     # icon foreground so the launcher, the system splash and the app's own
     # splash are provably the same drawing.
     - assets/brand/mark.png
+    - assets/icon/icon.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

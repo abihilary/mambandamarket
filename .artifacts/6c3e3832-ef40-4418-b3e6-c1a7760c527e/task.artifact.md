@@ -1,7 +1,12 @@
-- [x] Implement sharing logic in `ItemDetailScreen.dart`
-    - [x] Define `_publicListingBaseUrl` and `_isSharing` state
-    - [x] Implement `_buildListingShareUri` and `_buildShareText`
-    - [x] Implement `_shareListing` using `Share.share`
-    - [x] Update the UI to call `_shareListing` and show loading state
-- [x] Improve gallery UI and other missing parts from the provided snippet
-- [x] Verify implementation consistency with `share_plus: ^10.0.0`
+- [x] Redesign `ShipmentsScreen.dart`
+    - [x] Add mock data simulation
+    - [x] Implement dark header and white body
+    - [x] Update Segmented Control (Tabs)
+    - [x] Update `_ShipmentCardDesign` (Image left, details right)
+- [x] Redesign `ShipmentDetailScreen`
+    - [x] Add header banner with truck illustration
+    - [x] Update `_TimelineRowDesign` for high-fidelity look (with Active state)
+    - [x] Update "Current location" card with mini-map logic
+    - [x] Add mock documents for simulation
+    - [x] Add styled "Documents & Receipt" section
+    - [x] Update bottom action buttons

@@ -1,35 +1,31 @@
-# Walkthrough - Item Detail Sharing Implementation
+# Walkthrough - Track Shipment Redesign (Final Polish)
 
-I have completed the sharing functionality in `ItemDetailScreen.dart` and improved the UI components to match your requirements.
+I have finalized the **Track Shipment** screen to exactly match your design reference, including advanced timeline state handling and a dedicated documents section.
 
 ## Changes Made
 
-### Item Details & Sharing
-- **Public Domain Configured**: Set the public listing URL to `https://mambandamarket.com/listing`.
-- **Rich Share Content**: The shared text now includes:
-    - Listing Title
-    - Price
-    - Condition
-    - Location
-    - A direct link to the listing on the web.
-- **Improved Sharing API**: Updated the code to use `share_plus: ^10.0.0` correctly with `Share.share` and proper `ShareResult` handling.
-- **Debounced Share Button**: Added an `_isSharing` state to prevent multiple share sheets from opening if the user taps the button multiple times quickly.
+### 1. Advanced Timeline (Image 2 Parity)
+- **Active State Highlight**: The current journey step (e.g., "In transit") now features a subtle lime-tinted background highlight, making it immediately visible as the active stage.
+- **Dynamic Dot Indicators**:
+    - **Completed**: Green circle with a checkmark.
+    - **Active**: Green pulse dot.
+    - **Pending**: Simple grey outline.
+- **Contextual Actions**: Integrated the mini-map icon directly into the active timeline row on the right side, matching the mockup precisely.
 
-### UI Improvements
-- **Enhanced Gallery**:
-    - Added a smooth `PageView` for multi-image support.
-    - Added a gradient overlay at the bottom for better indicator visibility.
-    - Added both a numeric indicator (e.g., "1/3") and animated dot indicators.
-    - Implemented a network image loader with a progress indicator and fallback for broken links.
-- **Modernized Layout**: Updated spacing, dividers, and typography across the screen to provide a more polished feel.
-- **Seller Section**: Refined the `_SellerRow` with a cleaner design and verified badge integration.
+### 2. "Documents & Receipt" Section
+- **Premium Documentation Cards**: Added a new section for shipment paperwork. Each document (Confirmation, Receipt) is displayed as a clean white card with a subtle green border.
+- **Branded Iconography**: Used a branded background for the PDF icons to maintain visual consistency with the rest of the delivery section.
+- **Interactive Actions**: Users can "Open" or "Share" documents directly from these cards.
+
+### 3. Mock Data Enhancement
+- **Injected Simulation**: Added mock `ShippingDocument` objects to the simulated shipment data. When you view the "Smartphone" shipment, you will now see both the full timeline and the new document section populated.
 
 ## Verification Results
 
-### Code Quality
-- Verified `share_plus` API compatibility with the version specified in `pubspec.yaml`.
-- Ensured proper use of `context.l10n` for all user-facing strings.
-- Added safety checks for `mounted` state before calling `setState` after async operations.
+### Design Alignment
+- ✅ **Active Step**: Verified the light green highlight and map icon are correctly positioned in the "In transit" row.
+- ✅ **Document Cards**: Confirmed the cards match the "Safe • Fast • Reliable" aesthetic with thin green borders.
+- ✅ **Layout Hierarchy**: The section follows the logical order: Banner → Timeline → Current Location → Documents → Actions.
 
 > [!TIP]
-> You can now test the sharing feature by tapping the share icon in the top right corner of any item detail screen. The generated link will look like `https://mambandamarket.com/listing/<item_id>`.
+> Tap on the **Track Package** button for the **Smartphone (#MB-48291)** shipment to see the full redesign in action, including the new document section at the bottom.

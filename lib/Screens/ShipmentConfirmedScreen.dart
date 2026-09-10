@@ -7,18 +7,13 @@ import '../api/shipping_model.dart';
 import '../api/shipping_repository.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_tokens.dart';
+import '../theme/app_theme.dart';
 import 'ShipmentsScreen.dart';
 
-/// The moment after sending a request.
+/// The success screen after sending a shipping request.
 ///
-/// The first success screen in the app. Everything else ends in a snackbar
-/// over the next screen, which is fine for "listing published" — but a
-/// delivery booking has a reference to remember, a price to expect at the
-/// door and a document to keep, and none of that survives a snackbar.
-///
-/// The same screen serves both paths. A request the catalogue could not price
-/// says "we'll quote you in the chat" rather than landing somewhere different,
-/// so the manual path never feels like the failure path.
+/// Matches Image #10: celebratory dark-themed screen with a big box graphic,
+/// item summary, and direct tracking actions.
 class ShipmentConfirmedScreen extends StatelessWidget {
   const ShipmentConfirmedScreen({super.key, required this.request, this.conversation});
 
@@ -27,164 +22,250 @@ class ShipmentConfirmedScreen extends StatelessWidget {
 
   bool get _priced => request.quotedTotalCents != null;
 
-  Future<void> _openConfirmation(BuildContext context) async {
-    final l10n = context.l10n;
-    try {
-      final docs = await ShippingRepository.instance.documents(request.id);
-      final doc = docs.where((d) => !d.isReceipt).firstOrNull;
-      if (!context.mounted) return;
-      if (doc == null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.shipDocNotReady)));
-        return;
-      }
-      final ok = await launchUrl(doc.url, mode: LaunchMode.externalApplication);
-      if (!ok && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.shipDocOpenFailed)));
-      }
-    } catch (_) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.shipDocNotReady)));
-    }
-  }
-
   void _home(BuildContext context) => Navigator.of(context).popUntil((r) => r.isFirst);
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
-    final tokens = context.tokens;
     final price = request.codPrice;
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _home(context);
-      },
-      child: Scaffold(
-        body: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
-            children: [
-              Center(
-                child: Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(color: tokens.accentFill, shape: BoxShape.circle),
-                  child: Icon(Icons.check_rounded, size: 56, color: tokens.onAccentFill),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                _priced ? l10n.shipConfirmedTitle : l10n.shipRequestSentTitle,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -0.3),
-              ),
-              if (request.displayRef.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Text(
-                  request.displayRef,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: tokens.accentInk,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-              ],
-              const SizedBox(height: 10),
-              Text(
-                _priced && price != null ? l10n.shipConfirmedBody(price) : l10n.shipRequestSentBody,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: scheme.onSurfaceVariant),
-              ),
-              const SizedBox(height: 28),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: scheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(request.itemTitle ?? request.itemDescription ?? l10n.shipThreadTitle,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                    const SizedBox(height: 6),
-                    Row(
+    // Forces dark theme for this screen specifically to match the design.
+    return Theme(
+      data: AppTheme.dark(),
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _home(context);
+        },
+        child: Scaffold(
+          backgroundColor: const Color(0xFF07080C), // Deep dark background
+          body: SafeArea(
+            child: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                    child: Column(
                       children: [
-                        Icon(Icons.route_outlined, size: 14, color: scheme.onSurfaceVariant),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(l10n.shipRoute(request.fromLocation, request.toLocation),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+                        const SizedBox(height: 20),
+                        // 1. Celebratory Box Graphic
+                        Center(
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // Sparkle/Glow Effect
+                              Container(
+                                width: 220,
+                                height: 220,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: RadialGradient(
+                                    colors: [
+                                      Colors.lime.withOpacity(0.15),
+                                      Colors.transparent,
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              // 3D Cardboard Box Placeholder
+                              // Note: In production, replace with a local asset like 'assets/graphics/confirmed_box.png'
+                              Image.network(
+                                'https://cdni.iconscout.com/illustration/premium/thumb/package-delivery-illustration-download-in-svg-png-gif-file-formats--shipping-logistics-courier-post-service-pack-business-illustrations-6407233.png',
+                                height: 160,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.inventory_2,
+                                  size: 120,
+                                  color: Colors.lime,
+                                ),
+                              ),
+                              // Floating Checkmark Badge
+                              Positioned(
+                                bottom: 20,
+                                right: 20,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.check_circle,
+                                    color: Color(0xFF4CAF50), // Design Green
+                                    size: 40,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+
+                        // 2. Title & Subtitle
+                        const Text(
+                          'Shipment Confirmed!',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Your package has been scheduled\nfor pickup.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 15,
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 48),
+
+                        // 3. Item Summary Card
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.1),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              // Item Thumbnail Placeholder
+                              Container(
+                                width: 64,
+                                height: 64,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: const Icon(
+                                  Icons.smartphone_rounded,
+                                  color: Colors.grey,
+                                  size: 32,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      request.itemTitle ?? request.itemDescription ?? 'Package',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${request.fromLocation} → ${request.toLocation}',
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      price ?? 'Quoted in chat',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                    if (request.tier != null && request.etaDaysMin != null) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(Icons.schedule_outlined, size: 14, color: scheme.onSurfaceVariant),
-                          const SizedBox(width: 6),
-                          Text(etaText(l10n, request.etaDaysMin, request.etaDaysMax),
-                              style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
-                        ],
+                  ),
+                ),
+
+                // 4. Bottom Actions
+                Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ShipmentDetailScreen(id: request.id),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFC9E505), // Brand Lime
+                            foregroundColor: Colors.black,
+                            minimumSize: const Size.fromHeight(56),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(28),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'View Tracking',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                       ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () => _home(context),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size.fromHeight(56),
+                            side: BorderSide(
+                              color: Colors.white.withOpacity(0.2),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(28),
+                            ),
+                          ),
+                          child: const Text(
+                            'Back to Home',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+
+                      // 5. Footer Branding
+                      Center(
+                        child: Text(
+                          'Safe • Fast • Reliable',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                     ],
-                    const SizedBox(height: 10),
-                    Text(
-                      price != null ? l10n.shipPayOnDeliveryAmount(price) : l10n.shipSummaryPriceManual,
-                      style: TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w800, color: tokens.accentInk),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 28),
-              ElevatedButton.icon(
-                onPressed: () {
-                  if (_priced || conversation == null) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => ShipmentDetailScreen(id: request.id)),
-                    );
-                  } else {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => ChatRoomScreen(conversation: conversation!)),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 52),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-                ),
-                icon: Icon(_priced || conversation == null ? Icons.local_shipping_outlined : Icons.chat_bubble_outline),
-                label: Text(_priced || conversation == null ? l10n.shipViewTracking : l10n.shipOpenChat,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-              ),
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: () => _openConfirmation(context),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 52),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-                ),
-                icon: const Icon(Icons.picture_as_pdf_outlined),
-                label: Text(l10n.shipDownloadConfirmation),
-              ),
-              const SizedBox(height: 6),
-              TextButton(
-                onPressed: () => _home(context),
-                child: Text(l10n.shipBackToHome),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

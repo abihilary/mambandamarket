@@ -12,6 +12,7 @@ import '../Screens/AccountScreen.dart';
 import '../Screens/ChatInboxScreen.dart';
 import '../Screens/FavoritesScreen.dart';
 import '../Screens/HomeScreen.dart';
+import '../Screens/MabandaDeliveryHomeScreen.dart';
 import '../Screens/ShipmentsScreen.dart';
 import '../Components/shipping_button.dart';
 import '../api/shipping_repository.dart';
@@ -168,12 +169,10 @@ class _MainNavigationShellState extends State<MainNavigationShell>
       );
       return;
     }
-    // The list, not the form. Somebody with something in transit taps this to
-    // find out where it is far more often than they tap it to start a new one,
-    // and the empty state is a single large button for the first time.
+    // Navigate to the new Mabanda Delivery Landing Page
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const ShipmentsScreen()),
+      MaterialPageRoute(builder: (_) => const MabandaDeliveryHomeScreen()),
     );
   }
 

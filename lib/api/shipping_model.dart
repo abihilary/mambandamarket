@@ -468,6 +468,7 @@ class ShippingRequest {
     this.contactName,
     this.contactPhone,
     this.note,
+    this.estimatedValue,
     this.fromPlace,
     this.toPlace,
     this.locale,
@@ -500,6 +501,7 @@ class ShippingRequest {
   final String? contactName;
   final String? contactPhone;
   final String? note;
+  final String? estimatedValue;
   final String? fromPlace;
   final String? toPlace;
   final String? locale;
@@ -604,6 +606,7 @@ class ShippingRequest {
       contactName: _text(json['contact_name']),
       contactPhone: _text(json['contact_phone']),
       note: _text(json['note']),
+      estimatedValue: _text(json['estimated_value']),
       fromPlace: _text(json['from_place']),
       toPlace: _text(json['to_place']),
       locale: _text(json['locale']),

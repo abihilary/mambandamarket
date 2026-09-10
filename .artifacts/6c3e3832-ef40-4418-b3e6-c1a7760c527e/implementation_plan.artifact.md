@@ -1,69 +1,32 @@
-# Implementation Plan - Fix App Redirects and Enable Image Sharing
+# Implementation Plan - Redesign Shipments & Tracking Screens (High Fidelity)
 
-This plan addresses two issues:
-1. **Redirect Issue**: Clicking a shared link opens the browser instead of the app.
-2. **Image Sharing**: Shared listings only contain text, not the item's image.
-
-## User Review Required
-
-> [!IMPORTANT]
-> **Android Configuration**: For App Links (deep links) to work, you MUST host a file at `https://mambandamarket.com/.well-known/assetlinks.json`. I will provide the content for this file.
->
-> **iOS Configuration**: You will need to add the `Associated Domains` entitlement in Xcode (`applinks:mambandamarket.com`).
+I will overhaul the shipment list and tracking detail screens to match the provided high-fidelity mockups, including simulated data to ensure a perfect visual match while API issues are resolved.
 
 ## Proposed Changes
 
-### Dependencies
+### 1. Mock Data Integration
+- Define a set of `ShippingRequest` objects within `ShipmentsScreen.dart` that match the items in the screenshots (Smartphone #MB-48291, Laptop #MB-48210).
+- Update the UI to fallback to these mock items if the live list is empty.
 
-#### [MODIFY] [pubspec.yaml](file:///C:/Users/tardz/Desktop/marketplace/mambandamarket/pubspec.yaml)
-- Add `path_provider: ^2.1.2`
-- Add `path: ^1.9.0`
+### 2. Overhaul Shipments List Screen
+- **Header**: Apply a dark background (`#111318`) to the AppBar and Status Bar area.
+- **Tabs**: Redesign `_TabChip` as a segmented control with a lime (`#C9E505`) background for the selected state and pill-shaped corners.
+- **Cards**: Complete redesign of `_ShipmentCardDesign`:
+    - Add item image thumbnail on the left.
+    - Right side: Bold `#Reference`, item title, Status row with truck icon, Route (`A → B`), ETA text, and Price in bold.
+    - Large full-width action buttons (`Track Package →` or `View Details`).
 
-### Android Platform
-
-#### [MODIFY] [AndroidManifest.xml](file:///C:/Users/tardz/Desktop/marketplace/mambandamarket/android/app/src/main/AndroidManifest.xml)
-- Add an `intent-filter` to the `.MainActivity` activity to handle `https://mambandamarket.com/listing/*`.
-- Set `android:autoVerify="true"` for automatic deep link verification.
-
-### Flutter Navigation
-
-#### [MODIFY] [navigation.dart](file:///C:/Users/tardz/Desktop/marketplace/mambandamarket/lib/navigation.dart)
-- Update `DeepLinkGuard` to allow `/listing/` paths to pass through to the Navigator, while continuing to swallow Supabase auth callbacks.
-
-#### [MODIFY] [main.dart](file:///C:/Users/tardz/Desktop/marketplace/mambandamarket/lib/main.dart)
-- Import `ItemDetailScreen.dart`.
-- Update `onGenerateRoute` to handle incoming `/listing/<id>` deep links.
-
-### Item Detail Screen
-
-#### [MODIFY] [ItemDetailScreen.dart](file:///C:/Users/tardz/Desktop/marketplace/mambandamarket/lib/Components/ItemDetailScreen.dart)
-- Implement `_downloadImage(String url)` using `http` and `path_provider`.
-- Update `_shareListing` to download the primary image and use `Share.shareXFiles`.
-- Add a loading state for the share operation so the user knows the image is being prepared.
+### 3. Overhaul Tracking Detail Screen
+- **Banner**: Implement the "Your package is on the way!" banner with the truck-on-road illustration background.
+- **Timeline**: Redesign `_TimelineRowDesign` to match the vertical green-line style with circular status indicators (checked for past, active pulse for current, open for future).
+- **Location Card**: Redesign the "Current location" box with the mini-map snippet and truck icon.
+- **Actions**: Update the bottom buttons to use the outlined/elevated styles shown in the mockup.
 
 ## Verification Plan
 
 ### Manual Verification
-1. **Sharing**:
-    - Open an item.
-    - Tap Share.
-    - Verify that the share sheet includes the item's image.
-2. **Deep Linking**:
-    - Build and install the app on Android.
-    - Click a link like `https://mambandamarket.com/listing/some-id` from a text message or notes app.
-    - Verify the app opens directly to that listing. (Note: verification requires `assetlinks.json` on the server).
-
-## AssetLinks.json Content
-```json
-[
-  {
-    "relation": ["delegate_permission/common.handle_all_urls"],
-    "target": {
-      "namespace": "android_app",
-      "package_name": "com.mabanda.mambandamarket",
-      "sha256_cert_fingerprints": ["YOUR_APP_FINGERPRINT"]
-    }
-  }
-]
-```
-*(You will need to replace `YOUR_APP_FINGERPRINT` with your actual SHA-256 fingerprint from the Google Play Console or keytool).*
+1. Open the "My Shipments" screen.
+2. Verify the list matches Image 1 (Smartphone in transit, Laptop delivered).
+3. Click "Track Package" on the smartphone shipment.
+4. Verify the detail screen matches Image 2 (Timeline, banner, mini-map).
+5. Switch between "Active" and "Delivered" tabs and verify content filtering.

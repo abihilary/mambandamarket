@@ -67,7 +67,7 @@ abstract final class AppTheme {
           // "muted" label would render at full contrast and neutral fills would
           // be invisible against the card behind them.
           onSurfaceVariant: AppColors.lightMuted,
-          surfaceContainerHighest: AppColors.lightGround,
+          surfaceVariant: AppColors.lightGround,
           error: AppColors.danger,
           onError: Colors.white,
           outline: AppColors.lightLine,
@@ -90,7 +90,7 @@ abstract final class AppTheme {
           surface: AppColors.darkSurface,
           onSurface: AppColors.darkText,
           onSurfaceVariant: AppColors.darkMuted,
-          surfaceContainerHighest: AppColors.darkElevated,
+          surfaceVariant: AppColors.darkElevated,
           error: AppColors.danger,
           onError: Colors.white,
           outline: AppColors.darkLine,

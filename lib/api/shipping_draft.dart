@@ -10,6 +10,7 @@ enum ShippingField {
   category,
   size,
   sizeCustom,
+  estimatedValue,
   from,
   to,
   phone,
@@ -39,6 +40,7 @@ class ShippingDraft {
     this.fromLocation = '',
     this.toLocation = '',
     this.contactPhone = '',
+    this.estimatedValue = '',
     this.categoryHasPresets = false,
   });
 
@@ -47,6 +49,7 @@ class ShippingDraft {
   final String productUrl;
   final String description;
   final String categorySlug;
+  final String estimatedValue;
 
   /// A preset's code, or `custom`, or empty when nothing is chosen yet.
   final String sizeCode;
@@ -109,6 +112,7 @@ class ShippingDraft {
     String? fromLocation,
     String? toLocation,
     String? contactPhone,
+    String? estimatedValue,
     bool? categoryHasPresets,
     bool clearListing = false,
   }) =>
@@ -123,12 +127,13 @@ class ShippingDraft {
         fromLocation: fromLocation ?? this.fromLocation,
         toLocation: toLocation ?? this.toLocation,
         contactPhone: contactPhone ?? this.contactPhone,
+        estimatedValue: estimatedValue ?? this.estimatedValue,
         categoryHasPresets: categoryHasPresets ?? this.categoryHasPresets,
       );
 }
 
 /// The four screens the form is split across.
-enum ShippingStep { item, route, quote, confirm }
+enum ShippingStep { route, item, quote, confirm }
 
 /// Which fields each step is responsible for.
 ///
@@ -137,14 +142,15 @@ enum ShippingStep { item, route, quote, confirm }
 /// whether you may continue. The quote step owns nothing: it is a choice, and
 /// a route the catalogue cannot price is still allowed through.
 const stepFields = <ShippingStep, List<ShippingField>>{
+  ShippingStep.route: [ShippingField.from, ShippingField.to],
   ShippingStep.item: [
     ShippingField.source,
     ShippingField.item,
     ShippingField.category,
     ShippingField.size,
     ShippingField.sizeCustom,
+    ShippingField.estimatedValue,
   ],
-  ShippingStep.route: [ShippingField.from, ShippingField.to],
   ShippingStep.quote: [],
   ShippingStep.confirm: [ShippingField.phone],
 };
