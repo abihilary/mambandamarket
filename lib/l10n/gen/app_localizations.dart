@@ -5551,6 +5551,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send the link'**
   String get deliveryOptBuyCta;
+
+  /// No description provided for @deliveryStatOnTheWay.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =0{Nothing on the way} =1{1 package on the way} other{{n} packages on the way}}'**
+  String deliveryStatOnTheWay(int n);
+
+  /// No description provided for @deliveryStatDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =0{No deliveries yet} =1{1 delivered} other{{n} delivered}}'**
+  String deliveryStatDelivered(int n);
+
+  /// No description provided for @deliveryStatTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Tracked · Pay on delivery'**
+  String get deliveryStatTagline;
+
+  /// No description provided for @shipBannerOnTheWay.
+  ///
+  /// In en, this message translates to:
+  /// **'Your package is on the way!'**
+  String get shipBannerOnTheWay;
+
+  /// No description provided for @shipBannerBooked.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ve got your request'**
+  String get shipBannerBooked;
+
+  /// No description provided for @shipBannerQuoted.
+  ///
+  /// In en, this message translates to:
+  /// **'Your price is ready'**
+  String get shipBannerQuoted;
+
+  /// No description provided for @shipBannerDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered!'**
+  String get shipBannerDelivered;
+
+  /// No description provided for @shipBannerClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'This request is closed'**
+  String get shipBannerClosed;
+
+  /// No description provided for @shipPackageIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Your package is in {place}'**
+  String shipPackageIn(String place);
+
+  /// No description provided for @shipUpdatedAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {when}'**
+  String shipUpdatedAgo(String when);
+
+  /// No description provided for @shipJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'just now'**
+  String get shipJustNow;
+
+  /// No description provided for @shipMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} min ago'**
+  String shipMinutesAgo(int n);
+
+  /// No description provided for @shipHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{1 hour ago} other{{n} hours ago}}'**
+  String shipHoursAgo(int n);
+
+  /// No description provided for @shipDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{yesterday} other{{n} days ago}}'**
+  String shipDaysAgo(int n);
+
+  /// No description provided for @shipTrackPackage.
+  ///
+  /// In en, this message translates to:
+  /// **'Track package'**
+  String get shipTrackPackage;
+
+  /// No description provided for @shipViewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'View details'**
+  String get shipViewDetails;
+
+  /// No description provided for @shipDocumentsAndReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents & receipt'**
+  String get shipDocumentsAndReceipt;
 }
 
 class _AppLocalizationsDelegate

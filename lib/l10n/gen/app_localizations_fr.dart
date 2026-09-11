@@ -3142,4 +3142,95 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get deliveryOptBuyCta => 'Envoyer le lien';
+
+  @override
+  String deliveryStatOnTheWay(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n colis en route',
+      one: '1 colis en route',
+      zero: 'Rien en route',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String deliveryStatDelivered(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n livrés',
+      one: '1 livré',
+      zero: 'Aucune livraison pour l\'instant',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get deliveryStatTagline => 'Suivi en direct · Paiement à la livraison';
+
+  @override
+  String get shipBannerOnTheWay => 'Votre colis est en route !';
+
+  @override
+  String get shipBannerBooked => 'Nous avons votre demande';
+
+  @override
+  String get shipBannerQuoted => 'Votre prix est prêt';
+
+  @override
+  String get shipBannerDelivered => 'Livré !';
+
+  @override
+  String get shipBannerClosed => 'Cette demande est clôturée';
+
+  @override
+  String shipPackageIn(String place) {
+    return 'Votre colis est à $place';
+  }
+
+  @override
+  String shipUpdatedAgo(String when) {
+    return 'Mis à jour $when';
+  }
+
+  @override
+  String get shipJustNow => 'à l\'instant';
+
+  @override
+  String shipMinutesAgo(int n) {
+    return 'il y a $n min';
+  }
+
+  @override
+  String shipHoursAgo(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'il y a $n heures',
+      one: 'il y a 1 heure',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shipDaysAgo(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'il y a $n jours',
+      one: 'hier',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shipTrackPackage => 'Suivre le colis';
+
+  @override
+  String get shipViewDetails => 'Voir les détails';
+
+  @override
+  String get shipDocumentsAndReceipt => 'Documents et reçu';
 }

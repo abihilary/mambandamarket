@@ -388,7 +388,7 @@ class _ShipmentCard extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
               child: Text(
-                l10n.shipViewTracking,
+                s.isFinished ? l10n.shipViewDetails : '${l10n.shipTrackPackage} →',
                 style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
             ),
@@ -637,16 +637,14 @@ class _ShipmentDetailScreenState extends State<ShipmentDetailScreen> {
                           padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
                           child: Column(children: _timeline(context, s)),
                         ),
-                        if (s.lastSeen != null) ...[
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 24),
-                            child: Divider(),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                            child: _LocationCard(shipment: s, onOpen: _openMap),
-                          ),
-                        ],
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 24),
+                          child: Divider(),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                          child: _LocationCard(shipment: s, onOpen: _openMap),
+                        ),
                         const SizedBox(height: 16),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -667,8 +665,12 @@ class _ShipmentDetailScreenState extends State<ShipmentDetailScreen> {
           ? null
           : Container(
               color: Colors.white,
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 30),
-              child: Row(
+              child: SafeArea(
+                top: false,
+                minimum: const EdgeInsets.only(bottom: 12),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                  child: Row(
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
@@ -702,6 +704,8 @@ class _ShipmentDetailScreenState extends State<ShipmentDetailScreen> {
                   ),
                 ],
               ),
+                ),
+              ),
             ),
     );
   }
@@ -714,12 +718,22 @@ class _Banner extends StatelessWidget {
   const _Banner({required this.shipment});
   final ShippingRequest shipment;
 
+  String _headline(AppLocalizations l10n) {
+    final s = shipment;
+    return switch (s.status) {
+      'delivered' => l10n.shipBannerDelivered,
+      'cancelled' || 'declined' || 'expired' => l10n.shipBannerClosed,
+      'quoted' => l10n.shipBannerQuoted,
+      'in_transit' || 'sourcing' => l10n.shipBannerOnTheWay,
+      _ => l10n.shipBannerBooked,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final s = shipment;
     final eta = s.isFinished ? null : s.eta();
-    final headline = eta != null ? _etaLine(l10n, eta) : shippingStatusLabel(l10n, s.status);
 
     return Container(
       width: double.infinity,
@@ -731,12 +745,25 @@ class _Banner extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
         child: Stack(
           children: [
-            Positioned(
-              right: -20,
-              top: -10,
+            Positioned.fill(
               child: Opacity(
-                opacity: 0.08,
-                child: Image.asset('assets/brand/mark.png', width: 160, height: 160),
+                opacity: 0.55,
+                child: Image.asset(
+                  'assets/brand/onboarding_hero.png',
+                  fit: BoxFit.cover,
+                  alignment: const Alignment(0, -0.6),
+                ),
+              ),
+            ),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.black.withValues(alpha: 0.35), _kInk],
+                  ),
+                ),
               ),
             ),
             Padding(
@@ -745,7 +772,7 @@ class _Banner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    headline,
+                    _headline(l10n),
                     style: const TextStyle(
                         fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
@@ -755,13 +782,11 @@ class _Banner extends StatelessWidget {
                     style: const TextStyle(
                         color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _titleOf(s),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white70, fontSize: 13),
-                  ),
+                  if (eta != null) ...[
+                    const SizedBox(height: 2),
+                    Text(_etaLine(l10n, eta),
+                        style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                  ],
                 ],
               ),
             ),
@@ -866,17 +891,27 @@ class _AcceptQuotePanel extends StatelessWidget {
   }
 }
 
-/// Where it was last seen. The map tile is a button that opens the real
-/// coordinates in the phone's maps app — not a static map of somewhere else.
+/// Where it was last seen. Always on the page, honest when there is nothing
+/// yet. The map tile is a drawn map, not a photo of somewhere else; tapping
+/// it opens the real coordinates in the phone's maps app.
 class _LocationCard extends StatelessWidget {
   const _LocationCard({required this.shipment, required this.onOpen});
   final ShippingRequest shipment;
   final VoidCallback onOpen;
 
+  static String _ago(AppLocalizations l10n, DateTime at) {
+    final d = DateTime.now().difference(at);
+    if (d.inMinutes < 1) return l10n.shipJustNow;
+    if (d.inHours < 1) return l10n.shipMinutesAgo(d.inMinutes);
+    if (d.inDays < 1) return l10n.shipHoursAgo(d.inHours);
+    return l10n.shipDaysAgo(d.inDays);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final s = shipment;
+    final place = s.lastSeen;
     final at = s.lastEventAt;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -907,7 +942,7 @@ class _LocationCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      s.lastSeen!,
+                      place != null ? l10n.shipPackageIn(place) : l10n.shipNoTrackingYet,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -915,35 +950,76 @@ class _LocationCard extends StatelessWidget {
                     ),
                     if (at != null)
                       Text(
-                        '${l10n.shipLastSeen} · ${_when(context, at)}',
+                        l10n.shipUpdatedAgo(_ago(l10n, at)),
                         style: const TextStyle(color: Colors.grey, fontSize: 11),
                       ),
                   ],
                 ),
               ),
-              if (s.hasPosition)
-                Material(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(12),
-                  child: InkWell(
-                    onTap: onOpen,
-                    borderRadius: BorderRadius.circular(12),
-                    child: SizedBox(
-                      width: 80,
-                      height: 50,
-                      child: Tooltip(
-                        message: l10n.shipOpenInMaps,
-                        child: const Icon(Icons.map_outlined, color: Colors.black54),
-                      ),
-                    ),
-                  ),
-                ),
+              const SizedBox(width: 12),
+              _MiniMap(active: s.hasPosition, onTap: s.hasPosition ? onOpen : null),
             ],
           ),
         ),
       ],
     );
   }
+}
+
+/// An 80×50 map-looking tile: a soft grid with a pin, lit when there are real
+/// coordinates behind it. A live map image would need a maps provider key;
+/// until there is one, this says "map" without pretending to be one.
+class _MiniMap extends StatelessWidget {
+  const _MiniMap({required this.active, this.onTap});
+  final bool active;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: active ? const Color(0xFFE8F1DC) : Colors.grey[200],
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: SizedBox(
+          width: 80,
+          height: 50,
+          child: CustomPaint(
+            painter: _MapGridPainter(active: active),
+            child: Center(
+              child: Icon(
+                active ? Icons.location_on : Icons.location_off_outlined,
+                size: 20,
+                color: active ? Colors.green[700] : Colors.grey[500],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MapGridPainter extends CustomPainter {
+  const _MapGridPainter({required this.active});
+  final bool active;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final road = Paint()
+      ..color = (active ? Colors.green[300]! : Colors.grey[400]!).withValues(alpha: 0.5)
+      ..strokeWidth = 1.2;
+    // A few "streets": two verticals, two horizontals, one diagonal.
+    canvas.drawLine(Offset(size.width * 0.3, 0), Offset(size.width * 0.3, size.height), road);
+    canvas.drawLine(Offset(size.width * 0.7, 0), Offset(size.width * 0.75, size.height), road);
+    canvas.drawLine(Offset(0, size.height * 0.35), Offset(size.width, size.height * 0.3), road);
+    canvas.drawLine(Offset(0, size.height * 0.7), Offset(size.width, size.height * 0.75), road);
+    canvas.drawLine(Offset(0, size.height), Offset(size.width * 0.55, 0), road..strokeWidth = 0.8);
+  }
+
+  @override
+  bool shouldRepaint(_MapGridPainter old) => old.active != active;
 }
 
 class _Documents extends StatelessWidget {
@@ -967,7 +1043,7 @@ class _Documents extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l10n.shipDocumentsTitle,
+        Text(l10n.shipDocumentsAndReceipt,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
         const SizedBox(height: 16),
         if (loading && docs.isEmpty)

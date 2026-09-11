@@ -1112,5 +1112,22 @@
   "deliveryOptShipCta": "Voir le prix",
   "deliveryOptBuyTitle": "Acheter et livrer",
   "deliveryOptBuyBody": "Trouvé ailleurs que sur Mambanda ? Collez le lien, on s'occupe du reste.",
-  "deliveryOptBuyCta": "Envoyer le lien"
+  "deliveryOptBuyCta": "Envoyer le lien",
+  "deliveryStatOnTheWay": "{n, plural, =0{Rien en route} =1{1 colis en route} other{{n} colis en route}}",
+  "deliveryStatDelivered": "{n, plural, =0{Aucune livraison pour l'instant} =1{1 livré} other{{n} livrés}}",
+  "deliveryStatTagline": "Suivi en direct · Paiement à la livraison",
+  "shipBannerOnTheWay": "Votre colis est en route !",
+  "shipBannerBooked": "Nous avons votre demande",
+  "shipBannerQuoted": "Votre prix est prêt",
+  "shipBannerDelivered": "Livré !",
+  "shipBannerClosed": "Cette demande est clôturée",
+  "shipPackageIn": "Votre colis est à {place}",
+  "shipUpdatedAgo": "Mis à jour {when}",
+  "shipJustNow": "à l'instant",
+  "shipMinutesAgo": "il y a {n} min",
+  "shipHoursAgo": "{n, plural, =1{il y a 1 heure} other{il y a {n} heures}}",
+  "shipDaysAgo": "{n, plural, =1{hier} other{il y a {n} jours}}",
+  "shipTrackPackage": "Suivre le colis",
+  "shipViewDetails": "Voir les détails",
+  "shipDocumentsAndReceipt": "Documents et reçu"
 }

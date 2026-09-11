@@ -3089,4 +3089,95 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deliveryOptBuyCta => 'Send the link';
+
+  @override
+  String deliveryStatOnTheWay(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n packages on the way',
+      one: '1 package on the way',
+      zero: 'Nothing on the way',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String deliveryStatDelivered(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n delivered',
+      one: '1 delivered',
+      zero: 'No deliveries yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get deliveryStatTagline => 'Tracked · Pay on delivery';
+
+  @override
+  String get shipBannerOnTheWay => 'Your package is on the way!';
+
+  @override
+  String get shipBannerBooked => 'We\'ve got your request';
+
+  @override
+  String get shipBannerQuoted => 'Your price is ready';
+
+  @override
+  String get shipBannerDelivered => 'Delivered!';
+
+  @override
+  String get shipBannerClosed => 'This request is closed';
+
+  @override
+  String shipPackageIn(String place) {
+    return 'Your package is in $place';
+  }
+
+  @override
+  String shipUpdatedAgo(String when) {
+    return 'Updated $when';
+  }
+
+  @override
+  String get shipJustNow => 'just now';
+
+  @override
+  String shipMinutesAgo(int n) {
+    return '$n min ago';
+  }
+
+  @override
+  String shipHoursAgo(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n hours ago',
+      one: '1 hour ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shipDaysAgo(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n days ago',
+      one: 'yesterday',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shipTrackPackage => 'Track package';
+
+  @override
+  String get shipViewDetails => 'View details';
+
+  @override
+  String get shipDocumentsAndReceipt => 'Documents & receipt';
 }

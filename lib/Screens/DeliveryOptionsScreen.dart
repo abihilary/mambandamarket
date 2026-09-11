@@ -25,9 +25,11 @@ class DeliveryOptionsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.deliveryTitle)),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
+      body: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -80,6 +82,7 @@ class DeliveryOptionsScreen extends StatelessWidget {
               ),
             ),
           ],
+          ),
         ),
       ),
     );
@@ -105,8 +108,10 @@ class _OptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Material(
-      color: scheme.surfaceContainerHighest,
+      color: scheme.surface,
       borderRadius: BorderRadius.circular(20),
+      elevation: 1.5,
+      shadowColor: Colors.black.withValues(alpha: 0.12),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
