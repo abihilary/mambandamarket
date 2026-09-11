@@ -123,7 +123,6 @@ void main() {
       String category = 'elektronik',
       String size = 'tv_flat',
       String sizeCustom = '',
-      String estimatedValue = '1000',
       bool hasPresets = true,
       String from = 'cn',
       String to = 'douala',
@@ -136,7 +135,6 @@ void main() {
           categorySlug: category,
           sizeCode: size,
           sizeCustom: sizeCustom,
-          estimatedValue: estimatedValue,
           categoryHasPresets: hasPresets,
           fromLocation: from,
           toLocation: to,
@@ -148,10 +146,21 @@ void main() {
       expect(filled().isReady, isTrue);
     });
 
-    test('nothing is asked for until a path is chosen', () {
-      // The chooser owns the screen first; listing ten missing fields under it
-      // would be shouting at somebody who has not started.
-      expect(const ShippingDraft().missing, [ShippingField.source]);
+    test('the item step asks only for a path until one is chosen', () {
+      // The route and the phone are always wanted. The item step, though, is
+      // the chooser until a path is picked; listing the category and size
+      // under it would be shouting at somebody who has not started.
+      expect(const ShippingDraft().missing, [
+        ShippingField.from,
+        ShippingField.to,
+        ShippingField.source,
+        ShippingField.phone,
+      ]);
+    });
+
+    test('an empty route cannot be skipped just because no path is chosen', () {
+      expect(const ShippingDraft().missingIn(ShippingStep.route),
+          [ShippingField.from, ShippingField.to]);
     });
 
     test('a link is enough on its own, and so is a description', () {
@@ -188,11 +197,11 @@ void main() {
     test('missing fields come back in the order they appear on screen', () {
       final d = filled(description: '', url: '', category: '', size: '', from: '', to: '', phone: '');
       expect(d.missing, [
+        ShippingField.from,
+        ShippingField.to,
         ShippingField.item,
         ShippingField.category,
         ShippingField.size,
-        ShippingField.from,
-        ShippingField.to,
         ShippingField.phone,
       ]);
     });

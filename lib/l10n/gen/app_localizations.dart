@@ -5443,6 +5443,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{days}d ago'**
   String trendDaysAgo(int days);
+
+  /// No description provided for @deliveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mambanda Delivery'**
+  String get deliveryTitle;
+
+  /// No description provided for @deliveryHeroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Need something moved?'**
+  String get deliveryHeroTitle;
+
+  /// No description provided for @deliveryHeroBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup and delivery across Douala. Tracked live, and you pay the courier when it arrives.'**
+  String get deliveryHeroBody;
+
+  /// No description provided for @deliveryShipCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Ship something'**
+  String get deliveryShipCta;
+
+  /// No description provided for @deliveryCounts.
+  ///
+  /// In en, this message translates to:
+  /// **'{active} active · {past} delivered'**
+  String deliveryCounts(int active, int past);
+
+  /// No description provided for @deliveryNoShipmentsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No shipments yet'**
+  String get deliveryNoShipmentsYet;
+
+  /// No description provided for @deliveryTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Tracked · Pay on delivery'**
+  String get deliveryTagline;
+
+  /// No description provided for @deliveryOptionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What do you want to do?'**
+  String get deliveryOptionsTitle;
+
+  /// No description provided for @deliveryOptionsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how you want to use our delivery service.'**
+  String get deliveryOptionsBody;
+
+  /// No description provided for @deliveryOptPurchaseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Deliver my purchase'**
+  String get deliveryOptPurchaseTitle;
+
+  /// No description provided for @deliveryOptPurchaseBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Bought something on Mambanda? We\'ll bring it to you.'**
+  String get deliveryOptPurchaseBody;
+
+  /// No description provided for @deliveryOptPurchaseCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrange delivery'**
+  String get deliveryOptPurchaseCta;
+
+  /// No description provided for @deliveryOptShipTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ship something'**
+  String get deliveryOptShipTitle;
+
+  /// No description provided for @deliveryOptShipBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Need to send an item to someone? Get a price now.'**
+  String get deliveryOptShipBody;
+
+  /// No description provided for @deliveryOptShipCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Get a price'**
+  String get deliveryOptShipCta;
+
+  /// No description provided for @deliveryOptBuyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy & deliver'**
+  String get deliveryOptBuyTitle;
+
+  /// No description provided for @deliveryOptBuyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Found something outside Mambanda? Paste the link and we\'ll fetch it.'**
+  String get deliveryOptBuyBody;
+
+  /// No description provided for @deliveryOptBuyCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Send the link'**
+  String get deliveryOptBuyCta;
 }
 
 class _AppLocalizationsDelegate

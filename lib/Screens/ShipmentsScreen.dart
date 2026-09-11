@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -14,6 +15,11 @@ import '../theme/app_tokens.dart';
 import 'ShippingRequestScreen.dart';
 
 /// Everything somebody has asked us to ship, and where each of it has got to.
+///
+/// The look is the delivery mockup: a dark header, a white sheet with rounded
+/// shoulders, lime segmented tabs. Everything on it comes from the API — the
+/// list, the counts, the ETA, the price, the documents. Nothing here is
+/// invented for the screen to look full.
 class ShipmentsScreen extends StatefulWidget {
   const ShipmentsScreen({super.key});
 
@@ -21,72 +27,18 @@ class ShipmentsScreen extends StatefulWidget {
   State<ShipmentsScreen> createState() => _ShipmentsScreenState();
 }
 
+/// The delivery surfaces share a fixed dark header and a white sheet, in both
+/// app themes — it is the mockup's look, not a themed one, so the sheet's own
+/// text colours are set explicitly rather than read from the scheme.
+const _kInk = Color(0xFF111318);
+const _kInkRaised = Color(0xFF1D1F24);
+const _kSheet = Color(0xFFF9F9F9);
+const _kLime = Color(0xFFC9E505);
+
 class _ShipmentsScreenState extends State<ShipmentsScreen> {
   final _repo = ShippingRepository.instance;
   bool _loading = true;
   bool _past = false;
-
-  late final List<ShippingRequest> _mockActive = [
-    ShippingRequest(
-      id: 'mock_active_1',
-      status: 'in_transit',
-      source: 'external',
-      itemTitle: 'Smartphone',
-      reference: 'MB-48291',
-      fromLocation: 'Edéa',
-      toLocation: 'Bertoua',
-      quotedTotalCents: 500000,
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-      lastEventCode: 'in_transit',
-      lastPlaceName: 'Bafia',
-      etaDaysMin: 0,
-      etaDaysMax: 0,
-      tracking: [
-        TrackingEvent(id: '1', code: 'received', happenedAt: DateTime.now().subtract(const Duration(hours: 5)), note: 'Order confirmed'),
-        TrackingEvent(id: '2', code: 'picked_up', happenedAt: DateTime.now().subtract(const Duration(hours: 4)), note: 'Picked up'),
-        TrackingEvent(id: '3', code: 'in_transit', happenedAt: DateTime.now().subtract(const Duration(minutes: 12)), note: 'In transit', placeName: 'Bafia'),
-      ],
-    ),
-  ];
-
-  late final List<ShippingRequest> _mockDelivered = [
-    ShippingRequest(
-      id: 'mock_delivered_1',
-      status: 'delivered',
-      source: 'external',
-      itemTitle: 'Laptop',
-      reference: 'MB-48210',
-      fromLocation: 'Yaoundé',
-      toLocation: 'Douala',
-      quotedTotalCents: 3500000,
-      deliveredAt: DateTime.now().subtract(const Duration(days: 3)),
-      tracking: [
-        TrackingEvent(id: '4', code: 'delivered', happenedAt: DateTime.now().subtract(const Duration(days: 3)), note: 'Delivered on Aug 10, 2026'),
-      ],
-    ),
-    ShippingRequest(
-      id: 'mock_delivered_2',
-      status: 'delivered',
-      source: 'external',
-      itemTitle: 'Tablet',
-      reference: 'MB-48211',
-      fromLocation: 'Douala',
-      toLocation: 'Buea',
-      quotedTotalCents: 1500000,
-      deliveredAt: DateTime.now().subtract(const Duration(days: 5)),
-    ),
-    ShippingRequest(
-      id: 'mock_delivered_3',
-      status: 'delivered',
-      source: 'external',
-      itemTitle: 'Monitor',
-      reference: 'MB-48212',
-      fromLocation: 'Kribi',
-      toLocation: 'Yaoundé',
-      quotedTotalCents: 2000000,
-      deliveredAt: DateTime.now().subtract(const Duration(days: 7)),
-    ),
-  ];
 
   @override
   void initState() {
@@ -111,40 +63,35 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF111318), // Dark header background
+      backgroundColor: _kInk,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF111318),
+        backgroundColor: _kInk,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'My Shipments',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        title: Text(
+          l10n.shipMyShipments,
+          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
       ),
       body: Container(
         decoration: const BoxDecoration(
-          color: Color(0xFFF9F9F9), // Light body background
+          color: _kSheet,
           borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
         ),
         child: ValueListenableBuilder<List<ShippingRequest>>(
           valueListenable: _repo.shipments,
-          builder: (context, live, _) {
-            // Force include mock data for verification during simulation
-            final all = [..._mockActive, ..._mockDelivered, ...live];
-
-            if (_loading && live.isEmpty && all.isEmpty) {
+          builder: (context, all, _) {
+            if (_loading && all.isEmpty) {
               return const Center(child: CircularProgressIndicator());
             }
 
             final activeCount = all.where((s) => !s.isFinished).length;
-            final deliveredCount = all.where((s) => s.isFinished).length;
-
+            final pastCount = all.length - activeCount;
             final items = all.where((s) => s.isFinished == _past).toList(growable: false);
 
             return Column(
@@ -154,21 +101,21 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1D1F24),
+                      color: _kInkRaised,
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Row(
                       children: [
                         Expanded(
                           child: _TabChip(
-                            label: 'Active ($activeCount)',
+                            label: '${l10n.shipTabActive} ($activeCount)',
                             selected: !_past,
                             onTap: () => setState(() => _past = false),
                           ),
                         ),
                         Expanded(
                           child: _TabChip(
-                            label: 'Delivered ($deliveredCount)',
+                            label: '${l10n.shipTabPast} ($pastCount)',
                             selected: _past,
                             onTap: () => setState(() => _past = true),
                           ),
@@ -185,31 +132,28 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
                             padding: const EdgeInsets.all(32),
                             children: [
                               const SizedBox(height: 48),
-                              Icon(Icons.local_shipping_outlined,
-                                  size: 48, color: scheme.onSurfaceVariant),
+                              Icon(Icons.local_shipping_outlined, size: 48, color: Colors.grey[500]),
                               const SizedBox(height: 12),
-                              Text(_past ? l10n.shipNonePast : l10n.shipNoneActive,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              Text(
+                                _past ? l10n.shipNonePast : l10n.shipNoneActive,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                              ),
                             ],
                           )
                         : ListView.separated(
-                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                            padding: const EdgeInsets.fromLTRB(0, 8, 0, 96),
                             itemCount: items.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 16),
-                            itemBuilder: (context, i) => _ShipmentCardDesign(
+                            separatorBuilder: (_, _) => const SizedBox(height: 16),
+                            itemBuilder: (context, i) => _ShipmentCard(
                               shipment: items[i],
-                              onTap: () {
-                                final s = items[i];
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => ShipmentDetailScreen(
-                                        id: s.id,
-                                        mockRequest: s.id.startsWith('mock') ? s : null,
-                                      )),
-                                );
-                              },
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ShipmentDetailScreen(id: items[i].id),
+                                ),
+                              ),
                             ),
                           ),
                   ),
@@ -231,11 +175,10 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
 }
 
 class _TabChip extends StatelessWidget {
+  const _TabChip({required this.label, required this.selected, required this.onTap});
   final String label;
   final bool selected;
   final VoidCallback onTap;
-
-  const _TabChip({required this.label, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -244,7 +187,7 @@ class _TabChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFC9E505) : Colors.transparent,
+          color: selected ? _kLime : Colors.transparent,
           borderRadius: BorderRadius.circular(30),
         ),
         child: Text(
@@ -261,16 +204,59 @@ class _TabChip extends StatelessWidget {
   }
 }
 
-class _ShipmentCardDesign extends StatelessWidget {
+/// A shipment's title: what they called it, else how they described it, else
+/// its reference — never a made-up word.
+String _titleOf(ShippingRequest s) {
+  final title = s.itemTitle?.trim();
+  if (title != null && title.isNotEmpty) return title;
+  final desc = s.itemDescription?.trim();
+  if (desc != null && desc.isNotEmpty) return desc;
+  return s.displayRef;
+}
+
+String _etaLine(AppLocalizations l10n, EtaWindow eta) => switch (eta.kind) {
+      EtaKind.late => l10n.shipArrivingLate,
+      EtaKind.today => l10n.shipArrivingToday,
+      EtaKind.range => l10n.shipArrivingIn(
+          eta.minDays == eta.maxDays
+              ? l10n.shipEtaDaysOne(eta.maxDays)
+              : eta.minDays == 0
+                  ? l10n.shipEtaUpTo(eta.maxDays)
+                  : l10n.shipEtaDays(eta.minDays, eta.maxDays),
+        ),
+    };
+
+/// `9 Sept, 23:01` in the phone's language — not a hard-coded English month.
+String _when(BuildContext context, DateTime at) {
+  final locale = Localizations.localeOf(context).toString();
+  return DateFormat.MMMd(locale).add_Hm().format(at.toLocal());
+}
+
+class _ShipmentCard extends StatelessWidget {
+  const _ShipmentCard({required this.shipment, required this.onTap});
   final ShippingRequest shipment;
   final VoidCallback onTap;
-
-  const _ShipmentCardDesign({required this.shipment, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final statusColor = shipment.status == 'delivered' ? Colors.green : Colors.orange;
+    final s = shipment;
+    final delivered = s.status == 'delivered';
+    final statusColor = delivered
+        ? Colors.green
+        : s.isFinished
+            ? Colors.grey
+            : Colors.orange;
+    final eta = s.isFinished ? null : s.eta();
+    final price = s.codPrice;
+
+    // The one line under the route: when it is coming, or when it came.
+    String? whenLine;
+    if (delivered && s.deliveredAt != null) {
+      whenLine = '${shippingStatusLabel(l10n, s.status)} · ${_when(context, s.deliveredAt!)}';
+    } else if (eta != null) {
+      whenLine = _etaLine(l10n, eta);
+    }
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -280,7 +266,7 @@ class _ShipmentCardDesign extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -291,7 +277,6 @@ class _ShipmentCardDesign extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Item Image
               Container(
                 width: 80,
                 height: 80,
@@ -299,17 +284,10 @@ class _ShipmentCardDesign extends StatelessWidget {
                   color: Colors.grey[100],
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: shipment.id.startsWith('mock')
-                      ? Image.network(
-                          shipment.itemTitle == 'Smartphone'
-                              ? 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=200'
-                              : 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=200',
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(Icons.inventory_2, color: Colors.grey),
-                        )
-                      : const Icon(Icons.inventory_2, color: Colors.grey),
+                child: Icon(
+                  delivered ? Icons.inventory_2 : Icons.local_shipping_outlined,
+                  color: Colors.grey[500],
+                  size: 32,
                 ),
               ),
               const SizedBox(width: 16),
@@ -321,32 +299,37 @@ class _ShipmentCardDesign extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          shipment.displayRef,
-                          style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
+                          s.displayRef,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.bold,
+                            fontFeatures: [FontFeature.tabularFigures()],
+                          ),
                         ),
-                        Icon(
-                          shipment.status == 'delivered' ? Icons.more_vert : Icons.chevron_right,
-                          color: Colors.grey,
-                          size: 20,
-                        ),
+                        const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
                       ],
                     ),
                     Text(
-                      shipment.itemTitle ?? shipment.itemDescription ?? 'Package',
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+                      _titleOf(s),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w800, fontSize: 18, color: Colors.black),
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
                         Icon(
-                          shipment.status == 'delivered' ? Icons.check_circle : Icons.local_shipping,
+                          delivered ? Icons.check_circle : Icons.local_shipping,
                           color: statusColor,
                           size: 14,
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          shippingStatusLabel(l10n, shipment.status),
-                          style: TextStyle(color: statusColor, fontSize: 13, fontWeight: FontWeight.bold),
+                          shippingStatusLabel(l10n, s.status),
+                          style: TextStyle(
+                              color: statusColor, fontSize: 13, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -355,54 +338,57 @@ class _ShipmentCardDesign extends StatelessWidget {
                       children: [
                         const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
                         const SizedBox(width: 4),
-                        Text(
-                          '${shipment.fromLocation} → ${shipment.toLocation}',
-                          style: const TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.w500),
+                        Expanded(
+                          child: Text(
+                            '${s.fromLocation} → ${s.toLocation}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                fontSize: 13, color: Colors.black87, fontWeight: FontWeight.w500),
+                          ),
                         ),
                       ],
                     ),
-                    if (shipment.status != 'delivered') ...[
+                    if (whenLine != null) ...[
                       const SizedBox(height: 4),
-                      Text(
-                        'Arriving: Aug 16, 02:00 – 05:00 PM',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
-                    ] else ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Delivered on Aug 10, 2026',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
+                      Text(whenLine, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                     ],
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text(
-                shipment.codPrice ?? 'FCFA 0',
-                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
-              ),
-            ],
-          ),
+          if (price != null) ...[
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  delivered ? l10n.shipCollected(price) : l10n.shipPayOnDelivery,
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+                Text(
+                  price,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w900, fontSize: 18, color: Colors.black),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: onTap,
               style: ElevatedButton.styleFrom(
-                backgroundColor: shipment.status == 'delivered' ? Colors.grey[100] : const Color(0xFFC9E505),
-                foregroundColor: shipment.status == 'delivered' ? Colors.black87 : Colors.black,
+                backgroundColor: s.isFinished ? Colors.grey[100] : _kLime,
+                foregroundColor: Colors.black,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
               child: Text(
-                shipment.status == 'delivered' ? 'View Details' : 'Track Package →',
+                l10n.shipViewTracking,
                 style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
             ),
@@ -413,14 +399,21 @@ class _ShipmentCardDesign extends StatelessWidget {
   }
 }
 
+// ── Detail ──────────────────────────────────────────────────────────────────
+
 class ShipmentDetailScreen extends StatefulWidget {
-  const ShipmentDetailScreen({super.key, required this.id, this.mockRequest});
+  const ShipmentDetailScreen({super.key, required this.id});
   final String id;
-  final ShippingRequest? mockRequest;
 
   @override
   State<ShipmentDetailScreen> createState() => _ShipmentDetailScreenState();
 }
+
+/// The stops a Douala delivery goes through, in order. Real events are shown
+/// as they happen; the stops not reached yet are drawn greyed so the customer
+/// can see what is still to come — that is the mockup's "future steps", made
+/// from the actual journey rather than invented dates.
+const _kJourney = ['received', 'picked_up', 'in_transit', 'out_for_delivery', 'delivered'];
 
 class _ShipmentDetailScreenState extends State<ShipmentDetailScreen> {
   ShippingRequest? _shipment;
@@ -433,28 +426,8 @@ class _ShipmentDetailScreenState extends State<ShipmentDetailScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.mockRequest != null) {
-      _shipment = widget.mockRequest;
-      _loading = false;
-      _docsLoading = false;
-      _docs = [
-        ShippingDocument(
-          kind: 'confirmation',
-          number: '${widget.mockRequest!.reference}-CONF',
-          url: Uri.parse('https://example.com/doc1.pdf'),
-          createdAt: DateTime.now().subtract(const Duration(days: 1)),
-        ),
-        ShippingDocument(
-          kind: 'receipt',
-          number: '${widget.mockRequest!.reference}-RECT',
-          url: Uri.parse('https://example.com/doc2.pdf'),
-          createdAt: DateTime.now(),
-        ),
-      ];
-    } else {
-      ShippingRepository.instance.pulse.addListener(_load);
-      _load();
-    }
+    ShippingRepository.instance.pulse.addListener(_load);
+    _load();
   }
 
   @override
@@ -466,19 +439,24 @@ class _ShipmentDetailScreenState extends State<ShipmentDetailScreen> {
   Future<void> _load() async {
     try {
       final shipment = await ShippingRepository.instance.detail(widget.id);
-      if (mounted) setState(() {
-        _shipment = shipment;
-        _loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _shipment = shipment;
+          _loading = false;
+        });
+      }
     } catch (_) {
       if (mounted) setState(() => _loading = false);
     }
+    // Separately, so a document hiccup never hides the shipment itself.
     try {
       final docs = await ShippingRepository.instance.documents(widget.id);
-      if (mounted) setState(() {
-        _docs = docs;
-        _docsLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _docs = docs;
+          _docsLoading = false;
+        });
+      }
     } catch (_) {
       if (mounted) setState(() => _docsLoading = false);
     }
@@ -491,35 +469,38 @@ class _ShipmentDetailScreenState extends State<ShipmentDetailScreen> {
 
   Future<void> _accept() async {
     if (_accepting) return;
+    final l10n = context.l10n;
     setState(() => _accepting = true);
     try {
       await ShippingRepository.instance.accept(widget.id);
-      _snack(context.l10n.shipAccepted);
+      _snack(l10n.shipAccepted);
       await _load();
       unawaited(ShippingRepository.instance.refreshMine());
     } catch (_) {
-      _snack(context.l10n.shipAcceptFailed);
+      _snack(l10n.shipAcceptFailed);
     } finally {
       if (mounted) setState(() => _accepting = false);
     }
   }
 
   Future<void> _openDoc(ShippingDocument doc) async {
+    final l10n = context.l10n;
     final ok = await launchUrl(doc.url, mode: LaunchMode.externalApplication);
-    if (!ok) _snack(context.l10n.shipDocOpenFailed);
+    if (!ok) _snack(l10n.shipDocOpenFailed);
   }
 
   Future<void> _shareDoc(ShippingDocument doc) async {
     if (_sharing != null) return;
+    final l10n = context.l10n;
     setState(() => _sharing = doc.number);
     try {
       final file = await ShippingRepository.instance.documentFile(doc);
-      await Share.shareXFiles(
-        [XFile(file.path, mimeType: 'application/pdf', name: '${doc.number}.pdf')],
+      await SharePlus.instance.share(ShareParams(
+        files: [XFile(file.path, mimeType: 'application/pdf', name: '${doc.number}.pdf')],
         subject: doc.number,
-      );
+      ));
     } catch (_) {
-      _snack(context.l10n.shipDocOpenFailed);
+      _snack(l10n.shipDocOpenFailed);
     } finally {
       if (mounted) setState(() => _sharing = null);
     }
@@ -527,285 +508,261 @@ class _ShipmentDetailScreenState extends State<ShipmentDetailScreen> {
 
   Future<void> _openMap() async {
     final s = _shipment;
-    if (s == null || !s.hasPosition) return;
-    if (await launchUrl(mapUriFor(s.lastLat!, s.lastLng!), mode: LaunchMode.externalApplication)) return;
+    if (s == null) return;
+    if (!s.hasPosition) {
+      _snack(context.l10n.shipNoTrackingYet);
+      return;
+    }
+    if (await launchUrl(mapUriFor(s.lastLat!, s.lastLng!), mode: LaunchMode.externalApplication)) {
+      return;
+    }
     await launchUrl(webMapUriFor(s.lastLat!, s.lastLng!), mode: LaunchMode.externalApplication);
   }
 
   Future<void> _openChat() async {
     final id = _shipment?.conversationId;
     if (id == null) return;
-    final thread = ChatRepository.instance.threads.value
-        .where((t) => t.id == id)
-        .firstOrNull;
+    var thread = ChatRepository.instance.threads.value.where((t) => t.id == id).firstOrNull;
     if (thread == null) {
       await ChatRepository.instance.refresh();
       if (!mounted) return;
+      thread = ChatRepository.instance.threads.value.where((t) => t.id == id).firstOrNull;
     }
-    final found = ChatRepository.instance.threads.value
-        .where((t) => t.id == id)
-        .firstOrNull;
-    if (found == null || !mounted) return;
+    if (thread == null || !mounted) return;
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => ChatRoomScreen(conversation: found)),
+      MaterialPageRoute(builder: (_) => ChatRoomScreen(conversation: thread!)),
     );
+  }
+
+  /// The timeline rows: every real event, then whichever canonical stops have
+  /// not happened yet. A brand-new request with no events still shows "we
+  /// have the request" — its creation is a real moment, not a placeholder.
+  List<Widget> _timeline(BuildContext context, ShippingRequest s) {
+    final l10n = context.l10n;
+    final events = [...s.tracking]..sort((a, b) => a.happenedAt.compareTo(b.happenedAt));
+    if (events.isEmpty && s.createdAt != null) {
+      events.add(TrackingEvent(id: 'created', code: 'received', happenedAt: s.createdAt!));
+    }
+    final done = s.isFinished;
+
+    // How far along the canonical journey the furthest real event sits.
+    var reached = -1;
+    for (final e in events) {
+      final i = _kJourney.indexOf(e.code);
+      if (i > reached) reached = i;
+    }
+    final pending = done ? const <String>[] : _kJourney.skip(reached + 1).toList();
+
+    final eta = done ? null : s.eta();
+    final rows = <Widget>[];
+    for (var i = 0; i < events.length; i++) {
+      final e = events[i];
+      final latest = i == events.length - 1;
+      final where = e.where;
+      rows.add(_TimelineRow(
+        title: trackingLabel(l10n, e),
+        subtitle: where == null
+            ? _when(context, e.happenedAt)
+            : '${_when(context, e.happenedAt)} · $where',
+        state: latest && !done ? _StepState.active : _StepState.done,
+        isLast: latest && pending.isEmpty,
+        onMap: latest && e.hasPosition
+            ? () => launchUrl(mapUriFor(e.lat!, e.lng!), mode: LaunchMode.externalApplication)
+            : null,
+      ));
+    }
+    for (var i = 0; i < pending.length; i++) {
+      final code = pending[i];
+      rows.add(_TimelineRow(
+        title: trackingLabel(l10n, TrackingEvent(id: code, code: code, happenedAt: DateTime.now())),
+        subtitle: code == 'delivered' && eta != null ? _etaLine(l10n, eta) : '',
+        state: _StepState.pending,
+        isLast: i == pending.length - 1,
+      ));
+    }
+    return rows;
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
     final s = _shipment;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF111318), // Dark header
+      backgroundColor: _kInk,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF111318),
+        backgroundColor: _kInk,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Track Shipment', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        title: Text(
+          s != null && s.displayRef.isNotEmpty ? s.displayRef : l10n.shipTrackingTitle,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            fontFeatures: [FontFeature.tabularFigures()],
+          ),
+        ),
       ),
       body: _loading && s == null
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : s == null
-              ? Center(child: Text(l10n.shipFailed))
+              ? Center(child: Text(l10n.shipFailed, style: const TextStyle(color: Colors.white)))
               : Container(
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
                   ),
                   child: RefreshIndicator(
-                    onRefresh: () => widget.mockRequest != null ? Future.value() : _load(),
+                    onRefresh: _load,
                     child: ListView(
                       padding: EdgeInsets.zero,
                       children: [
-                        // 1. Banner Header
-                        Container(
-                          width: double.infinity,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF111318),
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                        _Banner(shipment: s),
+                        if (s.isQuotePending)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                            child: _AcceptQuotePanel(
+                                shipment: s, busy: _accepting, onAccept: _accept),
                           ),
-                          child: Stack(
-                            children: [
-                              // Background Illustration
-                              Positioned.fill(
-                                child: Opacity(
-                                  opacity: 0.6,
-                                  child: ClipRRect(
-                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-                                    child: Image.network(
-                                      'https://images.unsplash.com/photo-1519003722824-194d4455a60c?w=800&auto=format&fit=crop&q=60',
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => const SizedBox(),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              // Gradient Overlay
-                              Positioned.fill(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        Colors.black.withOpacity(0.4),
-                                        const Color(0xFF111318),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Your package is on the way!',
-                                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '${s.fromLocation} → ${s.toLocation}',
-                                      style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                        if (s.codPrice != null)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                            child: _CodBanner(shipment: s),
                           ),
-                        ),
-
-                        // 2. Timeline
                         Padding(
                           padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
-                          child: Column(
-                            children: [
-                              if (s.tracking.isEmpty)
-                                Text(l10n.shipNoTrackingYet, style: TextStyle(color: scheme.onSurfaceVariant))
-                              else
-                                ...List.generate(s.tracking.length + 2, (index) {
-                                  // Mocking some future steps for Image 2 parity
-                                  if (index < s.tracking.length) {
-                                    final event = s.tracking[index];
-                                    final isTransit = event.code == 'in_transit';
-                                    return _TimelineRowDesign(
-                                      event: event,
-                                      isLatest: index == s.tracking.length - 1,
-                                      isLast: false,
-                                      isCompleted: !isTransit,
-                                      isActive: isTransit,
-                                    );
-                                  } else if (index == s.tracking.length) {
-                                    return const _TimelineRowDesignMock(
-                                      title: 'Arriving today',
-                                      subtitle: 'Aug 16, 02:00 – 05:00 PM',
-                                      isLatest: false,
-                                      isLast: false,
-                                      isCompleted: false,
-                                    );
-                                  } else {
-                                    return const _TimelineRowDesignMock(
-                                      title: 'Delivered',
-                                      subtitle: 'Pending',
-                                      isLatest: false,
-                                      isLast: true,
-                                      isCompleted: false,
-                                    );
-                                  }
-                                }),
-                            ],
+                          child: Column(children: _timeline(context, s)),
+                        ),
+                        if (s.lastSeen != null) ...[
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 24),
+                            child: Divider(),
                           ),
-                        ),
-
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 24),
-                          child: Divider(),
-                        ),
-
-                        // 3. Current Location Card
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Current location', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 12),
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF9F9F9),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: Colors.green.withOpacity(0.1)),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFC9E505).withOpacity(0.1),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(Icons.local_shipping, color: Colors.green, size: 24),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Your package is in ${s.lastSeen ?? 'transit'}',
-                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                                          ),
-                                          const Text(
-                                            'Updated 12 min ago',
-                                            style: TextStyle(color: Colors.grey, fontSize: 11),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Container(
-                                      width: 80,
-                                      height: 50,
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey[200],
-                                        borderRadius: BorderRadius.circular(12),
-                                        image: const DecorationImage(
-                                          image: NetworkImage('https://static-maps.yandex.ru/1.x/?lang=en_US&ll=11.5,3.8&z=10&l=map&size=160,100'),
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        if (_docs.isNotEmpty) ...[
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Documents & Receipt', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 16),
-                                for (final doc in _docs)
-                                  _DocumentRow(
-                                    doc: doc,
-                                    busy: _sharing == doc.number,
-                                    onOpen: () => _openDoc(doc),
-                                    onShare: () => _shareDoc(doc),
-                                  ),
-                              ],
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                            child: _LocationCard(shipment: s, onOpen: _openMap),
                           ),
                         ],
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: _Documents(
+                            docs: _docs,
+                            loading: _docsLoading,
+                            sharing: _sharing,
+                            onOpen: _openDoc,
+                            onShare: _shareDoc,
+                          ),
+                        ),
                         const SizedBox(height: 120),
                       ],
                     ),
                   ),
                 ),
-      bottomNavigationBar: Container(
-        color: Colors.white,
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 30),
-        child: Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: _openChat,
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(0, 56),
-                  side: BorderSide(color: Colors.green.withOpacity(0.3)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
-                icon: const Icon(Icons.chat_bubble_outline, size: 20),
-                label: const Text('Chat with courier', style: TextStyle(fontWeight: FontWeight.bold)),
+      bottomNavigationBar: s == null
+          ? null
+          : Container(
+              color: Colors.white,
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 30),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: s.conversationId == null ? null : _openChat,
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 56),
+                        foregroundColor: Colors.black,
+                        side: BorderSide(color: Colors.green.withValues(alpha: 0.3)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      icon: const Icon(Icons.chat_bubble_outline, size: 20),
+                      label: Text(l10n.shipChatAbout,
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _openMap,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _kLime,
+                        foregroundColor: Colors.black,
+                        minimumSize: const Size(0, 56),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      icon: const Icon(Icons.map_outlined, size: 20),
+                      label: Text(l10n.shipOpenInMaps,
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: _openMap,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFC9E505),
-                  foregroundColor: Colors.black,
-                  minimumSize: const Size(0, 56),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
-                icon: const Icon(Icons.map_outlined, size: 20),
-                label: const Text('Track on map', style: TextStyle(fontWeight: FontWeight.bold)),
+    );
+  }
+}
+
+/// The dark banner under the app bar: what is happening, and the route. The
+/// backdrop is the brand mark from the bundle — nothing fetched over the
+/// network to draw a header.
+class _Banner extends StatelessWidget {
+  const _Banner({required this.shipment});
+  final ShippingRequest shipment;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final s = shipment;
+    final eta = s.isFinished ? null : s.eta();
+    final headline = eta != null ? _etaLine(l10n, eta) : shippingStatusLabel(l10n, s.status);
+
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: _kInk,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -20,
+              top: -10,
+              child: Opacity(
+                opacity: 0.08,
+                child: Image.asset('assets/brand/mark.png', width: 160, height: 160),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    headline,
+                    style: const TextStyle(
+                        fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${s.fromLocation} → ${s.toLocation}',
+                    style: const TextStyle(
+                        color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _titleOf(s),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                ],
               ),
             ),
           ],
@@ -815,96 +772,264 @@ class _ShipmentDetailScreenState extends State<ShipmentDetailScreen> {
   }
 }
 
-class _TimelineRowDesign extends StatelessWidget {
-  const _TimelineRowDesign({
-    required this.event,
-    required this.isLatest,
-    required this.isLast,
-    this.isCompleted = true,
-    this.isActive = false,
-  });
-
-  final TrackingEvent event;
-  final bool isLatest;
-  final bool isLast;
-  final bool isCompleted;
-  final bool isActive;
+/// What is paid at the door — or, once it has been, what was.
+class _CodBanner extends StatelessWidget {
+  const _CodBanner({required this.shipment});
+  final ShippingRequest shipment;
 
   @override
   Widget build(BuildContext context) {
-    return _BaseTimelineRow(
-      title: trackingLabel(context.l10n, event),
-      subtitle: _when(event.happenedAt),
-      isLatest: isLatest,
-      isLast: isLast,
-      isCompleted: isCompleted,
-      isActive: isActive,
-    );
-  }
-
-  String _when(DateTime at) {
-    final local = at.toLocal();
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return '${months[local.month - 1]} ${local.day}, ${local.hour}:${local.minute.toString().padLeft(2, '0')}';
-  }
-}
-
-class _TimelineRowDesignMock extends StatelessWidget {
-  const _TimelineRowDesignMock({
-    required this.title,
-    required this.subtitle,
-    required this.isLatest,
-    required this.isLast,
-    required this.isCompleted,
-  });
-
-  final String title;
-  final String subtitle;
-  final bool isLatest;
-  final bool isLast;
-  final bool isCompleted;
-
-  @override
-  Widget build(BuildContext context) {
-    return _BaseTimelineRow(
-      title: title,
-      subtitle: subtitle,
-      isLatest: isLatest,
-      isLast: isLast,
-      isCompleted: isCompleted,
+    final l10n = context.l10n;
+    final price = shipment.codPrice!;
+    final delivered = shipment.status == 'delivered';
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _kLime.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Icon(delivered ? Icons.check_circle_outline : Icons.payments_outlined,
+              color: Colors.black87),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  delivered ? l10n.shipCollected(price) : l10n.shipCodBannerTitle(price),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w800, fontSize: 15, color: Colors.black),
+                ),
+                if (!delivered)
+                  Text(l10n.shipCodBannerBody,
+                      style: TextStyle(fontSize: 12, color: Colors.grey[700])),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _BaseTimelineRow extends StatelessWidget {
-  const _BaseTimelineRow({
+/// A price the desk set by hand, waiting for a yes. This is the whole manual
+/// path: without it a request the rate card could not price never moves.
+class _AcceptQuotePanel extends StatelessWidget {
+  const _AcceptQuotePanel({required this.shipment, required this.busy, required this.onAccept});
+  final ShippingRequest shipment;
+  final bool busy;
+  final VoidCallback onAccept;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final until = shipment.quoteExpiresAt?.toLocal();
+    final locale = Localizations.localeOf(context).toString();
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _kLime, width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.shipNewPriceTitle(shipment.quotedPrice ?? ''),
+              style: const TextStyle(
+                  fontWeight: FontWeight.w800, fontSize: 16, color: Colors.black)),
+          const SizedBox(height: 4),
+          Text(l10n.shipNewPriceBody, style: TextStyle(fontSize: 13, color: Colors.grey[700])),
+          if (until != null)
+            Text(l10n.shipNewPriceUntil(DateFormat.yMd(locale).format(until)),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: busy ? null : onAccept,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _kLime,
+              foregroundColor: Colors.black,
+              elevation: 0,
+              minimumSize: const Size(double.infinity, 48),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+            child: busy
+                ? const SizedBox(
+                    width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                : Text(l10n.shipAcceptPrice, style: const TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Where it was last seen. The map tile is a button that opens the real
+/// coordinates in the phone's maps app — not a static map of somewhere else.
+class _LocationCard extends StatelessWidget {
+  const _LocationCard({required this.shipment, required this.onOpen});
+  final ShippingRequest shipment;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final s = shipment;
+    final at = s.lastEventAt;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.shipCurrentLocation,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _kSheet,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.green.withValues(alpha: 0.1)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: _kLime.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.local_shipping, color: Colors.green, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      s.lastSeen!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black),
+                    ),
+                    if (at != null)
+                      Text(
+                        '${l10n.shipLastSeen} · ${_when(context, at)}',
+                        style: const TextStyle(color: Colors.grey, fontSize: 11),
+                      ),
+                  ],
+                ),
+              ),
+              if (s.hasPosition)
+                Material(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(12),
+                  child: InkWell(
+                    onTap: onOpen,
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      width: 80,
+                      height: 50,
+                      child: Tooltip(
+                        message: l10n.shipOpenInMaps,
+                        child: const Icon(Icons.map_outlined, color: Colors.black54),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Documents extends StatelessWidget {
+  const _Documents({
+    required this.docs,
+    required this.loading,
+    required this.sharing,
+    required this.onOpen,
+    required this.onShare,
+  });
+  final List<ShippingDocument> docs;
+  final bool loading;
+  final String? sharing;
+  final void Function(ShippingDocument) onOpen;
+  final void Function(ShippingDocument) onShare;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final emailedTo = docs.map((d) => d.emailedTo).whereType<String>().firstOrNull;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.shipDocumentsTitle,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+        const SizedBox(height: 16),
+        if (loading && docs.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Center(
+                child: SizedBox(
+                    width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+          )
+        else if (docs.isEmpty)
+          Text(l10n.shipDocNone, style: TextStyle(fontSize: 13, color: Colors.grey[600]))
+        else ...[
+          for (final doc in docs)
+            _DocumentRow(
+              doc: doc,
+              busy: sharing == doc.number,
+              onOpen: () => onOpen(doc),
+              onShare: () => onShare(doc),
+            ),
+          if (emailedTo != null)
+            Text(l10n.shipDocEmailed(emailedTo),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+        ],
+      ],
+    );
+  }
+}
+
+enum _StepState { done, active, pending }
+
+class _TimelineRow extends StatelessWidget {
+  const _TimelineRow({
     required this.title,
     required this.subtitle,
-    required this.isLatest,
+    required this.state,
     required this.isLast,
-    required this.isCompleted,
-    this.isActive = false,
+    this.onMap,
   });
 
   final String title;
   final String subtitle;
-  final bool isLatest;
+  final _StepState state;
   final bool isLast;
-  final bool isCompleted;
-  final bool isActive;
+  final VoidCallback? onMap;
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = const Color(0xFFC9E505);
-    
+    final done = state == _StepState.done;
+    final active = state == _StepState.active;
+    final lit = done || active;
+
     return IntrinsicHeight(
       child: Container(
-        margin: const EdgeInsets.only(bottom: 0),
-        decoration: isActive ? BoxDecoration(
-          color: const Color(0xFFC9E505).withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-        ) : null,
-        padding: isActive ? const EdgeInsets.symmetric(vertical: 12, horizontal: 8) : const EdgeInsets.symmetric(horizontal: 8),
+        decoration: active
+            ? BoxDecoration(
+                color: _kLime.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+              )
+            : null,
+        padding: active
+            ? const EdgeInsets.symmetric(vertical: 12, horizontal: 8)
+            : const EdgeInsets.symmetric(horizontal: 8),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -914,26 +1039,26 @@ class _BaseTimelineRow extends StatelessWidget {
                   width: 24,
                   height: 24,
                   decoration: BoxDecoration(
-                    color: isCompleted ? Colors.green : Colors.white,
+                    color: done ? Colors.green : Colors.white,
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isCompleted ? Colors.green : Colors.grey[300]!,
-                      width: 2,
-                    ),
+                    border: Border.all(color: lit ? Colors.green : Colors.grey[300]!, width: 2),
                   ),
-                  child: isCompleted
+                  child: done
                       ? const Icon(Icons.check, size: 14, color: Colors.white)
-                      : (isActive ? Container(
-                          margin: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
-                        ) : null),
+                      : active
+                          ? Container(
+                              margin: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                  color: Colors.green, shape: BoxShape.circle),
+                            )
+                          : null,
                 ),
                 if (!isLast)
                   Expanded(
                     child: Container(
                       width: 2,
                       margin: const EdgeInsets.symmetric(vertical: 4),
-                      color: isCompleted ? Colors.green : Colors.grey[300],
+                      color: done ? Colors.green : Colors.grey[300],
                     ),
                   ),
               ],
@@ -952,30 +1077,32 @@ class _BaseTimelineRow extends StatelessWidget {
                           Text(
                             title,
                             style: TextStyle(
-                              fontWeight: (isCompleted || isActive) ? FontWeight.bold : FontWeight.w600,
+                              fontWeight: lit ? FontWeight.bold : FontWeight.w600,
                               fontSize: 16,
-                              color: (isCompleted || isActive) ? Colors.black : Colors.grey,
+                              color: lit ? Colors.black : Colors.grey,
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            subtitle,
-                            style: const TextStyle(fontSize: 12, color: Colors.grey),
-                          ),
+                          if (subtitle.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(subtitle,
+                                style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                          ],
                         ],
                       ),
                     ),
-                    if (isActive)
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
+                    if (onMap != null)
+                      Material(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        elevation: 1,
+                        child: InkWell(
+                          onTap: onMap,
                           borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4),
-                          ],
+                          child: const Padding(
+                            padding: EdgeInsets.all(6),
+                            child: Icon(Icons.map_outlined, size: 18, color: Colors.black),
+                          ),
                         ),
-                        child: const Icon(Icons.map_outlined, size: 18, color: Colors.black),
                       ),
                   ],
                 ),
@@ -989,7 +1116,8 @@ class _BaseTimelineRow extends StatelessWidget {
 }
 
 class _DocumentRow extends StatelessWidget {
-  const _DocumentRow({required this.doc, required this.busy, required this.onOpen, required this.onShare});
+  const _DocumentRow(
+      {required this.doc, required this.busy, required this.onOpen, required this.onShare});
   final ShippingDocument doc;
   final bool busy;
   final VoidCallback onOpen;
@@ -998,16 +1126,18 @@ class _DocumentRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.green.withOpacity(0.2)),
+        border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 2)),
         ],
       ),
       child: Row(
@@ -1015,7 +1145,7 @@ class _DocumentRow extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFFC9E505).withOpacity(0.1),
+              color: _kLime.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(Icons.picture_as_pdf_outlined, color: Colors.black),
@@ -1026,7 +1156,8 @@ class _DocumentRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(doc.isReceipt ? l10n.shipDocReceipt : l10n.shipDocConfirmation,
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w800, fontSize: 14, color: Colors.black)),
                 const SizedBox(height: 2),
                 Text(doc.number,
                     style: TextStyle(
@@ -1039,12 +1170,14 @@ class _DocumentRow extends StatelessWidget {
           ),
           TextButton(
             onPressed: onOpen,
-            child: Text(l10n.shipDocOpen, style: const TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(l10n.shipDocOpen,
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
           ),
           busy
               ? const Padding(
                   padding: EdgeInsets.all(12),
-                  child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                  child: SizedBox(
+                      width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
                 )
               : IconButton(
                   onPressed: onShare,

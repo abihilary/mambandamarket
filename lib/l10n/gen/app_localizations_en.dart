@@ -3028,4 +3028,65 @@ class AppLocalizationsEn extends AppLocalizations {
   String trendDaysAgo(int days) {
     return '${days}d ago';
   }
+
+  @override
+  String get deliveryTitle => 'Mambanda Delivery';
+
+  @override
+  String get deliveryHeroTitle => 'Need something moved?';
+
+  @override
+  String get deliveryHeroBody =>
+      'Pickup and delivery across Douala. Tracked live, and you pay the courier when it arrives.';
+
+  @override
+  String get deliveryShipCta => 'Ship something';
+
+  @override
+  String deliveryCounts(int active, int past) {
+    return '$active active · $past delivered';
+  }
+
+  @override
+  String get deliveryNoShipmentsYet => 'No shipments yet';
+
+  @override
+  String get deliveryTagline => 'Tracked · Pay on delivery';
+
+  @override
+  String get deliveryOptionsTitle => 'What do you want to do?';
+
+  @override
+  String get deliveryOptionsBody =>
+      'Choose how you want to use our delivery service.';
+
+  @override
+  String get deliveryOptPurchaseTitle => 'Deliver my purchase';
+
+  @override
+  String get deliveryOptPurchaseBody =>
+      'Bought something on Mambanda? We\'ll bring it to you.';
+
+  @override
+  String get deliveryOptPurchaseCta => 'Arrange delivery';
+
+  @override
+  String get deliveryOptShipTitle => 'Ship something';
+
+  @override
+  String get deliveryOptShipBody =>
+      'Need to send an item to someone? Get a price now.';
+
+  @override
+  String get deliveryOptShipCta => 'Get a price';
+
+  @override
+  String get deliveryOptBuyTitle => 'Buy & deliver';
+
+  @override
+  String get deliveryOptBuyBody =>
+      'Found something outside Mambanda? Paste the link and we\'ll fetch it.';
+
+  @override
+  String get deliveryOptBuyCta => 'Send the link';
 }

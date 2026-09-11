@@ -10,7 +10,6 @@ enum ShippingField {
   category,
   size,
   sizeCustom,
-  estimatedValue,
   from,
   to,
   phone,
@@ -40,7 +39,6 @@ class ShippingDraft {
     this.fromLocation = '',
     this.toLocation = '',
     this.contactPhone = '',
-    this.estimatedValue = '',
     this.categoryHasPresets = false,
   });
 
@@ -49,7 +47,6 @@ class ShippingDraft {
   final String productUrl;
   final String description;
   final String categorySlug;
-  final String estimatedValue;
 
   /// A preset's code, or `custom`, or empty when nothing is chosen yet.
   final String sizeCode;
@@ -69,31 +66,40 @@ class ShippingDraft {
   List<ShippingField> get missing {
     final out = <ShippingField>[];
 
-    if (source == null) return [ShippingField.source];
+    // On-screen order: the route comes first now, then the item, then who to
+    // call. Each step's Continue only looks at its own slice (see stepFields),
+    // so the route can never be skipped just because no path is chosen yet.
+    if (fromLocation.trim().isEmpty) out.add(ShippingField.from);
+    if (toLocation.trim().isEmpty) out.add(ShippingField.to);
 
-    if (source == ShippingSource.mambanda) {
-      if (listing == null) out.add(ShippingField.item);
+    if (source == null) {
+      // The chooser owns the item step until a path is picked; listing the
+      // category and size under it would be shouting at somebody who has not
+      // started.
+      out.add(ShippingField.source);
     } else {
-      // A link is enough on its own, and so is a description. "Ship me
-      // something" is not a request, but "ship me this <link>" is.
-      if (productUrl.trim().isEmpty && description.trim().isEmpty) {
-        out.add(ShippingField.item);
+      if (source == ShippingSource.mambanda) {
+        if (listing == null) out.add(ShippingField.item);
+      } else {
+        // A link is enough on its own, and so is a description. "Ship me
+        // something" is not a request, but "ship me this <link>" is.
+        if (productUrl.trim().isEmpty && description.trim().isEmpty) {
+          out.add(ShippingField.item);
+        }
+      }
+
+      if (categorySlug.trim().isEmpty) out.add(ShippingField.category);
+
+      if (categoryHasPresets && sizeCode.trim().isEmpty) {
+        out.add(ShippingField.size);
+      }
+      // Choosing "something else" and saying nothing is the same as choosing
+      // nothing — the server refuses it, so the form should too.
+      if (sizeCode == customSize && sizeCustom.trim().isEmpty) {
+        out.add(ShippingField.sizeCustom);
       }
     }
 
-    if (categorySlug.trim().isEmpty) out.add(ShippingField.category);
-
-    if (categoryHasPresets && sizeCode.trim().isEmpty) {
-      out.add(ShippingField.size);
-    }
-    // Choosing "something else" and saying nothing is the same as choosing
-    // nothing — the server refuses it, so the form should too.
-    if (sizeCode == customSize && sizeCustom.trim().isEmpty) {
-      out.add(ShippingField.sizeCustom);
-    }
-
-    if (fromLocation.trim().isEmpty) out.add(ShippingField.from);
-    if (toLocation.trim().isEmpty) out.add(ShippingField.to);
     if (contactPhone.trim().length < 6) out.add(ShippingField.phone);
 
     return out;
@@ -112,7 +118,6 @@ class ShippingDraft {
     String? fromLocation,
     String? toLocation,
     String? contactPhone,
-    String? estimatedValue,
     bool? categoryHasPresets,
     bool clearListing = false,
   }) =>
@@ -127,7 +132,6 @@ class ShippingDraft {
         fromLocation: fromLocation ?? this.fromLocation,
         toLocation: toLocation ?? this.toLocation,
         contactPhone: contactPhone ?? this.contactPhone,
-        estimatedValue: estimatedValue ?? this.estimatedValue,
         categoryHasPresets: categoryHasPresets ?? this.categoryHasPresets,
       );
 }
@@ -149,7 +153,6 @@ const stepFields = <ShippingStep, List<ShippingField>>{
     ShippingField.category,
     ShippingField.size,
     ShippingField.sizeCustom,
-    ShippingField.estimatedValue,
   ],
   ShippingStep.quote: [],
   ShippingStep.confirm: [ShippingField.phone],

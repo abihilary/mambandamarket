@@ -1339,5 +1339,24 @@
         "type": "int"
       }
     }
-  }
+  },
+  "deliveryTitle": "Mambanda Delivery",
+  "deliveryHeroTitle": "Need something moved?",
+  "deliveryHeroBody": "Pickup and delivery across Douala. Tracked live, and you pay the courier when it arrives.",
+  "deliveryShipCta": "Ship something",
+  "deliveryCounts": "{active} active · {past} delivered",
+  "@deliveryCounts": {"placeholders": {"active": {"type": "int"}, "past": {"type": "int"}}},
+  "deliveryNoShipmentsYet": "No shipments yet",
+  "deliveryTagline": "Tracked · Pay on delivery",
+  "deliveryOptionsTitle": "What do you want to do?",
+  "deliveryOptionsBody": "Choose how you want to use our delivery service.",
+  "deliveryOptPurchaseTitle": "Deliver my purchase",
+  "deliveryOptPurchaseBody": "Bought something on Mambanda? We'll bring it to you.",
+  "deliveryOptPurchaseCta": "Arrange delivery",
+  "deliveryOptShipTitle": "Ship something",
+  "deliveryOptShipBody": "Need to send an item to someone? Get a price now.",
+  "deliveryOptShipCta": "Get a price",
+  "deliveryOptBuyTitle": "Buy & deliver",
+  "deliveryOptBuyBody": "Found something outside Mambanda? Paste the link and we'll fetch it.",
+  "deliveryOptBuyCta": "Send the link"
 }

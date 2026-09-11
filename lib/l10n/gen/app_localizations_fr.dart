@@ -3081,4 +3081,65 @@ class AppLocalizationsFr extends AppLocalizations {
   String trendDaysAgo(int days) {
     return 'il y a $days j';
   }
+
+  @override
+  String get deliveryTitle => 'Mambanda Livraison';
+
+  @override
+  String get deliveryHeroTitle => 'Besoin de faire livrer quelque chose ?';
+
+  @override
+  String get deliveryHeroBody =>
+      'Enlèvement et livraison dans tout Douala. Suivi en direct, et vous payez le livreur à l\'arrivée.';
+
+  @override
+  String get deliveryShipCta => 'Faire livrer';
+
+  @override
+  String deliveryCounts(int active, int past) {
+    return '$active en cours · $past livrés';
+  }
+
+  @override
+  String get deliveryNoShipmentsYet => 'Aucune livraison pour l\'instant';
+
+  @override
+  String get deliveryTagline => 'Suivi en direct · Paiement à la livraison';
+
+  @override
+  String get deliveryOptionsTitle => 'Que souhaitez-vous faire ?';
+
+  @override
+  String get deliveryOptionsBody =>
+      'Choisissez comment utiliser notre service de livraison.';
+
+  @override
+  String get deliveryOptPurchaseTitle => 'Livrer mon achat';
+
+  @override
+  String get deliveryOptPurchaseBody =>
+      'Vous avez acheté sur Mambanda ? Nous vous l\'apportons.';
+
+  @override
+  String get deliveryOptPurchaseCta => 'Organiser la livraison';
+
+  @override
+  String get deliveryOptShipTitle => 'Envoyer un colis';
+
+  @override
+  String get deliveryOptShipBody =>
+      'Vous devez envoyer quelque chose à quelqu\'un ? Obtenez un prix maintenant.';
+
+  @override
+  String get deliveryOptShipCta => 'Voir le prix';
+
+  @override
+  String get deliveryOptBuyTitle => 'Acheter et livrer';
+
+  @override
+  String get deliveryOptBuyBody =>
+      'Trouvé ailleurs que sur Mambanda ? Collez le lien, on s\'occupe du reste.';
+
+  @override
+  String get deliveryOptBuyCta => 'Envoyer le lien';
 }
