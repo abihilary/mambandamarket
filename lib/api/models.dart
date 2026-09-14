@@ -390,6 +390,13 @@ class Profile {
   final String? avatarUrl;
   final String? city;
 
+  /// The language notifications arrive in, when chosen. Null follows the phone.
+  final String? locale;
+
+  /// Offers and news. Transactional notifications ignore this — a parcel that
+  /// moved is the product, not marketing.
+  final bool notifyMarketing;
+
   const Profile({
     required this.id,
     required this.role,
@@ -398,6 +405,8 @@ class Profile {
     this.bio,
     this.avatarUrl,
     this.city,
+    this.locale,
+    this.notifyMarketing = true,
   });
 
   bool get isBusiness => role == 'business';
@@ -416,7 +425,67 @@ class Profile {
         bio: json['bio']?.toString(),
         avatarUrl: json['avatar_url']?.toString(),
         city: json['city']?.toString(),
+        locale: json['locale']?.toString(),
+        notifyMarketing: json['notify_marketing'] != false,
       );
+}
+
+/// One row of the inbox — what the platform told this person, kept so a push
+/// that was swiped away is not gone. `data` is the same map the push carried;
+/// a tap here routes exactly like a tap in the shade.
+class AppNotification {
+  final String id;
+  final String kind;
+  final String title;
+  final String body;
+  final Map<String, String> data;
+  final String? imageUrl;
+  final DateTime? readAt;
+  final DateTime createdAt;
+
+  const AppNotification({
+    required this.id,
+    required this.kind,
+    required this.title,
+    required this.body,
+    required this.data,
+    required this.createdAt,
+    this.imageUrl,
+    this.readAt,
+  });
+
+  bool get isUnread => readAt == null;
+
+  AppNotification markRead() => AppNotification(
+        id: id,
+        kind: kind,
+        title: title,
+        body: body,
+        data: data,
+        createdAt: createdAt,
+        imageUrl: imageUrl,
+        readAt: readAt ?? DateTime.now(),
+      );
+
+  factory AppNotification.fromJson(Map<String, dynamic> json) {
+    final raw = json['data'];
+    final data = <String, String>{};
+    if (raw is Map) {
+      raw.forEach((k, v) {
+        if (v != null) data[k.toString()] = v.toString();
+      });
+    }
+    return AppNotification(
+      id: json['id'].toString(),
+      kind: json['kind']?.toString() ?? 'system',
+      title: json['title']?.toString() ?? '',
+      body: json['body']?.toString() ?? '',
+      data: data,
+      imageUrl: json['image_url']?.toString(),
+      readAt: json['read_at'] == null ? null : DateTime.tryParse(json['read_at'].toString()),
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
+    );
+  }
 }
 
 /// Everything shown on somebody else's profile, from `GET /users/:id`.

@@ -5653,6 +5653,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Documents & receipt'**
   String get shipDocumentsAndReceipt;
+
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationsTitle;
+
+  /// No description provided for @notificationsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing yet. Updates on your deliveries, orders and offers will show up here.'**
+  String get notificationsEmpty;
+
+  /// No description provided for @notificationsMarkAllRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all read'**
+  String get notificationsMarkAllRead;
+
+  /// No description provided for @notificationsOpenError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your notifications.'**
+  String get notificationsOpenError;
+
+  /// No description provided for @notificationsPrefTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Offers & news'**
+  String get notificationsPrefTitle;
+
+  /// No description provided for @notificationsPrefSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Deals, tips and what\'s new. Delivery and order updates always arrive.'**
+  String get notificationsPrefSub;
+
+  /// No description provided for @notificationChannelMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get notificationChannelMessages;
+
+  /// No description provided for @notificationChannelMessagesDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'New messages from buyers and sellers.'**
+  String get notificationChannelMessagesDesc;
+
+  /// No description provided for @notificationChannelShipping.
+  ///
+  /// In en, this message translates to:
+  /// **'Deliveries'**
+  String get notificationChannelShipping;
+
+  /// No description provided for @notificationChannelShippingDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Your parcel\'s status, price and checkpoints.'**
+  String get notificationChannelShippingDesc;
+
+  /// No description provided for @notificationChannelOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders'**
+  String get notificationChannelOrders;
+
+  /// No description provided for @notificationChannelOrdersDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments, shipping and delivery of your orders.'**
+  String get notificationChannelOrdersDesc;
+
+  /// No description provided for @notificationChannelAnnouncements.
+  ///
+  /// In en, this message translates to:
+  /// **'News & offers'**
+  String get notificationChannelAnnouncements;
+
+  /// No description provided for @notificationChannelAnnouncementsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Announcements, deals and messages from Mambanda.'**
+  String get notificationChannelAnnouncementsDesc;
 }
 
 class _AppLocalizationsDelegate

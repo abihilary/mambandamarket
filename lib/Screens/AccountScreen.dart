@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../api/api_client.dart';
 import '../api/auth_service.dart';
 import '../api/config.dart';
 import '../api/models.dart';
@@ -243,6 +244,16 @@ class _AccountScreenState extends State<AccountScreen> {
 
   /// Bottom sheet to pick the app language. "System default" clears the
   /// override so the app follows the device again.
+  Future<void> _setMarketing(BuildContext context, bool value) async {
+    try {
+      await ApiClient.instance.patch('/me', {'notify_marketing': value});
+      await AuthService.instance.refreshMe();
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
   void _pickLanguage(BuildContext context) {
     final l10n = context.l10n;
     final controller = LocaleController.instance;
@@ -597,6 +608,19 @@ class _AccountScreenState extends State<AccountScreen> {
                         subtitle: _themeLabel(context, mode),
                         onTap: () => _pickTheme(context),
                       ),
+                    ),
+                    // Offers and news. The switch the campaigns honour;
+                    // delivery and order updates ignore it, and the subtitle
+                    // says so.
+                    MenuRow(
+                      icon: Icons.notifications_outlined,
+                      title: l10n.notificationsPrefTitle,
+                      subtitle: l10n.notificationsPrefSub,
+                      trailing: Switch.adaptive(
+                        value: profile?.notifyMarketing ?? true,
+                        onChanged: (v) => _setMarketing(context, v),
+                      ),
+                      onTap: () => _setMarketing(context, !(profile?.notifyMarketing ?? true)),
                     ),
                     MenuRow(
                       icon: Icons.lock_outline,

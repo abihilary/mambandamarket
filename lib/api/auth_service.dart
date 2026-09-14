@@ -7,6 +7,7 @@ import 'api_client.dart';
 import 'config.dart';
 import 'remote_config.dart';
 import 'models.dart';
+import 'notification_repository.dart';
 import 'push_service.dart';
 
 /// Where Google sends the user back after consent.
@@ -372,6 +373,7 @@ class AuthService {
     // another account's messages after somebody else signed in on it.
     await PushService.instance.unregister();
     await _client.auth.signOut();
+    NotificationRepository.instance.clear();
     me.value = null;
     needsRoleSelection.value = false;
     pendingOAuthDisplayName = null;

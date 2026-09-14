@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:ui' show PlatformDispatcher;
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -6,10 +8,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-import '../Service/ChatRoomScreen.dart';
-import '../navigation.dart';
+import '../l10n/l10n.dart';
+import '../l10n/locale_controller.dart';
 import 'api_client.dart';
+import 'app_info.dart';
 import 'auth_service.dart';
+import 'notification_repository.dart';
+import 'notification_router.dart';
 import 'repositories.dart';
 
 /// Notifications that reach the app when it is not running.
@@ -29,7 +34,14 @@ class PushService {
   PushService._();
   static final PushService instance = PushService._();
 
-  static const _channelId = 'messages';
+  /// The channels the server addresses. Each is a switch in the phone's
+  /// settings, which is the whole reason there are four and not one: a person
+  /// may want their parcel's progress and not the offers.
+  static const channelMessages = 'messages';
+  static const channelShipping = 'shipping';
+  static const channelOrders = 'orders';
+  static const channelAnnouncements = 'announcements';
+  static const _channels = [channelMessages, channelShipping, channelOrders, channelAnnouncements];
 
   final _local = FlutterLocalNotificationsPlugin();
 
@@ -66,25 +78,19 @@ class PushService {
 
     await _local.initialize(
       settings: const InitializationSettings(
-        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        // A monochrome glyph: Android draws the small icon as a white silhouette,
+        // and the launcher's full-colour mark came out as a blob.
+        android: AndroidInitializationSettings('ic_notification'),
         iOS: DarwinInitializationSettings(),
       ),
       onDidReceiveNotificationResponse: (response) =>
-          _openConversation(response.payload),
+          _openPayload(response.payload),
     );
 
     // Android 8+ drops any notification addressed to a channel that does not
     // exist on the device, silently and with no error anywhere. The server
-    // addresses 'messages', so 'messages' has to be created here first.
-    await _local
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(const AndroidNotificationChannel(
-          _channelId,
-          'Messages',
-          description: 'New messages from buyers and sellers.',
-          importance: Importance.high,
-        ));
+    // addresses these four, so all four have to exist here first.
+    await _createChannels();
 
     _wire();
 
@@ -92,6 +98,47 @@ class PushService {
     // whose phone it is, and it must not outlive the account on it.
     AuthService.instance.isSignedIn.addListener(_onAuthChanged);
     if (AuthService.instance.isSignedIn.value) unawaited(register());
+
+    // A language change is a registration change: the server picks the text
+    // by what the phone said it speaks.
+    LocaleController.instance.locale.addListener(_onLocaleChanged);
+  }
+
+  Future<void> _createChannels() async {
+    final android = _local.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    if (android == null) return;
+    final l10n = l10nNow;
+    final specs = <AndroidNotificationChannel>[
+      AndroidNotificationChannel(channelMessages, l10n.notificationChannelMessages,
+          description: l10n.notificationChannelMessagesDesc, importance: Importance.high),
+      AndroidNotificationChannel(channelShipping, l10n.notificationChannelShipping,
+          description: l10n.notificationChannelShippingDesc, importance: Importance.high),
+      AndroidNotificationChannel(channelOrders, l10n.notificationChannelOrders,
+          description: l10n.notificationChannelOrdersDesc, importance: Importance.high),
+      AndroidNotificationChannel(channelAnnouncements, l10n.notificationChannelAnnouncements,
+          description: l10n.notificationChannelAnnouncementsDesc, importance: Importance.defaultImportance),
+    ];
+    for (final c in specs) {
+      await android.createNotificationChannel(c);
+    }
+  }
+
+  /// What the phone speaks, as the server's two-letter code.
+  static String effectiveLocale() {
+    final chosen = LocaleController.instance.locale.value?.languageCode;
+    final code = chosen ?? PlatformDispatcher.instance.locale.languageCode;
+    return code.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+  }
+
+  void _onLocaleChanged() {
+    // Channel names are shown by the OS in whatever language they were created
+    // with; recreate them so Settings reads in the new one.
+    unawaited(_createChannels());
+    _registered = null;
+    unawaited(register());
+    if (AuthService.instance.isSignedIn.value) {
+      unawaited(ApiClient.instance.patch('/me', {'locale': effectiveLocale()}).catchError((_) => null));
+    }
   }
 
   void _wire() {
@@ -104,7 +151,7 @@ class PushService {
 
     // App was backgrounded and the user tapped the notification.
     FirebaseMessaging.onMessageOpenedApp.listen(
-      (m) => _openConversation(m.data['conversation_id'] as String?),
+      (m) => unawaited(openNotificationTarget(m.data)),
     );
 
     // A rotated token is a token the server no longer has. Without this the
@@ -129,7 +176,7 @@ class PushService {
     final initial = await FirebaseMessaging.instance.getInitialMessage();
     if (initial == null) return;
     if (!await _awaitSession()) return;
-    _openConversation(initial.data['conversation_id'] as String?);
+    await openNotificationTarget(initial.data);
   }
 
   /// Wait, briefly, for a restored session.
@@ -193,9 +240,12 @@ class PushService {
     if (token == _registered) return;
     if (!AuthService.instance.isSignedIn.value) return;
     try {
+      final build = int.tryParse(AppInfo.cached?.buildNumber ?? '');
       await ApiClient.instance.post('/devices', {
         'token': token,
         'platform': defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android',
+        'locale': effectiveLocale(),
+        if (build != null) 'app_build': build,
       });
       _registered = token;
     } catch (e) {
@@ -219,59 +269,76 @@ class PushService {
   }
 
   Future<void> _onForegroundMessage(RemoteMessage message) async {
-    // The badge and the inbox should move whether or not anything is shown.
+    final data = message.data;
+    final type = data['type']?.toString() ?? 'message';
+
+    // The badges should move whether or not anything is shown.
     unawaited(() async {
       try {
-        await ChatRepository.instance.refresh();
+        if (type == 'message') {
+          await ChatRepository.instance.refresh();
+        } else {
+          await NotificationRepository.instance.refreshUnread();
+        }
       } catch (_) {
         // Realtime and the shell's sweep both cover this. Nothing to do.
       }
     }());
 
-    final conversationId = message.data['conversation_id'] as String?;
-    if (conversationId != null && conversationId == activeConversationId) return;
+    final conversationId = data['conversation_id']?.toString();
+    if (type == 'message' && conversationId != null && conversationId == activeConversationId) return;
 
     final notification = message.notification;
     if (notification == null) return;
 
+    final channel = _channels.contains(data['channel']) ? data['channel'].toString() : channelMessages;
+    final collapse = type == 'message' ? (conversationId ?? channel) : (data['id']?.toString() ?? data['campaign_id']?.toString() ?? channel);
+    final image = data['image']?.toString();
+
     await _local.show(
-      id: conversationId.hashCode,
+      id: collapse.hashCode,
       title: notification.title,
       body: notification.body,
-      notificationDetails: const NotificationDetails(
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
-          _channelId,
-          'Messages',
-          importance: Importance.high,
-          priority: Priority.high,
+          channel,
+          _channelName(channel),
+          importance: channel == channelAnnouncements ? Importance.defaultImportance : Importance.high,
+          priority: channel == channelAnnouncements ? Priority.defaultPriority : Priority.high,
+          styleInformation: BigTextStyleInformation(notification.body ?? ''),
         ),
-        iOS: DarwinNotificationDetails(),
+        iOS: const DarwinNotificationDetails(),
       ),
-      payload: conversationId,
+      payload: jsonEncode({...data, if (image != null) 'image': image}),
     );
   }
 
-  /// Open the thread a notification refers to.
-  ///
-  /// The conversation is fetched rather than reconstructed from the payload:
-  /// the notification carries an id and nothing else, deliberately, so the
-  /// listing, the counterparty and the unread count all come back over the
-  /// authenticated call that already knows the read rules.
-  void _openConversation(String? conversationId) {
-    if (conversationId == null || conversationId.isEmpty) return;
-    unawaited(() async {
-      try {
-        final thread = await ChatRepository.instance.thread(conversationId);
-        final navigator = rootNavigatorKey.currentState;
-        if (navigator == null) return;
-        await navigator.push(MaterialPageRoute(
-          builder: (_) => ChatRoomScreen(conversation: thread),
-        ));
-      } catch (e) {
-        // A deleted thread, or a tap while signed out. Landing on the app
-        // rather than an error screen is the right failure here.
-        debugPrint('[push] could not open conversation $conversationId ($e)');
-      }
-    }());
+  String _channelName(String channel) {
+    final l10n = l10nNow;
+    switch (channel) {
+      case channelShipping:
+        return l10n.notificationChannelShipping;
+      case channelOrders:
+        return l10n.notificationChannelOrders;
+      case channelAnnouncements:
+        return l10n.notificationChannelAnnouncements;
+      default:
+        return l10n.notificationChannelMessages;
+    }
+  }
+
+  /// A tap on a notification this app raised itself. The payload is the push's
+  /// data map, as JSON; older builds stored a bare conversation id, which is
+  /// still honoured.
+  void _openPayload(String? payload) {
+    if (payload == null || payload.isEmpty) return;
+    Map<String, dynamic> data;
+    try {
+      final decoded = jsonDecode(payload);
+      data = decoded is Map ? Map<String, dynamic>.from(decoded) : {'type': 'message', 'conversation_id': payload};
+    } catch (_) {
+      data = {'type': 'message', 'conversation_id': payload};
+    }
+    unawaited(openNotificationTarget(data));
   }
 }

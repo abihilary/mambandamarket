@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 // Screens imports
 import '../DashBoards/CreateListingScreen.dart';
 import '../api/auth_service.dart';
+import '../api/notification_repository.dart';
 import '../api/repositories.dart';
 import '../Screens/AccountScreen.dart';
 import '../Screens/ChatInboxScreen.dart';
@@ -50,6 +51,7 @@ class _MainNavigationShellState extends State<MainNavigationShell>
     });
     WidgetsBinding.instance.addObserver(this);
     ChatRepository.instance.startLive();
+    unawaited(NotificationRepository.instance.refreshUnread());
     _startSweep();
   }
 
@@ -73,6 +75,7 @@ class _MainNavigationShellState extends State<MainNavigationShell>
       // has been built — so relying on it alone meant a resume could leave the
       // badge stuck on its pre-background value until the next 45s sweep.
       unawaited(ChatRepository.instance.refresh());
+      unawaited(NotificationRepository.instance.refreshUnread());
       // And ask again whether shipping is open. It is a kill switch, and one
       // that only answers at cold start is a switch that takes days to reach
       // somebody who never fully closes the app — which is most people.
@@ -82,8 +85,7 @@ class _MainNavigationShellState extends State<MainNavigationShell>
       _inboxKey.currentState?.reload();
       _startSweep();
     } else if (state == AppLifecycleState.paused) {
-      // Nothing to poll for while nobody is looking. Push is what reaches a
-      // closed app, and that is not built yet.
+      // Nothing to poll for while nobody is looking; push reaches a closed app.
       _sweep?.cancel();
     }
   }
@@ -98,6 +100,7 @@ class _MainNavigationShellState extends State<MainNavigationShell>
   Future<void> _quietRefresh() async {
     try {
       await ChatRepository.instance.refresh();
+      await NotificationRepository.instance.refreshUnread();
     } catch (_) {
       // Offline, most likely. The next sweep tries again.
     }

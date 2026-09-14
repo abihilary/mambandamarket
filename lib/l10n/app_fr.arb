@@ -1129,5 +1129,19 @@
   "shipDaysAgo": "{n, plural, =1{hier} other{il y a {n} jours}}",
   "shipTrackPackage": "Suivre le colis",
   "shipViewDetails": "Voir les détails",
-  "shipDocumentsAndReceipt": "Documents et reçu"
+  "shipDocumentsAndReceipt": "Documents et reçu",
+  "notificationsTitle": "Notifications",
+  "notificationsEmpty": "Rien pour l'instant. Les nouvelles de vos livraisons, commandes et offres apparaîtront ici.",
+  "notificationsMarkAllRead": "Tout marquer lu",
+  "notificationsOpenError": "Impossible de charger vos notifications.",
+  "notificationsPrefTitle": "Offres et actualités",
+  "notificationsPrefSub": "Bons plans, conseils et nouveautés. Les mises à jour de livraison et de commande arrivent toujours.",
+  "notificationChannelMessages": "Messages",
+  "notificationChannelMessagesDesc": "Nouveaux messages des acheteurs et vendeurs.",
+  "notificationChannelShipping": "Livraisons",
+  "notificationChannelShippingDesc": "Statut, prix et étapes de votre colis.",
+  "notificationChannelOrders": "Commandes",
+  "notificationChannelOrdersDesc": "Paiements, expédition et livraison de vos commandes.",
+  "notificationChannelAnnouncements": "Actualités et offres",
+  "notificationChannelAnnouncementsDesc": "Annonces, bons plans et messages de Mambanda."
 }

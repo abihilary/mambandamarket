@@ -5,4 +5,6 @@
          and the Flutter splash all paint this exact value, which is what makes
          the handoff between the three invisible. -->
     <color name="brand_ground">#07080C</color>
+    <!-- AppColors.lime. Tints the status-bar glyph and the app name line in the shade. -->
+    <color name="notification_accent">#C9E505</color>
 </resources>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The status-bar glyph. Android draws a small icon as a white silhouette
+     over whatever the shade's colour is, so it has to be a flat single-colour
+     shape: the launcher mark, with its lime and its gradient, came out as a
+     white blob. This is the mark's "M" reduced to its two strokes. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M3,20 L3,4 L6.6,4 L12,12.4 L17.4,4 L21,4 L21,20 L17.6,20 L17.6,9.9 L12,18.3 L6.4,9.9 L6.4,20 Z" />
+</vector>

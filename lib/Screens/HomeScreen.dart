@@ -9,6 +9,8 @@ import '../Components/ItemDetailScreen.dart';
 
 // Backend
 import '../api/api_client.dart';
+import '../api/notification_repository.dart';
+import 'NotificationsScreen.dart';
 import '../api/auth_service.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
@@ -431,28 +433,51 @@ class _HomeScreenState extends State<HomeScreen> {
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                      child: ValueListenableBuilder<Me?>(
-                        valueListenable: AuthService.instance.me,
-                        builder: (context, me, _) => Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _greeting(context, me),
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: ValueListenableBuilder<Me?>(
+                              valueListenable: AuthService.instance.me,
+                              builder: (context, me, _) => Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _greeting(context, me),
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    context.l10n.homeGreetingSubtitle,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: scheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              context.l10n.homeGreetingSubtitle,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: scheme.onSurfaceVariant,
+                          ),
+                          // The inbox. Chat has the tab badge; this is
+                          // everything else the platform says to a person.
+                          ValueListenableBuilder<int>(
+                            valueListenable: NotificationRepository.instance.unread,
+                            builder: (context, unread, _) => IconButton(
+                              tooltip: context.l10n.notificationsTitle,
+                              onPressed: () => Navigator.of(context, rootNavigator: true).push(
+                                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                              ),
+                              icon: Badge.count(
+                                count: unread,
+                                isLabelVisible: unread > 0,
+                                child: const Icon(Icons.notifications_none_outlined),
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

@@ -3233,4 +3233,53 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get shipDocumentsAndReceipt => 'Documents et reçu';
+
+  @override
+  String get notificationsTitle => 'Notifications';
+
+  @override
+  String get notificationsEmpty =>
+      'Rien pour l\'instant. Les nouvelles de vos livraisons, commandes et offres apparaîtront ici.';
+
+  @override
+  String get notificationsMarkAllRead => 'Tout marquer lu';
+
+  @override
+  String get notificationsOpenError =>
+      'Impossible de charger vos notifications.';
+
+  @override
+  String get notificationsPrefTitle => 'Offres et actualités';
+
+  @override
+  String get notificationsPrefSub =>
+      'Bons plans, conseils et nouveautés. Les mises à jour de livraison et de commande arrivent toujours.';
+
+  @override
+  String get notificationChannelMessages => 'Messages';
+
+  @override
+  String get notificationChannelMessagesDesc =>
+      'Nouveaux messages des acheteurs et vendeurs.';
+
+  @override
+  String get notificationChannelShipping => 'Livraisons';
+
+  @override
+  String get notificationChannelShippingDesc =>
+      'Statut, prix et étapes de votre colis.';
+
+  @override
+  String get notificationChannelOrders => 'Commandes';
+
+  @override
+  String get notificationChannelOrdersDesc =>
+      'Paiements, expédition et livraison de vos commandes.';
+
+  @override
+  String get notificationChannelAnnouncements => 'Actualités et offres';
+
+  @override
+  String get notificationChannelAnnouncementsDesc =>
+      'Annonces, bons plans et messages de Mambanda.';
 }

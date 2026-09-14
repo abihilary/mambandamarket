@@ -1382,5 +1382,19 @@
   "@shipDaysAgo": {"placeholders": {"n": {"type": "int"}}},
   "shipTrackPackage": "Track package",
   "shipViewDetails": "View details",
-  "shipDocumentsAndReceipt": "Documents & receipt"
+  "shipDocumentsAndReceipt": "Documents & receipt",
+  "notificationsTitle": "Notifications",
+  "notificationsEmpty": "Nothing yet. Updates on your deliveries, orders and offers will show up here.",
+  "notificationsMarkAllRead": "Mark all read",
+  "notificationsOpenError": "Could not load your notifications.",
+  "notificationsPrefTitle": "Offers & news",
+  "notificationsPrefSub": "Deals, tips and what's new. Delivery and order updates always arrive.",
+  "notificationChannelMessages": "Messages",
+  "notificationChannelMessagesDesc": "New messages from buyers and sellers.",
+  "notificationChannelShipping": "Deliveries",
+  "notificationChannelShippingDesc": "Your parcel's status, price and checkpoints.",
+  "notificationChannelOrders": "Orders",
+  "notificationChannelOrdersDesc": "Payments, shipping and delivery of your orders.",
+  "notificationChannelAnnouncements": "News & offers",
+  "notificationChannelAnnouncementsDesc": "Announcements, deals and messages from Mambanda."
 }
