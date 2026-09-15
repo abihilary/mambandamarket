@@ -3,6 +3,7 @@ import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show SystemNavigator;
 
 // Screens imports
 import '../DashBoards/CreateListingScreen.dart';
@@ -79,9 +80,11 @@ class _MainNavigationShellState extends State<MainNavigationShell>
       // And ask again whether shipping is open. It is a kill switch, and one
       // that only answers at cold start is a switch that takes days to reach
       // somebody who never fully closes the app — which is most people.
-      unawaited(ShippingRepository.instance.loadOptions().then((_) {
-        if (mounted) setState(() {});
-      }));
+      unawaited(
+        ShippingRepository.instance.loadOptions().then((_) {
+          if (mounted) setState(() {});
+        }),
+      );
       _inboxKey.currentState?.reload();
       _startSweep();
     } else if (state == AppLifecycleState.paused) {
@@ -135,12 +138,17 @@ class _MainNavigationShellState extends State<MainNavigationShell>
       GlobalKey<ChatInboxScreenState>();
 
   // List of tab views
+  final GlobalKey<HomeScreenState> _homeKey = GlobalKey<HomeScreenState>();
+
+  /// When the back button was last pressed on home, for the double-press exit.
+  DateTime? _lastBackOnHome;
+
   late final List<Widget> _pages = [
-    const HomeScreen(),              // Index 0: Search / Home Feed
-    const FavoritesScreen(),         // Index 1: Favorites
-    const SizedBox.shrink(),         // Index 2: Placeholder for Insert Modal Action
+    HomeScreen(key: _homeKey), // Index 0: Search / Home Feed
+    const FavoritesScreen(), // Index 1: Favorites
+    const SizedBox.shrink(), // Index 2: Placeholder for Insert Modal Action
     ChatInboxScreen(key: _inboxKey), // Index 3: Charts / Messaging
-    const AccountScreen(),           // Index 4: Account
+    const AccountScreen(), // Index 4: Account
   ];
 
   /// Home and Favourites: the two places somebody is looking at things they
@@ -159,17 +167,18 @@ class _MainNavigationShellState extends State<MainNavigationShell>
   /// notification: RefreshIndicator and both feeds are listening too.
   bool _onFeedScroll(ScrollNotification n) {
     if (n.metrics.axis != Axis.vertical) return false;
-    final extended =
-        _shipExtended ? n.metrics.pixels < _shipCollapseAt : n.metrics.pixels < _shipExpandAt;
+    final extended = _shipExtended
+        ? n.metrics.pixels < _shipCollapseAt
+        : n.metrics.pixels < _shipExpandAt;
     if (extended != _shipExtended) setState(() => _shipExtended = extended);
     return false;
   }
 
   Future<void> _openShippingRequest() async {
     if (AuthService.instance.session == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.shipSignInRequired)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.shipSignInRequired)));
       return;
     }
     // Navigate to the new Mabanda Delivery Landing Page
@@ -217,9 +226,41 @@ class _MainNavigationShellState extends State<MainNavigationShell>
     // whatever was true when the app was opened.
     if (index == 3) _inboxKey.currentState?.reload();
 
+    // Home, tapped while on home: top of the feed, reloaded.
+    if (index == 0 && _currentBottomIndex == 0) {
+      unawaited(_homeKey.currentState?.scrollToTopAndRefresh());
+      return;
+    }
+
     setState(() {
       _currentBottomIndex = index;
     });
+  }
+
+  /// The system back button. On any other tab it goes home; on home it takes
+  /// two presses within two seconds to leave, so a slip does not close the app.
+  void _onBack() {
+    if (_currentBottomIndex != 0) {
+      setState(() => _currentBottomIndex = 0);
+      return;
+    }
+    final now = DateTime.now();
+    if (_lastBackOnHome != null &&
+        now.difference(_lastBackOnHome!) < const Duration(seconds: 2)) {
+      SystemNavigator.pop();
+      return;
+    }
+    _lastBackOnHome = now;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.backAgainToExit),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+        ),
+      );
   }
 
   void _showUpgradeDialog() {
@@ -248,101 +289,104 @@ class _MainNavigationShellState extends State<MainNavigationShell>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // Content runs underneath the bar rather than stopping above it. Without
-      // this there is nothing behind the glass to blur except the scaffold's
-      // own background, and the effect costs a frame to render nothing. Every
-      // scrollable in the tabs already carries 96px of bottom padding for the
-      // publish button, which is also what keeps the last row reachable here.
-      extendBody: true,
-      // StackFit.expand is load-bearing, not tidiness: a Stack is loose by
-      // default for non-positioned children, and without it the IndexedStack
-      // would shrink-wrap its tallest page instead of filling the body.
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          NotificationListener<ScrollNotification>(
-            onNotification: _onFeedScroll,
-            child: IndexedStack(
-              index: _currentBottomIndex,
-              children: _pages,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _onBack();
+      },
+      child: Scaffold(
+        // Content runs underneath the bar rather than stopping above it. Without
+        // this there is nothing behind the glass to blur except the scaffold's
+        // own background, and the effect costs a frame to render nothing. Every
+        // scrollable in the tabs already carries 96px of bottom padding for the
+        // publish button, which is also what keeps the last row reachable here.
+        extendBody: true,
+        // StackFit.expand is load-bearing, not tidiness: a Stack is loose by
+        // default for non-positioned children, and without it the IndexedStack
+        // would shrink-wrap its tallest page instead of filling the body.
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            NotificationListener<ScrollNotification>(
+              onNotification: _onFeedScroll,
+              child: IndexedStack(index: _currentBottomIndex, children: _pages),
             ),
-          ),
-          // Browsing surfaces only. It sits above the bar rather than in the
-          // Scaffold's FAB slot, which is taken — and a nested tab Scaffold's
-          // endFloat measures from the physical screen bottom under
-          // extendBody, so it would land inside the glass.
-          if (_showsShippingButton)
-            Positioned(
-              right: 16,
-              bottom: MediaQuery.viewPaddingOf(context).bottom + 80,
-              child: ShippingButton(
-                extended: _shipExtended,
-                onPressed: _openShippingRequest,
+            // Browsing surfaces only. It sits above the bar rather than in the
+            // Scaffold's FAB slot, which is taken — and a nested tab Scaffold's
+            // endFloat measures from the physical screen bottom under
+            // extendBody, so it would land inside the glass.
+            if (_showsShippingButton)
+              Positioned(
+                right: 16,
+                bottom: MediaQuery.viewPaddingOf(context).bottom + 80,
+                child: ShippingButton(
+                  extended: _shipExtended,
+                  onPressed: _openShippingRequest,
+                ),
+              ),
+          ],
+        ),
+        // The deck puts Publish on a lime disc straddling the bar rather than in
+        // a fifth slot. BottomNavigationBar cannot cut a notch, so the bar is a
+        // BottomAppBar with four hand-rolled tabs and a docked FAB between them.
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        floatingActionButton: _PublishButton(onPressed: _openPublish),
+        bottomNavigationBar: Stack(
+          children: [
+            // The glass sits behind the bar rather than around it, so
+            // BottomAppBar keeps doing its own layout — height, safe-area inset
+            // and notch — and this only has to match the shape it draws.
+            Positioned.fill(child: _GlassBarBackdrop()),
+            BottomAppBar(
+              shape: const CircularNotchedRectangle(),
+              notchMargin: 7,
+              height: 68,
+              padding: EdgeInsets.zero,
+              // The colour moved to the backdrop above. Left opaque here it
+              // would paint over the blur it is meant to be showing.
+              color: Colors.transparent,
+              elevation: 0,
+              child: Row(
+                children: [
+                  // Home, not Search. The magnifier was accurate while the feed
+                  // was the only place you could search from; now that search is
+                  // a screen of its own, a tab that opens the feed and calls
+                  // itself Search sends you to the wrong place twice — once for
+                  // the word and once for the glyph.
+                  _NavItem(
+                    icon: Icons.home_outlined,
+                    label: context.l10n.navHome,
+                    selected: _currentBottomIndex == 0,
+                    onTap: () => _onTabTapped(0),
+                  ),
+                  _NavItem(
+                    icon: Icons.favorite_border,
+                    label: context.l10n.navFavorites,
+                    selected: _currentBottomIndex == 1,
+                    onTap: () => _onTabTapped(1),
+                  ),
+                  // Room for the notch the FAB sits in.
+                  const Spacer(),
+                  _NavItem(
+                    icon: Icons.chat_bubble_outline,
+                    label: context.l10n.navMessages,
+                    selected: _currentBottomIndex == 3,
+                    onTap: () => _onTabTapped(3),
+                    // Unread count, so a message that arrives while you are on
+                    // another tab says so.
+                    badgeListenable: ChatRepository.instance.totalUnread,
+                  ),
+                  _NavItem(
+                    icon: Icons.person_outline,
+                    label: context.l10n.navAccount,
+                    selected: _currentBottomIndex == 4,
+                    onTap: () => _onTabTapped(4),
+                  ),
+                ],
               ),
             ),
-        ],
-      ),
-      // The deck puts Publish on a lime disc straddling the bar rather than in
-      // a fifth slot. BottomNavigationBar cannot cut a notch, so the bar is a
-      // BottomAppBar with four hand-rolled tabs and a docked FAB between them.
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: _PublishButton(onPressed: _openPublish),
-      bottomNavigationBar: Stack(
-        children: [
-          // The glass sits behind the bar rather than around it, so
-          // BottomAppBar keeps doing its own layout — height, safe-area inset
-          // and notch — and this only has to match the shape it draws.
-          Positioned.fill(child: _GlassBarBackdrop()),
-          BottomAppBar(
-            shape: const CircularNotchedRectangle(),
-            notchMargin: 7,
-            height: 68,
-            padding: EdgeInsets.zero,
-            // The colour moved to the backdrop above. Left opaque here it
-            // would paint over the blur it is meant to be showing.
-            color: Colors.transparent,
-            elevation: 0,
-            child: Row(
-              children: [
-                // Home, not Search. The magnifier was accurate while the feed
-                // was the only place you could search from; now that search is
-                // a screen of its own, a tab that opens the feed and calls
-                // itself Search sends you to the wrong place twice — once for
-                // the word and once for the glyph.
-                _NavItem(
-                  icon: Icons.home_outlined,
-                  label: context.l10n.navHome,
-                  selected: _currentBottomIndex == 0,
-                  onTap: () => _onTabTapped(0),
-                ),
-                _NavItem(
-                  icon: Icons.favorite_border,
-                  label: context.l10n.navFavorites,
-                  selected: _currentBottomIndex == 1,
-                  onTap: () => _onTabTapped(1),
-                ),
-                // Room for the notch the FAB sits in.
-                const Spacer(),
-                _NavItem(
-                  icon: Icons.chat_bubble_outline,
-                  label: context.l10n.navMessages,
-                  selected: _currentBottomIndex == 3,
-                  onTap: () => _onTabTapped(3),
-                  // Unread count, so a message that arrives while you are on
-                  // another tab says so.
-                  badgeListenable: ChatRepository.instance.totalUnread,
-                ),
-                _NavItem(
-                  icon: Icons.person_outline,
-                  label: context.l10n.navAccount,
-                  selected: _currentBottomIndex == 4,
-                  onTap: () => _onTabTapped(4),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -390,8 +434,10 @@ Path _notchedBarPath(Size size) {
     center: Offset(size.width / 2, 0),
     radius: fabRadius + notchMargin,
   );
-  return const CircularNotchedRectangle()
-      .getOuterPath(Offset.zero & size, guest);
+  return const CircularNotchedRectangle().getOuterPath(
+    Offset.zero & size,
+    guest,
+  );
 }
 
 class _NotchedBarClipper extends CustomClipper<Path> {
@@ -427,6 +473,7 @@ class _NotchedBarPainter extends CustomPainter {
   bool shouldRepaint(covariant _NotchedBarPainter old) =>
       old.fill != fill || old.stroke != stroke;
 }
+
 /// The lime disc in the middle of the bar.
 ///
 /// Uses the brand tokens rather than `colorScheme.primary`: primary is `ink` in

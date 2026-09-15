@@ -3282,4 +3282,34 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get notificationChannelAnnouncementsDesc =>
       'Annonces, bons plans et messages de Mambanda.';
+
+  @override
+  String get notifKindListing => 'Votre annonce';
+
+  @override
+  String get notifKindFromMambanda => 'De Mambanda';
+
+  @override
+  String get notifKindUpdate => 'Mise à jour';
+
+  @override
+  String get notifActionChat => 'Ouvrir la discussion';
+
+  @override
+  String get notifActionTrack => 'Suivre le colis';
+
+  @override
+  String get notifActionOrder => 'Voir la commande';
+
+  @override
+  String get notifActionListing => 'Voir l\'annonce';
+
+  @override
+  String get notifActionLink => 'Ouvrir le lien';
+
+  @override
+  String get notifActionOpen => 'Ouvrir';
+
+  @override
+  String get backAgainToExit => 'Appuyez encore sur Retour pour quitter';
 }

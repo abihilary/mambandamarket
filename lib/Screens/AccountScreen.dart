@@ -339,6 +339,7 @@ class _AccountScreenState extends State<AccountScreen> {
     final auth = AuthService.instance;
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
+    final tokens = context.tokens;
 
     return Scaffold(
       appBar: AppBar(
@@ -616,9 +617,19 @@ class _AccountScreenState extends State<AccountScreen> {
                       icon: Icons.notifications_outlined,
                       title: l10n.notificationsPrefTitle,
                       subtitle: l10n.notificationsPrefSub,
-                      trailing: Switch.adaptive(
+                      // Explicit colours: the platform defaults paint thumb and
+                      // track the same lime in dark mode and the same ink in
+                      // light, and a switch you cannot read is not a switch.
+                      trailing: Switch(
                         value: profile?.notifyMarketing ?? true,
                         onChanged: (v) => _setMarketing(context, v),
+                        activeTrackColor: tokens.accentFill,
+                        activeThumbColor: tokens.onAccentFill,
+                        inactiveTrackColor: scheme.surfaceContainerHighest,
+                        inactiveThumbColor: scheme.onSurfaceVariant,
+                        trackOutlineColor: WidgetStateProperty.resolveWith(
+                          (states) => states.contains(WidgetState.selected) ? Colors.transparent : scheme.outlineVariant,
+                        ),
                       ),
                       onTap: () => _setMarketing(context, !(profile?.notifyMarketing ?? true)),
                     ),

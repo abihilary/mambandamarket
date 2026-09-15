@@ -5737,6 +5737,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Announcements, deals and messages from Mambanda.'**
   String get notificationChannelAnnouncementsDesc;
+
+  /// No description provided for @notifKindListing.
+  ///
+  /// In en, this message translates to:
+  /// **'Your listing'**
+  String get notifKindListing;
+
+  /// No description provided for @notifKindFromMambanda.
+  ///
+  /// In en, this message translates to:
+  /// **'From Mambanda'**
+  String get notifKindFromMambanda;
+
+  /// No description provided for @notifKindUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get notifKindUpdate;
+
+  /// No description provided for @notifActionChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the chat'**
+  String get notifActionChat;
+
+  /// No description provided for @notifActionTrack.
+  ///
+  /// In en, this message translates to:
+  /// **'Track package'**
+  String get notifActionTrack;
+
+  /// No description provided for @notifActionOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'View order'**
+  String get notifActionOrder;
+
+  /// No description provided for @notifActionListing.
+  ///
+  /// In en, this message translates to:
+  /// **'View listing'**
+  String get notifActionListing;
+
+  /// No description provided for @notifActionLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Open link'**
+  String get notifActionLink;
+
+  /// No description provided for @notifActionOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get notifActionOpen;
+
+  /// No description provided for @backAgainToExit.
+  ///
+  /// In en, this message translates to:
+  /// **'Press back again to exit'**
+  String get backAgainToExit;
 }
 
 class _AppLocalizationsDelegate

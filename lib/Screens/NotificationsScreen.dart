@@ -58,7 +58,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _open(AppNotification n) async {
     if (n.isUnread) unawaited(_repo.markRead([n.id]));
-    await openNotificationTarget({...n.data, 'notification_id': n.id});
+    if (notificationHasTarget(n.data)) {
+      await openNotificationTarget({...n.data, 'notification_id': n.id});
+    } else {
+      await openNotificationDetail(n);
+    }
   }
 
   String _ago(BuildContext context, DateTime when) {

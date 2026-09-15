@@ -32,10 +32,10 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
   /// Sentinel stored in [_error] for a generic network failure, so the
   /// user-facing message can be localized in build() rather than baked in at
   /// fetch time (which runs from initState, before localizations are ready).
@@ -236,6 +236,20 @@ class _HomeScreenState extends State<HomeScreen> {
     return TrendingRepository.instance.load(categorySlug: _selectedSlug);
   }
 
+  Future<void> _refreshAll() async {
+    await Future.wait([_loadListings(), _favorites.refresh(), _loadBoards(), _loadTrending()]);
+  }
+
+  /// The home tab tapped while already on home: back to the top, and fresh.
+  /// What a person means by pressing the button they are already on.
+  Future<void> scrollToTopAndRefresh() async {
+    if (_scroll.hasClients && _scroll.offset > 0) {
+      await _scroll.animateTo(0, duration: const Duration(milliseconds: 350), curve: Curves.easeOutCubic);
+    }
+    if (!mounted) return;
+    await _refreshAll();
+  }
+
   Future<void> _loadBoards() async {
     await BoardRepository.instance.loadAll();
     // Against every board at once: reconciling one at a time would have each
@@ -421,10 +435,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Stack(
           children: [
             RefreshIndicator(
-              onRefresh: () async {
-                await Future.wait(
-                    [_loadListings(), _favorites.refresh(), _loadBoards(), _loadTrending()]);
-              },
+              onRefresh: _refreshAll,
               child: CustomScrollView(
                 controller: _scroll,
                 slivers: [

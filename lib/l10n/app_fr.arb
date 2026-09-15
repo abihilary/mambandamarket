@@ -1143,5 +1143,15 @@
   "notificationChannelOrders": "Commandes",
   "notificationChannelOrdersDesc": "Paiements, expédition et livraison de vos commandes.",
   "notificationChannelAnnouncements": "Actualités et offres",
-  "notificationChannelAnnouncementsDesc": "Annonces, bons plans et messages de Mambanda."
+  "notificationChannelAnnouncementsDesc": "Annonces, bons plans et messages de Mambanda.",
+  "notifKindListing": "Votre annonce",
+  "notifKindFromMambanda": "De Mambanda",
+  "notifKindUpdate": "Mise à jour",
+  "notifActionChat": "Ouvrir la discussion",
+  "notifActionTrack": "Suivre le colis",
+  "notifActionOrder": "Voir la commande",
+  "notifActionListing": "Voir l'annonce",
+  "notifActionLink": "Ouvrir le lien",
+  "notifActionOpen": "Ouvrir",
+  "backAgainToExit": "Appuyez encore sur Retour pour quitter"
 }

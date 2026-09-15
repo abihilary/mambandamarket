@@ -1396,5 +1396,15 @@
   "notificationChannelOrders": "Orders",
   "notificationChannelOrdersDesc": "Payments, shipping and delivery of your orders.",
   "notificationChannelAnnouncements": "News & offers",
-  "notificationChannelAnnouncementsDesc": "Announcements, deals and messages from Mambanda."
+  "notificationChannelAnnouncementsDesc": "Announcements, deals and messages from Mambanda.",
+  "notifKindListing": "Your listing",
+  "notifKindFromMambanda": "From Mambanda",
+  "notifKindUpdate": "Update",
+  "notifActionChat": "Open the chat",
+  "notifActionTrack": "Track package",
+  "notifActionOrder": "View order",
+  "notifActionListing": "View listing",
+  "notifActionLink": "Open link",
+  "notifActionOpen": "Open",
+  "backAgainToExit": "Press back again to exit"
 }

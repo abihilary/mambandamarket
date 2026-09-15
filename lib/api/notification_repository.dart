@@ -37,6 +37,12 @@ class NotificationRepository {
     return f;
   }
 
+  /// One row in full — a tap on the shade only carries the id.
+  Future<AppNotification> fetch(String id) async {
+    final json = await _api.get('/me/notifications/$id') as Map<String, dynamic>;
+    return AppNotification.fromJson(Map<String, dynamic>.from(json['notification'] as Map));
+  }
+
   Future<void> _refresh() async {
     final json = await _api.get('/me/notifications', query: {'limit': '30'}) as Map<String, dynamic>;
     final list = (json['items'] as List? ?? const [])
