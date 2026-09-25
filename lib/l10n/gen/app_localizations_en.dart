@@ -556,6 +556,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatAttach => 'Attach';
 
   @override
+  String get chatShipAction => 'Ship';
+
+  @override
+  String get chatShipPrompt => 'Ship this to me';
+
+  @override
+  String get chatShipPromptGeneric => 'Ask us to ship something';
+
+  @override
+  String get chatShipDismiss => 'Not now';
+
+  @override
   String get chatAttachPhoto => 'Photo library';
 
   @override

@@ -40,10 +40,20 @@ import '../theme/app_tokens.dart';
 /// ten fields is how you lose somebody on the first screen of a feature they
 /// have never used.
 class ShippingRequestScreen extends StatefulWidget {
-  const ShippingRequestScreen({super.key, this.initialListing, this.initialSource});
+  const ShippingRequestScreen({
+    super.key,
+    this.initialListing,
+    this.initialSource,
+    this.initialFromCity,
+  });
 
   /// Pre-picked product, for arriving from somewhere that already has one.
   final Listing? initialListing;
+
+  /// Where the goods already are, for arriving from somewhere that knows the
+  /// seller but has no listing to read a city off — a chat thread about
+  /// nothing in particular. Ignored when [initialListing] carries its own.
+  final String? initialFromCity;
 
   /// Which path to open on, for arriving from a screen where the choice was
   /// already made — "deliver my purchase" is a Mambanda listing, the other two
@@ -103,11 +113,16 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
   String? _quoteKey;
   String? _tier;
 
+  /// The city we put in the From field ourselves, so [_load] can upgrade it
+  /// from free text to a catalogue place once the catalogue arrives.
+  String _seededFrom = '';
+
   @override
   void initState() {
     super.initState();
     if (widget.initialListing != null) _takeListing(widget.initialListing!);
     if (widget.initialSource != null && _source == null) _source = widget.initialSource;
+    _applyFromCity(widget.initialFromCity ?? '');
 
     final profile = AuthService.instance.me.value?.profile;
     _name.text = profile?.displayName ?? '';
@@ -141,6 +156,13 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
 
   Future<void> _load() async {
     await ShippingRepository.instance.loadOptions();
+    // Whether a prefilled city is a route we can price or free text is the
+    // catalogue's answer, and at initState it may not have arrived yet.
+    if (_fromCode == 'other' && _fromOther.text.trim() == _seededFrom) {
+      _fromCode = '';
+      _fromOther.clear();
+      _applyFromCity(_seededFrom);
+    }
     try {
       final cats = await ListingsRepository.instance.categories();
       if (mounted) setState(() => _categories = cats);
@@ -201,25 +223,55 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
     _listing = listing;
     _source = ShippingSource.mambanda;
     // The listing already answers these; leave them editable but filled.
-    _categorySlug ??= listing.categorySlug;
-    final city = (listing.city ?? '').trim();
-    if (_fromCode.isEmpty && city.isNotEmpty) {
-      // A city that is a place in the catalogue is a route we can price;
-      // "somewhere else" with the city typed in is one the desk quotes.
-      final match = _options.from
-          .where(
-            (p) => p.label.values.any(
-              (l) => l.trim().toLowerCase() == city.toLowerCase(),
-            ),
-          )
-          .firstOrNull;
-      if (match != null) {
-        _fromCode = match.code;
-      } else {
-        _fromCode = 'other';
-        _fromOther.text = city;
-      }
+    if ((_categorySlug ?? '').isEmpty && listing.categorySlug.isNotEmpty) {
+      _categorySlug = listing.categorySlug;
     }
+    _applyFromCity(listing.city ?? '');
+  }
+
+  /// Fill From with a city somebody else already knows, if nothing is chosen.
+  ///
+  /// A city that is a place in the catalogue is a route we can price; anything
+  /// else goes in as "somewhere else" with the name typed out, which is one
+  /// the desk quotes by hand. Either way it stays editable — this is a head
+  /// start, not an answer.
+  void _applyFromCity(String? raw) {
+    final city = (raw ?? '').trim();
+    if (city.isEmpty || _fromCode.isNotEmpty) return;
+
+    final match = _matchPlace(city);
+    if (match != null) {
+      _fromCode = match;
+    } else {
+      _fromCode = 'other';
+      _fromOther.text = city;
+      _seededFrom = city;
+    }
+  }
+
+  /// The catalogue code for a written-out city, or null.
+  ///
+  /// Sellers write their city the way people say it — "Akwa, Douala" — while
+  /// the catalogue carries the pickup point alone, "Akwa". Matching the whole
+  /// string only, as this did, sent a route we can price to the desk for a
+  /// hand quote instead.
+  ///
+  /// Comma-separated parts are tried in order, so the narrower half wins:
+  /// "Akwa, Douala" collects in Akwa, not merely somewhere in Douala. Parts are
+  /// still matched whole — a substring test would read "Akwa Ibom", six hundred
+  /// miles away in Nigeria, as the Douala quarter.
+  String? _matchPlace(String city) {
+    final parts = [city, ...city.split(',')]
+        .map((p) => p.trim().toLowerCase())
+        .where((p) => p.isNotEmpty);
+
+    for (final part in parts) {
+      final hit = _options.from
+          .where((p) => p.label.values.any((l) => l.trim().toLowerCase() == part))
+          .firstOrNull;
+      if (hit != null) return hit.code;
+    }
+    return null;
   }
 
   Future<void> _pickListing() async {
@@ -800,12 +852,7 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
       ),
       child: Row(
         children: [
-          Icon(
-            _source == ShippingSource.mambanda
-                ? Icons.storefront_outlined
-                : Icons.link_rounded,
-            color: context.tokens.accentInk,
-          ),
+          _itemLeading(),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -841,6 +888,39 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
             child: Text(l10n.shipChange),
           ),
         ],
+      ),
+    );
+  }
+
+  /// The picked item's own photo where it has one, the generic glyph otherwise.
+  ///
+  /// Somebody arriving here has usually just been looking at the product, and
+  /// a title alone asks them to take on trust that the right one came through.
+  /// Its picture answers that without being read.
+  ///
+  /// [Listing.primaryImageUrl] is deliberately not used: with no images it
+  /// returns a placeholder hosted on a third-party service, which is a network
+  /// round trip to be told there is no picture. The count is already here, so
+  /// ask it first, and fall back to the glyph if the image itself fails.
+  Widget _itemLeading() {
+    final icon = Icon(
+      _source == ShippingSource.mambanda
+          ? Icons.storefront_outlined
+          : Icons.link_rounded,
+      color: context.tokens.accentInk,
+    );
+
+    final listing = _listing;
+    if (listing == null || listing.imagePaths.isEmpty) return icon;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Image.network(
+        listing.primaryImageUrl,
+        width: 44,
+        height: 44,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => icon,
       ),
     );
   }

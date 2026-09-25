@@ -3,16 +3,20 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../Components/VerifiedBadge.dart';
 import '../Components/local_image.dart';
 import '../Screens/PublicProfileScreen.dart';
+import '../Screens/ShippingRequestScreen.dart';
 import '../api/api_client.dart';
 import '../api/auth_service.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
+import '../api/shipping_draft.dart';
 import '../api/shipping_model.dart';
+import '../api/shipping_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../api/live_location.dart';
@@ -20,6 +24,7 @@ import '../api/location_share.dart';
 import '../Components/location_bubble.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_tokens.dart';
 import 'document_picker.dart';
 import '../api/push_service.dart';
 
@@ -67,6 +72,18 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   Timer? _poll;
   int _seq = 0;
 
+  /// Threads whose shipping prompt has been waved away, by id.
+  ///
+  /// Persisted because a prompt that comes back every time the thread is
+  /// reopened is not a suggestion, it is an advert.
+  static const _shipPromptDismissedKey = 'chat_ship_prompt_dismissed';
+
+  /// Starts true so the prompt cannot flash on screen before prefs are read.
+  bool _shipPromptDismissed = true;
+
+  /// A tap on a ship button is in flight — it fetches the full listing first.
+  bool _fetchingListing = false;
+
   String get _myId => AuthService.instance.userId ?? '';
 
   @override
@@ -83,6 +100,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     ChatRepository.instance.pulse.addListener(_onLivePulse);
     _poll = Timer.periodic(const Duration(seconds: 45), (_) => _load());
     _watchShares();
+    _readShipPromptDismissal();
   }
 
   /// Follow the location shares in this thread as they move.
@@ -675,6 +693,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                       ],
                     ),
                   ),
+                  // The row already names the thing being discussed and is
+                  // otherwise inert, so the way to have it delivered costs no
+                  // height here and reads as belonging to the product.
+                  if (_showsShipping) _shipStripButton(),
                 ],
               ),
             ),
@@ -806,6 +828,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                           ),
           ),
 
+          if (_showsShipPrompt) _shipPrompt(),
+
           // Composer
           Container(
             padding: const EdgeInsets.fromLTRB(6, 8, 12, 12),
@@ -853,6 +877,235 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------
+  // Asking us to ship what is being discussed.
+  //
+  // Two ways in, because they answer two different moments. The button on the
+  // listing strip is always there for somebody who already knows they want it
+  // delivered; the prompt above the composer only appears once both sides have
+  // spoken, which is when "how do I get it" stops being hypothetical. Either
+  // one lands on the same form the product page opens, prefilled the same way.
+  // ---------------------------------------------------------------------
+
+  /// Whether asking us to ship is on offer in this thread at all.
+  ///
+  /// Never on the desk's own threads: a shipping thread *is* a request, so
+  /// offering to start one inside it is circular, and support does not sell.
+  bool get _showsShipping =>
+      ShippingRepository.instance.enabled &&
+      !widget.conversation.isShipping &&
+      !widget.conversation.isSupport;
+
+  /// Both sides have said something.
+  ///
+  /// Before that there is nothing to deliver yet — the prompt would be an
+  /// advert on an empty thread rather than an answer to a question somebody
+  /// has actually reached.
+  bool get _conversationMoved =>
+      _messages.any((m) => m.senderId == _myId) &&
+      _messages.any((m) => m.senderId != _myId);
+
+  bool get _showsShipPrompt =>
+      _showsShipping && _conversationMoved && !_shipPromptDismissed;
+
+  Future<void> _readShipPromptDismissal() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final dismissed =
+          prefs.getStringList(_shipPromptDismissedKey) ?? const <String>[];
+      if (mounted) {
+        setState(() =>
+            _shipPromptDismissed = dismissed.contains(widget.conversation.id));
+      }
+    } catch (_) {
+      // Prefs are unavailable. Leaving it dismissed is the quiet failure.
+    }
+  }
+
+  Future<void> _dismissShipPrompt() async {
+    setState(() => _shipPromptDismissed = true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final dismissed =
+          prefs.getStringList(_shipPromptDismissedKey) ?? const <String>[];
+      if (dismissed.contains(widget.conversation.id)) return;
+      // Bounded: this only ever has to remember the threads still open enough
+      // to be revisited, and an unbounded list in prefs grows forever.
+      final next = [...dismissed, widget.conversation.id];
+      await prefs.setStringList(
+        _shipPromptDismissedKey,
+        next.length <= 100 ? next : next.sublist(next.length - 100),
+      );
+    } catch (_) {
+      // It stays gone for this visit either way.
+    }
+  }
+
+  /// Where the goods are: the seller's city, whichever side of it we are on.
+  ///
+  /// Only used when the thread has no listing to read a city off — with one,
+  /// the listing's own city is better, and the form reads it itself.
+  String? get _sellerCity {
+    final conversation = widget.conversation;
+    final city = conversation.role == 'seller'
+        ? AuthService.instance.me.value?.profile?.city
+        : conversation.counterparty?.city;
+    final trimmed = (city ?? '').trim();
+    return trimmed.isEmpty ? null : trimmed;
+  }
+
+  /// The thread carries a trimmed listing — enough to draw the strip, not
+  /// enough to fill the form.
+  ///
+  /// Fetching the real one is what makes arriving from a chat prefill exactly
+  /// what arriving from the product page prefills. A failed fetch falls back
+  /// to the trimmed row rather than making them start from nothing.
+  Future<Listing?> _fullListing() async {
+    final partial = widget.conversation.listing;
+    if (partial == null) return null;
+    try {
+      return await ListingsRepository.instance.detail(partial.id);
+    } catch (_) {
+      return partial;
+    }
+  }
+
+  Future<void> _shipThis() async {
+    if (_fetchingListing) return;
+    if (AuthService.instance.session == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.shipSignInRequired)),
+      );
+      return;
+    }
+
+    setState(() => _fetchingListing = true);
+    final listing = await _fullListing();
+    if (!mounted) return;
+    setState(() => _fetchingListing = false);
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ShippingRequestScreen(
+          initialListing: listing,
+          // Arriving from a thread about a product answers the chooser; a
+          // thread about nothing in particular does not, so leave it open.
+          initialSource: listing == null ? null : ShippingSource.mambanda,
+          initialFromCity: listing == null ? _sellerCity : null,
+        ),
+      ),
+    );
+  }
+
+  /// A · on the strip that already names the product.
+  ///
+  /// Material and InkWell rather than an `OutlinedButton`, which cannot live
+  /// here: a `Row` measures its non-flexible children at unbounded width, and
+  /// `ButtonStyleButton` forwards that infinity straight through its
+  /// `minimumSize` constraint to the `Material` underneath, which then fails
+  /// `performLayout`. That assert kills the layout of the whole body — strip,
+  /// messages and composer together — so the screen goes blank rather than
+  /// showing an error. `ItemDetailScreen` gets away with an `OutlinedButton`
+  /// only because it wraps it in a `SizedBox(width: 50, height: 50)`.
+  ///
+  /// `MainAxisSize.min` is what shrink-wraps this one, and it is the same
+  /// construction as the prompt below, so the two ways in match.
+  Widget _shipStripButton() {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(left: 8),
+      child: Material(
+        color: theme.colorScheme.surfaceContainerHighest,
+        shape: StadiumBorder(
+          side: BorderSide(color: theme.colorScheme.outlineVariant),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: _fetchingListing ? null : _shipThis,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _fetchingListing
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(Icons.local_shipping_outlined,
+                        size: 18, color: context.tokens.accentInk),
+                const SizedBox(width: 6),
+                Text(context.l10n.chatShipAction,
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// B · above the composer, once the conversation has actually moved.
+  Widget _shipPrompt() {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final label = widget.conversation.listing != null
+        ? context.l10n.chatShipPrompt
+        : context.l10n.chatShipPromptGeneric;
+
+    return Container(
+      width: double.infinity,
+      color: cs.surface,
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Material(
+          color: cs.surfaceContainerHighest,
+          shape: StadiumBorder(
+            side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.6)),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              InkWell(
+                onTap: _fetchingListing ? null : _shipThis,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.local_shipping_outlined,
+                          size: 18, color: context.tokens.accentInk),
+                      const SizedBox(width: 8),
+                      Text(label,
+                          style: const TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+              ),
+              InkWell(
+                onTap: _dismissShipPrompt,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 8, 10, 8),
+                  child: Tooltip(
+                    message: context.l10n.chatShipDismiss,
+                    child: Icon(Icons.close,
+                        size: 16, color: cs.onSurfaceVariant),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

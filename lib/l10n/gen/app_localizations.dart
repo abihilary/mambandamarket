@@ -1070,6 +1070,30 @@ abstract class AppLocalizations {
   /// **'Attach'**
   String get chatAttach;
 
+  /// No description provided for @chatShipAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Ship'**
+  String get chatShipAction;
+
+  /// No description provided for @chatShipPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Ship this to me'**
+  String get chatShipPrompt;
+
+  /// No description provided for @chatShipPromptGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask us to ship something'**
+  String get chatShipPromptGeneric;
+
+  /// No description provided for @chatShipDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get chatShipDismiss;
+
   /// No description provided for @chatAttachPhoto.
   ///
   /// In en, this message translates to:

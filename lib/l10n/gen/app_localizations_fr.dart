@@ -562,6 +562,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get chatAttach => 'Joindre';
 
   @override
+  String get chatShipAction => 'Expédier';
+
+  @override
+  String get chatShipPrompt => 'Faites-le-moi expédier';
+
+  @override
+  String get chatShipPromptGeneric => 'Demander une expédition';
+
+  @override
+  String get chatShipDismiss => 'Pas maintenant';
+
+  @override
   String get chatAttachPhoto => 'Galerie photo';
 
   @override
