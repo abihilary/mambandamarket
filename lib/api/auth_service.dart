@@ -343,16 +343,58 @@ class AuthService {
     );
   }
 
+  /// Set when a reset is requested, read when the app next starts.
+  ///
+  /// The link's PASSWORD_RECOVERY event is emitted inside
+  /// `Supabase.initialize()` — `detectSessionInUri` exchanges the code there,
+  /// and that call completes before `runApp`, before this service is first
+  /// touched, and so before anything is listening. A broadcast stream does not
+  /// replay, so the event is simply gone by the time the app can react, and
+  /// the user lands on sign-in instead of the reset screen.
+  ///
+  /// Remembering the intent at the point it is expressed survives that gap.
+  /// It is per-device, which costs nothing: PKCE already requires the link to
+  /// be opened where it was requested, since the code verifier lives in this
+  /// same storage.
+  static const _pendingRecoveryKey = 'pending_password_recovery';
+
   /// Email a password-recovery link.
   ///
   /// Deliberately does not reveal whether the address has an account — the
   /// caller shows the same confirmation either way, so this can't be used to
   /// enumerate registered users.
   Future<void> sendPasswordReset(String email) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_pendingRecoveryKey, true);
+    } catch (_) {
+      // Worst case the app misses the hand-off and the user asks again.
+    }
     await _client.auth.resetPasswordForEmail(
       email.trim(),
       redirectTo: _redirectFor(kPasswordResetRedirect),
     );
+  }
+
+  /// Whether this launch is the return leg of a password reset. Reads once.
+  static Future<bool> consumePendingRecovery() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getBool(_pendingRecoveryKey) != true) return false;
+      await prefs.remove(_pendingRecoveryKey);
+      // Only a link that actually produced a session can set a new password;
+      // an expired one leaves the user signed out and is not worth routing to.
+      return Supabase.instance.client.auth.currentSession != null;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<void> clearPendingRecovery() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_pendingRecoveryKey);
+    } catch (_) {}
   }
 
   /// Set a new password. Requires either a normal session or the short-lived
@@ -360,6 +402,7 @@ class AuthService {
   Future<void> updatePassword(String newPassword) async {
     await _client.auth.updateUser(UserAttributes(password: newPassword));
     passwordRecoveryRequested.value = false;
+    await clearPendingRecovery();
   }
 
   /// Re-send the sign-up confirmation email.

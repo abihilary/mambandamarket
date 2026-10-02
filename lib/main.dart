@@ -44,6 +44,13 @@ Future<void> main() async {
     publishableKey: AppConfig.supabasePublishableKey,
   );
 
+  // Touched here so its auth listener exists before anything else can fire one.
+  // It cannot be earlier — the listener needs the client Supabase.initialize
+  // creates — which is exactly why a recovery link arriving in the launch URL
+  // is already handled by then, and why AuthService.consumePendingRecovery
+  // exists to pick that case up below.
+  AuthService.instance;
+
   // Read once so the very first API request already says which build it is.
   await AppInfo.warm();
 
@@ -72,6 +79,18 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
     super.initState();
     AuthService.instance.passwordRecoveryRequested
         .addListener(_onPasswordRecovery);
+
+    // A reset link opened from an email is exchanged inside
+    // Supabase.initialize(), which finishes before this widget exists — so the
+    // PASSWORD_RECOVERY event has already passed and the listener above will
+    // never hear it. Without this the user arrives with a valid recovery
+    // session and is shown the sign-in screen, which is what "the link does
+    // nothing" looks like from the outside.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (await AuthService.consumePendingRecovery()) {
+        AuthService.instance.passwordRecoveryRequested.value = true;
+      }
+    });
   }
 
   @override
