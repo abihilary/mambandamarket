@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'Components/ItemDetailScreen.dart';
+import 'api/auth_service.dart';
 import 'api/repositories.dart';
 import 'api/share_links.dart';
 
@@ -91,6 +92,22 @@ Future<void> handleLaunchLink() async {
 ///
 /// Never throws. A link to something deleted, or a tap while offline, should
 /// leave somebody in the app rather than on an error screen.
+/// Open the reset screen if this launch is the return leg of a password reset.
+///
+/// Called from the splash *after* its stack clear, for the same reason the
+/// shared link and the update countdown are: `pushNamedAndRemoveUntil` with a
+/// `(_) => false` predicate removes every route, so anything pushed before it
+/// is gone. That is what made the link appear to log you in and then drop you
+/// on the home screen — the reset screen was pushed, then wiped, within the
+/// same launch.
+Future<void> maybeResumePasswordReset() async {
+  if (!await AuthService.consumePendingRecovery()) return;
+  final flag = AuthService.instance.passwordRecoveryRequested;
+  // Already true means the live event arrived and the listener has routed.
+  if (flag.value) return;
+  flag.value = true;
+}
+
 Future<void> openSharedListing(String id) async {
   try {
     final listing = await ListingsRepository.instance.detail(id);

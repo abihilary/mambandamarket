@@ -107,6 +107,8 @@ class _SplashScreenState extends State<SplashScreen> {
     // Same ordering reason: the countdown is a route, and the clear above
     // would remove it.
     unawaited(maybeWarnAboutUpdate());
+    // Same ordering reason again: the reset screen is a route.
+    unawaited(maybeResumePasswordReset());
     unawaited(PushService.instance.handleLaunchNotification());
   }
 
