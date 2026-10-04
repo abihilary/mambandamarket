@@ -10,6 +10,7 @@ import '../api/models.dart';
 import '../api/remote_config.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
+import '../l10n/locale_controller.dart';
 import '../Components/plan_card.dart';
 import '../Components/menu_group.dart';
 import '../Components/support_sheet.dart';
@@ -191,6 +192,118 @@ class _AccountScreenState extends State<AccountScreen> {
     await AuthService.instance.signOut();
     if (!context.mounted) return;
     Navigator.pushNamedAndRemoveUntil(context, '/welcome', (_) => false);
+  }
+
+  /// Ask to delete this account, from inside the app.
+  ///
+  /// The address is not a field. The caller is signed in, so the server takes
+  /// it from the verified token — typing it again is a step that only exists
+  /// on the public web form, which has no session to read it from, and an
+  /// opportunity to mistype it into silence (that endpoint answers the same
+  /// way whether or not an address has an account).
+  ///
+  /// The confirmation email stays. A session proves who is asking, but an
+  /// unlocked phone is also a session, and this cannot be undone.
+  Future<void> _deleteAccount() async {
+    final l10n = context.l10n;
+    final email = AuthService.instance.user?.email ?? '';
+
+    // The sheet owns its own text controller, which is why it is a widget and
+    // not a closure here. A controller created in this method and disposed as
+    // soon as `showModalBottomSheet` returns is disposed too early: the sheet
+    // is still mounted through its exit animation, and the TextField reaches
+    // for it one more frame later. Returning the reason as the pop value
+    // means nothing outside the sheet has to touch the controller at all.
+    final reason = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => _DeleteAccountSheet(
+        email: email,
+        sendsToLine: _sendsToLine,
+      ),
+    );
+
+    if (reason == null || !mounted) return;
+
+    final text = reason.trim();
+
+    try {
+      await ApiClient.instance.post('/account/request-deletion', {
+        if (text.isNotEmpty) 'reason': text,
+        'locale': LocaleController.instance.locale.value?.languageCode ?? 'en',
+      });
+      if (!mounted) return;
+
+      // A dialog, not a snackbar: the sign-out below tears this screen down,
+      // and a snackbar would go with it before it could be read. The only
+      // button is the sign-out, so the message cannot be skipped past.
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          title: Text(l10n.deleteAccount),
+          content: Text(l10n.deleteAccountSent),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(l10n.logOut),
+            ),
+          ],
+        ),
+      );
+
+      // Signed out on purpose. The account still exists until the link in the
+      // email is opened, but leaving the session live invites the owner to
+      // carry on using an account they have just asked to destroy — and the
+      // link has to be opened from the mailbox either way, so there is
+      // nothing left to do in here.
+      await AuthService.instance.signOut();
+      if (!mounted) return;
+      Navigator.pushNamedAndRemoveUntil(context, '/welcome', (_) => false);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.deleteAccountFailed),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
+  }
+
+  /// "We will email a confirmation link to <address>." with the address picked
+  /// out, in whatever language the sentence is written.
+  ///
+  /// Split on the address itself rather than on wording: it is the one token
+  /// guaranteed to be in the string and in the same form in every locale, so
+  /// this needs no per-language cases. A locale that somehow lost the
+  /// placeholder falls back to plain text instead of dropping the line.
+  ///
+  /// `accentInk` is the colour, not `primary`: it is the one token defined to
+  /// stay readable as *text* on both grounds — lime in the dark, a deepened
+  /// lime in the light, where the bright one cannot be read.
+  Widget _sendsToLine(BuildContext context, String sentence, String email) {
+    final scheme = Theme.of(context).colorScheme;
+    final base = TextStyle(color: scheme.onSurfaceVariant);
+    final at = sentence.indexOf(email);
+    if (at < 0) return Text(sentence, style: base);
+
+    return Text.rich(
+      TextSpan(
+        style: base,
+        children: [
+          TextSpan(text: sentence.substring(0, at)),
+          TextSpan(
+            text: email,
+            style: TextStyle(
+              color: context.tokens.accentInk,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          TextSpan(text: sentence.substring(at + email.length)),
+        ],
+      ),
+    );
   }
 
   String _themeLabel(BuildContext context, ThemeMode mode) {
@@ -668,6 +781,22 @@ class _AccountScreenState extends State<AccountScreen> {
                     ),
                   ],
                 ),
+
+                // Deliberately its own group, below signing out and set apart
+                // from it. Both rows are red, and sitting them together put
+                // the irreversible one directly above the one people tap all
+                // the time — a thumb aiming for Log out lands on Delete.
+                MenuGroup(
+                  margin: const EdgeInsets.only(top: 16, bottom: 16),
+                  children: [
+                    MenuRow(
+                      icon: Icons.delete_outline,
+                      title: l10n.deleteAccount,
+                      danger: true,
+                      onTap: _deleteAccount,
+                    ),
+                  ],
+                ),
               ],
             ),
           );
@@ -811,4 +940,101 @@ class _Divider extends StatelessWidget {
     indent: 4,
     endIndent: 4,
   );
+}
+
+/// The delete-account confirmation sheet.
+///
+/// Exists as a widget purely so the reason field's controller has an owner
+/// with a `dispose` that runs at the right moment — when the sheet's element
+/// is actually unmounted, not when the route's future completes. Pops the
+/// typed reason (empty string when blank) on confirm, and null on cancel, so
+/// the caller never holds a reference to the controller.
+class _DeleteAccountSheet extends StatefulWidget {
+  const _DeleteAccountSheet({required this.email, required this.sendsToLine});
+
+  final String email;
+  final Widget Function(BuildContext, String, String) sendsToLine;
+
+  @override
+  State<_DeleteAccountSheet> createState() => _DeleteAccountSheetState();
+}
+
+class _DeleteAccountSheetState extends State<_DeleteAccountSheet> {
+  final _reason = TextEditingController();
+
+  @override
+  void dispose() {
+    _reason.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.viewInsetsOf(context).bottom + 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.deleteAccount,
+              style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 10),
+          // The irreversibility is its own string rather than a phrase cut out
+          // of the warning: emphasis by slicing a sentence only works in the
+          // language it was written for, and this screen is trilingual.
+          Text(
+            l10n.deleteAccountIrreversible,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: scheme.error,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(l10n.deleteAccountWarning),
+          const SizedBox(height: 16),
+          if (widget.email.isNotEmpty) ...[
+            widget.sendsToLine(
+              context,
+              l10n.deleteAccountSendsTo(widget.email),
+              widget.email,
+            ),
+            const SizedBox(height: 16),
+          ],
+          TextField(
+            controller: _reason,
+            maxLines: 3,
+            maxLength: 1000,
+            decoration: InputDecoration(
+              labelText: l10n.deleteAccountReason,
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Stacked, not side by side. Every button in this app is themed
+          // `minimumSize: Size.fromHeight(52)` — a minimum *width* of
+          // infinity — so it is built to be full width and cannot be laid out
+          // in a Row at all: the infinity reaches the Material and fails
+          // performLayout.
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.pop(context, _reason.text),
+            child: Text(l10n.deleteAccountContinue),
+          ),
+          const SizedBox(height: 4),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancel),
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -57,6 +57,7 @@
   "logOutConfirmTitle": "Log out?",
   "logOutConfirmBody": "You'll need to sign in again to publish, buy or message anyone.",
   "logOutConfirmCancel": "Stay signed in",
+  "deleteAccount": "Delete account",
   "welcomeTitle": "Your Market.",
   "welcomeSubtitle": "Everything you need, right in your community.",
   "continueWithGoogle": "Continue with Google",
@@ -426,7 +427,9 @@
   "inviteShareText": "Join me on Mambanda Market — use my code {code} when you sign up.",
   "@inviteShareText": {
     "placeholders": {
-      "code": {}
+      "code": {
+        "type": "String"
+      }
     }
   },
   "inviteInvited": "Invited",
@@ -855,7 +858,9 @@
   "ordersItemCount": "{count, plural, =1{1 item} other{{count} items}}",
   "@ordersItemCount": {
     "placeholders": {
-      "count": {}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "ordersPlacedOn": "Placed on {date}",
@@ -968,7 +973,9 @@
   "walletOrderRef": "Order {reference}",
   "@walletOrderRef": {
     "placeholders": {
-      "reference": {}
+      "reference": {
+        "type": "String"
+      }
     }
   },
   "payoutRequestCta": "Request payout",
@@ -976,7 +983,9 @@
   "payoutAvailableNote": "You can withdraw up to {amount}.",
   "@payoutAvailableNote": {
     "placeholders": {
-      "amount": {}
+      "amount": {
+        "type": "String"
+      }
     }
   },
   "payoutAmountLabel": "Amount (FCFA)",
@@ -985,7 +994,9 @@
   "payoutAmountTooHigh": "That is more than your available balance of {amount}.",
   "@payoutAmountTooHigh": {
     "placeholders": {
-      "amount": {}
+      "amount": {
+        "type": "String"
+      }
     }
   },
   "payoutMethodLabel": "Payout method",
@@ -1003,7 +1014,9 @@
   "payoutRequestedOn": "Requested on {date}",
   "@payoutRequestedOn": {
     "placeholders": {
-      "date": {}
+      "date": {
+        "type": "String"
+      }
     }
   },
   "homeSearchHint": "Search items, brands, categories…",
@@ -1167,26 +1180,71 @@
   "shipRouteIntro": "Where do we collect it, and where does it go?",
   "shipQuoteTitle": "Choose a delivery option",
   "shipQuoteIntro": "Prices for {route}. You pay the courier when it arrives.",
-  "@shipQuoteIntro": {"placeholders": {"route": {"type": "String"}}},
+  "@shipQuoteIntro": {
+    "placeholders": {
+      "route": {
+        "type": "String"
+      }
+    }
+  },
   "shipQuoteLoading": "Working out your price…",
   "shipQuoteFailed": "We could not get a price right now.",
   "shipRetry": "Try again",
   "shipQuoteManualTitle": "We’ll quote you in the chat",
   "shipQuoteManualBody": "This route or size isn’t on our price list yet. Send the request and we’ll come back with a price.",
   "shipEtaDays": "{min}–{max} days",
-  "@shipEtaDays": {"placeholders": {"min": {"type": "int"}, "max": {"type": "int"}}},
+  "@shipEtaDays": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "shipEtaDaysOne": "{n, plural, =1{1 day} other{{n} days}}",
-  "@shipEtaDaysOne": {"placeholders": {"n": {"type": "int"}}},
+  "@shipEtaDaysOne": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "shipEtaUpTo": "up to {n} days",
-  "@shipEtaUpTo": {"placeholders": {"n": {"type": "int"}}},
+  "@shipEtaUpTo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "shipEtaSameDay": "Same day",
   "shipPayOnDelivery": "Pay on delivery",
   "shipPayOnDeliveryAmount": "{price} · pay on delivery",
-  "@shipPayOnDeliveryAmount": {"placeholders": {"price": {"type": "String"}}},
+  "@shipPayOnDeliveryAmount": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
   "shipCollected": "Paid {price} on delivery",
-  "@shipCollected": {"placeholders": {"price": {"type": "String"}}},
+  "@shipCollected": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
   "shipCodBannerTitle": "Pay {price} to the courier",
-  "@shipCodBannerTitle": {"placeholders": {"price": {"type": "String"}}},
+  "@shipCodBannerTitle": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
   "shipCodBannerBody": "Cash on delivery. Nothing to pay before it arrives.",
   "shipSummaryTitle": "Your request",
   "shipSummaryItem": "Item",
@@ -1197,7 +1255,13 @@
   "shipSummaryPriceManual": "Quoted in the chat",
   "shipConfirmedTitle": "Shipment confirmed!",
   "shipConfirmedBody": "We’ve booked it. Pay {price} to the courier when it arrives.",
-  "@shipConfirmedBody": {"placeholders": {"price": {"type": "String"}}},
+  "@shipConfirmedBody": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
   "shipRequestSentTitle": "Request sent",
   "shipRequestSentBody": "We’ll come back with a price in the chat.",
   "shipReferenceLabel": "Reference",
@@ -1211,15 +1275,33 @@
   "shipNonePast": "No past shipments",
   "shipArrivingToday": "Arriving today",
   "shipArrivingIn": "Arriving in {days}",
-  "@shipArrivingIn": {"placeholders": {"days": {"type": "String"}}},
+  "@shipArrivingIn": {
+    "placeholders": {
+      "days": {
+        "type": "String"
+      }
+    }
+  },
   "shipArrivingLate": "Running late — check the chat",
   "shipCurrentLocation": "Current location",
   "shipOpenInMaps": "Open in maps",
   "shipNewPriceTitle": "New price: {price}",
-  "@shipNewPriceTitle": {"placeholders": {"price": {"type": "String"}}},
+  "@shipNewPriceTitle": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
   "shipNewPriceBody": "We adjusted the price for this request. Accept it to go ahead.",
   "shipNewPriceUntil": "Valid until {date}",
-  "@shipNewPriceUntil": {"placeholders": {"date": {"type": "String"}}},
+  "@shipNewPriceUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "shipAcceptPrice": "Accept price",
   "shipAccepted": "Accepted. We’re on it.",
   "shipAcceptFailed": "Could not accept the price. Try again.",
@@ -1232,7 +1314,13 @@
   "shipDocNotReady": "Not ready yet — try again in a moment.",
   "shipDocOpenFailed": "Could not open the document.",
   "shipDocEmailed": "Also sent to {email}",
-  "@shipDocEmailed": {"placeholders": {"email": {"type": "String"}}},
+  "@shipDocEmailed": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
   "locOpenInMaps": "Open in Maps",
   "locStop": "Stop",
   "locPinTitle": "Location",
@@ -1240,9 +1328,21 @@
   "locLiveEnded": "Live location ended",
   "locLiveStopped": "Sharing stopped",
   "locUntil": "until {time}",
-  "@locUntil": {"placeholders": {"time": {"type": "String"}}},
+  "@locUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "locUpdated": "updated {time}",
-  "@locUpdated": {"placeholders": {"time": {"type": "String"}}},
+  "@locUpdated": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "locShareOnce": "Send my location",
   "locShareLive": "Share live location",
   "locChooseDuration": "How long should we share it?",
@@ -1349,7 +1449,16 @@
   "deliveryHeroBody": "Pickup and delivery across Douala. Tracked live, and you pay the courier when it arrives.",
   "deliveryShipCta": "Ship something",
   "deliveryCounts": "{active} active · {past} delivered",
-  "@deliveryCounts": {"placeholders": {"active": {"type": "int"}, "past": {"type": "int"}}},
+  "@deliveryCounts": {
+    "placeholders": {
+      "active": {
+        "type": "int"
+      },
+      "past": {
+        "type": "int"
+      }
+    }
+  },
   "deliveryNoShipmentsYet": "No shipments yet",
   "deliveryTagline": "Tracked · Pay on delivery",
   "deliveryOptionsTitle": "What do you want to do?",
@@ -1364,9 +1473,21 @@
   "deliveryOptBuyBody": "Found something outside Mambanda? Paste the link and we'll fetch it.",
   "deliveryOptBuyCta": "Send the link",
   "deliveryStatOnTheWay": "{n, plural, =0{Nothing on the way} =1{1 package on the way} other{{n} packages on the way}}",
-  "@deliveryStatOnTheWay": {"placeholders": {"n": {"type": "int"}}},
+  "@deliveryStatOnTheWay": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "deliveryStatDelivered": "{n, plural, =0{No deliveries yet} =1{1 delivered} other{{n} delivered}}",
-  "@deliveryStatDelivered": {"placeholders": {"n": {"type": "int"}}},
+  "@deliveryStatDelivered": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "deliveryStatTagline": "Tracked · Pay on delivery",
   "shipBannerOnTheWay": "Your package is on the way!",
   "shipBannerBooked": "We've got your request",
@@ -1374,16 +1495,46 @@
   "shipBannerDelivered": "Delivered!",
   "shipBannerClosed": "This request is closed",
   "shipPackageIn": "Your package is in {place}",
-  "@shipPackageIn": {"placeholders": {"place": {"type": "String"}}},
+  "@shipPackageIn": {
+    "placeholders": {
+      "place": {
+        "type": "String"
+      }
+    }
+  },
   "shipUpdatedAgo": "Updated {when}",
-  "@shipUpdatedAgo": {"placeholders": {"when": {"type": "String"}}},
+  "@shipUpdatedAgo": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
   "shipJustNow": "just now",
   "shipMinutesAgo": "{n} min ago",
-  "@shipMinutesAgo": {"placeholders": {"n": {"type": "int"}}},
+  "@shipMinutesAgo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "shipHoursAgo": "{n, plural, =1{1 hour ago} other{{n} hours ago}}",
-  "@shipHoursAgo": {"placeholders": {"n": {"type": "int"}}},
+  "@shipHoursAgo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "shipDaysAgo": "{n, plural, =1{yesterday} other{{n} days ago}}",
-  "@shipDaysAgo": {"placeholders": {"n": {"type": "int"}}},
+  "@shipDaysAgo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "shipTrackPackage": "Track package",
   "shipViewDetails": "View details",
   "shipDocumentsAndReceipt": "Documents & receipt",
@@ -1410,5 +1561,20 @@
   "notifActionListing": "View listing",
   "notifActionLink": "Open link",
   "notifActionOpen": "Open",
-  "backAgainToExit": "Press back again to exit"
+  "backAgainToExit": "Press back again to exit",
+  "deleteAccountWarning": "Your profile, settings, saved items and listings are deleted. Your shipment history and conversations are kept for security and auditing.",
+  "deleteAccountSendsTo": "We will email a confirmation link to {email}. The deletion only happens once you open it.",
+  "deleteAccountReason": "Reason for leaving (optional)",
+  "deleteAccountContinue": "Send confirmation",
+  "deleteAccountSent": "Check your email to confirm the deletion.",
+  "deleteAccountFailed": "Could not start the deletion. Please try again.",
+  "@deleteAccountSendsTo": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "cancel": "Cancel",
+  "deleteAccountIrreversible": "This cannot be undone."
 }

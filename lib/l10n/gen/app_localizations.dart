@@ -308,6 +308,12 @@ abstract class AppLocalizations {
   /// **'Stay signed in'**
   String get logOutConfirmCancel;
 
+  /// No description provided for @deleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get deleteAccount;
+
   /// No description provided for @welcomeTitle.
   ///
   /// In en, this message translates to:
@@ -1710,7 +1716,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Join me on Mambanda Market — use my code {code} when you sign up.'**
-  String inviteShareText(Object code);
+  String inviteShareText(String code);
 
   /// No description provided for @inviteInvited.
   ///
@@ -3462,7 +3468,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 item} other{{count} items}}'**
-  String ordersItemCount(num count);
+  String ordersItemCount(int count);
 
   /// No description provided for @ordersPlacedOn.
   ///
@@ -3900,7 +3906,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Order {reference}'**
-  String walletOrderRef(Object reference);
+  String walletOrderRef(String reference);
 
   /// No description provided for @payoutRequestCta.
   ///
@@ -3918,7 +3924,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'You can withdraw up to {amount}.'**
-  String payoutAvailableNote(Object amount);
+  String payoutAvailableNote(String amount);
 
   /// No description provided for @payoutAmountLabel.
   ///
@@ -3942,7 +3948,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'That is more than your available balance of {amount}.'**
-  String payoutAmountTooHigh(Object amount);
+  String payoutAmountTooHigh(String amount);
 
   /// No description provided for @payoutMethodLabel.
   ///
@@ -4020,7 +4026,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Requested on {date}'**
-  String payoutRequestedOn(Object date);
+  String payoutRequestedOn(String date);
 
   /// No description provided for @homeSearchHint.
   ///
@@ -5821,6 +5827,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Press back again to exit'**
   String get backAgainToExit;
+
+  /// No description provided for @deleteAccountWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Your profile, settings, saved items and listings are deleted. Your shipment history and conversations are kept for security and auditing.'**
+  String get deleteAccountWarning;
+
+  /// No description provided for @deleteAccountSendsTo.
+  ///
+  /// In en, this message translates to:
+  /// **'We will email a confirmation link to {email}. The deletion only happens once you open it.'**
+  String deleteAccountSendsTo(String email);
+
+  /// No description provided for @deleteAccountReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason for leaving (optional)'**
+  String get deleteAccountReason;
+
+  /// No description provided for @deleteAccountContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Send confirmation'**
+  String get deleteAccountContinue;
+
+  /// No description provided for @deleteAccountSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your email to confirm the deletion.'**
+  String get deleteAccountSent;
+
+  /// No description provided for @deleteAccountFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not start the deletion. Please try again.'**
+  String get deleteAccountFailed;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @deleteAccountIrreversible.
+  ///
+  /// In en, this message translates to:
+  /// **'This cannot be undone.'**
+  String get deleteAccountIrreversible;
 }
 
 class _AppLocalizationsDelegate

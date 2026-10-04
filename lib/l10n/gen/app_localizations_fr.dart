@@ -123,6 +123,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get logOutConfirmCancel => 'Rester connecté';
 
   @override
+  String get deleteAccount => 'Supprimer le compte';
+
+  @override
   String get welcomeTitle => 'Votre marché.';
 
   @override
@@ -917,7 +920,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get inviteShare => 'Partager';
 
   @override
-  String inviteShareText(Object code) {
+  String inviteShareText(String code) {
     return 'Rejoignez-moi sur Mambanda Market — utilisez mon code $code à l’inscription.';
   }
 
@@ -1938,7 +1941,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get ordersLoadMore => 'Afficher plus';
 
   @override
-  String ordersItemCount(num count) {
+  String ordersItemCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
@@ -2141,13 +2144,13 @@ class AppLocalizationsFr extends AppLocalizations {
       'Confirmez que vous avez remis ou expédié cette commande. L\'acheteur est ensuite invité à confirmer la livraison, ce qui libère votre paiement.';
 
   @override
-  String get companyDashFulfilCancel => 'Pas encore';
+  String get companyDashFulfilCancel => 'Not yet';
 
   @override
-  String get companyDashFulfilConfirm => 'Marquer comme expédiée';
+  String get companyDashFulfilConfirm => 'Mark fulfilled';
 
   @override
-  String get companyDashFulfilledSuccess => 'Commande marquée comme expédiée.';
+  String get companyDashFulfilledSuccess => 'Order marked as fulfilled.';
 
   @override
   String get walletAvailableTitle => 'Solde disponible';
@@ -2194,7 +2197,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get walletKindOther => 'Ajustement';
 
   @override
-  String walletOrderRef(Object reference) {
+  String walletOrderRef(String reference) {
     return 'Commande $reference';
   }
 
@@ -2205,7 +2208,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get payoutRequestTitle => 'Demander un retrait';
 
   @override
-  String payoutAvailableNote(Object amount) {
+  String payoutAvailableNote(String amount) {
     return 'Vous pouvez retirer jusqu\'à $amount.';
   }
 
@@ -2219,7 +2222,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get payoutAmountInvalid => 'Saisissez un montant valide';
 
   @override
-  String payoutAmountTooHigh(Object amount) {
+  String payoutAmountTooHigh(String amount) {
     return 'C\'est supérieur à votre solde disponible de $amount.';
   }
 
@@ -2262,7 +2265,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Impossible de charger vos retraits. Vérifiez votre connexion.';
 
   @override
-  String payoutRequestedOn(Object date) {
+  String payoutRequestedOn(String date) {
     return 'Demandé le $date';
   }
 
@@ -3257,8 +3260,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get notificationsMarkAllRead => 'Tout marquer lu';
 
   @override
-  String get notificationsOpenError =>
-      'Impossible de charger vos notifications.';
+  String get notificationsOpenError => 'Could not load your notifications.';
 
   @override
   String get notificationsPrefTitle => 'Offres et actualités';
@@ -3324,4 +3326,33 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get backAgainToExit => 'Appuyez encore sur Retour pour quitter';
+
+  @override
+  String get deleteAccountWarning =>
+      'Votre profil, vos paramètres, vos favoris et vos annonces seront supprimés. L\'historique des expéditions et les conversations sont conservés à des fins de sécurité et d\'audit.';
+
+  @override
+  String deleteAccountSendsTo(String email) {
+    return 'Nous enverrons un lien de confirmation à $email. La suppression n\'a lieu qu\'une fois ce lien ouvert.';
+  }
+
+  @override
+  String get deleteAccountReason => 'Raison du départ (facultatif)';
+
+  @override
+  String get deleteAccountContinue => 'Envoyer la confirmation';
+
+  @override
+  String get deleteAccountSent =>
+      'Consultez vos e-mails pour confirmer la suppression.';
+
+  @override
+  String get deleteAccountFailed =>
+      'Impossible de lancer la suppression. Veuillez réessayer.';
+
+  @override
+  String get cancel => 'Annuler';
+
+  @override
+  String get deleteAccountIrreversible => 'Cette action est irréversible.';
 }

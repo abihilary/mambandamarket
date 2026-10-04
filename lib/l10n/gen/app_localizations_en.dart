@@ -122,6 +122,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logOutConfirmCancel => 'Stay signed in';
 
   @override
+  String get deleteAccount => 'Delete account';
+
+  @override
   String get welcomeTitle => 'Your Market.';
 
   @override
@@ -906,7 +909,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inviteShare => 'Share';
 
   @override
-  String inviteShareText(Object code) {
+  String inviteShareText(String code) {
     return 'Join me on Mambanda Market — use my code $code when you sign up.';
   }
 
@@ -1901,7 +1904,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ordersLoadMore => 'Load more';
 
   @override
-  String ordersItemCount(num count) {
+  String ordersItemCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
@@ -2157,7 +2160,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walletKindOther => 'Adjustment';
 
   @override
-  String walletOrderRef(Object reference) {
+  String walletOrderRef(String reference) {
     return 'Order $reference';
   }
 
@@ -2168,7 +2171,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get payoutRequestTitle => 'Request a payout';
 
   @override
-  String payoutAvailableNote(Object amount) {
+  String payoutAvailableNote(String amount) {
     return 'You can withdraw up to $amount.';
   }
 
@@ -2182,7 +2185,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get payoutAmountInvalid => 'Enter a valid amount';
 
   @override
-  String payoutAmountTooHigh(Object amount) {
+  String payoutAmountTooHigh(String amount) {
     return 'That is more than your available balance of $amount.';
   }
 
@@ -2224,7 +2227,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not load your payouts. Check your connection.';
 
   @override
-  String payoutRequestedOn(Object date) {
+  String payoutRequestedOn(String date) {
     return 'Requested on $date';
   }
 
@@ -3270,4 +3273,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backAgainToExit => 'Press back again to exit';
+
+  @override
+  String get deleteAccountWarning =>
+      'Your profile, settings, saved items and listings are deleted. Your shipment history and conversations are kept for security and auditing.';
+
+  @override
+  String deleteAccountSendsTo(String email) {
+    return 'We will email a confirmation link to $email. The deletion only happens once you open it.';
+  }
+
+  @override
+  String get deleteAccountReason => 'Reason for leaving (optional)';
+
+  @override
+  String get deleteAccountContinue => 'Send confirmation';
+
+  @override
+  String get deleteAccountSent => 'Check your email to confirm the deletion.';
+
+  @override
+  String get deleteAccountFailed =>
+      'Could not start the deletion. Please try again.';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get deleteAccountIrreversible => 'This cannot be undone.';
 }
