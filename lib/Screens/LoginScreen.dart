@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../api/auth_errors.dart';
 import '../api/auth_service.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
@@ -101,12 +102,8 @@ class _LoginScreenState extends State<LoginScreen> {
       // Save credentials to platform manager on successful authentication
       TextInput.finishAutofillContext();
     } on AuthException catch (e) {
-      if (e.message.toLowerCase().contains('email not confirmed')) {
-        _showError(l10n.emailNotConfirmedBody);
-      } else {
-        debugPrint('[login] auth error: ${e.message} (code: ${e.statusCode})');
-        _showError(e.message);
-      }
+      debugPrint('[login] auth error: ${e.message} (code: ${e.statusCode})');
+      _showError(authErrorMessage(e, l10n));
     } catch (e) {
       debugPrint('[login] unexpected error: $e');
       _showError(l10n.signInFailed);
@@ -137,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } on AuthException catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      _showError(e.message);
+      _showError(authErrorMessage(e, l10n));
     } catch (_) {
       if (!mounted) return;
       setState(() => _isLoading = false);

@@ -1377,5 +1377,11 @@
     }
   },
   "cancel": "Annuler",
-  "deleteAccountIrreversible": "Cette action est irréversible."
+  "deleteAccountIrreversible": "Cette action est irréversible.",
+  "authEmailUndeliverable": "Nous n'avons pas pu envoyer l'e‑mail de confirmation pour le moment. Le problème vient de chez nous — vous pouvez continuer avec Google, ou réessayer dans quelques minutes.",
+  "authInvalidCredentials": "E‑mail ou mot de passe incorrect.",
+  "authWeakPassword": "Ce mot de passe est trop faible. Utilisez au moins 8 caractères.",
+  "authEmailInvalid": "Cette adresse e‑mail ne semble pas valide.",
+  "authLinkExpired": "Ce lien a expiré ou a déjà été utilisé. Veuillez en demander un nouveau.",
+  "authGenericFailure": "Une erreur s'est produite. Veuillez réessayer."
 }

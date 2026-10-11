@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../api/auth_errors.dart';
 import '../api/auth_service.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
@@ -42,10 +43,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       if (mounted) setState(() => _sent = true);
     } on AuthException catch (e) {
       if (!mounted) return;
-      final rateLimited = e.message.toLowerCase().contains('rate limit');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(rateLimited ? l10n.tooManyAttempts : e.message),
+          content: Text(isRateLimited(e)
+              ? l10n.tooManyAttempts
+              : authErrorMessage(e, l10n)),
           backgroundColor: AppColors.danger,
         ),
       );

@@ -3301,4 +3301,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteAccountIrreversible => 'This cannot be undone.';
+
+  @override
+  String get authEmailUndeliverable =>
+      'We could not send the confirmation email just now. This is on our side — you can continue with Google, or try again in a few minutes.';
+
+  @override
+  String get authInvalidCredentials => 'Incorrect email or password.';
+
+  @override
+  String get authWeakPassword =>
+      'That password is too weak. Use at least 8 characters.';
+
+  @override
+  String get authEmailInvalid => 'That email address does not look valid.';
+
+  @override
+  String get authLinkExpired =>
+      'That link has expired or has already been used. Please request a new one.';
+
+  @override
+  String get authGenericFailure => 'Something went wrong. Please try again.';
 }

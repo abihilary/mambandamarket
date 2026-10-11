@@ -3355,4 +3355,26 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get deleteAccountIrreversible => 'Cette action est irréversible.';
+
+  @override
+  String get authEmailUndeliverable =>
+      'Nous n\'avons pas pu envoyer l\'e‑mail de confirmation pour le moment. Le problème vient de chez nous — vous pouvez continuer avec Google, ou réessayer dans quelques minutes.';
+
+  @override
+  String get authInvalidCredentials => 'E‑mail ou mot de passe incorrect.';
+
+  @override
+  String get authWeakPassword =>
+      'Ce mot de passe est trop faible. Utilisez au moins 8 caractères.';
+
+  @override
+  String get authEmailInvalid => 'Cette adresse e‑mail ne semble pas valide.';
+
+  @override
+  String get authLinkExpired =>
+      'Ce lien a expiré ou a déjà été utilisé. Veuillez en demander un nouveau.';
+
+  @override
+  String get authGenericFailure =>
+      'Une erreur s\'est produite. Veuillez réessayer.';
 }

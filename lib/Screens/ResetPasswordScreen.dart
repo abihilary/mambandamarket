@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../api/auth_errors.dart';
 import '../api/auth_service.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
@@ -49,12 +50,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
     } on AuthException catch (e) {
       if (!mounted) return;
-      // The recovery link is single-use and short-lived.
-      final expired = e.message.toLowerCase().contains('expired') ||
-          e.message.toLowerCase().contains('invalid');
+      // The recovery link is single-use and short-lived, and this screen is
+      // only ever reached from one, so name that case rather than the generic
+      // "expired or already used" line.
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(expired ? l10n.resetLinkExpired : e.message),
+          content: Text(isLinkExpired(e)
+              ? l10n.resetLinkExpired
+              : authErrorMessage(e, l10n)),
           backgroundColor: AppColors.danger,
         ),
       );

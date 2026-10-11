@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../api/api_client.dart';
+import '../api/auth_errors.dart';
 import '../api/auth_service.dart';
 import '../api/config.dart';
 import '../api/models.dart';
@@ -160,7 +161,7 @@ class _AccountScreenState extends State<AccountScreen> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(e.message)));
+      ).showSnackBar(SnackBar(content: Text(authErrorMessage(e, l10n))));
     }
   }
 

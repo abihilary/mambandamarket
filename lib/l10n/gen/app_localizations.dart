@@ -5875,6 +5875,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This cannot be undone.'**
   String get deleteAccountIrreversible;
+
+  /// Shown when the auth server accepted the request but could not hand the email to the mail provider.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not send the confirmation email just now. This is on our side — you can continue with Google, or try again in a few minutes.'**
+  String get authEmailUndeliverable;
+
+  /// Sign-in failed because the pair did not match.
+  ///
+  /// In en, this message translates to:
+  /// **'Incorrect email or password.'**
+  String get authInvalidCredentials;
+
+  /// Password rejected by the server's strength rule.
+  ///
+  /// In en, this message translates to:
+  /// **'That password is too weak. Use at least 8 characters.'**
+  String get authWeakPassword;
+
+  /// Server rejected the address as malformed.
+  ///
+  /// In en, this message translates to:
+  /// **'That email address does not look valid.'**
+  String get authEmailInvalid;
+
+  /// A recovery or confirmation link is single-use and short-lived.
+  ///
+  /// In en, this message translates to:
+  /// **'That link has expired or has already been used. Please request a new one.'**
+  String get authLinkExpired;
+
+  /// Last-resort message so raw server text is never shown to a user.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get authGenericFailure;
 }
 
 class _AppLocalizationsDelegate

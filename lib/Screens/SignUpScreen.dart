@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../api/auth_errors.dart';
 import '../api/auth_service.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
@@ -64,9 +65,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
       );
     } on AuthException catch (e) {
-      _showError(e.message.toLowerCase().contains('rate limit')
+      _showError(isRateLimited(e)
           ? l10n.resendRateLimited
-          : e.message);
+          : authErrorMessage(e, l10n));
     } catch (_) {
       _showError(l10n.sendFailed);
     } finally {
@@ -130,12 +131,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
         setState(() => _awaitingConfirmation = true);
       }
     } on AuthException catch (e) {
-      // Supabase's built-in SMTP is heavily rate limited; say so plainly
-      // instead of surfacing a raw error.
-      final msg = e.message.toLowerCase().contains('rate limit')
-          ? l10n.signUpRateLimited
-          : e.message;
-      _showError(msg);
+      // The mail could not be sent. Not a dead end: Google sign-in sends no
+      // mail, so it works even while this is broken, and gotrue rolls the user
+      // row back on this failure so the address stays free for a retry.
+      if (isEmailUndeliverable(e)) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.authEmailUndeliverable),
+            backgroundColor: AppColors.danger,
+            duration: const Duration(seconds: 8),
+            action: SnackBarAction(
+              label: l10n.continueWithGoogle,
+              textColor: Colors.white,
+              // Back to the screen that has the Google button. Nothing is
+              // cleared on the way, so coming back and retrying is one tap.
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
+        );
+        return;
+      }
+      _showError(authErrorMessage(e, l10n));
     } catch (_) {
       _showError(l10n.signUpFailed);
     } finally {

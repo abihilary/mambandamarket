@@ -1576,5 +1576,29 @@
     }
   },
   "cancel": "Cancel",
-  "deleteAccountIrreversible": "This cannot be undone."
+  "deleteAccountIrreversible": "This cannot be undone.",
+  "authEmailUndeliverable": "We could not send the confirmation email just now. This is on our side — you can continue with Google, or try again in a few minutes.",
+  "@authEmailUndeliverable": {
+    "description": "Shown when the auth server accepted the request but could not hand the email to the mail provider."
+  },
+  "authInvalidCredentials": "Incorrect email or password.",
+  "@authInvalidCredentials": {
+    "description": "Sign-in failed because the pair did not match."
+  },
+  "authWeakPassword": "That password is too weak. Use at least 8 characters.",
+  "@authWeakPassword": {
+    "description": "Password rejected by the server's strength rule."
+  },
+  "authEmailInvalid": "That email address does not look valid.",
+  "@authEmailInvalid": {
+    "description": "Server rejected the address as malformed."
+  },
+  "authLinkExpired": "That link has expired or has already been used. Please request a new one.",
+  "@authLinkExpired": {
+    "description": "A recovery or confirmation link is single-use and short-lived."
+  },
+  "authGenericFailure": "Something went wrong. Please try again.",
+  "@authGenericFailure": {
+    "description": "Last-resort message so raw server text is never shown to a user."
+  }
 }
