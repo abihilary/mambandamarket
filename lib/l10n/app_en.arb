@@ -1600,5 +1600,9 @@
   "authGenericFailure": "Something went wrong. Please try again.",
   "@authGenericFailure": {
     "description": "Last-resort message so raw server text is never shown to a user."
+  },
+  "sellerDashAnalytics": "Analytics",
+  "@sellerDashAnalytics": {
+    "description": "Opens the sheet with views, inquiries and listing counts."
   }
 }

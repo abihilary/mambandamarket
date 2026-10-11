@@ -318,60 +318,101 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
+      // A NestedScrollView, not a Column. As a Column the header card, the
+      // earnings tile, the stat strip and the banner were fixed chrome: the
+      // only thing that could scroll was the TabBarView inside an Expanded, so
+      // the listings — the reason the screen exists — got whatever height was
+      // left over, which on a phone with the banner showing is about two rows.
+      // Here the chrome scrolls away and the listings get the whole screen,
+      // while the TabBar stays pinned so you can still switch tabs.
       body: SafeArea(
-        child: Column(
-          children: [
-            // PROFILE CARD WITH DUAL BUTTONS
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: _buildSellerHeaderCard(theme, context),
-            ),
-
-            // STATS SUMMARY
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: _buildStatTile(
-                title: context.l10n.sellerDashTotalEarned,
-                value: _totalEarnedLabel,
-                icon: Icons.account_balance_wallet_outlined,
-                color: AppColors.success,
+        child: NestedScrollView(
+          headerSliverBuilder: (context, _) => [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: _buildSellerHeaderCard(theme, context),
               ),
             ),
-            const SizedBox(height: 12),
-            // One divided strip rather than a 2x2 grid of bordered boxes: it is
-            // the deck's shape, and it leaves room for the fourth number the
-            // dashboard endpoint has always returned and nothing ever showed.
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: _buildStatStrip(theme),
+            // Total Earned stays on the page; the other four numbers moved
+            // behind it. This is the one that answers "is any of this working",
+            // and it is also now the way in to the rest.
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: _buildStatTile(
+                  title: context.l10n.sellerDashTotalEarned,
+                  value: _totalEarnedLabel,
+                  icon: Icons.account_balance_wallet_outlined,
+                  color: AppColors.success,
+                  onTap: _openAnalytics,
+                ),
+              ),
+            ),
+            if (_showBackfill)
+              SliverToBoxAdapter(child: _buildBackfillBanner(theme)),
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _PinnedTabBar(
+                TabBar(
+                  controller: _tabController,
+                  labelColor: scheme.primary,
+                  unselectedLabelColor: scheme.onSurfaceVariant,
+                  indicatorColor: scheme.primary,
+                  indicatorWeight: 3,
+                  tabs: [
+                    Tab(
+                        text: context.l10n
+                            .sellerDashActiveTab(_activeItems.length)),
+                    Tab(text: context.l10n.sellerDashSoldTab(_soldItems.length)),
+                  ],
+                ),
+                background: scheme.surface,
+                divider: theme.dividerColor,
+              ),
+            ),
+          ],
+          body: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildActiveListingsTab(theme),
+              _buildSoldListingsTab(theme),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Views, inquiries and the listing counts, on demand.
+  ///
+  /// These used to be a permanent strip under the earnings tile. They are worth
+  /// having and not worth a fifth of the screen every time the hub is opened —
+  /// two of the four (active, sold) are already written on the tab labels.
+  void _openAnalytics() {
+    final theme = Theme.of(context);
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          0,
+          16,
+          MediaQuery.viewPaddingOf(sheetContext).bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              sheetContext.l10n.sellerDashAnalytics,
+              style: Theme.of(sheetContext).textTheme.titleLarge,
             ),
             const SizedBox(height: 16),
-
-            if (_showBackfill) _buildBackfillBanner(theme),
-
-            // TAB BAR
-            TabBar(
-              controller: _tabController,
-              labelColor: scheme.primary,
-              unselectedLabelColor: scheme.onSurfaceVariant,
-              indicatorColor: scheme.primary,
-              indicatorWeight: 3,
-              tabs: [
-                Tab(text: context.l10n.sellerDashActiveTab(_activeItems.length)),
-                Tab(text: context.l10n.sellerDashSoldTab(_soldItems.length)),
-              ],
-            ),
-
-            // TAB BAR VIEWS
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildActiveListingsTab(theme),
-                  _buildSoldListingsTab(theme),
-                ],
-              ),
-            ),
+            // The same strip it has always been, in its own space rather than
+            // competing with the listings for the first screenful.
+            _buildStatStrip(theme),
           ],
         ),
       ),
@@ -790,20 +831,19 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     );
   }
 
+  /// With [onTap] the tile also becomes the way in to the analytics sheet, and
+  /// says so — a labelled disclosure rather than a surface that happens to be
+  /// tappable, which nobody discovers.
   Widget _buildStatTile({
     required String title,
     required String value,
     required IconData icon,
     required Color color,
+    VoidCallback? onTap,
   }) {
     final theme = Theme.of(context);
-    return Container(
+    final body = Padding(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.dividerColor),
-      ),
       child: Row(
         children: [
           Container(
@@ -815,22 +855,60 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              Text(
-                title,
-                style: TextStyle(
-                    fontSize: 11, color: theme.colorScheme.onSurfaceVariant),
-              ),
-            ],
+          // Expanded so a long amount cannot push the disclosure off the edge.
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style:
+                      const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontSize: 11, color: theme.colorScheme.onSurfaceVariant),
+                ),
+              ],
+            ),
           ),
+          if (onTap != null) ...[
+            const SizedBox(width: 8),
+            Text(
+              context.l10n.sellerDashAnalytics,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: context.tokens.accentInk,
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded,
+                size: 18, color: context.tokens.accentInk),
+          ],
         ],
       ),
+    );
+
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+      side: BorderSide(color: theme.dividerColor),
+    );
+
+    // Material + InkWell rather than a button: every button in this app is
+    // themed `minimumSize: Size.fromHeight(52)` — a minimum *width* of infinity
+    // — so one cannot be laid out anywhere its width is unbounded.
+    return Material(
+      color: theme.colorScheme.surface,
+      shape: shape,
+      clipBehavior: Clip.antiAlias,
+      child: onTap == null
+          ? body
+          : InkWell(onTap: onTap, child: body),
     );
   }
 
@@ -880,7 +958,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       itemCount: _activeItems.length,
       itemBuilder: (context, index) {
         final item = _activeItems[index];
@@ -1039,7 +1117,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       itemCount: _soldItems.length,
       itemBuilder: (context, index) {
         final item = _soldItems[index];
@@ -1176,4 +1254,56 @@ class _QuotaRing extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Holds the hub's TabBar at the top once the header has scrolled under it.
+///
+/// A SliverPersistentHeader needs an exact height, and a TabBar already knows
+/// its own — `preferredSize` — so take it from there rather than hardcoding a
+/// number that goes wrong the moment the text scales.
+class _PinnedTabBar extends SliverPersistentHeaderDelegate {
+  _PinnedTabBar(this.tabBar, {required this.background, required this.divider});
+
+  final TabBar tabBar;
+  final Color background;
+  final Color divider;
+
+  /// The hairline under the bar. It is part of what this header draws, so it
+  /// has to be part of what this header measures — leaving it out of the
+  /// extent while drawing it in the Column overflows by exactly its thickness.
+  static const double _dividerThickness = 1;
+
+  double get _height => tabBar.preferredSize.height + _dividerThickness;
+
+  @override
+  double get minExtent => _height;
+
+  @override
+  double get maxExtent => _height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    // Opaque: pinned headers are painted over the scrolling content, and a
+    // transparent one lets the listings slide visibly underneath the labels.
+    return Material(
+      color: background,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          tabBar,
+          Divider(
+            height: _dividerThickness,
+            thickness: _dividerThickness,
+            color: divider,
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(_PinnedTabBar old) =>
+      old.tabBar != tabBar ||
+      old.background != background ||
+      old.divider != divider;
 }

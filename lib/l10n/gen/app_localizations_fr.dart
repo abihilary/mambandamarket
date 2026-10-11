@@ -3377,4 +3377,7 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get authGenericFailure =>
       'Une erreur s\'est produite. Veuillez réessayer.';
+
+  @override
+  String get sellerDashAnalytics => 'Statistiques';
 }

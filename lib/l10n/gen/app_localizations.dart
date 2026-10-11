@@ -5911,6 +5911,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Something went wrong. Please try again.'**
   String get authGenericFailure;
+
+  /// Opens the sheet with views, inquiries and listing counts.
+  ///
+  /// In en, this message translates to:
+  /// **'Analytics'**
+  String get sellerDashAnalytics;
 }
 
 class _AppLocalizationsDelegate

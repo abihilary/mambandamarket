@@ -1383,5 +1383,6 @@
   "authWeakPassword": "Ce mot de passe est trop faible. Utilisez au moins 8 caractères.",
   "authEmailInvalid": "Cette adresse e‑mail ne semble pas valide.",
   "authLinkExpired": "Ce lien a expiré ou a déjà été utilisé. Veuillez en demander un nouveau.",
-  "authGenericFailure": "Une erreur s'est produite. Veuillez réessayer."
+  "authGenericFailure": "Une erreur s'est produite. Veuillez réessayer.",
+  "sellerDashAnalytics": "Statistiques"
 }

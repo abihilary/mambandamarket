@@ -3322,4 +3322,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authGenericFailure => 'Something went wrong. Please try again.';
+
+  @override
+  String get sellerDashAnalytics => 'Analytics';
 }
