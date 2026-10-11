@@ -78,6 +78,17 @@ class Listing {
   final String currency;
   final int quantity;
   final String categorySlug;
+
+  /// product | service | job. Decides whether this is a physical good at all —
+  /// and therefore whether quantity, condition, stock, delivery and shipping
+  /// mean anything for it. See migration 0048.
+  final String kind;
+
+  /// How to read [priceCents]: fixed | from | hourly | daily | negotiable |
+  /// on_request | free. The amount-less modes store 0 and are rendered from
+  /// the mode, which is what lets `price_cents` stay non-nullable all the way
+  /// down through orders and sales.
+  final String priceMode;
   final String? condition;
   final bool hasGuarantee;
   final String? city;
@@ -147,6 +158,8 @@ class Listing {
     this.currency = 'XAF',
     this.quantity = 1,
     required this.categorySlug,
+    this.kind = 'product',
+    this.priceMode = 'fixed',
     this.condition,
     this.hasGuarantee = false,
     this.city,
@@ -170,12 +183,54 @@ class Listing {
   bool get isSold => status == 'sold';
   bool get inStock => quantity > 0;
 
-  /// Can this be ordered and paid for inside the app? Only a verified
-  /// company's listing can, because only a company can be held to escrow.
-  bool get isBuyable =>
-      companyId != null && companyId!.isNotEmpty && !isSold && inStock;
+  /// A physical good: the only kind with stock, a condition, delivery or
+  /// shipping. Services and jobs are arranged in chat.
+  bool get isProduct => kind == 'product';
 
-  String get displayPrice => formatPrice(priceCents, currency: currency);
+  /// True when [priceCents] is a placeholder rather than an amount, so nothing
+  /// should render it, filter on it or add it up.
+  bool get hasNoAmount => priceMode == 'negotiable' || priceMode == 'on_request';
+
+  /// Can this be ordered and paid for inside the app? Only a verified
+  /// company's listing can, because only a company can be held to escrow —
+  /// and only a product, because checkout takes a quantity and a delivery
+  /// address, neither of which means anything for a job.
+  bool get isBuyable => isProduct &&
+      !hasNoAmount &&
+      companyId != null &&
+      companyId!.isNotEmpty &&
+      !isSold &&
+      inStock;
+
+  /// The price as it should be read, which depends on [priceMode].
+  ///
+  /// Deliberately still a plain non-nullable String. Roughly thirty call sites
+  /// render this — cards, detail, checkout, chat headers, share text — and two
+  /// of them take it as a required non-nullable parameter. Changing the body
+  /// rather than the signature is what let "Negotiable" reach all of them
+  /// without touching any.
+  String get displayPrice {
+    final l10n = l10nNow;
+    switch (priceMode) {
+      case 'negotiable':
+        return l10n.priceNegotiable;
+      case 'on_request':
+        return l10n.priceOnRequest;
+      case 'free':
+        return l10n.priceFree;
+    }
+    final amount = formatPrice(priceCents, currency: currency);
+    switch (priceMode) {
+      case 'from':
+        return l10n.priceFrom(amount);
+      case 'hourly':
+        return l10n.pricePerHour(amount);
+      case 'daily':
+        return l10n.pricePerDay(amount);
+      default:
+        return amount;
+    }
+  }
 
   /// First image as a full CDN URL, or a neutral placeholder when the listing
   /// has no images yet.
@@ -231,6 +286,11 @@ class Listing {
       currency: json['currency']?.toString() ?? 'XAF',
       quantity: _asInt(json['quantity'], 1),
       categorySlug: json['category_slug']?.toString() ?? '',
+      // Defaulted rather than required: both endpoints were returning rows
+      // before these columns existed, and an older cached response has to go
+      // on parsing as the product it was.
+      kind: json['kind']?.toString() ?? 'product',
+      priceMode: json['price_mode']?.toString() ?? 'fixed',
       condition: json['condition']?.toString(),
       hasGuarantee: json['has_guarantee'] == true,
       city: json['city']?.toString(),
@@ -273,7 +333,15 @@ class Category {
   /// nothing here may assume a category is a leaf.
   final String? parentSlug;
 
+  /// Which listing kind this category normally holds — 'service' for repairs
+  /// and tutoring, 'job' for vacancies, null (meaning product) for the vast
+  /// majority. Set in migration 0048 so the create form can pre-select rather
+  /// than carrying a slug list in the client that goes stale whenever a
+  /// category is added.
+  final String? defaultKind;
+
   const Category({
+    this.defaultKind,
     required this.slug,
     required this.label,
     this.labelEn,
@@ -339,6 +407,7 @@ class Category {
         labelFr: json['label_fr']?.toString(),
         icon: json['icon']?.toString(),
         parentSlug: json['parent_slug']?.toString(),
+        defaultKind: json['default_kind']?.toString(),
       );
 }
 

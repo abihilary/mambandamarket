@@ -3380,4 +3380,77 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get sellerDashAnalytics => 'Statistiques';
+
+  @override
+  String get priceNegotiable => 'Prix à négocier';
+
+  @override
+  String get priceOnRequest => 'Sur demande';
+
+  @override
+  String get priceFree => 'Gratuit';
+
+  @override
+  String priceFrom(String price) {
+    return 'À partir de $price';
+  }
+
+  @override
+  String pricePerHour(String price) {
+    return '$price/h';
+  }
+
+  @override
+  String pricePerDay(String price) {
+    return '$price/jour';
+  }
+
+  @override
+  String get listingKindProduct => 'Produit';
+
+  @override
+  String get listingKindService => 'Service';
+
+  @override
+  String get listingKindJob => 'Emploi';
+
+  @override
+  String get createKindLabel => 'Que publiez-vous ?';
+
+  @override
+  String get createKindProductHint =>
+      'Un objet physique que vous remettrez ou livrerez.';
+
+  @override
+  String get createKindServiceHint =>
+      'Un travail que vous effectuez — réparations, beauté, cours, transport.';
+
+  @override
+  String get createKindJobHint => 'Un poste que vous souhaitez pourvoir.';
+
+  @override
+  String get createPriceModeLabel => 'Tarification';
+
+  @override
+  String get priceModeFixed => 'Prix fixe';
+
+  @override
+  String get priceModeFromLabel => 'À partir de';
+
+  @override
+  String get priceModeHourly => 'Par heure';
+
+  @override
+  String get priceModeDaily => 'Par jour';
+
+  @override
+  String get createPhotos => 'Photos';
+
+  @override
+  String get createPhotosOptional =>
+      'Facultatif pour les services et les emplois.';
+
+  @override
+  String get createLocationHelperService =>
+      'Où vous intervenez, pour que les acheteurs proches vous trouvent.';
 }

@@ -1029,6 +1029,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
     final title = listing?.title ?? widget.title;
     final price = listing?.displayPrice ?? widget.price;
+    // Only a product has a condition. The fallback string is "Local pickup
+    // only", which is a sentence about delivering an object — printed beside
+    // a job advert it is nonsense, so non-products show no chip at all.
+    final showsCondition = listing == null || listing.isProduct;
     final condition = listing?.condition ?? context.l10n.detailConditionFallback;
     final city = listing?.city ?? '—';
     final description = (listing?.description?.trim().isNotEmpty ?? false)
@@ -1180,17 +1184,20 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                           ),
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: scheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(8),
+                      if (showsCondition)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: scheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            condition,
+                            style: const TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.w600),
+                          ),
                         ),
-                        child: Text(
-                          condition,
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                        ),
-                      ),
                     ],
                   ),
                   if (_isBuyable) ...[
@@ -1352,9 +1359,16 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   /// Restricting it to company products meant the one place somebody is
   /// already looking at a thing they want was also the place the option was
   /// usually missing — and "can I pay for this on the platform" is a different
-  /// question from "can you get this to me". Only the server-side switch gates
-  /// it now.
-  bool get _showsShipping => _listing != null && ShippingRepository.instance.enabled;
+  /// question from "can you get this to me". Only the server-side switch and
+  /// the kind gate it now.
+  ///
+  /// The kind check is not cosmetic: before 0048 every listing was a product,
+  /// so a job advert carried a working "ship this item" button that opened a
+  /// courier request for a vacancy.
+  bool get _showsShipping =>
+      _listing != null &&
+      _listing!.isProduct &&
+      ShippingRepository.instance.enabled;
 
   Widget _shipButton() {
     final scheme = Theme.of(context).colorScheme;

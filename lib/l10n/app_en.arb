@@ -1604,5 +1604,107 @@
   "sellerDashAnalytics": "Analytics",
   "@sellerDashAnalytics": {
     "description": "Opens the sheet with views, inquiries and listing counts."
+  },
+  "priceNegotiable": "Negotiable",
+  "@priceNegotiable": {
+    "description": "Pricing mode: seller will discuss the price in chat."
+  },
+  "priceOnRequest": "On request",
+  "@priceOnRequest": {
+    "description": "Pricing mode: price quoted per job after contact."
+  },
+  "priceFree": "Free",
+  "@priceFree": {
+    "description": "Pricing mode: given away at no cost."
+  },
+  "priceFrom": "From {price}",
+  "@priceFrom": {
+    "description": "Pricing mode: a starting price.",
+    "placeholders": {
+      "price": {
+        "example": "5.000 FCFA",
+        "type": "String"
+      }
+    }
+  },
+  "pricePerHour": "{price}/hr",
+  "@pricePerHour": {
+    "description": "Pricing mode: hourly rate.",
+    "placeholders": {
+      "price": {
+        "example": "5.000 FCFA",
+        "type": "String"
+      }
+    }
+  },
+  "pricePerDay": "{price}/day",
+  "@pricePerDay": {
+    "description": "Pricing mode: daily rate.",
+    "placeholders": {
+      "price": {
+        "example": "5.000 FCFA",
+        "type": "String"
+      }
+    }
+  },
+  "listingKindProduct": "Product",
+  "@listingKindProduct": {
+    "description": "Listing kind: a physical item that can be bought and delivered."
+  },
+  "listingKindService": "Service",
+  "@listingKindService": {
+    "description": "Listing kind: work offered — repairs, tutoring, catering."
+  },
+  "listingKindJob": "Job",
+  "@listingKindJob": {
+    "description": "Listing kind: a vacancy being advertised."
+  },
+  "createKindLabel": "What are you listing?",
+  "@createKindLabel": {
+    "description": "Heading for the kind selector at the top of the create form."
+  },
+  "createKindProductHint": "Something physical you will hand over or deliver.",
+  "@createKindProductHint": {
+    "description": "Helper under Product."
+  },
+  "createKindServiceHint": "Work you do — repairs, beauty, tutoring, transport.",
+  "@createKindServiceHint": {
+    "description": "Helper under Service."
+  },
+  "createKindJobHint": "A position you are hiring for.",
+  "@createKindJobHint": {
+    "description": "Helper under Job."
+  },
+  "createPriceModeLabel": "Pricing",
+  "@createPriceModeLabel": {
+    "description": "Label for the pricing-mode dropdown."
+  },
+  "priceModeFixed": "Fixed price",
+  "@priceModeFixed": {
+    "description": "Pricing mode option: one set amount."
+  },
+  "priceModeFromLabel": "Starting at",
+  "@priceModeFromLabel": {
+    "description": "Pricing mode option: a floor price."
+  },
+  "priceModeHourly": "Per hour",
+  "@priceModeHourly": {
+    "description": "Pricing mode option."
+  },
+  "priceModeDaily": "Per day",
+  "@priceModeDaily": {
+    "description": "Pricing mode option."
+  },
+  "createPhotos": "Photos",
+  "@createPhotos": {
+    "description": "Heading above the image picker. Kind-neutral: the same form publishes products, services and jobs."
+  },
+  "createPhotosOptional": "Optional for services and jobs.",
+  "@createPhotosOptional": {
+    "description": "Shown under the image picker when the listing is not a product."
+  },
+  "createLocationHelperService": "Where you work, so buyers nearby can find you.",
+  "@createLocationHelperService": {
+    "description": "Location helper for services and jobs; the product one talks about collecting an item."
   }
 }

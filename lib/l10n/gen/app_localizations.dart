@@ -5917,6 +5917,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Analytics'**
   String get sellerDashAnalytics;
+
+  /// Pricing mode: seller will discuss the price in chat.
+  ///
+  /// In en, this message translates to:
+  /// **'Negotiable'**
+  String get priceNegotiable;
+
+  /// Pricing mode: price quoted per job after contact.
+  ///
+  /// In en, this message translates to:
+  /// **'On request'**
+  String get priceOnRequest;
+
+  /// Pricing mode: given away at no cost.
+  ///
+  /// In en, this message translates to:
+  /// **'Free'**
+  String get priceFree;
+
+  /// Pricing mode: a starting price.
+  ///
+  /// In en, this message translates to:
+  /// **'From {price}'**
+  String priceFrom(String price);
+
+  /// Pricing mode: hourly rate.
+  ///
+  /// In en, this message translates to:
+  /// **'{price}/hr'**
+  String pricePerHour(String price);
+
+  /// Pricing mode: daily rate.
+  ///
+  /// In en, this message translates to:
+  /// **'{price}/day'**
+  String pricePerDay(String price);
+
+  /// Listing kind: a physical item that can be bought and delivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Product'**
+  String get listingKindProduct;
+
+  /// Listing kind: work offered — repairs, tutoring, catering.
+  ///
+  /// In en, this message translates to:
+  /// **'Service'**
+  String get listingKindService;
+
+  /// Listing kind: a vacancy being advertised.
+  ///
+  /// In en, this message translates to:
+  /// **'Job'**
+  String get listingKindJob;
+
+  /// Heading for the kind selector at the top of the create form.
+  ///
+  /// In en, this message translates to:
+  /// **'What are you listing?'**
+  String get createKindLabel;
+
+  /// Helper under Product.
+  ///
+  /// In en, this message translates to:
+  /// **'Something physical you will hand over or deliver.'**
+  String get createKindProductHint;
+
+  /// Helper under Service.
+  ///
+  /// In en, this message translates to:
+  /// **'Work you do — repairs, beauty, tutoring, transport.'**
+  String get createKindServiceHint;
+
+  /// Helper under Job.
+  ///
+  /// In en, this message translates to:
+  /// **'A position you are hiring for.'**
+  String get createKindJobHint;
+
+  /// Label for the pricing-mode dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Pricing'**
+  String get createPriceModeLabel;
+
+  /// Pricing mode option: one set amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed price'**
+  String get priceModeFixed;
+
+  /// Pricing mode option: a floor price.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting at'**
+  String get priceModeFromLabel;
+
+  /// Pricing mode option.
+  ///
+  /// In en, this message translates to:
+  /// **'Per hour'**
+  String get priceModeHourly;
+
+  /// Pricing mode option.
+  ///
+  /// In en, this message translates to:
+  /// **'Per day'**
+  String get priceModeDaily;
+
+  /// Heading above the image picker. Kind-neutral: the same form publishes products, services and jobs.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get createPhotos;
+
+  /// Shown under the image picker when the listing is not a product.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional for services and jobs.'**
+  String get createPhotosOptional;
+
+  /// Location helper for services and jobs; the product one talks about collecting an item.
+  ///
+  /// In en, this message translates to:
+  /// **'Where you work, so buyers nearby can find you.'**
+  String get createLocationHelperService;
 }
 
 class _AppLocalizationsDelegate

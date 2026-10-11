@@ -842,10 +842,23 @@ class _PriceSheet extends StatefulWidget {
 }
 
 class _PriceSheetState extends State<_PriceSheet> {
-  late final TextEditingController _min = TextEditingController(
-      text: widget.minCents == null ? '' : '${widget.minCents! ~/ 100}');
-  late final TextEditingController _max = TextEditingController(
-      text: widget.maxCents == null ? '' : '${widget.maxCents! ~/ 100}');
+  /// Both directions go through the currency-aware helpers.
+  ///
+  /// This sheet used to divide and multiply by 100 flat. The CFA franc has no
+  /// minor unit — 145000 XAF *is* 145.000 FCFA — so typing "5000" filtered at
+  /// 500.000 FCFA and the chip above then read "500.000 FCFA" back, which made
+  /// the filter look like it was working. Same class of bug the write path
+  /// already fixed; see toMinorUnits in models.dart.
+  static String _display(int? minor) {
+    if (minor == null) return '';
+    final n = fromMinorUnits(minor);
+    return n == n.roundToDouble() ? n.round().toString() : n.toString();
+  }
+
+  late final TextEditingController _min =
+      TextEditingController(text: _display(widget.minCents));
+  late final TextEditingController _max =
+      TextEditingController(text: _display(widget.maxCents));
 
   @override
   void dispose() {
@@ -856,7 +869,7 @@ class _PriceSheetState extends State<_PriceSheet> {
 
   int? _cents(TextEditingController c) {
     final n = int.tryParse(c.text.trim().replaceAll(RegExp(r'[^0-9]'), ''));
-    return n == null ? null : n * 100;
+    return n == null ? null : toMinorUnits(n);
   }
 
   @override

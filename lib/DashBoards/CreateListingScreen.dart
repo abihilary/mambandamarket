@@ -84,6 +84,32 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
 
   /// Category **slug** (the API's identifier), not the display label.
   String? _selectedCategory;
+
+  /// product | service | job. Chosen first, because it decides which of the
+  /// fields below are even asked for — a job has no quantity, no condition,
+  /// no stock and nothing to deliver.
+  String _kind = 'product';
+
+  /// Set once the seller picks the kind themselves, so that choosing a
+  /// category afterwards cannot quietly overrule them. Without this, a
+  /// plumber who marks a listing a Service and then picks "Repairs" has it
+  /// flipped back under them by the category default.
+  bool _kindChosenByUser = false;
+
+  /// How [_priceController] should be read. See migration 0048.
+  String _priceMode = 'fixed';
+
+  /// Modes that carry no amount at all — the price box is hidden and 0 is
+  /// stored, because the column is still NOT NULL.
+  static const Set<String> _amountlessModes = {
+    'negotiable',
+    'on_request',
+    'free',
+  };
+
+  bool get _wantsAmount => !_amountlessModes.contains(_priceMode);
+  bool get _isProduct => _kind == 'product';
+
   String _selectedCondition = 'New';
   bool _hasGuarantee = false;
   bool _isSubmitting = false;
@@ -124,6 +150,13 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       final condition = listing['condition']?.toString();
       _selectedCondition =
           _conditions.contains(condition) ? condition! : 'New';
+      _kind = (listing['kind'] ?? listing['kind_slug'])?.toString() ?? 'product';
+      // An existing listing's kind is the seller's own earlier decision, so
+      // re-picking the category while editing must not overwrite it.
+      _kindChosenByUser = true;
+      _priceMode = listing['priceMode']?.toString() ??
+          listing['price_mode']?.toString() ??
+          'fixed';
       _hasGuarantee = listing['hasGuarantee'] ?? false;
       // Both spellings, for the same reason the category reads two keys: the
       // seller hub and the store dashboard build this map differently.
@@ -343,7 +376,11 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       _showErrorSnackBar(l10n.createPleaseChooseACategory);
       return;
     }
-    if (_existingImages.isEmpty && _newImageFiles.isEmpty) {
+    // A photo is the whole listing for a product and nobody will tap a card
+    // without one. A job advert is text, and demanding a picture of a vacancy
+    // is how you get stock photos of handshakes — so it is asked for, not
+    // required, once this stops being an object.
+    if (_isProduct && _existingImages.isEmpty && _newImageFiles.isEmpty) {
       _showErrorSnackBar(l10n.createSelectAtLeastOneImage);
       return;
     }
@@ -354,10 +391,16 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       // Money is sent as integer minor units; never as a float. FCFA has no
       // minor unit, so the conversion is currency-aware — scaling by 100 here
       // published every listing at 100x its price.
-      final priceCents = api.toMinorUnits(
-        double.tryParse(_priceController.text.replaceAll(',', '.')) ?? 0,
-      );
-      final quantity = int.tryParse(_quantityController.text) ?? 1;
+      // Amount-less modes store 0; the column is still NOT NULL and the mode
+      // is what gets rendered. Reading the box anyway would carry a number the
+      // seller typed before switching mode into a listing that says
+      // "Negotiable" — which is exactly what the DB constraint forbids.
+      final priceCents = _wantsAmount
+          ? api.toMinorUnits(
+              double.tryParse(_priceController.text.replaceAll(',', '.')) ?? 0,
+            )
+          : 0;
+      final quantity = _isProduct ? (int.tryParse(_quantityController.text) ?? 1) : 1;
       final description = _descriptionController.text.trim();
 
       if (editingId != null) {
@@ -370,8 +413,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           'price_cents': priceCents,
           'quantity': quantity,
           'category_slug': _selectedCategory!,
-          'condition': _selectedCondition,
-          'has_guarantee': _hasGuarantee,
+          'kind': _kind,
+          'price_mode': _priceMode,
+          // Null for anything that is not an object. The server normalises
+          // this too, but sending the right shape keeps the two in step.
+          'condition': _isProduct ? _selectedCondition : null,
+          'has_guarantee': _isProduct && _hasGuarantee,
           // Sent even when blank: the API reads "" as "cleared" and stores
           // null, which is how a seller removes a location they no longer
           // want on the listing. Omitting the key would leave the old one.
@@ -424,8 +471,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         priceCents: priceCents,
         quantity: quantity,
         categorySlug: _selectedCategory!,
-        condition: _selectedCondition,
-        hasGuarantee: _hasGuarantee,
+        kind: _kind,
+        priceMode: _priceMode,
+        condition: _isProduct ? _selectedCondition : null,
+        hasGuarantee: _isProduct && _hasGuarantee,
         city: _locationController.text.trim().isEmpty
             ? null
             : _locationController.text.trim(),
@@ -578,6 +627,96 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     // null means dismissed, which is not the same as cleared.
     if (picked == null || !mounted) return;
     setState(() => _selectedCategory = picked);
+
+    // Jobs and services are categories the server already knows the shape of,
+    // so picking one offers the matching kind — but never overrides a seller
+    // who has already answered the question themselves.
+    if (_kindChosenByUser) return;
+    String? suggested;
+    for (final c in _categories) {
+      if (c.slug == picked) {
+        suggested = c.defaultKind;
+        break;
+      }
+    }
+    if (suggested != null) _setKind(suggested, byUser: false);
+  }
+
+  /// Which pricing modes make sense for a given kind.
+  ///
+  /// A job is not sold by the day and is never "free", so offering those would
+  /// only invite nonsense listings. A product can be given away — that is what
+  /// the `verschenken` category has always been for — but is not billed hourly.
+  static List<String> _priceModesFor(String kind) {
+    switch (kind) {
+      case 'service':
+        return const [
+          'fixed', 'from', 'hourly', 'daily', 'negotiable', 'on_request', 'free',
+        ];
+      case 'job':
+        return const ['fixed', 'from', 'hourly', 'daily', 'negotiable', 'on_request'];
+      default:
+        return const ['fixed', 'from', 'negotiable', 'on_request', 'free'];
+    }
+  }
+
+  String _priceModeLabel(String mode) {
+    final l10n = context.l10n;
+    switch (mode) {
+      case 'from':
+        return l10n.priceModeFromLabel;
+      case 'hourly':
+        return l10n.priceModeHourly;
+      case 'daily':
+        return l10n.priceModeDaily;
+      case 'negotiable':
+        return l10n.priceNegotiable;
+      case 'on_request':
+        return l10n.priceOnRequest;
+      case 'free':
+        return l10n.priceFree;
+      default:
+        return l10n.priceModeFixed;
+    }
+  }
+
+  String _kindLabel(String kind) {
+    final l10n = context.l10n;
+    switch (kind) {
+      case 'service':
+        return l10n.listingKindService;
+      case 'job':
+        return l10n.listingKindJob;
+      default:
+        return l10n.listingKindProduct;
+    }
+  }
+
+  String _kindHint(String kind) {
+    final l10n = context.l10n;
+    switch (kind) {
+      case 'service':
+        return l10n.createKindServiceHint;
+      case 'job':
+        return l10n.createKindJobHint;
+      default:
+        return l10n.createKindProductHint;
+    }
+  }
+
+  /// Switch kind, keeping the rest of the form coherent.
+  ///
+  /// The mode list differs per kind, so a service priced "per hour" that
+  /// becomes a product would otherwise hold a mode its own dropdown no longer
+  /// offers — which asserts inside DropdownButtonFormField rather than failing
+  /// quietly.
+  void _setKind(String kind, {required bool byUser}) {
+    if (kind == _kind) return;
+    setState(() {
+      _kind = kind;
+      if (byUser) _kindChosenByUser = true;
+      if (!_priceModesFor(kind).contains(_priceMode)) _priceMode = 'fixed';
+    });
   }
 
   /// Localized display label for a condition. The stable value ([cond]) is
@@ -616,8 +755,21 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(l10n.createProductImages,
+              Text(l10n.createPhotos,
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              // Still asked for, just not demanded: a photo is the whole card
+              // for a product, while a job advert is text and forcing a
+              // picture of a vacancy only produces stock photography.
+              if (!_isProduct) ...[
+                const SizedBox(height: 2),
+                Text(
+                  l10n.createPhotosOptional,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
               const SizedBox(height: 8),
               SizedBox(
                 height: 100,
@@ -668,6 +820,37 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                       );
                     }
                   },
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // WHAT KIND OF THING IS THIS
+              //
+              // First, because it decides which of the fields below are even
+              // shown. Segmented rather than a dropdown: there are exactly
+              // three and the choice changes the rest of the form, so it
+              // should be visible rather than folded away.
+              Text(
+                l10n.createKindLabel,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              SegmentedButton<String>(
+                segments: [
+                  for (final k in const ['product', 'service', 'job'])
+                    ButtonSegment(value: k, label: Text(_kindLabel(k))),
+                ],
+                selected: {_kind},
+                showSelectedIcon: false,
+                onSelectionChanged: (sel) =>
+                    _setKind(sel.first, byUser: true),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _kindHint(_kind),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 20),
@@ -771,62 +954,115 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               ),
               const SizedBox(height: 16),
 
-              // PRICE & QUANTITY ROW
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: TextFormField(
-                      controller: _priceController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: InputDecoration(
-                        labelText: l10n.createPriceLabel,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      validator: (val) {
-                        if (val == null || val.isEmpty) return l10n.createEnterPrice;
-                        if (double.tryParse(val) == null) return l10n.createInvalidPrice;
-                        return null;
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 1,
-                    child: TextFormField(
-                      controller: _quantityController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: l10n.createQuantity,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      validator: (val) {
-                        if (val == null || val.isEmpty) return l10n.createEnterQuantity;
-                        final qty = int.tryParse(val);
-                        if (qty == null || qty < 1) return l10n.createMinQuantity;
-                        return null;
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // CONDITION SELECTOR
+              // PRICING
+              //
+              // The mode comes first because it decides whether an amount is
+              // asked for at all. "Negotiable" and "On request" store 0 —
+              // `price_cents` is still NOT NULL — and are rendered from the
+              // mode, so there is nothing to type and no stale number left
+              // sitting behind the word.
               DropdownButtonFormField<String>(
-                value: _selectedCondition,
+                value: _priceMode,
+                isExpanded: true,
                 decoration: InputDecoration(
-                  labelText: l10n.createCondition,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  labelText: l10n.createPriceModeLabel,
+                  border:
+                      OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                items: _conditions.map((cond) {
-                  return DropdownMenuItem(value: cond, child: Text(_conditionLabel(cond)));
-                }).toList(),
+                items: [
+                  for (final mode in _priceModesFor(_kind))
+                    DropdownMenuItem(
+                        value: mode, child: Text(_priceModeLabel(mode))),
+                ],
                 onChanged: (val) {
-                  if (val != null) setState(() => _selectedCondition = val);
+                  if (val != null) setState(() => _priceMode = val);
                 },
               ),
+              if (_wantsAmount) ...[
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: _isProduct ? 2 : 1,
+                      child: TextFormField(
+                        controller: _priceController,
+                        keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(
+                          labelText: l10n.createPriceLabel,
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        validator: (val) {
+                          // Only demanded for the modes that carry a number;
+                          // the field is not even built for the others.
+                          if (val == null || val.isEmpty) {
+                            return l10n.createEnterPrice;
+                          }
+                          final n = double.tryParse(val.replaceAll(',', '.'));
+                          // Parsed the same way submission parses it. The old
+                          // validator used double.tryParse on the raw text, so
+                          // "1,5" failed here and would have parsed on save.
+                          if (n == null) return l10n.createInvalidPrice;
+                          // A negative used to pass this and get rejected by
+                          // the server as a generic API failure.
+                          if (n < 0) return l10n.createInvalidPrice;
+                          return null;
+                        },
+                      ),
+                    ),
+                    // Quantity is a product idea. You do not have three of a
+                    // plumbing visit, and 0048 constrains non-products to one.
+                    if (_isProduct) ...[
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 1,
+                        child: TextFormField(
+                          controller: _quantityController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: l10n.createQuantity,
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                          ),
+                          validator: (val) {
+                            if (val == null || val.isEmpty) {
+                              return l10n.createEnterQuantity;
+                            }
+                            final qty = int.tryParse(val);
+                            if (qty == null || qty < 1) {
+                              return l10n.createMinQuantity;
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
               const SizedBox(height: 16),
+
+              // CONDITION SELECTOR — products only. The four values are
+              // New/Like New/Used/Refurbished, which describe an object.
+              if (_isProduct) ...[
+                DropdownButtonFormField<String>(
+                  value: _selectedCondition,
+                  decoration: InputDecoration(
+                    labelText: l10n.createCondition,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  items: _conditions.map((cond) {
+                    return DropdownMenuItem(
+                        value: cond, child: Text(_conditionLabel(cond)));
+                  }).toList(),
+                  onChanged: (val) {
+                    if (val != null) setState(() => _selectedCondition = val);
+                  },
+                ),
+                const SizedBox(height: 16),
+              ],
 
               // LOCATION
               //
@@ -856,7 +1092,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                     decoration: InputDecoration(
                       labelText: l10n.createListingLocation,
                       hintText: l10n.createListingLocationHint,
-                      helperText: l10n.createListingLocationHelp,
+                      // "collect the item" is about handing over an object.
+                      helperText: _isProduct
+                          ? l10n.createListingLocationHelp
+                          : l10n.createLocationHelperService,
                       prefixIcon: const Icon(Icons.location_on_outlined),
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12)),
@@ -936,13 +1175,17 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               ),
               const SizedBox(height: 4),
 
-              // GUARANTEE CHECKBOX
-              CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(l10n.createIncludesGuarantee),
-                value: _hasGuarantee,
-                onChanged: (val) => setState(() => _hasGuarantee = val ?? false),
-              ),
+              // GUARANTEE CHECKBOX — products only. A warranty is a promise
+              // about an object; a job advert cannot carry one.
+              if (_isProduct) ...[
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.createIncludesGuarantee),
+                  value: _hasGuarantee,
+                  onChanged: (val) =>
+                      setState(() => _hasGuarantee = val ?? false),
+                ),
+              ],
               const SizedBox(height: 24),
 
               // SUBMIT BUTTON
