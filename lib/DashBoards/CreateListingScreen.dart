@@ -96,6 +96,19 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   /// flipped back under them by the category default.
   bool _kindChosenByUser = false;
 
+  /// True while [_selectedCategory] is one the form filled in from the kind
+  /// rather than one the seller picked, so the field can say so and invite a
+  /// narrower choice.
+  bool _categoryAutoPicked = false;
+
+  /// Lets a kind switch refresh the category field's own state, so an error
+  /// left from a failed save does not sit under a category just filled in.
+  final _categoryFieldKey = GlobalKey<FormFieldState<String>>();
+
+  /// The product category in use before the seller switched to Service or
+  /// Job, so switching back returns it instead of leaving them on "Services".
+  String? _lastProductCategory;
+
   /// How [_priceController] should be read. See migration 0048.
   String _priceMode = 'fixed';
 
@@ -232,7 +245,11 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         _categories = cats;
         // Keep any pre-selected slug that still exists; otherwise default.
         if (!cats.any((c) => c.slug == _selectedCategory)) {
-          _selectedCategory = cats.isNotEmpty ? cats.first.slug : null;
+          // A seller who chose Service or Job before the list arrived gets
+          // that group, not the first product category in the list.
+          final home = _homeCategoryFor(_kind);
+          _selectedCategory = home ?? (cats.isNotEmpty ? cats.first.slug : null);
+          _categoryAutoPicked = home != null;
         }
       });
     } catch (e, stack) {
@@ -626,7 +643,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     );
     // null means dismissed, which is not the same as cleared.
     if (picked == null || !mounted) return;
-    setState(() => _selectedCategory = picked);
+    setState(() {
+      _selectedCategory = picked;
+      _categoryAutoPicked = false;
+    });
 
     // Jobs and services are categories the server already knows the shape of,
     // so picking one offers the matching kind — but never overrides a seller
@@ -640,6 +660,47 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       }
     }
     if (suggested != null) _setKind(suggested, byUser: false);
+  }
+
+  /// The kind a category normally holds: its own default, else its group's,
+  /// else product. Leaves under Services and Jobs carry their own today, but
+  /// a leaf added later without one should still follow its group.
+  String _kindOfCategory(String? slug) {
+    final c = _categoryBySlug(slug);
+    if (c == null) return 'product';
+    return c.defaultKind ?? _categoryBySlug(c.parentSlug)?.defaultKind ?? 'product';
+  }
+
+  /// Where a listing of [kind] starts when its current category does not fit.
+  ///
+  /// For services and jobs, the top-level group the server marks with that
+  /// kind ("Services", "Jobs") — read from `default_kind` rather than a slug
+  /// list here, so it keeps working if the tree is reorganised. For products,
+  /// whatever the seller had before they switched away, if anything.
+  String? _homeCategoryFor(String kind) {
+    if (kind == 'product') return _lastProductCategory;
+    for (final c in _categories) {
+      if (c.isRoot && c.defaultKind == kind) return c.slug;
+    }
+    return null;
+  }
+
+  /// Keep the category in step with a kind the seller just chose.
+  ///
+  /// A category that already fits is left alone — "Food › Catering" is a
+  /// perfectly good home for a service. Only a mismatch moves it, and the
+  /// product category being left behind is remembered for the way back.
+  void _alignCategoryWithKind(String kind) {
+    if (_categories.isEmpty) return;
+    final current = _kindOfCategory(_selectedCategory);
+    if (_selectedCategory != null && current == kind) return;
+    if (_selectedCategory != null && current == 'product') {
+      _lastProductCategory = _selectedCategory;
+    }
+    final home = _homeCategoryFor(kind);
+    _selectedCategory = home;
+    // Restoring the seller's own earlier product choice is not a guess.
+    _categoryAutoPicked = home != null && kind != 'product';
   }
 
   /// Which pricing modes make sense for a given kind.
@@ -714,9 +775,13 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     if (kind == _kind) return;
     setState(() {
       _kind = kind;
-      if (byUser) _kindChosenByUser = true;
+      if (byUser) {
+        _kindChosenByUser = true;
+        _alignCategoryWithKind(kind);
+      }
       if (!_priceModesFor(kind).contains(_priceMode)) _priceMode = 'fixed';
     });
+    if (byUser) _categoryFieldKey.currentState?.didChange(_selectedCategory);
   }
 
   /// Localized display label for a condition. The stable value ([cond]) is
@@ -862,6 +927,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               // single unsearchable column, so finding "Groceries" meant
               // scrolling past everything the marketplace sells.
               FormField<String>(
+                key: _categoryFieldKey,
                 initialValue: _selectedCategory,
                 validator: (_) => _selectedCategory == null
                     ? l10n.createPleaseChooseCategory
@@ -884,6 +950,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                       decoration: InputDecoration(
                         labelText: l10n.createSelectCategory,
                         errorText: field.errorText,
+                        helperText: _categoryAutoPicked
+                            ? l10n.createCategoryAutoPicked
+                            : null,
+                        helperMaxLines: 2,
                         suffixIcon: const Icon(Icons.expand_more),
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12)),

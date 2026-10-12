@@ -1403,6 +1403,7 @@
   "createKindProductHint": "Un objet physique que vous remettrez ou livrerez.",
   "createKindServiceHint": "Un travail que vous effectuez — réparations, beauté, cours, transport.",
   "createKindJobHint": "Un poste que vous souhaitez pourvoir.",
+  "createCategoryAutoPicked": "Choisie d'après le type ci-dessus. Touchez pour en préciser une.",
   "createPriceModeLabel": "Tarification",
   "priceModeFixed": "Prix fixe",
   "priceModeFromLabel": "À partir de",

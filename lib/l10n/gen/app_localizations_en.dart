@@ -3395,6 +3395,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createKindJobHint => 'A position you are hiring for.';
 
   @override
+  String get createCategoryAutoPicked =>
+      'Filled in from the type above. Tap to choose a more specific one.';
+
+  @override
   String get createPriceModeLabel => 'Pricing';
 
   @override

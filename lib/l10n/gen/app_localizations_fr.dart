@@ -3450,6 +3450,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get createKindJobHint => 'Un poste que vous souhaitez pourvoir.';
 
   @override
+  String get createCategoryAutoPicked =>
+      'Choisie d\'après le type ci-dessus. Touchez pour en préciser une.';
+
+  @override
   String get createPriceModeLabel => 'Tarification';
 
   @override

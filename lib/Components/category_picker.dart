@@ -79,11 +79,14 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
   void initState() {
     super.initState();
     // Open on the group the current selection lives in, so re-opening the
-    // picker to change a choice does not start from the top every time.
+    // picker to change a choice does not start from the top every time. A
+    // selected root opens too: that is what the create form fills in when a
+    // seller picks Service or Job, and the next thing they want is its leaves.
     final selected = widget.selectedSlug;
     if (selected != null) {
       for (final group in _groups) {
-        if (group.children.any((c) => c.slug == selected)) {
+        if (group.children.any((c) => c.slug == selected) ||
+            (group.root.slug == selected && group.children.isNotEmpty)) {
           _openGroup = group;
           break;
         }

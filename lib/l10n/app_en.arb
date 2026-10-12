@@ -1687,6 +1687,10 @@
   "@createKindJobHint": {
     "description": "Helper under Job."
   },
+  "createCategoryAutoPicked": "Filled in from the type above. Tap to choose a more specific one.",
+  "@createCategoryAutoPicked": {
+    "description": "Helper under the category field after choosing Service or Job selected its group automatically."
+  },
   "createPriceModeLabel": "Pricing",
   "@createPriceModeLabel": {
     "description": "Label for the pricing-mode dropdown."

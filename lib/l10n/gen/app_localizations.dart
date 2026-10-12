@@ -6026,6 +6026,12 @@ abstract class AppLocalizations {
   /// **'A position you are hiring for.'**
   String get createKindJobHint;
 
+  /// Helper under the category field after choosing Service or Job selected its group automatically.
+  ///
+  /// In en, this message translates to:
+  /// **'Filled in from the type above. Tap to choose a more specific one.'**
+  String get createCategoryAutoPicked;
+
   /// Label for the pricing-mode dropdown.
   ///
   /// In en, this message translates to:
