@@ -334,6 +334,27 @@ class AppLocalizationsFr extends AppLocalizations {
       'Impossible de joindre la marketplace. Vérifiez votre connexion.';
 
   @override
+  String get errorTimeout =>
+      'La marketplace met trop de temps à répondre. Veuillez réessayer.';
+
+  @override
+  String get errorServer =>
+      'La marketplace rencontre un problème. Réessayez dans un instant.';
+
+  @override
+  String get errorBadResponse =>
+      'Réponse inattendue. Si vous êtes sur un Wi-Fi public, vous devez peut-être d\'abord vous y connecter.';
+
+  @override
+  String get errorUnexpected =>
+      'Un problème est survenu lors du chargement. Veuillez réessayer.';
+
+  @override
+  String errorReference(String ref) {
+    return 'Réf. : $ref';
+  }
+
+  @override
   String get favoriteSignInRequired =>
       'Connectez-vous pour enregistrer des annonces.';
 

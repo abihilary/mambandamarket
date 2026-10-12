@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -21,6 +23,24 @@ class ApiException implements Exception {
   bool get isForbidden => statusCode == 403;
   bool get isNotFound => statusCode == 404;
   bool get isRateLimited => statusCode == 429;
+
+  /// The request never got an answer: no connection, DNS or TLS failure, or a
+  /// network that blocks the API's address.
+  bool get isNetwork => code == 'network';
+  bool get isTimeout => code == 'timeout';
+
+  /// Something answered, but not with our API's JSON — most often a public
+  /// Wi-Fi sign-in page standing in front of every address.
+  bool get isBadResponse => code == 'bad_response';
+  bool get isServer => statusCode >= 500;
+
+  /// A short tag a tester can quote back to us ("network", "timeout",
+  /// "http 502"), so a screenshot of an error says which one it was.
+  String get reference => statusCode <= 0
+      ? code
+      : code.startsWith('http_')
+          ? 'http $statusCode'
+          : '$code · http $statusCode';
 
   @override
   String toString() => message;
@@ -62,9 +82,40 @@ class ApiClient {
     );
   }
 
+  /// Long enough for a slow mobile connection, short enough that a hung
+  /// request ends in a message and a retry button rather than a spinner that
+  /// never stops.
+  static const Duration _timeout = Duration(seconds: 30);
+
+  /// Runs one request and turns every way it can fail *before* a response
+  /// arrives into an [ApiException], so screens can say which failure it was
+  /// instead of calling everything a connection problem.
+  Future<http.Response> _send(Future<http.Response> Function() call) async {
+    try {
+      return await call().timeout(_timeout);
+    } on TimeoutException {
+      throw ApiException(0, 'timeout', l10nNow.errorTimeout);
+    } catch (e) {
+      debugPrint('API transport error: $e');
+      throw ApiException(0, 'network', l10nNow.connectionError);
+    }
+  }
+
   dynamic _decode(http.Response res) {
-    final body = res.body.isEmpty ? null : jsonDecode(res.body);
-    if (res.statusCode >= 200 && res.statusCode < 300) return body;
+    dynamic body;
+    var parsed = true;
+    try {
+      body = res.body.isEmpty ? null : jsonDecode(res.body);
+    } on FormatException {
+      parsed = false;
+    }
+    final ok = res.statusCode >= 200 && res.statusCode < 300;
+    if (ok && parsed) return body;
+    if (ok) {
+      // A 200 that is not JSON did not come from the API.
+      debugPrint('API non-JSON 2xx: ${res.body.length} bytes');
+      throw ApiException(res.statusCode, 'bad_response', l10nNow.errorBadResponse);
+    }
 
     final err = (body is Map ? body['error'] : null) as Map?;
     throw ApiException(
@@ -73,21 +124,24 @@ class ApiClient {
       // The API always sends a message; this is the fallback for the times it
       // cannot — a gateway 502 with an HTML body, say — which is exactly when
       // a user is looking at the error.
-      err?['message']?.toString() ?? l10nNow.apiRequestFailed(res.statusCode),
+      err?['message']?.toString() ??
+          (res.statusCode >= 500
+              ? l10nNow.errorServer
+              : l10nNow.apiRequestFailed(res.statusCode)),
     );
   }
 
   Future<dynamic> get(String path, {Map<String, dynamic>? query}) async =>
-      _decode(await _http.get(_uri(path, query), headers: _headers()));
+      _decode(await _send(() => _http.get(_uri(path, query), headers: _headers())));
 
   Future<dynamic> post(String path, [Map<String, dynamic>? body]) async =>
-      _decode(await _http.post(_uri(path),
-          headers: _headers(), body: jsonEncode(body ?? {})));
+      _decode(await _send(() => _http.post(_uri(path),
+          headers: _headers(), body: jsonEncode(body ?? {}))));
 
   Future<dynamic> patch(String path, [Map<String, dynamic>? body]) async =>
-      _decode(await _http.patch(_uri(path),
-          headers: _headers(), body: jsonEncode(body ?? {})));
+      _decode(await _send(() => _http.patch(_uri(path),
+          headers: _headers(), body: jsonEncode(body ?? {}))));
 
   Future<dynamic> delete(String path) async =>
-      _decode(await _http.delete(_uri(path), headers: _headers()));
+      _decode(await _send(() => _http.delete(_uri(path), headers: _headers())));
 }

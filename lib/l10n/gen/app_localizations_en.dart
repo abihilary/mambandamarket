@@ -331,6 +331,27 @@ class AppLocalizationsEn extends AppLocalizations {
       'Couldn\'t reach the marketplace. Check your connection.';
 
   @override
+  String get errorTimeout =>
+      'The marketplace is taking too long to answer. Please try again.';
+
+  @override
+  String get errorServer =>
+      'The marketplace is having trouble right now. Please try again in a moment.';
+
+  @override
+  String get errorBadResponse =>
+      'We got an unexpected reply. If you\'re on public Wi-Fi, you may need to sign in to it first.';
+
+  @override
+  String get errorUnexpected =>
+      'Something went wrong loading this. Please try again.';
+
+  @override
+  String errorReference(String ref) {
+    return 'Ref: $ref';
+  }
+
+  @override
   String get favoriteSignInRequired => 'Sign in to save listings.';
 
   @override

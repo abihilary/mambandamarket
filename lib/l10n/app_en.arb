@@ -158,6 +158,18 @@
   },
   "retry": "Try again",
   "connectionError": "Couldn't reach the marketplace. Check your connection.",
+  "errorTimeout": "The marketplace is taking too long to answer. Please try again.",
+  "errorServer": "The marketplace is having trouble right now. Please try again in a moment.",
+  "errorBadResponse": "We got an unexpected reply. If you're on public Wi-Fi, you may need to sign in to it first.",
+  "errorUnexpected": "Something went wrong loading this. Please try again.",
+  "errorReference": "Ref: {ref}",
+  "@errorReference": {
+    "placeholders": {
+      "ref": {
+        "type": "String"
+      }
+    }
+  },
   "favoriteSignInRequired": "Sign in to save listings.",
   "favoriteUpdateFailed": "Couldn't update your favorites.",
   "favoritesTitle": "My favorites",

@@ -10,9 +10,14 @@ class AppConfig {
   const AppConfig._();
 
   /// MambandaMarket Core API.
+  ///
+  /// On the brand's own domain since 1.0.38. The old
+  /// mambanda-api.blacksilvergroups.xyz address serves the same deployment and
+  /// must stay attached for builds already installed — and some networks and
+  /// DNS filters block .xyz outright, which is why the move.
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://mambanda-api.blacksilvergroups.xyz',
+    defaultValue: 'https://api.mambandamarket.com',
   );
 
   static const String supabaseUrl = String.fromEnvironment(

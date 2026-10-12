@@ -686,6 +686,36 @@ abstract class AppLocalizations {
   /// **'Couldn\'t reach the marketplace. Check your connection.'**
   String get connectionError;
 
+  /// No description provided for @errorTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'The marketplace is taking too long to answer. Please try again.'**
+  String get errorTimeout;
+
+  /// No description provided for @errorServer.
+  ///
+  /// In en, this message translates to:
+  /// **'The marketplace is having trouble right now. Please try again in a moment.'**
+  String get errorServer;
+
+  /// No description provided for @errorBadResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'We got an unexpected reply. If you\'re on public Wi-Fi, you may need to sign in to it first.'**
+  String get errorBadResponse;
+
+  /// No description provided for @errorUnexpected.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong loading this. Please try again.'**
+  String get errorUnexpected;
+
+  /// No description provided for @errorReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Ref: {ref}'**
+  String errorReference(String ref);
+
   /// No description provided for @favoriteSignInRequired.
   ///
   /// In en, this message translates to:

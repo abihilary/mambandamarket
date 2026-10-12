@@ -36,11 +36,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> {
-  /// Sentinel stored in [_error] for a generic network failure, so the
-  /// user-facing message can be localized in build() rather than baked in at
-  /// fetch time (which runs from initState, before localizations are ready).
-  static const String _networkErrorSentinel = '__network__';
-
   final _repo = ListingsRepository.instance;
   final _favorites = FavoritesRepository.instance;
 
@@ -54,7 +49,10 @@ class HomeScreenState extends State<HomeScreen> {
 
   List<Listing> _listings = [];
   bool _isLoading = true;
-  String? _error;
+  /// The failure itself, not its text: build() words it per kind (and in the
+  /// current language), since the fetch runs from initState before
+  /// localizations are ready.
+  Object? _error;
 
   /// Whether the feed is being asked to annotate distances.
   ///
@@ -152,20 +150,28 @@ class HomeScreenState extends State<HomeScreen> {
         _listings = items;
         _isLoading = false;
       });
-    } on ApiException catch (e) {
+    } catch (e, st) {
+      // Not only network failures land here: a reply the app cannot read
+      // does too, and used to be reported as "check your connection".
+      if (e is! ApiException) debugPrint('Home feed failed: $e\n$st');
       if (!mounted) return;
       setState(() {
-        _error = e.message;
-        _isLoading = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _error = _networkErrorSentinel;
+        _error = e;
         _isLoading = false;
       });
     }
   }
+
+  String _errorText(Object e) {
+    final l10n = context.l10n;
+    if (e is! ApiException) return l10n.errorUnexpected;
+    if (e.isNetwork) return l10n.connectionError;
+    if (e.isTimeout) return l10n.errorTimeout;
+    if (e.isBadResponse) return l10n.errorBadResponse;
+    return e.message;
+  }
+
+  String _errorRef(Object e) => e is ApiException ? e.reference : 'app';
 
   /// Turn distances on, asking for permission the first time.
   ///
@@ -614,11 +620,21 @@ class HomeScreenState extends State<HomeScreen> {
                                   size: 48, color: scheme.onSurfaceVariant),
                               const SizedBox(height: 12),
                               Text(
-                                _error == _networkErrorSentinel
-                                    ? context.l10n.connectionError
-                                    : _error!,
+                                _errorText(_error!),
                                 textAlign: TextAlign.center,
                                 style: TextStyle(color: scheme.onSurfaceVariant),
+                              ),
+                              const SizedBox(height: 6),
+                              // Small and quotable, so a report like "it
+                              // doesn't load" arrives saying which failure.
+                              Text(
+                                context.l10n.errorReference(_errorRef(_error!)),
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: scheme.onSurfaceVariant
+                                      .withValues(alpha: 0.7),
+                                ),
                               ),
                               const SizedBox(height: 16),
                               OutlinedButton(
