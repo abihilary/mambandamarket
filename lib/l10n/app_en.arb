@@ -1722,5 +1722,24 @@
   "createLocationHelperService": "Where you work, so buyers nearby can find you.",
   "@createLocationHelperService": {
     "description": "Location helper for services and jobs; the product one talks about collecting an item."
-  }
+  },
+  "chatReportMessage": "Report message",
+  "chatHeldLabel": "Being reviewed — not delivered yet",
+  "chatRejectedLabel": "Not delivered",
+  "chatAskReview": "Ask for a review",
+  "chatReviewRequested": "Review requested",
+  "chatAppealTitle": "Ask for a review",
+  "chatAppealBody": "Someone from our team will look at this message again. Add anything that explains it (optional).",
+  "chatAppealHint": "Explain the context (optional)",
+  "chatAppealSend": "Send request",
+  "chatAppealSent": "Thanks — we'll take another look.",
+  "chatAppealError": "Could not send the request. Try again.",
+  "chatScreeningNotice": "Messages are checked automatically to protect you from scams.",
+  "chatScreeningLearnMore": "Learn more",
+  "hubNeedsChangesTitle": "Needs changes",
+  "hubNeedsChangesBody": "Hidden until you update it:",
+  "hubFixNow": "Fix now",
+  "hubHiddenByTeam": "Hidden by Mambanda. Contact support to ask why.",
+  "listingReviewLive": "Thanks! Your listing is live again.",
+  "listingReviewStill": "Saved, but still to fix:"
 }

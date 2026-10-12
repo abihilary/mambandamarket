@@ -6079,6 +6079,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Where you work, so buyers nearby can find you.'**
   String get createLocationHelperService;
+
+  /// No description provided for @chatReportMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Report message'**
+  String get chatReportMessage;
+
+  /// No description provided for @chatHeldLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Being reviewed — not delivered yet'**
+  String get chatHeldLabel;
+
+  /// No description provided for @chatRejectedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Not delivered'**
+  String get chatRejectedLabel;
+
+  /// No description provided for @chatAskReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for a review'**
+  String get chatAskReview;
+
+  /// No description provided for @chatReviewRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'Review requested'**
+  String get chatReviewRequested;
+
+  /// No description provided for @chatAppealTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for a review'**
+  String get chatAppealTitle;
+
+  /// No description provided for @chatAppealBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone from our team will look at this message again. Add anything that explains it (optional).'**
+  String get chatAppealBody;
+
+  /// No description provided for @chatAppealHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Explain the context (optional)'**
+  String get chatAppealHint;
+
+  /// No description provided for @chatAppealSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send request'**
+  String get chatAppealSend;
+
+  /// No description provided for @chatAppealSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks — we\'ll take another look.'**
+  String get chatAppealSent;
+
+  /// No description provided for @chatAppealError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not send the request. Try again.'**
+  String get chatAppealError;
+
+  /// No description provided for @chatScreeningNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages are checked automatically to protect you from scams.'**
+  String get chatScreeningNotice;
+
+  /// No description provided for @chatScreeningLearnMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Learn more'**
+  String get chatScreeningLearnMore;
+
+  /// No description provided for @hubNeedsChangesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs changes'**
+  String get hubNeedsChangesTitle;
+
+  /// No description provided for @hubNeedsChangesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden until you update it:'**
+  String get hubNeedsChangesBody;
+
+  /// No description provided for @hubFixNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix now'**
+  String get hubFixNow;
+
+  /// No description provided for @hubHiddenByTeam.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden by Mambanda. Contact support to ask why.'**
+  String get hubHiddenByTeam;
+
+  /// No description provided for @listingReviewLive.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks! Your listing is live again.'**
+  String get listingReviewLive;
+
+  /// No description provided for @listingReviewStill.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved, but still to fix:'**
+  String get listingReviewStill;
 }
 
 class _AppLocalizationsDelegate

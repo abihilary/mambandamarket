@@ -27,6 +27,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   late TabController _tabController;
 
   final List<Map<String, dynamic>> _activeItems = [];
+
+  /// Listings Mambanda hid: ones to fix (with what to fix), and ones hidden
+  /// outright. Shown above the live ones so a seller cannot miss them.
+  final List<api.Listing> _flagged = [];
   final List<Map<String, dynamic>> _soldItems = [];
 
   bool _isLoading = true;
@@ -119,17 +123,22 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     try {
       final repo = ListingsRepository.instance;
       final results = await Future.wait([
-        repo.sellerListings(uid, status: 'active'),
+        repo.sellerListings(uid, status: 'all'),
         repo.sales(uid),
         repo.dashboard(uid),
       ]);
       if (!mounted) return;
-      final listings = results[0] as List<api.Listing>;
+      final all = results[0] as List<api.Listing>;
+      final listings = all.where((l) => l.status == 'active').toList();
+      final flagged = all.where((l) => l.needsChanges || l.hiddenByTeam).toList();
       final sales = results[1] as ({List<api.Sale> items, int totalCents});
       setState(() {
         _activeItems
           ..clear()
           ..addAll(listings.map(_fromListing));
+        _flagged
+          ..clear()
+          ..addAll(flagged);
         _soldItems
           ..clear()
           ..addAll(sales.items.map(_fromSale));
@@ -944,11 +953,88 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     return null;
   }
 
+  /// A listing Mambanda asked the seller to fix (what to fix, and the way to
+  /// do it), or one the team hid outright.
+  Widget _flaggedCard(ThemeData theme, api.Listing l) {
+    final l10n = context.l10n;
+    final scheme = theme.colorScheme;
+    final lang = Localizations.localeOf(context).languageCode;
+    final points = l.reviewMessagesFor(lang);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.warning.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.report_gmailerrorred, size: 18, color: AppColors.warning),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(l.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.warning,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(l10n.hubNeedsChangesTitle,
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.black)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (l.needsChanges) ...[
+            Text(l10n.hubNeedsChangesBody,
+                style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
+            const SizedBox(height: 4),
+            for (final p in points)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 3),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('•  '),
+                    Expanded(child: Text(p, style: const TextStyle(fontSize: 13))),
+                  ],
+                ),
+              ),
+            if ((l.reviewNote ?? '').isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text('“${l.reviewNote}”',
+                    style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: scheme.onSurfaceVariant)),
+              ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton.icon(
+                onPressed: () => _editItem(_fromListing(l)),
+                icon: const Icon(Icons.edit, size: 16),
+                label: Text(l10n.hubFixNow),
+              ),
+            ),
+          ] else
+            Text(l10n.hubHiddenByTeam, style: const TextStyle(fontSize: 13)),
+        ],
+      ),
+    );
+  }
+
   Widget _buildActiveListingsTab(ThemeData theme) {
     final scheme = theme.colorScheme;
     final gate = _gate();
     if (gate != null) return gate;
-    if (_activeItems.isEmpty) {
+    if (_activeItems.isEmpty && _flagged.isEmpty) {
       return Center(
         child: Text(
           context.l10n.sellerDashNoActiveItems,
@@ -959,9 +1045,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
 
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-      itemCount: _activeItems.length,
+      itemCount: _flagged.length + _activeItems.length,
       itemBuilder: (context, index) {
-        final item = _activeItems[index];
+        if (index < _flagged.length) return _flaggedCard(theme, _flagged[index]);
+        final item = _activeItems[index - _flagged.length];
         final List<String> images = List<String>.from(item['images'] ?? []);
         final String mainImage = images.isNotEmpty
             ? images.first

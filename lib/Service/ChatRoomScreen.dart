@@ -22,6 +22,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../api/live_location.dart';
 import '../api/location_share.dart';
 import '../Components/location_bubble.dart';
+import '../Components/report_sheet.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_tokens.dart';
@@ -729,10 +730,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                         : ListView.builder(
                             controller: _scrollController,
                             padding: const EdgeInsets.all(12),
-                            itemCount: _messages.length,
-                            itemBuilder: (context, i) {
+                            // Item 0 is the screening notice; messages follow.
+                            itemCount: _messages.length + 1,
+                            itemBuilder: (context, index) {
+                              if (index == 0) return _screeningNotice();
+                              final i = index - 1;
                               final m = _messages[i];
                               final mine = m.senderId == _myId;
+                              final moderated = mine && (m.isHeld || m.isRejected);
                               return Align(
                                 alignment: mine
                                     ? Alignment.centerRight
@@ -740,6 +745,17 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                 child: GestureDetector(
                                   onTap:
                                       m.hasFailed ? () => _retry(m) : null,
+                                  // Someone else's message can be reported;
+                                  // it then goes to the review queue with the
+                                  // reason the reporter chose.
+                                  onLongPress: !mine && !m.isPending
+                                      ? () => showReportSheet(
+                                            context,
+                                            targetType: 'message',
+                                            targetId: m.id,
+                                            title: l10n.chatReportMessage,
+                                          )
+                                      : null,
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.end,
@@ -764,7 +780,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                         // A message still in flight is dimmed
                                         // until the server confirms it.
                                         child: Opacity(
-                                          opacity: m.isPending ? 0.75 : 1,
+                                          opacity: m.isPending ? 0.75 : moderated ? 0.6 : 1,
                                           child: Column(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
@@ -818,6 +834,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                                 color: AppColors.danger),
                                           ),
                                         )
+                                      else if (moderated)
+                                        _moderationNote(m)
                                       else
                                         const SizedBox(height: 6),
                                     ],
@@ -1110,11 +1128,132 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     );
   }
 
+  /// The one line at the top of every chat: screening is not a secret.
+  Widget _screeningNotice() {
+    final cs = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Icon(Icons.shield_outlined, size: 13, color: cs.onSurfaceVariant),
+          const SizedBox(width: 4),
+          Text(l10n.chatScreeningNotice,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
+          const SizedBox(width: 4),
+          InkWell(
+            onTap: () => launchUrl(
+              Uri.parse('https://mambandamarket.com/privacy'),
+              mode: LaunchMode.externalApplication,
+            ),
+            child: Text(l10n.chatScreeningLearnMore,
+                style: TextStyle(
+                    fontSize: 11,
+                    color: cs.onSurfaceVariant,
+                    decoration: TextDecoration.underline)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Under my own held or rejected message: what happened, why, and the way
+  /// to ask a person to look again.
+  Widget _moderationNote(Message m) {
+    final l10n = context.l10n;
+    final cs = Theme.of(context).colorScheme;
+    final lang = Localizations.localeOf(context).languageCode;
+    final reason = m.moderationReasonFor(lang);
+    final color = m.isRejected ? AppColors.danger : cs.onSurfaceVariant;
+    return Container(
+      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+      padding: const EdgeInsets.only(bottom: 10, right: 4, top: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(m.isHeld ? Icons.hourglass_empty : Icons.block, size: 12, color: color),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  m.isHeld ? l10n.chatHeldLabel : l10n.chatRejectedLabel,
+                  style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+          if (reason != null && reason.isNotEmpty)
+            Text(reason,
+                textAlign: TextAlign.end,
+                style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
+          if (m.moderationAppealed)
+            Text(l10n.chatReviewRequested,
+                style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant))
+          else
+            TextButton(
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                minimumSize: const Size(0, 30),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              onPressed: () => _askForReview(m),
+              child: Text(l10n.chatAskReview, style: const TextStyle(fontSize: 12)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _askForReview(Message m) async {
+    final l10n = context.l10n;
+    final note = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _AppealSheet(),
+    );
+    if (note == null || !mounted) return;
+    try {
+      await _chat.appeal(m.id, note: note);
+      if (!mounted) return;
+      setState(() {
+        _messages = [
+          for (final x in _messages) if (x.id == m.id) x.copyWith(moderationAppealed: true) else x,
+        ];
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.chatAppealSent)));
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      // 409: already asked. Show it as asked rather than as an error.
+      if (e.statusCode == 409) {
+        setState(() {
+          _messages = [
+            for (final x in _messages) if (x.id == m.id) x.copyWith(moderationAppealed: true) else x,
+          ];
+        });
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.chatAppealError)));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.chatAppealError)));
+    }
+  }
+
   Widget _statusIcon(Message m) {
     // These sit inside the outgoing bubble, which is filled with the brand
     // colour — everything here has to be an `onPrimary` tint to stay legible
     // against lime in the dark theme as well as near-black in the light one.
     final onBubble = Theme.of(context).colorScheme.onPrimary;
+    if (m.isHeld || m.isRejected) {
+      return Icon(m.isHeld ? Icons.hourglass_empty : Icons.block,
+          size: 13, color: onBubble.withValues(alpha: 0.7));
+    }
     if (m.hasFailed) {
       return const Icon(Icons.error_outline, size: 13, color: AppColors.danger);
     }
@@ -1128,6 +1267,56 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       m.isRead ? Icons.done_all : Icons.done,
       size: 13,
       color: m.isRead ? onBubble : onBubble.withValues(alpha: 0.7),
+    );
+  }
+}
+
+/// The note that goes with a request for review. Owns its controller, so
+/// the sheet's closing animation never touches a disposed one.
+class _AppealSheet extends StatefulWidget {
+  @override
+  State<_AppealSheet> createState() => _AppealSheetState();
+}
+
+class _AppealSheetState extends State<_AppealSheet> {
+  final _note = TextEditingController();
+
+  @override
+  void dispose() {
+    _note.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.chatAppealTitle, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Text(l10n.chatAppealBody),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _note,
+            minLines: 2,
+            maxLines: 4,
+            maxLength: 1000,
+            decoration: InputDecoration(hintText: l10n.chatAppealHint),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () => Navigator.pop(context, _note.text.trim()),
+              child: Text(l10n.chatAppealSend),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

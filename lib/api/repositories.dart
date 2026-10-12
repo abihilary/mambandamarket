@@ -136,6 +136,7 @@ class ListingsRepository {
     final json = await _api.post('/listings/$listingId/images', {
       'images': [for (final p in storagePaths) {'storage_path': p}],
     }) as Map<String, dynamic>;
+    _noteReview(json);
     return (json['items'] as List? ?? [])
         .whereType<Map>()
         .map((m) => ListingImage.fromJson(m.cast<String, dynamic>()))
@@ -207,8 +208,21 @@ class ListingsRepository {
   }
 
   Future<void> update(String id, Map<String, dynamic> fields) async {
-    await _api.patch('/listings/$id', fields);
+    final json = await _api.patch('/listings/$id', fields);
+    _noteReview(json);
     revision.value++;
+  }
+
+  /// What the server said after the latest edit of a listing Mambanda had
+  /// asked the seller to fix: `state` is 'resubmitted' (live again) or
+  /// 'changes_requested' (still hidden), and `remaining` holds the points
+  /// still to fix, as sentences per language. Null when the edit was not of
+  /// a flagged listing. Read once by the edit screen right after saving.
+  Map<String, dynamic>? lastReview;
+
+  void _noteReview(Object? json) {
+    final r = json is Map ? json['review'] : null;
+    if (r is Map) lastReview = r.cast<String, dynamic>();
   }
 
   /// Close a sale. The server verifies ownership and records it in `sales`.
@@ -628,6 +642,15 @@ class ChatRepository {
     );
   }
 
+  /// Ask a person to look again at one of my messages that was held or not
+  /// delivered. One open request per message; a second answers 409.
+  Future<void> appeal(String messageId, {String? note}) async {
+    await _api.post('/compliance/appeals', {
+      'message_id': messageId,
+      if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+    });
+  }
+
   Future<Message> send(String conversationId, {String? body, String? attachmentPath}) async {
     final json = await _api.post('/conversations/$conversationId/messages', {
       if (body != null && body.isNotEmpty) 'body': body,
@@ -878,7 +901,7 @@ class ReportsRepository {
   final _api = ApiClient.instance;
 
   Future<void> report({
-    required String targetType, // 'user' | 'store' | 'listing'
+    required String targetType, // 'user' | 'store' | 'listing' | 'message' | 'shipping_request'
     required String targetId,
     required String reason,
     String? detail,

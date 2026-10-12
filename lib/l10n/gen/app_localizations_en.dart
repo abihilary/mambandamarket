@@ -3422,4 +3422,64 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get createLocationHelperService =>
       'Where you work, so buyers nearby can find you.';
+
+  @override
+  String get chatReportMessage => 'Report message';
+
+  @override
+  String get chatHeldLabel => 'Being reviewed — not delivered yet';
+
+  @override
+  String get chatRejectedLabel => 'Not delivered';
+
+  @override
+  String get chatAskReview => 'Ask for a review';
+
+  @override
+  String get chatReviewRequested => 'Review requested';
+
+  @override
+  String get chatAppealTitle => 'Ask for a review';
+
+  @override
+  String get chatAppealBody =>
+      'Someone from our team will look at this message again. Add anything that explains it (optional).';
+
+  @override
+  String get chatAppealHint => 'Explain the context (optional)';
+
+  @override
+  String get chatAppealSend => 'Send request';
+
+  @override
+  String get chatAppealSent => 'Thanks — we\'ll take another look.';
+
+  @override
+  String get chatAppealError => 'Could not send the request. Try again.';
+
+  @override
+  String get chatScreeningNotice =>
+      'Messages are checked automatically to protect you from scams.';
+
+  @override
+  String get chatScreeningLearnMore => 'Learn more';
+
+  @override
+  String get hubNeedsChangesTitle => 'Needs changes';
+
+  @override
+  String get hubNeedsChangesBody => 'Hidden until you update it:';
+
+  @override
+  String get hubFixNow => 'Fix now';
+
+  @override
+  String get hubHiddenByTeam =>
+      'Hidden by Mambanda. Contact support to ask why.';
+
+  @override
+  String get listingReviewLive => 'Thanks! Your listing is live again.';
+
+  @override
+  String get listingReviewStill => 'Saved, but still to fix:';
 }

@@ -52,7 +52,8 @@ Future<void> openSupportThread(BuildContext context) async {
   } on ApiException catch (e) {
     if (!context.mounted) return;
     Navigator.pop(context);
-    _fail(context, e.code == 'support_unavailable' ? l10n.supportUnavailable : e.message);
+    // The API says desk_unavailable; support_unavailable is kept for older servers.
+    _fail(context, e.code == 'desk_unavailable' || e.code == 'support_unavailable' ? l10n.supportUnavailable : e.message);
   } catch (_) {
     if (!context.mounted) return;
     Navigator.pop(context);

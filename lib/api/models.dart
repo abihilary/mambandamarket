@@ -118,6 +118,25 @@ class Listing {
   /// Present on the seller's own feed, where sold/hidden items are included.
   final String status;
 
+  /// Set when Mambanda asked the seller to fix this listing
+  /// ('changes_requested'), or after they did ('resubmitted'). Only ever
+  /// present on the seller's own listings.
+  final String? reviewState;
+
+  /// What to fix, as the server wrote it, in each language. Sentences rather
+  /// than codes, so a reason added later needs no app update.
+  final List<String> reviewMessagesEn;
+  final List<String> reviewMessagesFr;
+  final String? reviewNote;
+
+  /// Hidden by the team: the seller cannot switch it back on themselves.
+  final bool moderationLocked;
+
+  bool get needsChanges => reviewState == 'changes_requested';
+  bool get hiddenByTeam => moderationLocked && status == 'hidden' && !needsChanges;
+  List<String> reviewMessagesFor(String languageCode) =>
+      languageCode == 'fr' && reviewMessagesFr.isNotEmpty ? reviewMessagesFr : reviewMessagesEn;
+
   // ── Who is selling ────────────────────────────────────────────────────────
   //
   // The API embeds the seller and their store on the browse feed and the
@@ -172,6 +191,11 @@ class Listing {
     this.isFavorited = false,
     this.inquiryCount = 0,
     this.status = 'active',
+    this.reviewState,
+    this.reviewMessagesEn = const [],
+    this.reviewMessagesFr = const [],
+    this.reviewNote,
+    this.moderationLocked = false,
     this.sellerName,
     this.sellerAvatarUrl,
     this.sellerRole,
@@ -303,6 +327,11 @@ class Listing {
       isFavorited: json['is_favorited'] == true,
       inquiryCount: _asInt(json['inquiry_count']),
       status: json['status']?.toString() ?? 'active',
+      reviewState: json['review_state']?.toString(),
+      reviewMessagesEn: _stringList((json['review_messages'] as Map?)?['en']),
+      reviewMessagesFr: _stringList((json['review_messages'] as Map?)?['fr']),
+      reviewNote: json['review_note']?.toString(),
+      moderationLocked: json['moderation_locked'] == true,
       sellerName: seller?['display_name']?.toString(),
       sellerAvatarUrl: seller?['avatar_url']?.toString(),
       sellerRole: seller?['role']?.toString(),
@@ -899,6 +928,14 @@ class Message {
   /// Set when this message is somebody sharing where they are.
   final LocationShare? location;
 
+  /// 'visible', or — only ever on the sender's own messages — 'held' (waiting
+  /// for a person to review it) or 'rejected' (not delivered).
+  final String moderationStatus;
+  final String? moderationReasonEn;
+  final String? moderationReasonFr;
+  final String? moderationCaseId;
+  final bool moderationAppealed;
+
   const Message({
     required this.id,
     required this.conversationId,
@@ -910,7 +947,17 @@ class Message {
     this.readAt,
     this.sendState = MessageSendState.sent,
     this.location,
+    this.moderationStatus = 'visible',
+    this.moderationReasonEn,
+    this.moderationReasonFr,
+    this.moderationCaseId,
+    this.moderationAppealed = false,
   });
+
+  bool get isHeld => moderationStatus == 'held';
+  bool get isRejected => moderationStatus == 'rejected';
+  String? moderationReasonFor(String languageCode) =>
+      languageCode == 'fr' ? (moderationReasonFr ?? moderationReasonEn) : (moderationReasonEn ?? moderationReasonFr);
 
   bool get isRead => readAt != null;
   bool get isPending => sendState == MessageSendState.pending;
@@ -944,6 +991,7 @@ class Message {
     DateTime? readAt,
     MessageSendState? sendState,
     LocationShare? location,
+    bool? moderationAppealed,
   }) =>
       Message(
         id: id ?? this.id,
@@ -956,6 +1004,11 @@ class Message {
         readAt: readAt ?? this.readAt,
         sendState: sendState ?? this.sendState,
         location: location ?? this.location,
+        moderationStatus: moderationStatus,
+        moderationReasonEn: moderationReasonEn,
+        moderationReasonFr: moderationReasonFr,
+        moderationCaseId: moderationCaseId,
+        moderationAppealed: moderationAppealed ?? this.moderationAppealed,
       );
 
   factory Message.fromJson(Map<String, dynamic> json) => Message(
@@ -970,6 +1023,13 @@ class Message {
         location: LocationShare.fromJson(
           (json['location'] as Map?)?.cast<String, dynamic>(),
         ),
+        moderationStatus: json['moderation_status']?.toString() ??
+            ((json['moderation'] as Map?)?['status'])?.toString() ??
+            'visible',
+        moderationReasonEn: (((json['moderation'] as Map?)?['reason']) as Map?)?['en']?.toString(),
+        moderationReasonFr: (((json['moderation'] as Map?)?['reason']) as Map?)?['fr']?.toString(),
+        moderationCaseId: ((json['moderation'] as Map?)?['case_id'])?.toString(),
+        moderationAppealed: (json['moderation'] as Map?)?['appealed'] == true,
       );
 }
 
@@ -1439,3 +1499,6 @@ class ReferralSummary {
     );
   }
 }
+
+List<String> _stringList(Object? v) =>
+    v is List ? v.map((e) => e?.toString() ?? '').where((e) => e.isNotEmpty).toList() : const [];

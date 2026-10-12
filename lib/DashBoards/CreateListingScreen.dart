@@ -424,6 +424,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         // Editing said "Edit Item" and "Save Changes" at the top and bottom of
         // the screen, and then posted a second listing. The screen has always
         // known which one it was; only this call did not.
+        // Whatever the last call below reports is the listing's final
+        // state, if Mambanda had asked for changes to it.
+        ListingsRepository.instance.lastReview = null;
         await ListingsRepository.instance.update(editingId, {
           'title': _titleController.text.trim(),
           'description': description,
@@ -463,9 +466,38 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         }
 
         if (!mounted) return;
+        final review = ListingsRepository.instance.lastReview;
+        ListingsRepository.instance.lastReview = null;
+        if (review != null && review['state'] == 'changes_requested') {
+          // Saved, but what Mambanda asked about is still there: say exactly
+          // what, in the seller's language, before they leave the form.
+          final lang = Localizations.localeOf(context).languageCode;
+          final remaining = (review['remaining'] as Map?)?[lang == 'fr' ? 'fr' : 'en'];
+          final points = remaining is List ? remaining.map((e) => e.toString()).toList() : const <String>[];
+          await showDialog<void>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: Text(l10n.listingReviewStill),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [for (final p in points) Padding(padding: const EdgeInsets.only(bottom: 6), child: Text('•  $p'))],
+              ),
+              actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(MaterialLocalizations.of(ctx).okButtonLabel))],
+            ),
+          );
+          // Everything is saved — photos included — so leave the form rather
+          // than invite a second save that would upload the photos again.
+          // The listing's card in the seller hub keeps the points to fix.
+          if (!mounted) return;
+          Navigator.pop(context, <String, dynamic>{'id': editingId});
+          return;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n.createListingUpdated),
+            content: Text(review != null && review['state'] == 'resubmitted'
+                ? l10n.listingReviewLive
+                : l10n.createListingUpdated),
             backgroundColor: AppColors.success,
           ),
         );

@@ -3478,4 +3478,65 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get createLocationHelperService =>
       'Où vous intervenez, pour que les acheteurs proches vous trouvent.';
+
+  @override
+  String get chatReportMessage => 'Signaler le message';
+
+  @override
+  String get chatHeldLabel => 'En cours de vérification — pas encore remis';
+
+  @override
+  String get chatRejectedLabel => 'Non remis';
+
+  @override
+  String get chatAskReview => 'Demander un réexamen';
+
+  @override
+  String get chatReviewRequested => 'Réexamen demandé';
+
+  @override
+  String get chatAppealTitle => 'Demander un réexamen';
+
+  @override
+  String get chatAppealBody =>
+      'Une personne de notre équipe va réexaminer ce message. Ajoutez ce qui peut l’expliquer (facultatif).';
+
+  @override
+  String get chatAppealHint => 'Expliquez le contexte (facultatif)';
+
+  @override
+  String get chatAppealSend => 'Envoyer la demande';
+
+  @override
+  String get chatAppealSent => 'Merci — nous allons le réexaminer.';
+
+  @override
+  String get chatAppealError => 'Impossible d’envoyer la demande. Réessayez.';
+
+  @override
+  String get chatScreeningNotice =>
+      'Les messages sont vérifiés automatiquement pour vous protéger des arnaques.';
+
+  @override
+  String get chatScreeningLearnMore => 'En savoir plus';
+
+  @override
+  String get hubNeedsChangesTitle => 'À corriger';
+
+  @override
+  String get hubNeedsChangesBody => 'Masquée jusqu’à sa mise à jour :';
+
+  @override
+  String get hubFixNow => 'Corriger';
+
+  @override
+  String get hubHiddenByTeam =>
+      'Masquée par Mambanda. Contactez le support pour en savoir plus.';
+
+  @override
+  String get listingReviewLive =>
+      'Merci ! Votre annonce est de nouveau en ligne.';
+
+  @override
+  String get listingReviewStill => 'Enregistré, mais encore à corriger :';
 }
