@@ -30,7 +30,13 @@
   -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!--
+    Opaque, not black-translucent. Translucent lets the page draw under the
+    clock, which only works if the page knows to stay clear of it — and Flutter
+    web reports no safe-area insets at all, so the installed app put its header
+    under the status bar. Black matches the ground the app starts on.
+  -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Mambanda">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
@@ -160,8 +166,18 @@
       if (!boot) return;
       boot.classList.add('done');
       setTimeout(function () { boot.remove(); }, 400);
-      maybeOfferInstall();
     });
+
+    // Not on first paint any more: the card sat over the top of whatever the
+    // app opened on — the search bar, a listing's back button — for fifteen
+    // seconds. The app asks for it instead, from screens where covering the
+    // top costs nothing (Welcome, Account). See lib/web/install_hint.dart.
+    var installOffered = false;
+    window.mambandaOfferInstall = function () {
+      if (installOffered) return;
+      installOffered = true;
+      maybeOfferInstall();
+    };
 
     function maybeOfferInstall() {
       try {

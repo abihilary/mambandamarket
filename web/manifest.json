@@ -7,7 +7,7 @@
     "background_color": "#07080C",
     "theme_color": "#07080C",
     "description": "Buy, sell and connect with people near you. Browse local listings, message sellers directly, and turn what you no longer need into cash.",
-    "orientation": "portrait-primary",
+    "orientation": "any",
     "lang": "en",
     "categories": ["shopping", "business"],
     "prefer_related_applications": false,
