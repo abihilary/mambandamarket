@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
@@ -13,6 +14,8 @@ import '../api/shipping_repository.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_tokens.dart';
 import 'ShippingRequestScreen.dart';
+import '../theme/breakpoints.dart';
+import '../api/open_link.dart';
 
 /// Everything somebody has asked us to ship, and where each of it has got to.
 ///
@@ -78,7 +81,9 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
           style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
       ),
-      body: Container(
+      body: ContentFrame(
+        maxWidth: Breakpoints.form,
+        child: Container(
         decoration: const BoxDecoration(
           color: _kSheet,
           borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
@@ -163,6 +168,7 @@ class _ShipmentsScreenState extends State<ShipmentsScreen> {
           },
         ),
       ),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _newRequest,
         backgroundColor: context.tokens.accentFill,
@@ -182,7 +188,7 @@ class _TabChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Tappable(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -485,12 +491,16 @@ class _ShipmentDetailScreenState extends State<ShipmentDetailScreen> {
 
   Future<void> _openDoc(ShippingDocument doc) async {
     final l10n = context.l10n;
-    final ok = await launchUrl(doc.url, mode: LaunchMode.externalApplication);
+    final ok = await openExternal(doc.url);
     if (!ok) _snack(l10n.shipDocOpenFailed);
   }
 
   Future<void> _shareDoc(ShippingDocument doc) async {
     if (_sharing != null) return;
+    // No file to hand over in a browser: the document opens in a tab, where
+    // the browser's own share and download take it from there. Saving it
+    // first delivered index.html under the PDF's name.
+    if (kIsWeb) return _openDoc(doc);
     final l10n = context.l10n;
     setState(() => _sharing = doc.number);
     try {
@@ -607,7 +617,9 @@ class _ShipmentDetailScreenState extends State<ShipmentDetailScreen> {
           ),
         ),
       ),
-      body: _loading && s == null
+      body: ContentFrame(
+        maxWidth: Breakpoints.form,
+        child: _loading && s == null
           ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : s == null
               ? Center(child: Text(l10n.shipFailed, style: const TextStyle(color: Colors.white)))
@@ -661,6 +673,7 @@ class _ShipmentDetailScreenState extends State<ShipmentDetailScreen> {
                     ),
                   ),
                 ),
+      ),
       bottomNavigationBar: s == null
           ? null
           : Container(

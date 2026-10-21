@@ -6,6 +6,7 @@ import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import 'SignUpScreen.dart';
 import 'SubscriptionScreen.dart';
+import '../theme/breakpoints.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
@@ -111,7 +112,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         title: Text(context.l10n.roleAppBarTitle),
         elevation: 0,
       ),
-      body: SafeArea(
+      body: ContentFrame(
+        maxWidth: Breakpoints.form,
+        child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
@@ -192,6 +195,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -207,7 +211,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    return GestureDetector(
+    return Tappable(
       onTap: () {
         setState(() {
           _selectedRole = id;

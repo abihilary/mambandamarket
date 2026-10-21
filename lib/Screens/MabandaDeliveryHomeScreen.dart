@@ -8,6 +8,7 @@ import '../l10n/l10n.dart';
 import 'ChatInboxScreen.dart';
 import 'DeliveryOptionsScreen.dart';
 import 'ShipmentsScreen.dart';
+import '../theme/breakpoints.dart';
 
 /// The front door of the delivery service — the mockup's layout, with every
 /// number on it read from this account's own data. The hero is the bundled
@@ -36,7 +37,9 @@ class _MabandaDeliveryHomeScreenState extends State<MabandaDeliveryHomeScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
+      body: ContentFrame(
+        maxWidth: Breakpoints.form,
+        child: SafeArea(
         child: Column(
           children: [
             Padding(
@@ -150,6 +153,7 @@ class _MabandaDeliveryHomeScreenState extends State<MabandaDeliveryHomeScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

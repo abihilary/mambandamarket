@@ -6,6 +6,7 @@ import '../Components/local_image.dart';
 import '../Components/image_placeholder.dart';
 import '../Components/rating_badge.dart';
 import '../Components/safe_bottom.dart';
+import '../theme/breakpoints.dart';
 
 class ViewProfileScreen extends StatelessWidget {
   final api.Store? store;
@@ -112,7 +113,9 @@ class ViewProfileScreen extends StatelessWidget {
         ),
         elevation: 0,
       ),
-      body: SingleChildScrollView(
+      body: ContentFrame(
+        maxWidth: Breakpoints.dashboard,
+        child: SingleChildScrollView(
         padding: EdgeInsets.only(bottom: safeBottom(context, 16)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -271,8 +274,8 @@ class ViewProfileScreen extends StatelessWidget {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
+                    const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 220,
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
                       childAspectRatio: 0.72,
@@ -289,6 +292,7 @@ class ViewProfileScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

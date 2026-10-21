@@ -8,6 +8,8 @@ import 'SignUpScreen.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_tokens.dart';
+import '../theme/breakpoints.dart';
+import '../web/install_hint.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -22,6 +24,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   void initState() {
     super.initState();
+    // The web build's "Add to Home Screen" card, on a screen it can cover.
+    offerInstall();
     // Google sign-in finishes outside this screen (the user returns via the
     // deep link). Wait for AuthService to fully resolve the session before
     // routing: brand-new social accounts still need to pick an account type.
@@ -152,34 +156,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     );
   }
 
-  Widget _buildBody(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = context.l10n;
-    final tokens = context.tokens;
-
-    return Scaffold(
-      backgroundColor: AppColors.darkGround,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // The hero from screen 01 of the deck: the wordmark surrounded by
-          // floating stock — headphones, a controller, a handbag, trainers, a
-          // sofa, a phone, a tyre — on the lime-flecked dark texture. It is the
-          // designer's own artwork rather than an approximation of it, and it
-          // is the thing that makes the first screen say "marketplace"; the bag
-          // glyph that used to sit here said "an app".
-          //
-          // Full-bleed and unrounded, as the deck has it: no SafeArea above it,
-          // so the texture runs under the status bar rather than starting below
-          // a white strip.
-          //
-          // Expanded rather than a fixed height or a fixed ratio: the art is
-          // 832x1440, which at full width would stand 1.7 screens tall on a
-          // phone. This gives it whatever is left after the copy and the
-          // buttons have taken theirs, so it grows on a tall device and gives
-          // way on a short one instead of overflowing.
-          Expanded(
-            child: Stack(
+  /// The artwork, fading into the ground at the bottom — with a way back
+  /// when this was opened over something, as it is when a web visitor taps
+  /// "Create account" from a listing.
+  Widget _hero() {
+    final art = Stack(
               fit: StackFit.expand,
               children: [
                 Image.asset(
@@ -212,11 +193,35 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   ),
                 ),
               ],
+            );
+    if (!(ModalRoute.of(context)?.canPop ?? false)) return art;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        art,
+        Positioned(
+          left: 8,
+          top: 8,
+          child: SafeArea(
+            child: IconButton.filledTonal(
+              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+              onPressed: () => Navigator.maybePop(context),
+              icon: const Icon(Icons.arrow_back),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
-            child: Column(
+        ),
+      ],
+    );
+  }
+
+  /// Title, subtitle and the ways in.
+  Widget _copy(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = context.l10n;
+    final tokens = context.tokens;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+      child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
               Text(
@@ -330,7 +335,63 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               const SizedBox(height: 16),
               ],
             ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    // Side by side on a desktop or a phone on its side: stacked, the artwork
+    // got whatever height the buttons left, which in landscape is none.
+    final size = MediaQuery.sizeOf(context);
+    if (size.width >= Breakpoints.wide || size.width > size.height * 1.2) {
+      return Scaffold(
+        backgroundColor: AppColors.darkGround,
+        body: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: _hero()),
+            SizedBox(
+              width: Breakpoints.auth + 64,
+              child: SafeArea(
+                left: false,
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 24),
+                    child: _copy(context),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: AppColors.darkGround,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // The hero from screen 01 of the deck: the wordmark surrounded by
+          // floating stock — headphones, a controller, a handbag, trainers, a
+          // sofa, a phone, a tyre — on the lime-flecked dark texture. It is the
+          // designer's own artwork rather than an approximation of it, and it
+          // is the thing that makes the first screen say "marketplace"; the bag
+          // glyph that used to sit here said "an app".
+          //
+          // Full-bleed and unrounded, as the deck has it: no SafeArea above it,
+          // so the texture runs under the status bar rather than starting below
+          // a white strip.
+          //
+          // Expanded rather than a fixed height or a fixed ratio: the art is
+          // 832x1440, which at full width would stand 1.7 screens tall on a
+          // phone. This gives it whatever is left after the copy and the
+          // buttons have taken theirs, so it grows on a tall device and gives
+          // way on a short one instead of overflowing.
+          Expanded(
+            child: _hero(),
           ),
+          _copy(context),
           // Only at the bottom: the gesture bar is real, the notch is where the
           // artwork is meant to be.
           SafeArea(top: false, child: const SizedBox(height: 4)),

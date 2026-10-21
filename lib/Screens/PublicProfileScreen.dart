@@ -8,6 +8,7 @@ import '../api/models.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../Components/safe_bottom.dart';
+import '../theme/breakpoints.dart';
 
 /// Somebody else's profile: who they are, and what they are selling.
 ///
@@ -90,7 +91,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(title), elevation: 0),
-      body: _loading
+      body: ContentFrame(
+        maxWidth: Breakpoints.dashboard,
+        child: _loading
           ? const Center(child: CircularProgressIndicator())
           : _failed || data == null
           ? _ErrorState(onRetry: _load)
@@ -105,6 +108,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 ],
               ),
             ),
+      ),
     );
   }
 }
@@ -355,8 +359,8 @@ class _Shop extends StatelessWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: listings.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 220,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
                 childAspectRatio: 0.68,

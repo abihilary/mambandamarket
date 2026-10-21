@@ -7,6 +7,7 @@ import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../Components/local_image.dart';
+import '../theme/breakpoints.dart';
 
 class IndividualSellerOnboardingScreen extends StatefulWidget {
   const IndividualSellerOnboardingScreen({super.key});
@@ -178,7 +179,9 @@ class _IndividualSellerOnboardingScreenState
         title: Text(context.l10n.onbIndAppBarTitle),
         elevation: 0,
       ),
-      body: SafeArea(
+      body: ContentFrame(
+        maxWidth: Breakpoints.form,
+        child: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20.0),
           child: Form(
@@ -225,7 +228,7 @@ class _IndividualSellerOnboardingScreenState
                       Positioned(
                         bottom: 0,
                         right: 0,
-                        child: GestureDetector(
+                        child: Tappable(
                           onTap: _pickProfileImage,
                           child: Container(
                             padding: const EdgeInsets.all(8),
@@ -386,6 +389,7 @@ class _IndividualSellerOnboardingScreenState
             ),
           ),
         ),
+      ),
       ),
     );
   }

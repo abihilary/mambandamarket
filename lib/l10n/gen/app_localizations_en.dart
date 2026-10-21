@@ -3602,4 +3602,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String inviteEarn(String amount) {
     return 'Earn $amount for every friend who joins and makes a first purchase.';
   }
+
+  @override
+  String get navSell => 'Sell';
+
+  @override
+  String get guestGateBody =>
+      'It\'s free, and keeps your saved items, messages and orders in one place.';
+
+  @override
+  String get sellSignInRequired => 'Sign in to sell on Mambanda Market.';
+
+  @override
+  String get messageSignInRequired => 'Sign in to message the seller.';
+
+  @override
+  String get guestAccountTitle => 'Your Mambanda account';
+
+  @override
+  String get guestAccountBody =>
+      'Sign in to buy, sell, message sellers and track your orders.';
+
+  @override
+  String get guestWelcome => 'Welcome to Mambanda Market 👋';
+
+  @override
+  String get messagesPickThread => 'Pick a conversation to read it here.';
+
+  @override
+  String get shareLinkCopied => 'Link copied. Paste it anywhere to share.';
+
+  @override
+  String get locationDeniedWeb =>
+      'Location is blocked for this site. Allow it from the icon beside the web address, then try again.';
 }

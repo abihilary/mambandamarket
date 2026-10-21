@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:ui' show ImageFilter;
 
-import 'package:flutter/foundation.dart' show ValueListenable;
+import 'package:flutter/foundation.dart' show ValueListenable, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show SystemNavigator;
 
@@ -16,10 +16,14 @@ import '../Screens/FavoritesScreen.dart';
 import '../Screens/HomeScreen.dart';
 import '../Screens/MabandaDeliveryHomeScreen.dart';
 import '../Screens/ShipmentsScreen.dart';
+import '../Components/require_account.dart';
 import '../Components/shipping_button.dart';
 import '../api/shipping_repository.dart';
 import '../l10n/l10n.dart';
+import '../navigation.dart';
+import '../web/install_hint.dart';
 import '../theme/app_tokens.dart';
+import '../theme/breakpoints.dart';
 
 class MainNavigationShell extends StatefulWidget {
   const MainNavigationShell({super.key});
@@ -51,22 +55,37 @@ class _MainNavigationShellState extends State<MainNavigationShell>
       if (mounted) setState(() {});
     });
     WidgetsBinding.instance.addObserver(this);
+    // A visitor browsing the web app without an account: no inbox, no
+    // notifications, no Home card — each of those is an authenticated call
+    // that would only come back 401.
+    if (_guest) return;
     ChatRepository.instance.startLive();
     unawaited(NotificationRepository.instance.refreshUnread());
     unawaited(NotificationRepository.instance.refreshHomeCard());
     _startSweep();
+    // A visitor who signed in from a listing goes back to it.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final id = await ReturnTo.consume();
+      if (id != null && mounted) await openSharedListing(id);
+    });
   }
+
+  /// Signed out. Only reachable on the web build, where browsing is open;
+  /// the phone app sends a signed-out launch to Welcome instead. Fixed for the
+  /// life of the shell: signing in replaces it with a new one.
+  final bool _guest = AuthService.instance.session == null;
 
   @override
   void dispose() {
     _sweep?.cancel();
     WidgetsBinding.instance.removeObserver(this);
-    ChatRepository.instance.stopLive();
+    if (!_guest) ChatRepository.instance.stopLive();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_guest) return;
     if (state == AppLifecycleState.resumed) {
       // Coming back from the background used to change nothing: the inbox was
       // as stale as the moment the app was put down. The socket is also very
@@ -147,11 +166,21 @@ class _MainNavigationShellState extends State<MainNavigationShell>
 
   late final List<Widget> _pages = [
     HomeScreen(key: _homeKey), // Index 0: Search / Home Feed
-    const FavoritesScreen(), // Index 1: Favorites
+    _guest
+        ? const _GuestTab(kind: _GuestTabKind.favorites)
+        : const FavoritesScreen(), // Index 1: Favorites
     const SizedBox.shrink(), // Index 2: Placeholder for Insert Modal Action
-    ChatInboxScreen(key: _inboxKey), // Index 3: Charts / Messaging
-    const AccountScreen(), // Index 4: Account
+    _guest
+        ? const _GuestTab(kind: _GuestTabKind.messages)
+        : ChatInboxScreen(key: _inboxKey), // Index 3: Charts / Messaging
+    _guest
+        ? const _GuestTab(kind: _GuestTabKind.account)
+        : const AccountScreen(), // Index 4: Account
   ];
+
+  /// The sidebar's four entries, as indices into [_pages]. Slot 2 is the
+  /// publish placeholder, which the sidebar shows as a button instead.
+  static const List<int> _railPages = [0, 1, 3, 4];
 
   /// Home and Favourites: the two places somebody is looking at things they
   /// might want shipped. Not Messages or Account, where it would just be
@@ -177,12 +206,10 @@ class _MainNavigationShellState extends State<MainNavigationShell>
   }
 
   Future<void> _openShippingRequest() async {
-    if (AuthService.instance.session == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.shipSignInRequired)));
+    if (!await requireAccount(context, context.l10n.shipSignInRequired)) {
       return;
     }
+    if (!mounted) return;
     // Navigate to the new Mabanda Delivery Landing Page
     await Navigator.push(
       context,
@@ -196,6 +223,10 @@ class _MainNavigationShellState extends State<MainNavigationShell>
   /// deck puts Publish on a disc straddling the bar, so it is a docked FAB and
   /// this is what it calls. The quota gate is unchanged.
   Future<void> _openPublish() async {
+    if (!await requireAccount(context, context.l10n.sellSignInRequired)) {
+      return;
+    }
+    if (!mounted) return;
     if (!_canPublish) {
       _showUpgradeDialog();
       return;
@@ -227,6 +258,9 @@ class _MainNavigationShellState extends State<MainNavigationShell>
     // Opening Messages re-reads the inbox. Without this it keeps showing
     // whatever was true when the app was opened.
     if (index == 3) _inboxKey.currentState?.reload();
+    // Account: where the web build offers the iPhone install card, rather
+    // than over the feed on arrival.
+    if (index == 4) offerInstall();
 
     // Home, tapped while on home: top of the feed, reloaded.
     if (index == 0 && _currentBottomIndex == 0) {
@@ -246,6 +280,9 @@ class _MainNavigationShellState extends State<MainNavigationShell>
       setState(() => _currentBottomIndex = 0);
       return;
     }
+    // A browser tab is not closed by its back button, and "press again to
+    // exit" that then does nothing reads as broken.
+    if (kIsWeb) return;
     final now = DateTime.now();
     if (_lastBackOnHome != null &&
         now.difference(_lastBackOnHome!) < const Duration(seconds: 2)) {
@@ -260,7 +297,11 @@ class _MainNavigationShellState extends State<MainNavigationShell>
           content: Text(context.l10n.backAgainToExit),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+          // Above the bar. Not beside the sidebar, where the theme gives
+          // snackbars a width, and a width and a margin cannot both be set.
+          margin: context.isWideLayout
+              ? null
+              : const EdgeInsets.fromLTRB(16, 0, 16, 96),
         ),
       );
   }
@@ -289,14 +330,52 @@ class _MainNavigationShellState extends State<MainNavigationShell>
     );
   }
 
+  /// The desktop layout: a sidebar where the bottom bar was, with Sell and
+  /// Ship in it, and the tabs beside it.
+  Widget _buildWide(BuildContext context) {
+    final railIndex = _railPages.indexOf(_currentBottomIndex);
+    return Scaffold(
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _SideRail(
+            selected: railIndex < 0 ? 0 : railIndex,
+            extended: context.isLargeLayout,
+            guest: _guest,
+            onSelect: (i) => _onTabTapped(_railPages[i]),
+            onPublish: _openPublish,
+            onShip: ShippingRepository.instance.enabled
+                ? _openShippingRequest
+                : null,
+          ),
+          const VerticalDivider(width: 1, thickness: 1),
+          Expanded(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // No floating ship button here: the sidebar carries it, on
+                // every tab, and a second one in the corner said it twice.
+                IndexedStack(
+                  index: _currentBottomIndex,
+                  children: _pages,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final wide = context.isWideLayout;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _onBack();
       },
-      child: Scaffold(
+      child: wide ? _buildWide(context) : Scaffold(
         // Content runs underneath the bar rather than stopping above it. Without
         // this there is nothing behind the glass to blur except the scaffold's
         // own background, and the effect costs a frame to render nothing. Every
@@ -376,11 +455,12 @@ class _MainNavigationShellState extends State<MainNavigationShell>
                     onTap: () => _onTabTapped(3),
                     // Unread count, so a message that arrives while you are on
                     // another tab says so.
-                    badgeListenable: ChatRepository.instance.totalUnread,
+                    badgeListenable:
+                        _guest ? null : ChatRepository.instance.totalUnread,
                   ),
                   _NavItem(
-                    icon: Icons.person_outline,
-                    label: context.l10n.navAccount,
+                    icon: _guest ? Icons.login_rounded : Icons.person_outline,
+                    label: _guest ? context.l10n.signIn : context.l10n.navAccount,
                     selected: _currentBottomIndex == 4,
                     onTap: () => _onTabTapped(4),
                   ),
@@ -567,6 +647,244 @@ class _NavItem extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The desktop sidebar: the mark, the four tabs, then Sell and Ship.
+///
+/// Sell keeps the lime disc's identity — on a phone it is the disc in the bar,
+/// here it is the one lime button in the column. Labels show from 1200px; below
+/// that the rail is icons only, with tooltips.
+class _SideRail extends StatelessWidget {
+  const _SideRail({
+    required this.selected,
+    required this.extended,
+    required this.guest,
+    required this.onSelect,
+    required this.onPublish,
+    required this.onShip,
+  });
+
+  final int selected;
+  final bool extended;
+  final bool guest;
+  final ValueChanged<int> onSelect;
+  final VoidCallback onPublish;
+  final VoidCallback? onShip;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final tokens = context.tokens;
+    final theme = Theme.of(context);
+
+    Widget messagesIcon(IconData icon) => guest
+        ? Icon(icon)
+        : ValueListenableBuilder<int>(
+            valueListenable: ChatRepository.instance.totalUnread,
+            builder: (context, unread, child) => Badge.count(
+              count: unread,
+              isLabelVisible: unread > 0,
+              child: child,
+            ),
+            child: Icon(icon),
+          );
+
+    final sell = extended
+        ? FloatingActionButton.extended(
+            heroTag: null,
+            onPressed: onPublish,
+            backgroundColor: tokens.accentFill,
+            foregroundColor: tokens.onAccentFill,
+            elevation: 0,
+            icon: const Icon(Icons.add),
+            label: Text(l10n.navSell),
+          )
+        : FloatingActionButton(
+            heroTag: null,
+            onPressed: onPublish,
+            backgroundColor: tokens.accentFill,
+            foregroundColor: tokens.onAccentFill,
+            elevation: 0,
+            tooltip: l10n.navSell,
+            child: const Icon(Icons.add),
+          );
+
+    final ship = onShip == null
+        ? null
+        : extended
+            ? TextButton.icon(
+                onPressed: onShip,
+                icon: Icon(Icons.local_shipping_outlined,
+                    color: tokens.accentInk),
+                label: Text(l10n.shipFabLabel),
+              )
+            : IconButton(
+                onPressed: onShip,
+                tooltip: l10n.shipFabLabel,
+                icon: Icon(Icons.local_shipping_outlined,
+                    color: tokens.accentInk),
+              );
+
+    return NavigationRail(
+      selectedIndex: selected,
+      onDestinationSelected: onSelect,
+      extended: extended,
+      minExtendedWidth: 232,
+      labelType: extended ? null : NavigationRailLabelType.none,
+      backgroundColor: theme.scaffoldBackgroundColor,
+      leading: Padding(
+        padding: const EdgeInsets.only(top: 8, bottom: 20),
+        child: Column(
+          crossAxisAlignment:
+              extended ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset('assets/brand/mark.png', height: 36),
+                if (extended) ...[
+                  const SizedBox(width: 10),
+                  Text(
+                    'Mambanda',
+                    style: theme.textTheme.titleLarge
+                        ?.copyWith(fontWeight: FontWeight.w800),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 24),
+            sell,
+          ],
+        ),
+      ),
+      trailing: ship == null
+          ? null
+          : Expanded(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: ship,
+                ),
+              ),
+            ),
+      destinations: [
+        NavigationRailDestination(
+          icon: const Icon(Icons.home_outlined),
+          selectedIcon: const Icon(Icons.home_rounded),
+          label: Text(l10n.navHome),
+        ),
+        NavigationRailDestination(
+          icon: const Icon(Icons.favorite_border),
+          selectedIcon: const Icon(Icons.favorite),
+          label: Text(l10n.navFavorites),
+        ),
+        NavigationRailDestination(
+          icon: messagesIcon(Icons.chat_bubble_outline),
+          selectedIcon: messagesIcon(Icons.chat_bubble),
+          label: Text(l10n.navMessages),
+        ),
+        NavigationRailDestination(
+          icon: Icon(guest ? Icons.login_rounded : Icons.person_outline),
+          selectedIcon: Icon(guest ? Icons.login_rounded : Icons.person),
+          label: Text(guest ? l10n.signIn : l10n.navAccount),
+        ),
+      ],
+    );
+  }
+}
+
+enum _GuestTabKind { favorites, messages, account }
+
+/// What a signed-out visitor sees on a tab that only makes sense with an
+/// account: what it is for, and the two ways in.
+class _GuestTab extends StatelessWidget {
+  const _GuestTab({required this.kind});
+
+  final _GuestTabKind kind;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final tokens = context.tokens;
+    final theme = Theme.of(context);
+    final (icon, title, body) = switch (kind) {
+      _GuestTabKind.favorites => (
+          Icons.favorite_border,
+          l10n.navFavorites,
+          l10n.signInToSeeFavorites,
+        ),
+      _GuestTabKind.messages => (
+          Icons.chat_bubble_outline,
+          l10n.navMessages,
+          l10n.signInToSeeMessages,
+        ),
+      _GuestTabKind.account => (
+          Icons.person_outline,
+          l10n.guestAccountTitle,
+          l10n.guestAccountBody,
+        ),
+    };
+
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              24,
+              24,
+              24,
+              shellBottomClearance(context),
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: Breakpoints.auth),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Icon(icon, size: 48, color: tokens.accentInk),
+                  const SizedBox(height: 16),
+                  Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    body,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pushNamed(context, '/welcome'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: tokens.accentFill,
+                      foregroundColor: tokens.onAccentFill,
+                      minimumSize: const Size.fromHeight(50),
+                    ),
+                    child: Text(l10n.createAccount),
+                  ),
+                  const SizedBox(height: 10),
+                  OutlinedButton(
+                    onPressed: () => Navigator.pushNamed(context, '/login'),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(50),
+                    ),
+                    child: Text(l10n.logIn),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

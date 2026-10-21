@@ -3661,4 +3661,40 @@ class AppLocalizationsFr extends AppLocalizations {
   String inviteEarn(String amount) {
     return 'Gagnez $amount pour chaque ami qui s’inscrit et fait un premier achat.';
   }
+
+  @override
+  String get navSell => 'Vendre';
+
+  @override
+  String get guestGateBody =>
+      'C’est gratuit, et vos favoris, messages et commandes restent au même endroit.';
+
+  @override
+  String get sellSignInRequired =>
+      'Connectez-vous pour vendre sur Mambanda Market.';
+
+  @override
+  String get messageSignInRequired => 'Connectez-vous pour écrire au vendeur.';
+
+  @override
+  String get guestAccountTitle => 'Votre compte Mambanda';
+
+  @override
+  String get guestAccountBody =>
+      'Connectez-vous pour acheter, vendre, écrire aux vendeurs et suivre vos commandes.';
+
+  @override
+  String get guestWelcome => 'Bienvenue sur Mambanda Market 👋';
+
+  @override
+  String get messagesPickThread =>
+      'Choisissez une conversation pour la lire ici.';
+
+  @override
+  String get shareLinkCopied =>
+      'Lien copié. Collez-le où vous voulez pour le partager.';
+
+  @override
+  String get locationDeniedWeb =>
+      'La localisation est bloquée pour ce site. Autorisez-la depuis l’icône à côté de l’adresse web, puis réessayez.';
 }

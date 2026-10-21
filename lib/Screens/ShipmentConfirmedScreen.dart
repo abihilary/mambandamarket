@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../Service/ChatRoomScreen.dart';
 import '../api/models.dart';
@@ -8,6 +7,8 @@ import '../api/shipping_repository.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_tokens.dart';
 import 'ShipmentsScreen.dart';
+import '../theme/breakpoints.dart';
+import '../api/open_link.dart';
 
 /// The moment after sending a request.
 ///
@@ -37,7 +38,7 @@ class ShipmentConfirmedScreen extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.shipDocNotReady)));
         return;
       }
-      final ok = await launchUrl(doc.url, mode: LaunchMode.externalApplication);
+      final ok = await openExternal(doc.url, afterAwait: true);
       if (!ok && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.shipDocOpenFailed)));
       }
@@ -62,7 +63,9 @@ class ShipmentConfirmedScreen extends StatelessWidget {
         if (!didPop) _home(context);
       },
       child: Scaffold(
-        body: SafeArea(
+        body: ContentFrame(
+        maxWidth: Breakpoints.form,
+        child: SafeArea(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
             children: [
@@ -187,6 +190,7 @@ class ShipmentConfirmedScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

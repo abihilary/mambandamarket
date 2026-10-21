@@ -1,5 +1,7 @@
+import 'dart:math' as math;
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -366,7 +368,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     final text = switch (outcome) {
       ShareOutcome.servicesOff => l10n.locServicesOff,
       ShareOutcome.denied => l10n.locDenied,
-      ShareOutcome.deniedForever => l10n.locDeniedForever,
+      ShareOutcome.deniedForever => kIsWeb ? l10n.locationDeniedWeb : l10n.locDeniedForever,
       _ => l10n.locFailed,
     };
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
@@ -558,6 +560,12 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       ),
     );
   }
+
+  /// Three quarters of the screen on a phone. Capped, because a desktop
+  /// window, or the right-hand pane of Messages, made a one-line message a
+  /// 1000px strip.
+  double get _bubbleMax =>
+      math.min(MediaQuery.sizeOf(context).width * 0.75, 520);
 
   @override
   Widget build(BuildContext context) {
@@ -757,6 +765,16 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                             title: l10n.chatReportMessage,
                                           )
                                       : null,
+                                  // And a right-click, which is what a mouse
+                                  // has instead of a long press.
+                                  onSecondaryTap: !mine && !m.isPending
+                                      ? () => showReportSheet(
+                                            context,
+                                            targetType: 'message',
+                                            targetId: m.id,
+                                            title: l10n.chatReportMessage,
+                                          )
+                                      : null,
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.end,
@@ -767,10 +785,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 14, vertical: 10),
                                         constraints: BoxConstraints(
-                                            maxWidth: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                0.75),
+                                            maxWidth: _bubbleMax),
                                         decoration: BoxDecoration(
                                           color: mine
                                               ? cs.primary
@@ -1170,7 +1185,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     final reason = m.moderationReasonFor(lang);
     final color = m.isRejected ? AppColors.danger : cs.onSurfaceVariant;
     return Container(
-      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+      constraints: BoxConstraints(maxWidth: _bubbleMax),
       padding: const EdgeInsets.only(bottom: 10, right: 4, top: 2),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,

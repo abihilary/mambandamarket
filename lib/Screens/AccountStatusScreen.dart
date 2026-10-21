@@ -4,6 +4,7 @@ import '../api/auth_service.dart';
 import '../api/models.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
+import '../theme/breakpoints.dart';
 
 /// Shown after sign-in when the account is blocked or suspended. A restricted
 /// account keeps a valid session (so it can be told *why*), but the app never
@@ -65,7 +66,9 @@ class _AccountStatusScreenState extends State<AccountStatusScreen> {
     final l10n = context.l10n;
 
     return Scaffold(
-      body: SafeArea(
+      body: ContentFrame(
+        maxWidth: Breakpoints.form,
+        child: SafeArea(
         child: ValueListenableBuilder<Me?>(
           valueListenable: AuthService.instance.me,
           builder: (context, me, _) {
@@ -182,6 +185,7 @@ class _AccountStatusScreenState extends State<AccountStatusScreen> {
             );
           },
         ),
+      ),
       ),
     );
   }

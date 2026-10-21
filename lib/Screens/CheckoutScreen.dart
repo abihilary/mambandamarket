@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../api/api_client.dart';
 import '../api/auth_service.dart';
@@ -8,6 +7,8 @@ import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import 'OrderDetailScreen.dart';
+import '../theme/breakpoints.dart';
+import '../api/open_link.dart';
 
 /// Buying a verified company's listing in-app.
 ///
@@ -152,10 +153,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         );
         final url = payment.redirectUrl;
         if (url != null && url.isNotEmpty) {
-          final opened = await launchUrl(
-            Uri.parse(url),
-            mode: LaunchMode.externalApplication,
-          );
+          final opened = await openExternal(Uri.parse(url), afterAwait: true);
           if (!opened) message = l10n.checkoutPaymentOpenFailed;
         }
       } catch (_) {
@@ -204,7 +202,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         title: Text(l10n.checkoutTitle,
             style: const TextStyle(fontWeight: FontWeight.bold)),
       ),
-      body: SafeArea(
+      body: ContentFrame(
+        maxWidth: Breakpoints.form,
+        child: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
@@ -301,6 +301,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
           ),
         ),
+      ),
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(

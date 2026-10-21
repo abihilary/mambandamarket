@@ -9,6 +9,7 @@ import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../Components/local_image.dart';
 import '../Components/safe_bottom.dart';
+import '../theme/breakpoints.dart';
 
 class BusinessOnboardingScreen extends StatefulWidget {
   const BusinessOnboardingScreen({super.key});
@@ -200,7 +201,9 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
         title: Text(l10n.onbBizTitle),
         elevation: 0,
       ),
-      body: SingleChildScrollView(
+      body: ContentFrame(
+        maxWidth: Breakpoints.form,
+        child: SingleChildScrollView(
         padding: EdgeInsets.only(bottom: safeBottom(context, 16)),
         child: Column(
           children: [
@@ -210,7 +213,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
               alignment: Alignment.bottomCenter,
               children: [
                 // Store Banner Container
-                GestureDetector(
+                Tappable(
                   onTap: _pickBannerImage,
                   child: Container(
                     height: 160,
@@ -276,7 +279,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
                 // Store Avatar / Logo Picker
                 Positioned(
                   bottom: -35,
-                  child: GestureDetector(
+                  child: Tappable(
                     onTap: _pickAvatarImage,
                     child: Stack(
                       alignment: Alignment.bottomRight,
@@ -387,6 +390,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

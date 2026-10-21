@@ -9,6 +9,7 @@ import '../theme/app_theme.dart';
 import 'ForgotPasswordScreen.dart';
 import 'SignUpScreen.dart';
 import '../Components/ReferalScreen.dart';
+import '../theme/breakpoints.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -148,7 +149,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final l10n = context.l10n;
 
     return Scaffold(
-      body: SafeArea(
+      body: ContentFrame(
+        maxWidth: Breakpoints.auth,
+        child: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: AutofillGroup(
@@ -372,6 +375,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

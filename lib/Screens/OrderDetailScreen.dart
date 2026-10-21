@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../Components/order_status_chip.dart';
 import '../api/api_client.dart';
@@ -8,6 +7,8 @@ import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../Components/safe_bottom.dart';
+import '../theme/breakpoints.dart';
+import '../api/open_link.dart';
 
 /// One purchase, from the buyer's side.
 ///
@@ -179,8 +180,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       );
       final url = payment.redirectUrl;
       if (url != null && url.isNotEmpty) {
-        final opened =
-            await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+        final opened = await openExternal(Uri.parse(url), afterAwait: true);
         if (!opened) message = l10n.checkoutPaymentOpenFailed;
       }
     } on ApiException catch (e) {
@@ -206,7 +206,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: SafeArea(
+      body: ContentFrame(
+        maxWidth: Breakpoints.form,
+        child: SafeArea(
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : order == null
@@ -239,6 +241,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       ],
                     ),
                   ),
+      ),
       ),
       bottomNavigationBar:
           order == null ? null : _actions(l10n, order),

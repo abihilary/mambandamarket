@@ -4,6 +4,7 @@ import '../api/api_client.dart';
 import '../api/auth_service.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
+import '../theme/breakpoints.dart';
 
 /// Asks a new user for the code of whoever invited them.
 ///
@@ -91,7 +92,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
           ),
         ],
       ),
-      body: SafeArea(
+      body: ContentFrame(
+        maxWidth: Breakpoints.form,
+        child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -167,6 +170,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

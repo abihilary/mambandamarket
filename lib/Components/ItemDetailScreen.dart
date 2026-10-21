@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:share_plus/share_plus.dart';
 
 import '../Screens/CheckoutScreen.dart';
@@ -6,7 +8,6 @@ import '../Screens/PublicProfileScreen.dart';
 import '../Screens/ShippingRequestScreen.dart';
 import '../Service/ChatRoomScreen.dart';
 import '../api/api_client.dart';
-import '../api/auth_service.dart';
 import '../api/models.dart' as api;
 import '../api/repositories.dart';
 import '../api/share_links.dart';
@@ -18,6 +19,8 @@ import '../theme/app_tokens.dart';
 import 'ItemCard.dart';
 import 'VerifiedBadge.dart';
 import 'report_sheet.dart';
+import 'require_account.dart';
+import '../theme/breakpoints.dart';
 
 class ItemDetailScreen extends StatefulWidget {
   final String title;
@@ -312,6 +315,19 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       if (!mounted) return;
 
       if (result.status == ShareResultStatus.unavailable) {
+        // A desktop browser often has no share sheet. The link is still the
+        // thing they want, so it goes on the clipboard rather than ending in
+        // "not available".
+        if (kIsWeb) {
+          await Clipboard.setData(
+            ClipboardData(text: ShareLinks.listing(_listing?.id ?? widget.listingId ?? '').toString()),
+          );
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(context.l10n.shareLinkCopied)),
+          );
+          return;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -419,6 +435,12 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
     final l10n = context.l10n;
 
+    if (!await requireAccount(context, l10n.detailSignInToSave,
+        returnToListing: id)) {
+      return;
+    }
+    if (!mounted) return;
+
     try {
       await FavoritesRepository.instance.toggle(id);
 
@@ -447,23 +469,18 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   // CHECKOUT
   // ===========================================================================
 
-  void _buyNow() {
+  Future<void> _buyNow() async {
     final listing = _listing;
 
     if (listing == null || !listing.isBuyable) {
       return;
     }
 
-    if (AuthService.instance.session == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            context.l10n.checkoutSignInRequired,
-          ),
-        ),
-      );
+    if (!await requireAccount(context, context.l10n.checkoutSignInRequired,
+        returnToListing: listing.id)) {
       return;
     }
+    if (!mounted) return;
 
     Navigator.push(
       context,
@@ -479,7 +496,15 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   // CHAT
   // ===========================================================================
 
-  void _onChatPressed() {
+  Future<void> _onChatPressed() async {
+    // Account first: a visitor should not read the safety rules for a chat
+    // they then find they cannot open.
+    final id = widget.listingId;
+    if (!await requireAccount(context, context.l10n.detailSignInToMessage,
+        returnToListing: id)) {
+      return;
+    }
+    if (!mounted) return;
     if (_dontShowSafetyNoticeAgain) {
       _contactSeller();
       return;
@@ -781,16 +806,11 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
     final l10n = context.l10n;
 
-    if (AuthService.instance.session == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            l10n.detailSignInToMessage,
-          ),
-        ),
-      );
+    if (!await requireAccount(context, l10n.detailSignInToMessage,
+        returnToListing: id)) {
       return;
     }
+    if (!mounted) return;
 
     if (_startingChat) {
       return;
@@ -843,8 +863,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   Widget _buildGallery(
     BuildContext context,
-    ColorScheme scheme,
-  ) {
+    ColorScheme scheme, {
+    BoxFit fit = BoxFit.cover,
+  }) {
     if (_imageList.isEmpty) {
       return Container(
         color:
@@ -875,7 +896,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           itemBuilder: (context, index) {
             return Image.network(
               _imageList[index],
-              fit: BoxFit.cover,
+              fit: fit,
               width: double.infinity,
               height: double.infinity,
               loadingBuilder: (context, child, loadingProgress) {
@@ -982,76 +1003,13 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     );
   }
 
-  // ===========================================================================
-  // RELATED
-  // ===========================================================================
-
-  Widget _buildRelatedSection() {
-    if (_relatedItems.isEmpty) {
-      return SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-          child: Text(
-            context.l10n.detailRelated,
-            style: TextStyle(
-              fontSize: 13,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-      );
-    }
-
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 12,
-          childAspectRatio: 0.72,
-        ),
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final item = _relatedItems[index];
-            return ItemCard(
-              imageUrl: item.primaryImageUrl,
-              title: item.title,
-              price: item.displayPrice,
-              location: item.city,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ItemDetailScreen(
-                      title: item.title,
-                      price: item.displayPrice,
-                      imageUrl: item.primaryImageUrl,
-                      images: item.imageUrls,
-                      listingId: item.id,
-                      listing: item,
-                    ),
-                  ),
-                );
-              },
-            );
-          },
-          childCount: _relatedItems.length,
-        ),
-      ),
-    );
-  }
-
-  // ===========================================================================
-  // BUILD
-  // ===========================================================================
-
-  @override
-  Widget build(BuildContext context) {
+  /// Title, price, seller, details and description — the page's words.
+  /// One column on a phone; the right-hand column beside the photos on a
+  /// desktop.
+  List<Widget> _infoChildren(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final listing = _listing;
-
     final title = listing?.title ?? widget.title;
     final price = listing?.displayPrice ?? widget.price;
     // Only a product has a condition. The fallback string is "Local pickup
@@ -1063,115 +1021,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     final description = (listing?.description?.trim().isNotEmpty ?? false)
         ? listing!.description!
         : context.l10n.detailNoDescription;
-
-    return Scaffold(
-      // So the page passes under the action bar and there is something for it
-      // to blur. The sliver at the end of the list carries the clearance.
-      extendBody: true,
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 320,
-            pinned: true,
-            elevation: 0,
-            backgroundColor: scheme.surface,
-            leading: Padding(
-              padding: const EdgeInsets.all(6),
-              child: CircleAvatar(
-                backgroundColor: Colors.black.withValues(alpha: 0.45),
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ),
-            ),
-            actions: [
-              // Favorite
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: CircleAvatar(
-                  backgroundColor: Colors.black.withValues(alpha: 0.45),
-                  child: IconButton(
-                    icon: Icon(
-                      _isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: _isFavorite ? AppColors.danger : Colors.white,
-                      size: 20,
-                    ),
-                    onPressed: widget.listingId == null ? null : _toggleFavorite,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-
-              // Share
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Builder(builder: (shareButtonContext) {
-                  return CircleAvatar(
-                    backgroundColor: Colors.black.withValues(alpha: 0.45),
-                    child: IconButton(
-                      onPressed: _isSharing ? null : () => _shareListing(shareButtonContext),
-                      icon: _isSharing
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.share, color: Colors.white, size: 20),
-                    ),
-                  );
-                }),
-              ),
-              const SizedBox(width: 8),
-
-              // Report
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: CircleAvatar(
-                  backgroundColor: Colors.black.withValues(alpha: 0.45),
-                  child: PopupMenuButton<String>(
-                    icon: const Icon(Icons.flag_outlined, color: Colors.white, size: 20),
-                    onSelected: (value) {
-                      final l10n = context.l10n;
-                      if (value == 'listing' && widget.listingId != null) {
-                        showReportSheet(context,
-                            targetType: 'listing',
-                            targetId: widget.listingId!,
-                            title: l10n.reportListing);
-                      } else if (value == 'seller' && listing != null) {
-                        showReportSheet(context,
-                            targetType: 'user',
-                            targetId: listing.sellerId,
-                            title: l10n.reportSeller);
-                      }
-                    },
-                    itemBuilder: (context) {
-                      final l10n = context.l10n;
-                      return [
-                        PopupMenuItem(value: 'listing', child: Text(l10n.reportListing)),
-                        PopupMenuItem(value: 'seller', child: Text(l10n.reportSeller)),
-                      ];
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              collapseMode: CollapseMode.parallax,
-              background: _buildGallery(context, scheme),
-            ),
-          ),
-
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+    return [
                   if (city != '—' && city.isNotEmpty)
                     Row(
                       children: [
@@ -1317,7 +1167,14 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     description,
                     style: TextStyle(height: 1.5, color: scheme.onSurface, fontSize: 14),
                   ),
-                  const Divider(height: 56),
+    ];
+  }
+
+  Widget _relatedHeader(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
                   Row(
                     children: [
                       Expanded(
@@ -1335,6 +1192,121 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
+      ],
+    );
+  }
+
+  // ===========================================================================
+  // RELATED
+  // ===========================================================================
+
+  Widget _buildRelatedSection({
+    EdgeInsets padding = const EdgeInsets.symmetric(horizontal: 16),
+  }) {
+    if (_relatedItems.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: padding.copyWith(bottom: 20),
+          child: Text(
+            context.l10n.detailRelated,
+            style: TextStyle(
+              fontSize: 13,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return SliverPadding(
+      padding: padding,
+      sliver: SliverGrid(
+        // Columns from the width, as on Home: a fixed two made each card half
+        // a desktop window wide.
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 220,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 12,
+          childAspectRatio: 0.72,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final item = _relatedItems[index];
+            return ItemCard(
+              imageUrl: item.primaryImageUrl,
+              title: item.title,
+              price: item.displayPrice,
+              location: item.city,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ItemDetailScreen(
+                      title: item.title,
+                      price: item.displayPrice,
+                      imageUrl: item.primaryImageUrl,
+                      images: item.imageUrls,
+                      listingId: item.id,
+                      listing: item,
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+          childCount: _relatedItems.length,
+        ),
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // BUILD
+  // ===========================================================================
+
+  @override
+  Widget build(BuildContext context) {
+    if (context.isWideLayout) return _buildWide(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Scaffold(
+      // So the page passes under the action bar and there is something for it
+      // to blur. The sliver at the end of the list carries the clearance.
+      extendBody: true,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 320,
+            pinned: true,
+            elevation: 0,
+            backgroundColor: scheme.surface,
+            leading: Padding(
+              padding: const EdgeInsets.all(6),
+              child: CircleAvatar(
+                backgroundColor: Colors.black.withValues(alpha: 0.45),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+            ),
+            actions: _headerActions(context),
+            flexibleSpace: FlexibleSpaceBar(
+              collapseMode: CollapseMode.parallax,
+              background: _buildGallery(context, scheme),
+            ),
+          ),
+
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ..._infoChildren(context),
+                  const Divider(height: 56),
+                  _relatedHeader(context),
                 ],
               ),
             ),
@@ -1354,7 +1326,16 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-            child: Column(
+            child: _buildActions(context),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Buy, message and ship, with the buyer-protection line above them.
+  Widget _buildActions(BuildContext context) {
+    return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (_isBuyable && (_listing?.companyEscrow ?? true)) ...[
@@ -1396,10 +1377,246 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 ],
               ),
             ],
+            );
+  }
+
+  /// The app bar's buttons: save, share, report.
+  List<Widget> _headerActions(BuildContext context) {
+    final listing = _listing;
+    return [
+              // Favorite
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: CircleAvatar(
+                  backgroundColor: Colors.black.withValues(alpha: 0.45),
+                  child: IconButton(
+                    icon: Icon(
+                      _isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: _isFavorite ? AppColors.danger : Colors.white,
+                      size: 20,
+                    ),
+                    onPressed: widget.listingId == null ? null : _toggleFavorite,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // Share
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Builder(builder: (shareButtonContext) {
+                  return CircleAvatar(
+                    backgroundColor: Colors.black.withValues(alpha: 0.45),
+                    child: IconButton(
+                      onPressed: _isSharing ? null : () => _shareListing(shareButtonContext),
+                      icon: _isSharing
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.share, color: Colors.white, size: 20),
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(width: 8),
+
+              // Report
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: CircleAvatar(
+                  backgroundColor: Colors.black.withValues(alpha: 0.45),
+                  child: PopupMenuButton<String>(
+                    icon: const Icon(Icons.flag_outlined, color: Colors.white, size: 20),
+                    onSelected: (value) {
+                      final l10n = context.l10n;
+                      if (value == 'listing' && widget.listingId != null) {
+                        showReportSheet(context,
+                            targetType: 'listing',
+                            targetId: widget.listingId!,
+                            title: l10n.reportListing);
+                      } else if (value == 'seller' && listing != null) {
+                        showReportSheet(context,
+                            targetType: 'user',
+                            targetId: listing.sellerId,
+                            title: l10n.reportSeller);
+                      }
+                    },
+                    itemBuilder: (context) {
+                      final l10n = context.l10n;
+                      return [
+                        PopupMenuItem(value: 'listing', child: Text(l10n.reportListing)),
+                        PopupMenuItem(value: 'seller', child: Text(l10n.reportSeller)),
+                      ];
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+    ];
+  }
+
+  /// The desktop page: photos on the left at a size that shows the whole
+  /// picture, the words and the buttons beside them, related items below.
+  ///
+  /// On a phone the gallery is a 320px header the page scrolls over, which at
+  /// 1440px wide became a letterbox strip cropping every photo to its middle.
+  Widget _buildWide(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final title = _listing?.title ?? widget.title;
+    final side = frameInsets(context, min: 32);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        actions: _headerActions(context),
+      ),
+      body: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: side.copyWith(top: 24, bottom: 8),
+            sliver: SliverToBoxAdapter(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 7,
+                    child: _buildWideGallery(context, scheme),
+                  ),
+                  const SizedBox(width: 40),
+                  Expanded(
+                    flex: 5,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ..._infoChildren(context),
+                        const SizedBox(height: 28),
+                        _buildActions(context),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: side.copyWith(top: 24),
+            sliver: SliverToBoxAdapter(child: _relatedHeader(context)),
+          ),
+          _buildRelatedSection(padding: side),
+          const SliverToBoxAdapter(child: SizedBox(height: 48)),
+        ],
+      ),
+    );
+  }
+
+  /// The gallery at 4:3 with the whole photo showing, arrows to step through
+  /// it with a mouse, and thumbnails underneath.
+  Widget _buildWideGallery(BuildContext context, ColorScheme scheme) {
+    final count = _imageList.length;
+    void go(int index) {
+      if (!_pageController.hasClients) return;
+      _pageController.animateToPage(
+        index.clamp(0, count - 1),
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: AspectRatio(
+            aspectRatio: 4 / 3,
+            child: ColoredBox(
+              color: scheme.surfaceContainerHighest,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _buildGallery(context, scheme, fit: BoxFit.contain),
+                  if (count > 1) ...[
+                    Positioned(
+                      left: 12,
+                      top: 0,
+                      bottom: 0,
+                      child: Center(
+                        child: IconButton.filledTonal(
+                          tooltip: MaterialLocalizations.of(context)
+                              .previousPageTooltip,
+                          onPressed: _currentImageIndex > 0
+                              ? () => go(_currentImageIndex - 1)
+                              : null,
+                          icon: const Icon(Icons.chevron_left),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: 12,
+                      top: 0,
+                      bottom: 0,
+                      child: Center(
+                        child: IconButton.filledTonal(
+                          tooltip:
+                              MaterialLocalizations.of(context).nextPageTooltip,
+                          onPressed: _currentImageIndex < count - 1
+                              ? () => go(_currentImageIndex + 1)
+                              : null,
+                          icon: const Icon(Icons.chevron_right),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
         ),
-      ),
+        if (count > 1) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 72,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: count,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, i) {
+                final selected = i == _currentImageIndex;
+                return Tappable(
+                  onTap: () => go(i),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    width: 72,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: selected
+                            ? context.tokens.accentInk
+                            : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        _imageList[i],
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            ColoredBox(color: scheme.surfaceContainerHighest),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ],
     );
   }
 
@@ -1452,15 +1669,14 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   /// Straight into the request with this product already chosen — the picker
   /// and the "what would you like shipped" question are both already answered
   /// by being here.
-  void _shipThis() {
+  Future<void> _shipThis() async {
     final listing = _listing;
     if (listing == null) return;
-    if (AuthService.instance.session == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.shipSignInRequired)),
-      );
+    if (!await requireAccount(context, context.l10n.shipSignInRequired,
+        returnToListing: listing.id)) {
       return;
     }
+    if (!mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(

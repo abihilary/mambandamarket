@@ -7,6 +7,7 @@ import '../api/repositories.dart';
 import '../api/shipping_model.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_tokens.dart';
+import '../theme/breakpoints.dart';
 
 /// Inbox of chat threads.
 ///
@@ -39,6 +40,15 @@ class ChatInboxScreenState extends State<ChatInboxScreen> {
   final _searchController = TextEditingController();
   String _query = '';
   bool _unreadOnly = false;
+
+  /// The thread open in the right-hand pane, beside the sidebar. Unused on a
+  /// phone, where a thread is a screen of its own.
+  String? _openId;
+
+  /// Room for the list and a conversation side by side.
+  static const double _twoPaneAt = 760;
+  static const double _listWidth = 360;
+  bool _twoPane = false;
 
   @override
   void initState() {
@@ -111,6 +121,58 @@ class ChatInboxScreenState extends State<ChatInboxScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        _twoPane = constraints.maxWidth >= _twoPaneAt;
+        return _twoPane ? _buildTwoPane(context) : _buildList(context);
+      },
+    );
+  }
+
+  /// The desktop Messages: the inbox on the left, the open conversation on
+  /// the right, like every mail and chat app on a computer.
+  Widget _buildTwoPane(BuildContext context) {
+    final l10n = context.l10n;
+    final cs = Theme.of(context).colorScheme;
+    return ValueListenableBuilder<List<Conversation>>(
+      valueListenable: _chat.threads,
+      builder: (context, chats, _) {
+        final open = chats.where((c) => c.id == _openId).firstOrNull;
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(width: _listWidth, child: _buildList(context)),
+            const VerticalDivider(width: 1, thickness: 1),
+            Expanded(
+              child: open == null
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.forum_outlined,
+                              size: 48, color: cs.onSurfaceVariant),
+                          const SizedBox(height: 12),
+                          Text(
+                            l10n.messagesPickThread,
+                            style: TextStyle(color: cs.onSurfaceVariant),
+                          ),
+                        ],
+                      ),
+                    )
+                  // Keyed by thread, so switching conversations starts the
+                  // room fresh instead of reusing the last one's state.
+                  : ChatRoomScreen(
+                      key: ValueKey(open.id),
+                      conversation: open,
+                    ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildList(BuildContext context) {
     final l10n = context.l10n;
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
@@ -178,9 +240,7 @@ class ChatInboxScreenState extends State<ChatInboxScreen> {
                                     // Clearance for the docked publish button.
                                     // Plus the system bar (edge-to-edge).
                                     padding: EdgeInsets.only(
-                                        bottom: MediaQuery.viewPaddingOf(context)
-                                                .bottom +
-                                            96),
+                                        bottom: shellBottomClearance(context)),
                                     itemCount: visible.length,
                                     separatorBuilder: (_, __) =>
                                         const Divider(height: 1),
@@ -212,6 +272,7 @@ class ChatInboxScreenState extends State<ChatInboxScreen> {
     final avatar = isDesk ? null : chat.counterparty?.avatarUrl;
 
     return ListTile(
+      selected: chat.id == _openId,
       leading: isDesk
           ? CircleAvatar(
               backgroundColor: context.tokens.accentFill.withValues(alpha: 0.16),
@@ -272,6 +333,11 @@ class ChatInboxScreenState extends State<ChatInboxScreen> {
             )
           : null,
       onTap: () async {
+        // Beside the list on a desktop, rather than over it.
+        if (_twoPane) {
+          setState(() => _openId = chat.id);
+          return;
+        }
         await Navigator.push(
           context,
           MaterialPageRoute(

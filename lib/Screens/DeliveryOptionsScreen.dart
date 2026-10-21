@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api/shipping_draft.dart';
 import '../l10n/l10n.dart';
 import 'ShippingRequestScreen.dart';
+import '../theme/breakpoints.dart';
 
 /// Three ways in, which are really the two the backend knows: a Mambanda
 /// listing, or something from outside. "Buy & deliver" is the outside path
@@ -25,7 +26,9 @@ class DeliveryOptionsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.deliveryTitle)),
-      body: SafeArea(
+      body: ContentFrame(
+        maxWidth: Breakpoints.form,
+        child: SafeArea(
         top: false,
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -84,6 +87,7 @@ class DeliveryOptionsScreen extends StatelessWidget {
           ],
           ),
         ),
+      ),
       ),
     );
   }

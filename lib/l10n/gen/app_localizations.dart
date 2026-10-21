@@ -6403,6 +6403,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Earn {amount} for every friend who joins and makes a first purchase.'**
   String inviteEarn(String amount);
+
+  /// No description provided for @navSell.
+  ///
+  /// In en, this message translates to:
+  /// **'Sell'**
+  String get navSell;
+
+  /// No description provided for @guestGateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It\'s free, and keeps your saved items, messages and orders in one place.'**
+  String get guestGateBody;
+
+  /// No description provided for @sellSignInRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to sell on Mambanda Market.'**
+  String get sellSignInRequired;
+
+  /// No description provided for @messageSignInRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to message the seller.'**
+  String get messageSignInRequired;
+
+  /// No description provided for @guestAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Mambanda account'**
+  String get guestAccountTitle;
+
+  /// No description provided for @guestAccountBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to buy, sell, message sellers and track your orders.'**
+  String get guestAccountBody;
+
+  /// No description provided for @guestWelcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to Mambanda Market 👋'**
+  String get guestWelcome;
+
+  /// No description provided for @messagesPickThread.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a conversation to read it here.'**
+  String get messagesPickThread;
+
+  /// No description provided for @shareLinkCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied. Paste it anywhere to share.'**
+  String get shareLinkCopied;
+
+  /// No description provided for @locationDeniedWeb.
+  ///
+  /// In en, this message translates to:
+  /// **'Location is blocked for this site. Allow it from the icon beside the web address, then try again.'**
+  String get locationDeniedWeb;
 }
 
 class _AppLocalizationsDelegate

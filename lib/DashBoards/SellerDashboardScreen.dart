@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../Screens/EditProfileScreen.dart';
@@ -14,6 +15,7 @@ import '../theme/app_theme.dart';
 import '../theme/app_tokens.dart';
 import 'CreateListingScreen.dart';
 import '../Components/local_image.dart';
+import '../theme/breakpoints.dart';
 
 class SellerDashboardScreen extends StatefulWidget {
   const SellerDashboardScreen({super.key});
@@ -334,7 +336,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
       // left over, which on a phone with the banner showing is about two rows.
       // Here the chrome scrolls away and the listings get the whole screen,
       // while the TabBar stays pinned so you can still switch tabs.
-      body: SafeArea(
+      body: ContentFrame(
+        maxWidth: Breakpoints.dashboard,
+        child: SafeArea(
         child: NestedScrollView(
           headerSliverBuilder: (context, _) => [
             SliverToBoxAdapter(
@@ -389,6 +393,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             ],
           ),
         ),
+      ),
       ),
     );
   }
@@ -680,7 +685,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
       setState(() => _backfilling = false);
       final message = switch (outcome) {
         LocationOutcome.servicesOff => l10n.locationServicesOff,
-        LocationOutcome.deniedForever => l10n.locationDeniedForever,
+        LocationOutcome.deniedForever => kIsWeb ? l10n.locationDeniedWeb : l10n.locationDeniedForever,
         LocationOutcome.denied => l10n.locationDenied,
         _ => l10n.locationUnavailable,
       };

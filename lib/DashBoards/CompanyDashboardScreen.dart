@@ -8,6 +8,7 @@ import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../Components/safe_bottom.dart';
+import '../theme/breakpoints.dart';
 
 /// Label for a ledger movement. Unknown kinds fall back to a neutral
 /// "Adjustment" rather than leaking a raw database enum at the merchant.
@@ -364,7 +365,9 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
           ],
         ),
       ),
-      body: SafeArea(
+      body: ContentFrame(
+        maxWidth: Breakpoints.dashboard,
+        child: SafeArea(
         child: TabBarView(
           controller: _tabController,
           children: [
@@ -373,6 +376,7 @@ class _CompanyDashboardScreenState extends State<CompanyDashboardScreen>
             _payoutsTab(l10n),
           ],
         ),
+      ),
       ),
     );
   }

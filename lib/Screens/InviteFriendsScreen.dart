@@ -7,6 +7,7 @@ import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../Components/safe_bottom.dart';
+import '../theme/breakpoints.dart';
 
 /// The other half of referrals: the code you give out, and what it has earned.
 ///
@@ -64,7 +65,9 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.inviteTitle)),
-      body: RefreshIndicator(
+      body: ContentFrame(
+        maxWidth: Breakpoints.form,
+        child: RefreshIndicator(
         onRefresh: _load,
         child: _loading
             ? const Center(child: CircularProgressIndicator())
@@ -211,6 +214,7 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
                   ],
                 ],
               ),
+      ),
       ),
     );
   }

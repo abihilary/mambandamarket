@@ -10,6 +10,7 @@ import 'CreateListingScreen.dart';
 import '../Components/local_image.dart';
 import 'ViewProfileScreen.dart'; // Import the newly created screen
 import '../Components/safe_bottom.dart';
+import '../theme/breakpoints.dart';
 
 class BusinessDashboardScreen extends StatefulWidget {
   const BusinessDashboardScreen({super.key});
@@ -274,7 +275,9 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: SingleChildScrollView(
+      body: ContentFrame(
+        maxWidth: Breakpoints.dashboard,
+        child: SingleChildScrollView(
         // Room for the extended FAB and the system bar below the last card.
         padding: EdgeInsets.fromLTRB(16, 16, 16, safeBottom(context, 88)),
         child: Column(
@@ -371,6 +374,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
             const SizedBox(height: 80),
           ],
         ),
+      ),
       ),
     );
   }

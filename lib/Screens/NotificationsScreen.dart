@@ -7,6 +7,7 @@ import '../api/notification_repository.dart';
 import '../api/notification_router.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_tokens.dart';
+import '../theme/breakpoints.dart';
 
 /// The inbox: everything the platform has said to this person that was not a
 /// chat message. A tap goes where the notification's push would have gone.
@@ -109,7 +110,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ],
       ),
-      body: SafeArea(
+      body: ContentFrame(
+        maxWidth: Breakpoints.form,
+        child: SafeArea(
         top: false,
         child: RefreshIndicator(
           onRefresh: _load,
@@ -177,6 +180,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             },
           ),
         ),
+      ),
       ),
     );
   }

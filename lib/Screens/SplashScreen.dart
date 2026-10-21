@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../api/auth_service.dart';
@@ -81,8 +82,12 @@ class _SplashScreenState extends State<SplashScreen> {
       }
     }
 
+    // A signed-out visitor on the web goes straight to the feed: they came
+    // from the website or a shared link to look at things, and the web app
+    // lets them browse until they want to do something that needs an account
+    // (see requireAccount). The phone app still opens on Welcome.
     final target = auth.session == null
-        ? '/welcome'
+        ? (kIsWeb ? '/home' : '/welcome')
         : auth.isAccountRestricted
             ? '/account-status'
             : (profileMissing ? '/role-selection' : '/home');

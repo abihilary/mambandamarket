@@ -1811,5 +1811,15 @@
         "type": "String"
       }
     }
-  }
+  },
+  "navSell": "Sell",
+  "guestGateBody": "It's free, and keeps your saved items, messages and orders in one place.",
+  "sellSignInRequired": "Sign in to sell on Mambanda Market.",
+  "messageSignInRequired": "Sign in to message the seller.",
+  "guestAccountTitle": "Your Mambanda account",
+  "guestAccountBody": "Sign in to buy, sell, message sellers and track your orders.",
+  "guestWelcome": "Welcome to Mambanda Market 👋",
+  "messagesPickThread": "Pick a conversation to read it here.",
+  "shareLinkCopied": "Link copied. Paste it anywhere to share.",
+  "locationDeniedWeb": "Location is blocked for this site. Allow it from the icon beside the web address, then try again."
 }

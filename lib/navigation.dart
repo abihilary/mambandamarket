@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import 'Components/ItemDetailScreen.dart';
@@ -50,7 +51,10 @@ class DeepLinkGuard with WidgetsBindingObserver {
     // .well-known/assetlinks.json, so by the time this runs the link is known
     // to be ours; the parser checks the shape again anyway, because the same
     // path also sees links that arrived by other routes.
-    final id = ShareLinks.listingIdFrom(routeInformation.uri);
+    final uri = routeInformation.uri;
+    final id = kIsWeb
+        ? ShareLinks.listingIdFromPath(uri.path)
+        : ShareLinks.listingIdFrom(uri);
     if (id != null) {
       unawaited(openSharedListing(id));
       return true;
@@ -59,6 +63,17 @@ class DeepLinkGuard with WidgetsBindingObserver {
     // routed — see above.
     return true;
   }
+}
+
+/// The page's address as it was when the web app started.
+///
+/// Read in main(), before runApp: the first route Flutter puts up is the
+/// splash, named '/', and with path URLs it writes that name straight into
+/// the address bar — so by the time the splash asks, /l/<id> already reads /.
+String? _webLaunchPath;
+
+void captureLaunchAddress() {
+  if (kIsWeb) _webLaunchPath = Uri.base.path;
 }
 
 /// The link that launched the app, if that is how it started.
@@ -73,11 +88,18 @@ class DeepLinkGuard with WidgetsBindingObserver {
 /// because of the link.
 ///
 /// Called after the first frame: there is no Navigator to push onto before it.
+///
+/// On the web the launch link is the page's own address — app.mambandamarket.com/l/<id>
+/// — and it is already ours, so only the path is checked.
 Future<void> handleLaunchLink() async {
-  final raw = WidgetsBinding.instance.platformDispatcher.defaultRouteName;
-  final uri = Uri.tryParse(raw);
-  if (uri == null) return;
-  final id = ShareLinks.listingIdFrom(uri);
+  final String? id;
+  if (kIsWeb) {
+    id = ShareLinks.listingIdFromPath(_webLaunchPath ?? '');
+  } else {
+    final raw = WidgetsBinding.instance.platformDispatcher.defaultRouteName;
+    final uri = Uri.tryParse(raw);
+    id = uri == null ? null : ShareLinks.listingIdFrom(uri);
+  }
   if (id == null) return;
   await openSharedListing(id);
 }

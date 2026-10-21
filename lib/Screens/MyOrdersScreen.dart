@@ -8,6 +8,7 @@ import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import 'OrderDetailScreen.dart';
+import '../theme/breakpoints.dart';
 
 /// The buyer's purchases. Cursor-paged the same way the chat history is, so a
 /// long history never loads in one go.
@@ -107,7 +108,9 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
         title: Text(l10n.ordersTitle,
             style: const TextStyle(fontWeight: FontWeight.bold)),
       ),
-      body: SafeArea(
+      body: ContentFrame(
+        maxWidth: Breakpoints.form,
+        child: SafeArea(
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
@@ -172,6 +175,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                             },
                           ),
                   ),
+      ),
       ),
     );
   }

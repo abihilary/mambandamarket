@@ -6,6 +6,7 @@ import '../api/auth_service.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../Components/safe_bottom.dart';
+import '../theme/breakpoints.dart';
 
 /// Create an account with email + password.
 ///
@@ -169,7 +170,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (_awaitingConfirmation) {
       return Scaffold(
         appBar: AppBar(),
-        body: Padding(
+        body: ContentFrame(
+        maxWidth: Breakpoints.auth,
+        child: Padding(
           padding: EdgeInsets.fromLTRB(32, 32, 32, safeBottom(context, 32)),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -224,12 +227,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ],
           ),
         ),
+      ),
       );
     }
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.signUpTitle), elevation: 0),
-      body: SafeArea(
+      body: ContentFrame(
+        maxWidth: Breakpoints.auth,
+        child: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Form(
@@ -359,6 +365,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

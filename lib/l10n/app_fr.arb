@@ -1465,5 +1465,15 @@
   "walletErrorBalance": "C’est plus que votre solde.",
   "walletErrorNumber": "Entrez un numéro mobile camerounais, ex. 677 12 34 56.",
   "walletErrorGeneric": "La demande n’a pas pu être envoyée. Réessayez.",
-  "inviteEarn": "Gagnez {amount} pour chaque ami qui s’inscrit et fait un premier achat."
+  "inviteEarn": "Gagnez {amount} pour chaque ami qui s’inscrit et fait un premier achat.",
+  "navSell": "Vendre",
+  "guestGateBody": "C’est gratuit, et vos favoris, messages et commandes restent au même endroit.",
+  "sellSignInRequired": "Connectez-vous pour vendre sur Mambanda Market.",
+  "messageSignInRequired": "Connectez-vous pour écrire au vendeur.",
+  "guestAccountTitle": "Votre compte Mambanda",
+  "guestAccountBody": "Connectez-vous pour acheter, vendre, écrire aux vendeurs et suivre vos commandes.",
+  "guestWelcome": "Bienvenue sur Mambanda Market 👋",
+  "messagesPickThread": "Choisissez une conversation pour la lire ici.",
+  "shareLinkCopied": "Lien copié. Collez-le où vous voulez pour le partager.",
+  "locationDeniedWeb": "La localisation est bloquée pour ce site. Autorisez-la depuis l’icône à côté de l’adresse web, puis réessayez."
 }

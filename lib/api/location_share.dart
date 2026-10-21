@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 /// Somebody's position, shared into a conversation.
 ///
 /// Two shapes behind one class. A pin is a single fixed point. A live share is
@@ -101,7 +103,11 @@ class LocationShare {
 
 /// A point, for whichever map app the phone uses. Shared with the shipment
 /// screen, which shows where a parcel was last seen the same way.
-Uri mapUriFor(double lat, double lng) => Uri.parse('geo:$lat,$lng?q=$lat,$lng');
+// A browser has nothing registered for geo: — iOS Safari refuses it outright
+// — so the web build goes straight to the map page.
+Uri mapUriFor(double lat, double lng) => kIsWeb
+    ? webMapUriFor(lat, lng)
+    : Uri.parse('geo:$lat,$lng?q=$lat,$lng');
 
 Uri webMapUriFor(double lat, double lng) =>
     Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');

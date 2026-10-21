@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -14,6 +15,8 @@ import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_tokens.dart';
 import '../Components/safe_bottom.dart';
+import '../Components/require_account.dart';
+import '../theme/breakpoints.dart';
 
 /// Everything the query is narrowed by.
 ///
@@ -290,6 +293,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Future<void> _toggleFavorite(Listing item) async {
     final l10n = context.l10n;
+    if (!await requireAccount(context, l10n.favoriteSignInRequired)) return;
     try {
       await _favorites.toggle(item.id);
     } on ApiException catch (e) {
@@ -377,7 +381,10 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
         ),
       ),
-      body: _body(context, l10n, scheme),
+      body: ContentFrame(
+        maxWidth: Breakpoints.feed,
+        child: _body(context, l10n, scheme),
+      ),
     );
   }
 
@@ -674,7 +681,7 @@ class _FilterBar extends StatelessWidget {
     messenger.showSnackBar(SnackBar(
       content: Text(switch (outcome) {
         LocationOutcome.servicesOff => l10n.locationServicesOff,
-        LocationOutcome.deniedForever => l10n.locationDeniedForever,
+        LocationOutcome.deniedForever => kIsWeb ? l10n.locationDeniedWeb : l10n.locationDeniedForever,
         LocationOutcome.denied => l10n.locationDenied,
         _ => l10n.locationUnavailable,
       }),
@@ -826,7 +833,7 @@ class _Chip extends StatelessWidget {
               const SizedBox(width: 2),
               // A filter you can see is on should be removable where it is,
               // not only by reopening the sheet that set it.
-              GestureDetector(
+              Tappable(
                 onTap: onClear,
                 child: Icon(Icons.close, size: 16, color: fg),
               ),

@@ -5,6 +5,7 @@ import '../api/models.dart';
 import '../api/notification_router.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_tokens.dart';
+import '../theme/breakpoints.dart';
 
 /// One notification, in full: the picture, every line of the text, when it
 /// came, and — when it points somewhere — one button that goes there.
@@ -65,7 +66,9 @@ class NotificationDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(_kindLabel(l10n, n.kind))),
-      body: SafeArea(
+      body: ContentFrame(
+        maxWidth: Breakpoints.form,
+        child: SafeArea(
         top: false,
         child: Column(
           children: [
@@ -145,6 +148,7 @@ class NotificationDetailScreen extends StatelessWidget {
               ),
           ],
         ),
+      ),
       ),
     );
   }

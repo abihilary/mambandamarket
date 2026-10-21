@@ -37,7 +37,13 @@ class ShareLinks {
   /// `/l/<uuid>`" is not something to open on somebody's behalf.
   static String? listingIdFrom(Uri uri) {
     if (!_knownHosts.contains(uri.host.toLowerCase())) return null;
-    final parts = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+    return listingIdFromPath(uri.path);
+  }
+
+  /// The listing id in a bare path like `/l/<uuid>`. For the web app, whose
+  /// own address is the link — the host there is ours by definition.
+  static String? listingIdFromPath(String path) {
+    final parts = path.split('/').where((s) => s.isNotEmpty).toList();
     if (parts.length != 2 || parts.first != 'l') return null;
     final id = parts[1];
     return _uuid.hasMatch(id) ? id : null;

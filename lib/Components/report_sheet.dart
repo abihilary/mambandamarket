@@ -6,6 +6,7 @@ import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import 'safe_bottom.dart';
+import 'require_account.dart';
 
 /// A report reason: [code] goes to the API, [label] resolves the display text.
 class _Reason {
@@ -38,10 +39,7 @@ Future<void> showReportSheet(
 }) {
   // Reporting is a write; anonymous users can't (the API would 401 anyway).
   if (AuthService.instance.session == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.l10n.reportSignInRequired)),
-    );
-    return Future.value();
+    return requireAccount(context, context.l10n.reportSignInRequired);
   }
   return showModalBottomSheet<void>(
     context: context,

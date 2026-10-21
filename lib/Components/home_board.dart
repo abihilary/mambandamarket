@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
@@ -12,6 +13,7 @@ import '../api/board_repository.dart';
 import '../navigation.dart';
 import '../theme/app_tokens.dart';
 import 'board_promo_sheet.dart';
+import '../theme/breakpoints.dart';
 
 /// The dashboard-authored board in the home feed.
 ///
@@ -78,9 +80,17 @@ class HomeBoard extends StatelessWidget {
           );
         }
 
+        // A ratio scales with the window: a 16:9 board on a desktop was 700px
+        // tall, a poster rather than a banner. Capped so the artwork stays at
+        // most 360 tall (and 1100 wide), centred; a phone never reaches either.
+        final maxWidth = (360 * style.aspect).clamp(320.0, 1100.0);
+
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-          child: Container(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: Container(
             decoration: BoxDecoration(
               color: style.background?.resolve(brightness),
               borderRadius: radius,
@@ -98,6 +108,8 @@ class HomeBoard extends StatelessWidget {
                   )
                 : null,
             child: content,
+              ),
+            ),
           ),
         );
       },
@@ -346,7 +358,7 @@ class _Slide extends StatelessWidget {
     if (!(slide.link?.isActionable ?? false)) return child;
     // The buttons sit above this in the stack and take their own taps, so the
     // slide's link is what is left over — tapping the picture, not the button.
-    return GestureDetector(
+    return Tappable(
       onTap: () => openBoardLink(context, slide.link!, onCategory: onCategory),
       child: child,
     );
@@ -618,10 +630,18 @@ class _VideoState extends State<_Video> with WidgetsBindingObserver {
     // From disk, always. The download happens once, on the first board that
     // referenced this file; every later launch and every pull-to-refresh reads
     // the same bytes back.
-    final File? file = await BoardMediaCache.instance.fileFor(url: url, path: path);
-    if (file == null || !mounted) return;
-
-    final controller = VideoPlayerController.file(file);
+    // A browser has no disk to cache to, and video_player cannot play a local
+    // file there: the clip downloaded in full and then failed. It streams from
+    // the URL instead, and the browser's own cache does the rest.
+    final VideoPlayerController controller;
+    if (kIsWeb) {
+      controller = VideoPlayerController.networkUrl(Uri.parse(url));
+    } else {
+      final File? file =
+          await BoardMediaCache.instance.fileFor(url: url, path: path);
+      if (file == null || !mounted) return;
+      controller = VideoPlayerController.file(file);
+    }
     try {
       await controller.initialize();
       await controller.setLooping(widget.slide.loop);
@@ -808,7 +828,7 @@ class _Split extends StatelessWidget {
     );
 
     if (!(slide.link?.isActionable ?? false)) return content;
-    return GestureDetector(
+    return Tappable(
       onTap: () => openBoardLink(context, slide.link!, onCategory: onCategory),
       child: content,
     );

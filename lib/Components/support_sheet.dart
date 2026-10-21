@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../Service/ChatRoomScreen.dart';
 import '../api/api_client.dart';
-import '../api/auth_service.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
+import 'require_account.dart';
 
 /// Open the conversation with the team.
 ///
@@ -21,12 +21,8 @@ import '../theme/app_theme.dart';
 /// account — there is nobody to open a thread with when there is no account.
 Future<void> openSupportThread(BuildContext context) async {
   final l10n = context.l10n;
-  if (AuthService.instance.session == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.supportSignInRequired)),
-    );
-    return;
-  }
+  if (!await requireAccount(context, l10n.supportSignInRequired)) return;
+  if (!context.mounted) return;
 
   // A spinner rather than an empty screen: opening a thread is one round trip,
   // and a tap that appears to do nothing is a tap people make twice.

@@ -8,6 +8,7 @@ import '../api/user_wallet.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_tokens.dart';
+import '../theme/breakpoints.dart';
 
 /// What inviting friends has earned, and taking it out.
 ///
@@ -91,7 +92,9 @@ class _WalletScreenState extends State<WalletScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.walletTitle)),
-      body: RefreshIndicator(
+      body: ContentFrame(
+        maxWidth: Breakpoints.form,
+        child: RefreshIndicator(
         onRefresh: _load,
         child: _loading
             ? const Center(child: CircularProgressIndicator())
@@ -277,6 +280,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   ],
                 ],
               ),
+      ),
       ),
     );
   }

@@ -9,6 +9,7 @@ import '../api/models.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_tokens.dart';
+import '../theme/breakpoints.dart';
 
 /// Edit your own profile: picture, name, phone, city, bio.
 ///
@@ -162,7 +163,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.editProfileTitle)),
-      body: SafeArea(
+      body: ContentFrame(
+        maxWidth: Breakpoints.form,
+        child: SafeArea(
         child: AbsorbPointer(
           // Nothing is editable mid-save: a second tap on Save, or a change to a
           // field whose old value is already in flight, produces a profile that
@@ -174,7 +177,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
               children: [
                 Center(
-                  child: GestureDetector(
+                  child: Tappable(
                     onTap: _pickPhoto,
                     child: Stack(
                       clipBehavior: Clip.none,
@@ -280,6 +283,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
           ),
         ),
+      ),
       ),
       // Save is pinned rather than sitting at the end of the list. The bio box
       // is four lines tall and the keyboard covers most of the screen, so the

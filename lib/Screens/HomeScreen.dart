@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 // Components
@@ -28,6 +29,8 @@ import '../Components/glass_surface.dart';
 import 'SearchScreen.dart';
 import '../theme/app_tokens.dart';
 import '../Components/home_announcement.dart';
+import '../Components/require_account.dart';
+import '../theme/breakpoints.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -205,7 +208,7 @@ class HomeScreenState extends State<HomeScreen> {
 
     final message = switch (outcome) {
       LocationOutcome.servicesOff => l10n.locationServicesOff,
-      LocationOutcome.deniedForever => l10n.locationDeniedForever,
+      LocationOutcome.deniedForever => kIsWeb ? l10n.locationDeniedWeb : l10n.locationDeniedForever,
       LocationOutcome.denied => l10n.locationDenied,
       _ => l10n.locationUnavailable,
     };
@@ -249,7 +252,8 @@ class HomeScreenState extends State<HomeScreen> {
       _favorites.refresh(),
       _loadBoards(),
       _loadTrending(),
-      NotificationRepository.instance.refreshHomeCard(),
+      if (AuthService.instance.session != null)
+        NotificationRepository.instance.refreshHomeCard(),
     ]);
   }
 
@@ -343,6 +347,7 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _toggleFavorite(Listing listing) async {
     final l10n = context.l10n;
+    if (!await requireAccount(context, l10n.favoriteSignInRequired)) return;
     try {
       await _favorites.toggle(listing.id);
     } on ApiException catch (e) {
@@ -370,6 +375,7 @@ class HomeScreenState extends State<HomeScreen> {
         : hour < 18
             ? l10n.homeGreetingAfternoon
             : l10n.homeGreetingEvening;
+    if (AuthService.instance.session == null) return l10n.guestWelcome;
     final name = me?.profile?.displayName?.trim() ?? '';
     final first = name.isEmpty ? '' : name.split(' ').first;
     return first.isEmpty ? '$greeting 👋' : '$greeting $first 👋';
@@ -432,6 +438,14 @@ class HomeScreenState extends State<HomeScreen> {
     ];
   }
 
+  List<Widget> _framed(BuildContext context, List<Widget> slivers) {
+    final insets = frameInsets(context);
+    if (insets.horizontal == 0) return slivers;
+    return [
+      for (final s in slivers) SliverPadding(padding: insets, sliver: s),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final gallery = _listings.take(8).toList();
@@ -451,7 +465,10 @@ class HomeScreenState extends State<HomeScreen> {
               onRefresh: _refreshAll,
               child: CustomScrollView(
                 controller: _scroll,
-                slivers: [
+                // Every sliver is centred in a 1280 column on a desktop. The
+                // scroll view itself stays full width, so the wheel scrolls the
+                // feed wherever the pointer is, gutters included.
+                slivers: _framed(context, [
                   // Greeting. The deck opens on the person rather than on the
                   // search field, which is what makes the feed read as "yours".
                   SliverToBoxAdapter(
@@ -487,6 +504,7 @@ class HomeScreenState extends State<HomeScreen> {
                           ),
                           // The inbox. Chat has the tab badge; this is
                           // everything else the platform says to a person.
+                          if (AuthService.instance.session != null)
                           ValueListenableBuilder<int>(
                             valueListenable: NotificationRepository.instance.unread,
                             builder: (context, unread, _) => IconButton(
@@ -793,7 +811,7 @@ class HomeScreenState extends State<HomeScreen> {
                   // shipping button above it, which the 96 was never sized for.
                   SliverToBoxAdapter(
                       child: SizedBox(height: shippingButtonClearance(context))),
-                ],
+                ]),
               ),
             ),
 
@@ -868,7 +886,11 @@ class _FloatingSearch extends StatelessWidget {
           // and leave a sliver of glass showing at rest.
           child: Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: FractionallySizedBox(
+            // Capped on a desktop: a pill the width of the window is a bar.
+            child: Center(
+              child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: Breakpoints.form),
+              child: FractionallySizedBox(
               widthFactor: 0.94,
               child: GlassSurface(
                 sigma: 20,
@@ -898,6 +920,8 @@ class _FloatingSearch extends StatelessWidget {
                     ),
                   ),
                 ),
+              ),
+              ),
               ),
             ),
           ),

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
+import '../theme/breakpoints.dart';
+import '../api/open_link.dart';
+import '../api/share_links.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   final String roleType; // 'buyer_seller' or 'business'
@@ -115,7 +118,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         title: Text(context.l10n.subSelectPlan),
         elevation: 0,
       ),
-      body: SafeArea(
+      body: ContentFrame(
+        maxWidth: Breakpoints.form,
+        child: SafeArea(
         child: Column(
           children: [
             Expanded(
@@ -145,7 +150,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                       child: Row(
                         children: [
                           Expanded(
-                            child: GestureDetector(
+                            child: Tappable(
                               onTap: () => setState(() => _isAnnual = false),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -166,7 +171,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                             ),
                           ),
                           Expanded(
-                            child: GestureDetector(
+                            child: Tappable(
                               onTap: () => setState(() => _isAnnual = true),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -217,23 +222,24 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
                     const SizedBox(height: 16),
 
-                    // Store Policy & Restore Purchases Link (App Store Requirement)
+                    // The terms and privacy pages on the site. These were
+                    // `onPressed: () {}` — links that looked live and went
+                    // nowhere. "Restore purchases" is gone: plans are paid by
+                    // mobile money through Campay, not a store, so there is
+                    // never a store purchase to restore.
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () => openExternal(
+                              Uri.parse('${ShareLinks.siteBase}/terms')),
                           child: Text(context.l10n.subTermsOfUse, style: const TextStyle(fontSize: 12)),
                         ),
                         Text('•', style: TextStyle(color: cs.onSurfaceVariant)),
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () => openExternal(
+                              Uri.parse('${ShareLinks.siteBase}/privacy')),
                           child: Text(context.l10n.subPrivacyPolicy, style: const TextStyle(fontSize: 12)),
-                        ),
-                        Text('•', style: TextStyle(color: cs.onSurfaceVariant)),
-                        TextButton(
-                          onPressed: () {},
-                          child: Text(context.l10n.subRestorePurchases, style: const TextStyle(fontSize: 12)),
                         ),
                       ],
                     ),
@@ -283,6 +289,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -297,7 +304,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     final List<String> features = List<String>.from(data['features']);
     final String? badge = data['badge'];
 
-    return GestureDetector(
+    return Tappable(
       onTap: () => setState(() => _selectedTier = id),
       child: Stack(
         clipBehavior: Clip.none,

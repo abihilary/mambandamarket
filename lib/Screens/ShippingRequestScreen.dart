@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../Components/listing_picker.dart';
+import '../Components/local_image.dart';
 import '../api/api_client.dart';
 import '../api/models.dart';
 import '../Service/ChatRoomScreen.dart';
@@ -17,6 +17,7 @@ import '../api/shipping_repository.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_tokens.dart';
+import '../theme/breakpoints.dart';
 
 /// "Ship this for me."
 ///
@@ -562,7 +563,9 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
-        body: Form(
+        body: ContentFrame(
+        maxWidth: Breakpoints.form,
+        child: Form(
           key: _formKey,
           child: ListView(
             controller: _scroll,
@@ -574,6 +577,7 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
             ],
           ),
         ),
+      ),
         bottomNavigationBar: !showsBar
             ? null
             : SafeArea(
@@ -981,7 +985,7 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
-              GestureDetector(
+              Tappable(
                 onTap: _addPhotos,
                 child: Container(
                   width: 100,
@@ -1005,15 +1009,15 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: Image.file(
-                        File(_photos[i].path),
+                      child: LocalImage(
+                        _photos[i].path,
                         fit: BoxFit.cover,
                       ),
                     ),
                     Positioned(
                       top: 4,
                       right: 14,
-                      child: GestureDetector(
+                      child: Tappable(
                         onTap: () => setState(() => _photos.removeAt(i)),
                         child: const CircleAvatar(
                           radius: 12,
@@ -1310,7 +1314,7 @@ class _StepHeader extends StatelessWidget {
                     : scheme.outlineVariant,
               ),
             ),
-          GestureDetector(
+          Tappable(
             onTap: step.index <= furthest.index && step != current
                 ? () => onTap(step)
                 : null,

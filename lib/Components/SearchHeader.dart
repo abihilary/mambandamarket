@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
+import '../theme/breakpoints.dart';
 
 class SearchHeader extends StatefulWidget {
   final String locationText;
@@ -83,7 +84,7 @@ class _SearchHeaderState extends State<SearchHeader> {
 
                   // Clear button when user types something
                   if (_searchController.text.isNotEmpty)
-                    GestureDetector(
+                    Tappable(
                       onTap: () {
                         setState(() {
                           _searchController.clear();
@@ -98,7 +99,7 @@ class _SearchHeaderState extends State<SearchHeader> {
                     ),
 
                   // Location Tag Button
-                  GestureDetector(
+                  Tappable(
                     onTap: widget.onLocationTap,
                     child: Padding(
                       padding: const EdgeInsets.only(right: 6.0, left: 4.0),

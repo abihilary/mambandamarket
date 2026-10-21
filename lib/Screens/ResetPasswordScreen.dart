@@ -5,6 +5,7 @@ import '../api/auth_errors.dart';
 import '../api/auth_service.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
+import '../theme/breakpoints.dart';
 
 /// Set a new password.
 ///
@@ -78,7 +79,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.newPasswordTitle), elevation: 0),
-      body: SafeArea(
+      body: ContentFrame(
+        maxWidth: Breakpoints.auth,
+        child: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
@@ -158,6 +161,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

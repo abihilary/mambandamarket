@@ -8,6 +8,7 @@ import '../Components/shipping_button.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_tokens.dart';
+import '../theme/breakpoints.dart';
 
 /// Saved listings, grouped by what they are.
 ///
@@ -172,20 +173,32 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       child: ListView(
                         // Clearance for the docked publish button, and for
                         // the shipping button sitting above it.
-                        padding: EdgeInsets.fromLTRB(
-                            16, 8, 16, shippingButtonClearance(context)),
+                        // Centred on a desktop, where the rows also go two
+                        // or three across instead of one 1400px row each.
+                        padding: frameInsets(
+                          context,
+                          maxWidth: Breakpoints.dashboard,
+                          min: 16,
+                        ).copyWith(
+                          top: 8,
+                          bottom: shippingButtonClearance(context),
+                        ),
                         children: [
                           for (final (slug, items) in sections) ...[
                             _SectionHeading(
                               label: _sectionLabel(context, slug),
                               count: items.length,
                             ),
-                            for (final item in items)
-                              _FavoriteRow(
-                                item: item,
-                                onTap: () => _openDetail(item),
-                                onRemove: () => _repo.toggle(item.id),
-                              ),
+                            _RowColumns(
+                              children: [
+                                for (final item in items)
+                                  _FavoriteRow(
+                                    item: item,
+                                    onTap: () => _openDetail(item),
+                                    onRemove: () => _repo.toggle(item.id),
+                                  ),
+                              ],
+                            ),
                             const SizedBox(height: 8),
                           ],
                         ],
@@ -193,6 +206,37 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     );
                   },
                 ),
+    );
+  }
+}
+
+/// One column of rows on a phone; as many 360px columns as fit beside the
+/// desktop sidebar.
+class _RowColumns extends StatelessWidget {
+  const _RowColumns({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cols = (constraints.maxWidth / 360).floor().clamp(1, 3);
+        if (cols == 1) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: children,
+          );
+        }
+        const gap = 12.0;
+        final width = (constraints.maxWidth - gap * (cols - 1)) / cols;
+        return Wrap(
+          spacing: gap,
+          children: [
+            for (final c in children) SizedBox(width: width, child: c),
+          ],
+        );
+      },
     );
   }
 }

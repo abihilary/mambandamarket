@@ -13,6 +13,7 @@ import '../Components/category_icons.dart';
 import '../Components/category_picker.dart';
 import '../Components/local_image.dart';
 import '../Components/safe_bottom.dart';
+import '../theme/breakpoints.dart';
 
 class CreateListingScreen extends StatefulWidget {
   final Map<String, dynamic>? initialListing;
@@ -677,7 +678,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           Positioned(
             top: 4,
             right: 16,
-            child: GestureDetector(
+            child: Tappable(
               onTap: onRemove,
               child: const CircleAvatar(
                 radius: 12,
@@ -708,7 +709,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     if (outcome == LocationOutcome.ok) return;
     final message = switch (outcome) {
       LocationOutcome.servicesOff => l10n.locationServicesOff,
-      LocationOutcome.deniedForever => l10n.locationDeniedForever,
+      LocationOutcome.deniedForever => kIsWeb ? l10n.locationDeniedWeb : l10n.locationDeniedForever,
       LocationOutcome.denied => l10n.locationDenied,
       _ => l10n.locationUnavailable,
     };
@@ -1082,7 +1083,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       appBar: AppBar(
         title: Text(isEditing ? l10n.createEditItem : l10n.createAddNewItem),
       ),
-      body: SingleChildScrollView(
+      body: ContentFrame(
+        maxWidth: Breakpoints.form,
+        child: SingleChildScrollView(
         // The submit button is the last thing in the scroll: keep it above
         // the system navigation bar.
         padding: EdgeInsets.fromLTRB(16, 16, 16, safeBottom(context, 16)),
@@ -1114,7 +1117,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   itemCount: totalImagesCount + 1,
                   itemBuilder: (context, index) {
                     if (index == 0) {
-                      return GestureDetector(
+                      return Tappable(
                         onTap: _showImagePickerModal,
                         child: Container(
                           width: 100,
@@ -1555,6 +1558,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

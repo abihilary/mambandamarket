@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:mambandamarket/Components/ReferalScreen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -10,6 +12,7 @@ import 'api/push_service.dart';
 import 'l10n/l10n.dart';
 import 'navigation.dart';
 import 'theme/app_theme.dart';
+import 'theme/breakpoints.dart';
 import 'theme/theme_controller.dart';
 
 // Screens & Dashboards
@@ -34,6 +37,12 @@ import 'Screens/WelcomeScreen.dart';
 import 'Service/MainNavigationShell.dart';
 
 Future<void> main() async {
+  // Clean addresses on the web build (app.mambandamarket.com/l/<id>, not
+  // /#/l/<id>), so a shared listing link can be opened in the web app as-is.
+  // vercel.json already rewrites every unknown path to index.html. A no-op on
+  // Android.
+  usePathUrlStrategy();
+  captureLaunchAddress();
   WidgetsFlutterBinding.ensureInitialized();
 
   // Ahead of runApp so this observer precedes WidgetsApp's: an auth callback
@@ -61,7 +70,9 @@ Future<void> main() async {
   // Brings up Firebase Messaging so a closed app can still be reached. A build
   // with no google-services.json simply reports push unavailable and carries
   // on, so this is not a launch-blocking dependency.
-  await PushService.instance.init();
+  // Not on the web build: there is no service worker for it, and Firebase's
+  // scripts loading and failing cost every cold start a second or more.
+  if (!kIsWeb) await PushService.instance.init();
 
   runApp(const MarketplaceApp());
 }
@@ -107,8 +118,25 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
           // Wraps every route, so an old build is stopped wherever it is —
           // including a screen opened from a shared link or a notification.
           // Defaults inert; see UpdateGate for why it fails open.
-          builder: (context, child) =>
-              UpdateGate(child: child ?? const SizedBox.shrink()),
+          //
+          // On a desktop-width window snackbars are a 480px card instead of a
+          // strip across the whole screen. Always wrapped, only the data
+          // changes, so resizing across the breakpoint keeps every route's
+          // state.
+          builder: (context, child) {
+            final theme = Theme.of(context);
+            final wide =
+                MediaQuery.sizeOf(context).width >= Breakpoints.wide;
+            return Theme(
+              data: wide
+                  ? theme.copyWith(
+                      snackBarTheme:
+                          theme.snackBarTheme.copyWith(width: 480),
+                    )
+                  : theme,
+              child: UpdateGate(child: child ?? const SizedBox.shrink()),
+            );
+          },
           title: 'Mambanda Market',
           debugShowCheckedModeBanner: false,
           locale: locale,
@@ -117,7 +145,19 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
           theme: AppTheme.light(),
           darkTheme: AppTheme.dark(),
           themeMode: themeMode,
+          // Mouse and trackpad drag rails and carousels too, not only a finger.
+          scrollBehavior: const AppScrollBehavior(),
           initialRoute: '/',
+          // Always one splash, whatever the address. The default splits a path
+          // like /l/<id> into '/', '/l', '/l/<id>' and pushes a route for
+          // each — three splash screens racing to replace themselves. The
+          // splash reads the launch address itself (handleLaunchLink).
+          onGenerateInitialRoutes: (_) => [
+            MaterialPageRoute(
+              builder: (_) => const SplashScreen(),
+              settings: const RouteSettings(name: '/'),
+            ),
+          ],
           onGenerateRoute: (settings) {
             // Parse the incoming URI to extract path without query parameters
             final uri = Uri.parse(settings.name ?? '/');

@@ -21,6 +21,7 @@ import 'EditProfileScreen.dart';
 import '../theme/app_tokens.dart';
 import 'ResetPasswordScreen.dart';
 import '../Components/safe_bottom.dart';
+import '../theme/breakpoints.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -478,12 +479,13 @@ class _AccountScreenState extends State<AccountScreen> {
               // Bottom room for the docked FAB, which overhangs the bar
               // and would otherwise sit on top of the last row.
               // Plus the system bar: the app draws edge-to-edge.
-              padding: EdgeInsets.fromLTRB(
-                16,
-                16,
-                16,
-                MediaQuery.viewPaddingOf(context).bottom + 96,
-              ),
+              // Centred at form width on a desktop: settings rows 1400px
+              // long put the label and its chevron a screen apart.
+              padding: frameInsets(
+                context,
+                maxWidth: Breakpoints.form,
+                min: 16,
+              ).copyWith(top: 16, bottom: shellBottomClearance(context)),
               children: [
                 // The person, on the page itself — no card behind them.
                 //
@@ -498,7 +500,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Row(
                       children: [
-                        GestureDetector(
+                        Tappable(
                           onTap: _changeAvatar,
                           child: Stack(
                             clipBehavior: Clip.none,

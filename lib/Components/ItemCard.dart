@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../theme/app_theme.dart';
 import '../theme/app_tokens.dart';
+import '../theme/breakpoints.dart';
 
 class ItemCard extends StatelessWidget {
   final String imageUrl;
@@ -54,7 +55,7 @@ class ItemCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final distance = distanceMeters;
 
-    return GestureDetector(
+    return Tappable(
       onTap: onTap,
       child: Container(
         width: isCompact ? 140 : double.infinity,
@@ -86,7 +87,7 @@ class ItemCard extends StatelessWidget {
                   Positioned(
                     top: 8,
                     right: 8,
-                    child: GestureDetector(
+                    child: Tappable(
                       onTap: onFavoriteToggle,
                       child: Container(
                         padding: const EdgeInsets.all(6),

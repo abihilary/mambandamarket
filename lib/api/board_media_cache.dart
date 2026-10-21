@@ -83,6 +83,7 @@ class BoardMediaCache {
   /// somebody pays each time they pull the feed, and popping the other board
   /// back to its poster mid-scroll.
   Future<void> reconcileAll(Iterable<Board?> boards) async {
+    if (kIsWeb) return; // nothing cached in a browser; see HomeBoard
     final keep = boardMediaKeepSet(boards);
     final stale = _held.difference(keep);
     for (final path in stale) {

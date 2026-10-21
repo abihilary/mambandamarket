@@ -2,14 +2,19 @@ import 'package:flutter/material.dart';
 
 import '../l10n/l10n.dart';
 import '../theme/app_tokens.dart';
+import '../theme/breakpoints.dart';
 
 /// Bottom clearance a feed showing the shipping button must reserve.
 ///
 /// The 96 every scrollable already carries was sized for the bar and the
 /// publish disc. This sits above that, so without the extra the last row of
 /// the grid stays permanently half-covered.
+///
+/// Beside the desktop sidebar there is neither: Ship lives in the sidebar.
 double shippingButtonClearance(BuildContext context) =>
-    MediaQuery.viewPaddingOf(context).bottom + 140;
+    MediaQuery.sizeOf(context).width >= Breakpoints.wide
+        ? 32
+        : MediaQuery.viewPaddingOf(context).bottom + 140;
 
 /// The way in to asking us to ship something.
 ///

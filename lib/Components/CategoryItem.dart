@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_tokens.dart';
+import '../theme/breakpoints.dart';
 
 class CategoryItem {
   final String label;
@@ -39,7 +40,7 @@ class CategoryBar extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(width: 14),
         itemBuilder: (context, index) {
           final cat = categories[index];
-          return GestureDetector(
+          return Tappable(
             onTap: () => onSelectCategory?.call(index),
             child: SizedBox(
               // French labels run longer than the German originals
