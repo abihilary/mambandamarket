@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../api/models.dart';
 import '../api/remote_config.dart';
@@ -8,6 +10,8 @@ import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../Components/safe_bottom.dart';
 import '../theme/breakpoints.dart';
+import '../api/share_links.dart';
+import '../web/web_share.dart';
 
 /// The other half of referrals: the code you give out, and what it has earned.
 ///
@@ -47,6 +51,31 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
         _failed = true;
       });
     }
+  }
+
+  /// The share sheet with the invite and where to get the app. Falls back to
+  /// the clipboard where there is no sheet (a desktop browser).
+  Future<void> _share(String sentence) async {
+    final l10n = context.l10n;
+    final text = '$sentence\n${ShareLinks.siteBase}/download';
+    if (kIsWeb) {
+      // Straight from the tap, before any await: see webShare.
+      final outcome =
+          await webShare(title: 'Mambanda Market', text: text);
+      if (outcome != WebShareOutcome.unsupported) return;
+    } else {
+      try {
+        final result = await SharePlus.instance
+            .share(ShareParams(text: text, subject: 'Mambanda Market'));
+        if (result.status != ShareResultStatus.unavailable) return;
+      } catch (_) {
+        // No sheet on this device: copy instead, below.
+      }
+    }
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(l10n.shareLinkCopied)));
   }
 
   Future<void> _copy(String code) async {
@@ -132,12 +161,12 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: FilledButton.icon(
-                            // Copies the whole invite sentence rather than
-                            // opening a share sheet: no share plugin ships in
-                            // this app, and a half-working button is worse than
-                            // an honest one.
+                            // The share sheet — WhatsApp, SMS — with the
+                            // invite sentence and the download link. It used
+                            // to copy the sentence and say "Code copied",
+                            // which read as a Share button that did nothing.
                             onPressed: () =>
-                                _copy(l10n.inviteShareText(s!.code!)),
+                                _share(l10n.inviteShareText(s!.code!)),
                             icon: const Icon(Icons.ios_share, size: 18),
                             label: Text(l10n.inviteShare),
                           ),

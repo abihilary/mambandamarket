@@ -3697,4 +3697,9 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get locationDeniedWeb =>
       'La localisation est bloquée pour ce site. Autorisez-la depuis l’icône à côté de l’adresse web, puis réessayez.';
+
+  @override
+  String shareCopyFailed(String link) {
+    return 'Copiez ce lien pour partager : $link';
+  }
 }

@@ -3635,4 +3635,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get locationDeniedWeb =>
       'Location is blocked for this site. Allow it from the icon beside the web address, then try again.';
+
+  @override
+  String shareCopyFailed(String link) {
+    return 'Copy this link to share: $link';
+  }
 }

@@ -21,6 +21,7 @@ import 'VerifiedBadge.dart';
 import 'report_sheet.dart';
 import 'require_account.dart';
 import '../theme/breakpoints.dart';
+import '../web/web_share.dart';
 
 class ItemDetailScreen extends StatefulWidget {
   final String title;
@@ -249,6 +250,30 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     return buffer.toString().trim();
   }
 
+  /// The web build: the browser's share sheet where it has one (phones,
+  /// Safari, Edge), otherwise the link on the clipboard — which on a computer
+  /// is what sharing a page means anyway.
+  Future<void> _shareOnWeb(String title, String text) async {
+    // Before any await, so the browser still counts it as the tap.
+    final outcome = await webShare(title: title, text: text);
+    if (outcome != WebShareOutcome.unsupported) return;
+    final id = _listing?.id ?? widget.listingId;
+    final link = id == null ? text : ShareLinks.listing(id).toString();
+    try {
+      await Clipboard.setData(ClipboardData(text: link));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.shareCopyFailed(link))),
+      );
+      return;
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.shareLinkCopied)),
+    );
+  }
+
   /// Opens the native platform share sheet.
   Future<void> _shareListing(BuildContext buttonContext) async {
     if (_isSharing) {
@@ -277,6 +302,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     }
 
     final text = _buildShareText();
+
+    if (kIsWeb) return _shareOnWeb(title, text);
 
     final renderObject =
         buttonContext.findRenderObject();
@@ -315,19 +342,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       if (!mounted) return;
 
       if (result.status == ShareResultStatus.unavailable) {
-        // A desktop browser often has no share sheet. The link is still the
-        // thing they want, so it goes on the clipboard rather than ending in
-        // "not available".
-        if (kIsWeb) {
-          await Clipboard.setData(
-            ClipboardData(text: ShareLinks.listing(_listing?.id ?? widget.listingId ?? '').toString()),
-          );
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(context.l10n.shareLinkCopied)),
-          );
-          return;
-        }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(

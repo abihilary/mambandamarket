@@ -6463,6 +6463,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Location is blocked for this site. Allow it from the icon beside the web address, then try again.'**
   String get locationDeniedWeb;
+
+  /// No description provided for @shareCopyFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy this link to share: {link}'**
+  String shareCopyFailed(String link);
 }
 
 class _AppLocalizationsDelegate
