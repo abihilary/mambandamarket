@@ -224,10 +224,30 @@ abstract final class AppTheme {
         elevation: 0,
       ),
 
+      // Selected is lime in both themes, with near-black on it — the same
+      // pairing as the primary button. The label colour used to be onSurface
+      // whatever the state, so a selected size in the dark theme was white on
+      // lime and could barely be read. Label, checkmark and border now follow
+      // the selection.
       chipTheme: ChipThemeData(
         backgroundColor: isDark ? AppColors.darkElevated : AppColors.lightGround,
-        side: BorderSide(color: line),
-        labelStyle: TextStyle(color: scheme.onSurface),
+        selectedColor: tokens.accentFill,
+        checkmarkColor: tokens.onAccentFill,
+        side: WidgetStateBorderSide.resolveWith(
+          (states) => BorderSide(
+            color: states.contains(WidgetState.selected)
+                ? tokens.accentFill
+                : line,
+          ),
+        ),
+        labelStyle: TextStyle(
+          color: WidgetStateColor.resolveWith(
+            (states) => states.contains(WidgetState.selected)
+                ? tokens.onAccentFill
+                : scheme.onSurface,
+          ),
+          fontWeight: FontWeight.w500,
+        ),
       ),
 
       snackBarTheme: SnackBarThemeData(
