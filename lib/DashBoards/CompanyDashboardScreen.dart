@@ -7,6 +7,7 @@ import '../api/models.dart' as api;
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
+import '../Components/safe_bottom.dart';
 
 /// Label for a ledger movement. Unknown kinds fall back to a neutral
 /// "Adjustment" rather than leaking a raw database enum at the merchant.
@@ -906,7 +907,7 @@ class _PayoutSheetState extends State<_PayoutSheet> {
         left: 20,
         right: 20,
         top: 4,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+        bottom: safeBottom(context),
       ),
       child: Form(
         key: _formKey,

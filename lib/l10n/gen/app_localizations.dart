@@ -6193,6 +6193,216 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saved, but still to fix:'**
   String get listingReviewStill;
+
+  /// No description provided for @createDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get createDetailsTitle;
+
+  /// No description provided for @createDetailsHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Buyers filter on these — the more you fill in, the easier you are to find.'**
+  String get createDetailsHelp;
+
+  /// No description provided for @createDetailsMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Please fill in: {fields}'**
+  String createDetailsMissing(String fields);
+
+  /// No description provided for @createDetailsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get createDetailsRequired;
+
+  /// No description provided for @createDetailsNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a number in range'**
+  String get createDetailsNumber;
+
+  /// No description provided for @detailsYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get detailsYes;
+
+  /// No description provided for @homeAnnouncementClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get homeAnnouncementClose;
+
+  /// No description provided for @walletTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My wallet'**
+  String get walletTitle;
+
+  /// No description provided for @walletMenuSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Referral earnings and withdrawals'**
+  String get walletMenuSubtitle;
+
+  /// No description provided for @walletOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open my wallet'**
+  String get walletOpen;
+
+  /// No description provided for @walletBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance'**
+  String get walletBalance;
+
+  /// No description provided for @walletWithdraw.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw'**
+  String get walletWithdraw;
+
+  /// No description provided for @walletMinimum.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum withdrawal: {amount}'**
+  String walletMinimum(String amount);
+
+  /// No description provided for @walletRewardExplainer.
+  ///
+  /// In en, this message translates to:
+  /// **'You earn {amount} each time a friend you invited completes their first purchase.'**
+  String walletRewardExplainer(String amount);
+
+  /// No description provided for @walletRewardOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Referral rewards will show here when they are switched on.'**
+  String get walletRewardOff;
+
+  /// No description provided for @walletWithdrawals.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawals'**
+  String get walletWithdrawals;
+
+  /// No description provided for @walletStatusPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent'**
+  String get walletStatusPaid;
+
+  /// No description provided for @walletStatusRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sent — back in your balance'**
+  String get walletStatusRejected;
+
+  /// No description provided for @walletStatusRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'Requested — we’ll send it soon'**
+  String get walletStatusRequested;
+
+  /// No description provided for @walletHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get walletHistory;
+
+  /// No description provided for @walletEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing yet. Invite friends to start earning.'**
+  String get walletEmpty;
+
+  /// No description provided for @walletEntryReward.
+  ///
+  /// In en, this message translates to:
+  /// **'Referral reward'**
+  String get walletEntryReward;
+
+  /// No description provided for @walletEntryWithdrawal.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal'**
+  String get walletEntryWithdrawal;
+
+  /// No description provided for @walletEntryReversal.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal returned'**
+  String get walletEntryReversal;
+
+  /// No description provided for @walletEntryAdjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjustment'**
+  String get walletEntryAdjustment;
+
+  /// No description provided for @walletWithdrawDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Request sent — you’ll get a notification when the money is on its way.'**
+  String get walletWithdrawDone;
+
+  /// No description provided for @walletWithdrawHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'We send it to your mobile money number, usually within a day.'**
+  String get walletWithdrawHelp;
+
+  /// No description provided for @walletNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile money number'**
+  String get walletNumber;
+
+  /// No description provided for @walletAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get walletAmount;
+
+  /// No description provided for @walletWithdrawSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Request withdrawal'**
+  String get walletWithdrawSubmit;
+
+  /// No description provided for @walletErrorMinimum.
+  ///
+  /// In en, this message translates to:
+  /// **'The minimum is {amount}.'**
+  String walletErrorMinimum(String amount);
+
+  /// No description provided for @walletErrorBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'That is more than your balance.'**
+  String get walletErrorBalance;
+
+  /// No description provided for @walletErrorNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a Cameroonian mobile number, e.g. 677 12 34 56.'**
+  String get walletErrorNumber;
+
+  /// No description provided for @walletErrorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'The request could not be sent. Try again.'**
+  String get walletErrorGeneric;
+
+  /// No description provided for @inviteEarn.
+  ///
+  /// In en, this message translates to:
+  /// **'Earn {amount} for every friend who joins and makes a first purchase.'**
+  String inviteEarn(String amount);
 }
 
 class _AppLocalizationsDelegate

@@ -176,8 +176,11 @@ class ChatInboxScreenState extends State<ChatInboxScreen> {
                                   onRefresh: _load,
                                   child: ListView.separated(
                                     // Clearance for the docked publish button.
-                                    padding:
-                                        const EdgeInsets.only(bottom: 96),
+                                    // Plus the system bar (edge-to-edge).
+                                    padding: EdgeInsets.only(
+                                        bottom: MediaQuery.viewPaddingOf(context)
+                                                .bottom +
+                                            96),
                                     itemCount: visible.length,
                                     separatorBuilder: (_, __) =>
                                         const Divider(height: 1),

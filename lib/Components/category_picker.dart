@@ -75,23 +75,23 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
   CategoryGroup? _openGroup;
   String _query = '';
 
-  @override
-  void initState() {
-    super.initState();
-    // Open on the group the current selection lives in, so re-opening the
-    // picker to change a choice does not start from the top every time. A
-    // selected root opens too: that is what the create form fills in when a
-    // seller picks Service or Job, and the next thing they want is its leaves.
+  // Always opens on every group. It used to open inside the group holding the
+  // current choice — and since choosing Service or Job fills in that group,
+  // sellers met a list of services only and read it as the other categories
+  // having been removed. The group with the current choice is marked instead,
+  // and names the choice, so changing it is still one tap away.
+
+  /// The group the current selection belongs to, if any.
+  CategoryGroup? get _selectedGroup {
     final selected = widget.selectedSlug;
-    if (selected != null) {
-      for (final group in _groups) {
-        if (group.children.any((c) => c.slug == selected) ||
-            (group.root.slug == selected && group.children.isNotEmpty)) {
-          _openGroup = group;
-          break;
-        }
+    if (selected == null) return null;
+    for (final group in _groups) {
+      if (group.root.slug == selected ||
+          group.children.any((c) => c.slug == selected)) {
+        return group;
       }
     }
+    return null;
   }
 
   @override
@@ -215,28 +215,42 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
     );
   }
 
-  Widget _buildRoots(ScrollController controller) => ListView.builder(
-        controller: controller,
-        itemCount: _groups.length,
-        itemBuilder: (context, i) {
-          final group = _groups[i];
-          final hasChildren = group.children.isNotEmpty;
-          return ListTile(
-            leading: Icon(categoryIcon(group.root)),
-            title: Text(_labelOf(group.root)),
-            subtitle: hasChildren
-                ? Text(context.l10n.categoryPickerCount(group.children.length))
-                : null,
-            trailing: hasChildren ? const Icon(Icons.chevron_right) : null,
-            selected: widget.selectedSlug == group.root.slug,
-            // A group with nothing under it is itself the answer; one with
-            // children opens, and its own "all in" row is offered inside.
-            onTap: () => hasChildren
-                ? setState(() => _openGroup = group)
-                : Navigator.pop(context, group.root.slug),
-          );
-        },
-      );
+  Widget _buildRoots(ScrollController controller) {
+    final current = _selectedGroup;
+    Category? currentLeaf;
+    if (current != null) {
+      for (final c in current.children) {
+        if (c.slug == widget.selectedSlug) currentLeaf = c;
+      }
+    }
+    return ListView.builder(
+      controller: controller,
+      itemCount: _groups.length,
+      itemBuilder: (context, i) {
+        final group = _groups[i];
+        final hasChildren = group.children.isNotEmpty;
+        final isCurrent = identical(group, current);
+        return ListTile(
+          leading: Icon(categoryIcon(group.root)),
+          title: Text(_labelOf(group.root)),
+          // The marked group says what is chosen in it; the others how much
+          // they hold.
+          subtitle: isCurrent && currentLeaf != null
+              ? Text(_labelOf(currentLeaf))
+              : hasChildren
+              ? Text(context.l10n.categoryPickerCount(group.children.length))
+              : null,
+          trailing: hasChildren ? const Icon(Icons.chevron_right) : null,
+          selected: isCurrent,
+          // A group with nothing under it is itself the answer; one with
+          // children opens, and its own "all in" row is offered inside.
+          onTap: () => hasChildren
+              ? setState(() => _openGroup = group)
+              : Navigator.pop(context, group.root.slug),
+        );
+      },
+    );
+  }
 
   Widget _buildGroup(ScrollController controller, CategoryGroup group) {
     return ListView.builder(

@@ -28,6 +28,7 @@ import '../theme/app_theme.dart';
 import '../theme/app_tokens.dart';
 import 'document_picker.dart';
 import '../api/push_service.dart';
+import '../Components/safe_bottom.dart';
 
 /// A single chat thread.
 ///
@@ -1291,7 +1292,7 @@ class _AppealSheetState extends State<_AppealSheet> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return Padding(
-      padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+      padding: EdgeInsets.fromLTRB(20, 0, 20, safeBottom(context)),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

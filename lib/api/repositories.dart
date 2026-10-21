@@ -45,19 +45,27 @@ class ListingsRepository {
     String sort = 'recent',
     int limit = 20,
     int offset = 0,
+    // A detail of [categorySlug]'s template to match, e.g. {'sizes': 'M'}.
+    Map<String, String> attrs = const {},
   }) async {
-    final json = await _api.get('/listings', query: {
-      'q': query,
-      'category': categorySlug,
-      'min': minCents,
-      'max': maxCents,
-      'condition': condition,
-      if (lat != null && lng != null) 'near': '$lat,$lng',
-      'radius': radiusMeters,
-      'sort': sort,
-      'limit': limit,
-      'offset': offset,
-    }) as Map<String, dynamic>;
+    final json =
+        await _api.get(
+              '/listings',
+              query: {
+                for (final e in attrs.entries) 'attr.${e.key}': e.value,
+                'q': query,
+                'category': categorySlug,
+                'min': minCents,
+                'max': maxCents,
+                'condition': condition,
+                if (lat != null && lng != null) 'near': '$lat,$lng',
+                'radius': radiusMeters,
+                'sort': sort,
+                'limit': limit,
+                'offset': offset,
+              },
+            )
+            as Map<String, dynamic>;
 
     return (json['items'] as List? ?? [])
         .whereType<Map>()
@@ -75,10 +83,30 @@ class ListingsRepository {
     // Served by the API rather than read from Supabase directly, so the client
     // depends on one contract instead of also knowing the table shape.
     final json = await _api.get('/categories') as Map<String, dynamic>;
-    return (json['items'] as List? ?? [])
+    final list = (json['items'] as List? ?? [])
         .whereType<Map>()
         .map((m) => Category.fromJson(m.cast<String, dynamic>()))
         .toList();
+    _categoriesCache = list;
+    _categoriesAt = DateTime.now();
+    return list;
+  }
+
+  List<Category>? _categoriesCache;
+  DateTime? _categoriesAt;
+
+  /// The categories, from memory when fetched in the last ten minutes. For
+  /// screens that only need names and detail templates to draw a listing —
+  /// the server's own answer is cached for five minutes anyway.
+  Future<List<Category>> cachedCategories() async {
+    final at = _categoriesAt;
+    final cached = _categoriesCache;
+    if (cached != null &&
+        at != null &&
+        DateTime.now().difference(at) < const Duration(minutes: 10)) {
+      return cached;
+    }
+    return categories();
   }
 
   /// "More like this" for the detail screen — same seller first, then category.
@@ -180,29 +208,36 @@ class ListingsRepository {
     double? lat,
     double? lng,
     List<String> imagePaths = const [],
+    // Always sent by this build, even empty: that is what tells the server to
+    // check the category's required details.
+    Map<String, dynamic> attributes = const {},
   }) async {
-    final json = await _api.post('/listings', {
-      'title': title,
-      if (description != null && description.isNotEmpty)
-        'description': description,
-      'price_cents': priceCents,
-      'currency': currency,
-      'quantity': quantity,
-      'category_slug': categorySlug,
-      'kind': kind,
-      'price_mode': priceMode,
-      if (condition != null) 'condition': condition,
-      'has_guarantee': hasGuarantee,
-      if (city != null && city.isNotEmpty) 'city': city,
-      if (lat != null && lng != null) 'location': [lng, lat],
-      if (imagePaths.isNotEmpty)
-        'images': [
-          for (var i = 0; i < imagePaths.length; i++)
-            {'storage_path': imagePaths[i], 'position': i}
-        ],
-    }) as Map<String, dynamic>;
-    final listing =
-        Listing.fromJson((json['listing'] as Map).cast<String, dynamic>());
+    final json =
+        await _api.post('/listings', {
+              'attributes': attributes,
+              'title': title,
+              if (description != null && description.isNotEmpty)
+                'description': description,
+              'price_cents': priceCents,
+              'currency': currency,
+              'quantity': quantity,
+              'category_slug': categorySlug,
+              'kind': kind,
+              'price_mode': priceMode,
+              if (condition != null) 'condition': condition,
+              'has_guarantee': hasGuarantee,
+              if (city != null && city.isNotEmpty) 'city': city,
+              if (lat != null && lng != null) 'location': [lng, lat],
+              if (imagePaths.isNotEmpty)
+                'images': [
+                  for (var i = 0; i < imagePaths.length; i++)
+                    {'storage_path': imagePaths[i], 'position': i},
+                ],
+            })
+            as Map<String, dynamic>;
+    final listing = Listing.fromJson(
+      (json['listing'] as Map).cast<String, dynamic>(),
+    );
     revision.value++;
     return listing;
   }

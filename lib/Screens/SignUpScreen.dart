@@ -5,6 +5,7 @@ import '../api/auth_errors.dart';
 import '../api/auth_service.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
+import '../Components/safe_bottom.dart';
 
 /// Create an account with email + password.
 ///
@@ -169,7 +170,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return Scaffold(
         appBar: AppBar(),
         body: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: EdgeInsets.fromLTRB(32, 32, 32, safeBottom(context, 32)),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

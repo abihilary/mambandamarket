@@ -21,6 +21,31 @@ class NotificationRepository {
   final ValueNotifier<int> unread = ValueNotifier(0);
   final ValueNotifier<List<AppNotification>> items = ValueNotifier(const []);
 
+  /// The announcement floating on Home, if Mambanda published one for this
+  /// person (a campaign with "Float on Home"). Closing it marks it read, which
+  /// is what keeps it closed on every device and clears it from the bell.
+  final ValueNotifier<AppNotification?> homeCard = ValueNotifier(null);
+
+  Future<void> refreshHomeCard() async {
+    try {
+      final json =
+          await _api.get('/me/notifications/home') as Map<String, dynamic>;
+      final n = json['notification'];
+      homeCard.value = n is Map
+          ? AppNotification.fromJson(Map<String, dynamic>.from(n))
+          : null;
+    } catch (_) {
+      // Offline, or signed out: no card is the right answer to both.
+    }
+  }
+
+  Future<void> dismissHomeCard() async {
+    final n = homeCard.value;
+    if (n == null) return;
+    homeCard.value = null;
+    await markRead([n.id]);
+  }
+
   /// Whether the last [refresh] reached the end of the list.
   bool _exhausted = false;
   String? _nextBefore;
@@ -111,6 +136,7 @@ class NotificationRepository {
   /// Sign-out. Nothing here belongs to the next person.
   void clear() {
     items.value = const [];
+    homeCard.value = null;
     unread.value = 0;
     _nextBefore = null;
     _exhausted = false;

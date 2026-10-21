@@ -3539,4 +3539,126 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get listingReviewStill => 'Enregistré, mais encore à corriger :';
+
+  @override
+  String get createDetailsTitle => 'Détails';
+
+  @override
+  String get createDetailsHelp =>
+      'Les acheteurs filtrent avec ces informations — plus vous en donnez, plus on vous trouve facilement.';
+
+  @override
+  String createDetailsMissing(String fields) {
+    return 'Merci de renseigner : $fields';
+  }
+
+  @override
+  String get createDetailsRequired => 'Obligatoire';
+
+  @override
+  String get createDetailsNumber => 'Entrez un nombre valide';
+
+  @override
+  String get detailsYes => 'Oui';
+
+  @override
+  String get homeAnnouncementClose => 'Fermer';
+
+  @override
+  String get walletTitle => 'Mon portefeuille';
+
+  @override
+  String get walletMenuSubtitle => 'Gains de parrainage et retraits';
+
+  @override
+  String get walletOpen => 'Ouvrir mon portefeuille';
+
+  @override
+  String get walletBalance => 'Solde';
+
+  @override
+  String get walletWithdraw => 'Retirer';
+
+  @override
+  String walletMinimum(String amount) {
+    return 'Retrait minimum : $amount';
+  }
+
+  @override
+  String walletRewardExplainer(String amount) {
+    return 'Vous gagnez $amount chaque fois qu’un ami que vous avez invité termine son premier achat.';
+  }
+
+  @override
+  String get walletRewardOff =>
+      'Les récompenses de parrainage apparaîtront ici dès qu’elles seront activées.';
+
+  @override
+  String get walletWithdrawals => 'Retraits';
+
+  @override
+  String get walletStatusPaid => 'Envoyé';
+
+  @override
+  String get walletStatusRejected => 'Non envoyé — revenu sur votre solde';
+
+  @override
+  String get walletStatusRequested => 'Demandé — nous l’envoyons bientôt';
+
+  @override
+  String get walletHistory => 'Historique';
+
+  @override
+  String get walletEmpty =>
+      'Rien pour l’instant. Invitez des amis pour commencer à gagner.';
+
+  @override
+  String get walletEntryReward => 'Récompense de parrainage';
+
+  @override
+  String get walletEntryWithdrawal => 'Retrait';
+
+  @override
+  String get walletEntryReversal => 'Retrait restitué';
+
+  @override
+  String get walletEntryAdjustment => 'Ajustement';
+
+  @override
+  String get walletWithdrawDone =>
+      'Demande envoyée — vous serez notifié dès que l’argent part.';
+
+  @override
+  String get walletWithdrawHelp =>
+      'Nous l’envoyons sur votre numéro mobile money, en général sous 24 h.';
+
+  @override
+  String get walletNumber => 'Numéro mobile money';
+
+  @override
+  String get walletAmount => 'Montant';
+
+  @override
+  String get walletWithdrawSubmit => 'Demander le retrait';
+
+  @override
+  String walletErrorMinimum(String amount) {
+    return 'Le minimum est de $amount.';
+  }
+
+  @override
+  String get walletErrorBalance => 'C’est plus que votre solde.';
+
+  @override
+  String get walletErrorNumber =>
+      'Entrez un numéro mobile camerounais, ex. 677 12 34 56.';
+
+  @override
+  String get walletErrorGeneric =>
+      'La demande n’a pas pu être envoyée. Réessayez.';
+
+  @override
+  String inviteEarn(String amount) {
+    return 'Gagnez $amount pour chaque ami qui s’inscrit et fait un premier achat.';
+  }
 }

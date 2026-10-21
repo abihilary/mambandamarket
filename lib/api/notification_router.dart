@@ -17,7 +17,15 @@ import 'repositories.dart';
 /// Routes the app may be sent to by name from a notification. A closed list:
 /// a push is server data, and "open any route" would let a typo land someone
 /// on the reset-password screen.
-const _openableRoutes = <String>{'/home', '/my-orders', '/subscription', '/invite', '/referral', '/notifications'};
+const _openableRoutes = <String>{
+  '/home',
+  '/my-orders',
+  '/subscription',
+  '/invite',
+  '/referral',
+  '/notifications',
+  '/wallet',
+};
 
 /// Where a notification's tap goes.
 ///

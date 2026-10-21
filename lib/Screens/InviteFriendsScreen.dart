@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../api/models.dart';
+import '../api/remote_config.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
+import '../Components/safe_bottom.dart';
 
 /// The other half of referrals: the code you give out, and what it has earned.
 ///
@@ -67,7 +69,12 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : ListView(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  16,
+                  16,
+                  safeBottom(context, 16),
+                ),
                 children: [
                   if (_failed)
                     Padding(
@@ -136,6 +143,21 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
                     ),
 
                   const SizedBox(height: 16),
+                  // What it pays, in so many words — only once the amount is
+                  // set in the panel, so the screen never promises nothing.
+                  if (RemoteConfig.instance.referralRewardCents > 0) ...[
+                    Text(
+                      l10n.inviteEarn(
+                        formatPrice(RemoteConfig.instance.referralRewardCents),
+                      ),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                   Text(
                     l10n.inviteExplainer,
                     style: TextStyle(
@@ -168,6 +190,16 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
                       _stat(context, l10n.inviteRewarded, s?.rewarded ?? 0,
                           cs.primary),
                     ],
+                  ),
+
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: () => Navigator.pushNamed(context, '/wallet'),
+                    icon: const Icon(
+                      Icons.account_balance_wallet_outlined,
+                      size: 18,
+                    ),
+                    label: Text(l10n.walletOpen),
                   ),
 
                   if ((s?.total ?? 0) == 0) ...[

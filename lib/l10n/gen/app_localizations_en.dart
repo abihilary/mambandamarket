@@ -3482,4 +3482,124 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get listingReviewStill => 'Saved, but still to fix:';
+
+  @override
+  String get createDetailsTitle => 'Details';
+
+  @override
+  String get createDetailsHelp =>
+      'Buyers filter on these — the more you fill in, the easier you are to find.';
+
+  @override
+  String createDetailsMissing(String fields) {
+    return 'Please fill in: $fields';
+  }
+
+  @override
+  String get createDetailsRequired => 'Required';
+
+  @override
+  String get createDetailsNumber => 'Enter a number in range';
+
+  @override
+  String get detailsYes => 'Yes';
+
+  @override
+  String get homeAnnouncementClose => 'Close';
+
+  @override
+  String get walletTitle => 'My wallet';
+
+  @override
+  String get walletMenuSubtitle => 'Referral earnings and withdrawals';
+
+  @override
+  String get walletOpen => 'Open my wallet';
+
+  @override
+  String get walletBalance => 'Balance';
+
+  @override
+  String get walletWithdraw => 'Withdraw';
+
+  @override
+  String walletMinimum(String amount) {
+    return 'Minimum withdrawal: $amount';
+  }
+
+  @override
+  String walletRewardExplainer(String amount) {
+    return 'You earn $amount each time a friend you invited completes their first purchase.';
+  }
+
+  @override
+  String get walletRewardOff =>
+      'Referral rewards will show here when they are switched on.';
+
+  @override
+  String get walletWithdrawals => 'Withdrawals';
+
+  @override
+  String get walletStatusPaid => 'Sent';
+
+  @override
+  String get walletStatusRejected => 'Not sent — back in your balance';
+
+  @override
+  String get walletStatusRequested => 'Requested — we’ll send it soon';
+
+  @override
+  String get walletHistory => 'History';
+
+  @override
+  String get walletEmpty => 'Nothing yet. Invite friends to start earning.';
+
+  @override
+  String get walletEntryReward => 'Referral reward';
+
+  @override
+  String get walletEntryWithdrawal => 'Withdrawal';
+
+  @override
+  String get walletEntryReversal => 'Withdrawal returned';
+
+  @override
+  String get walletEntryAdjustment => 'Adjustment';
+
+  @override
+  String get walletWithdrawDone =>
+      'Request sent — you’ll get a notification when the money is on its way.';
+
+  @override
+  String get walletWithdrawHelp =>
+      'We send it to your mobile money number, usually within a day.';
+
+  @override
+  String get walletNumber => 'Mobile money number';
+
+  @override
+  String get walletAmount => 'Amount';
+
+  @override
+  String get walletWithdrawSubmit => 'Request withdrawal';
+
+  @override
+  String walletErrorMinimum(String amount) {
+    return 'The minimum is $amount.';
+  }
+
+  @override
+  String get walletErrorBalance => 'That is more than your balance.';
+
+  @override
+  String get walletErrorNumber =>
+      'Enter a Cameroonian mobile number, e.g. 677 12 34 56.';
+
+  @override
+  String get walletErrorGeneric => 'The request could not be sent. Try again.';
+
+  @override
+  String inviteEarn(String amount) {
+    return 'Earn $amount for every friend who joins and makes a first purchase.';
+  }
 }

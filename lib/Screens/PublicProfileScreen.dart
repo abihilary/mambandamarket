@@ -7,6 +7,7 @@ import '../Components/VerifiedBadge.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
+import '../Components/safe_bottom.dart';
 
 /// Somebody else's profile: who they are, and what they are selling.
 ///
@@ -92,18 +93,18 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _failed || data == null
-              ? _ErrorState(onRetry: _load)
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: ListView(
-                    padding: EdgeInsets.zero,
-                    children: [
-                      _Header(data: data, onCallSupport: _callSupport),
-                      _Shop(data: data, onOpen: _openListing),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
-                ),
+          ? _ErrorState(onRetry: _load)
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
+                padding: EdgeInsets.only(bottom: safeBottom(context, 16)),
+                children: [
+                  _Header(data: data, onCallSupport: _callSupport),
+                  _Shop(data: data, onOpen: _openListing),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
     );
   }
 }

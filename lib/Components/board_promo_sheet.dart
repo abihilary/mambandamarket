@@ -5,6 +5,7 @@ import '../api/board_model.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_tokens.dart';
 import 'home_board.dart';
+import 'safe_bottom.dart';
 
 /// A promotion, explained without leaving the feed.
 ///
@@ -51,12 +52,7 @@ class _BoardPromoSheet extends StatelessWidget {
     final imageUrl = promo.imageUrl;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        4,
-        20,
-        MediaQuery.of(context).viewInsets.bottom + 20,
-      ),
+      padding: EdgeInsets.fromLTRB(20, 4, 20, safeBottom(context)),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,

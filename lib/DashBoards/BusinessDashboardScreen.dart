@@ -9,6 +9,7 @@ import '../theme/app_theme.dart';
 import 'CreateListingScreen.dart';
 import '../Components/local_image.dart';
 import 'ViewProfileScreen.dart'; // Import the newly created screen
+import '../Components/safe_bottom.dart';
 
 class BusinessDashboardScreen extends StatefulWidget {
   const BusinessDashboardScreen({super.key});
@@ -274,7 +275,8 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        // Room for the extended FAB and the system bar below the last card.
+        padding: EdgeInsets.fromLTRB(16, 16, 16, safeBottom(context, 88)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,

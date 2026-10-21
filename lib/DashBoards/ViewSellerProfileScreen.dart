@@ -4,6 +4,7 @@ import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../Components/local_image.dart';
 import '../Components/image_placeholder.dart';
+import '../Components/safe_bottom.dart';
 
 class ViewSellerProfileScreen extends StatelessWidget {
   final api.SellerDashboard? sellerStats;
@@ -107,6 +108,7 @@ class ViewSellerProfileScreen extends StatelessWidget {
         elevation: 0,
       ),
       body: SingleChildScrollView(
+        padding: EdgeInsets.only(bottom: safeBottom(context, 16)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

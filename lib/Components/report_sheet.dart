@@ -5,6 +5,7 @@ import '../api/auth_service.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
+import 'safe_bottom.dart';
 
 /// A report reason: [code] goes to the API, [label] resolves the display text.
 class _Reason {
@@ -136,7 +137,7 @@ class _ReportSheetState extends State<_ReportSheet> {
         left: 20,
         right: 20,
         top: 4,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+        bottom: safeBottom(context),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

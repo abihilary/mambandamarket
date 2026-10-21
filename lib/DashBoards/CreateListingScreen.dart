@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../api/api_client.dart';
 import '../api/models.dart' as api;
+import '../api/listing_attributes.dart';
 import '../api/location_service.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
@@ -11,6 +12,7 @@ import '../theme/app_theme.dart';
 import '../Components/category_icons.dart';
 import '../Components/category_picker.dart';
 import '../Components/local_image.dart';
+import '../Components/safe_bottom.dart';
 
 class CreateListingScreen extends StatefulWidget {
   final Map<String, dynamic>? initialListing;
@@ -125,6 +127,26 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
 
   String _selectedCondition = 'New';
   bool _hasGuarantee = false;
+
+  /// The category's details as answered so far (sizes, subjects…). Chips and
+  /// switches write here; text and number fields keep their own controllers
+  /// and are read on save. Answers for fields the new category does not ask
+  /// for are simply not sent.
+  final Map<String, dynamic> _attributes = {};
+  final Map<String, TextEditingController> _attrControllers = {};
+
+  /// Set by a save attempt, so missing required chips show as missing only
+  /// once the seller has tried, not while they are still filling in.
+  bool _attrTried = false;
+
+  List<AttrField> get _attrFields =>
+      api.attributeFieldsFor(_categories, _selectedCategory);
+
+  TextEditingController _attrCtl(String key) =>
+      _attrControllers.putIfAbsent(key, () {
+        final v = _attributes[key];
+        return TextEditingController(text: v == null ? '' : v.toString());
+      });
   bool _isSubmitting = false;
 
   /// Loaded from the database so the picker always matches the server.
@@ -173,8 +195,17 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       _hasGuarantee = listing['hasGuarantee'] ?? false;
       // Both spellings, for the same reason the category reads two keys: the
       // seller hub and the store dashboard build this map differently.
-      _locationController.text =
-          (listing['city'] ?? listing['location'] ?? '').toString();
+      _locationController.text = (listing['city'] ?? listing['location'] ?? '')
+          .toString();
+      // The dashboards build this map by hand and do not carry the details,
+      // so they are read from the listing itself — saving without them would
+      // send an empty set and fail a category's required fields.
+      final attrs = listing['attributes'];
+      if (attrs is Map) {
+        _attributes.addAll(attrs.cast<String, dynamic>());
+      } else {
+        _loadExistingAttributes();
+      }
 
       // Show what the caller already has so the row is not empty while the
       // real records — the ones carrying ids — are fetched.
@@ -200,6 +231,53 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     return amount == amount.roundToDouble()
         ? amount.round().toString()
         : amount.toString();
+  }
+
+  Future<void> _loadExistingAttributes() async {
+    final id = _editingId;
+    if (id == null) return;
+    try {
+      final listing = await ListingsRepository.instance.detail(id);
+      if (!mounted) return;
+      setState(() {
+        _attributes
+          ..clear()
+          ..addAll(listing.attributes);
+        for (final e in _attrControllers.entries) {
+          final v = _attributes[e.key];
+          e.value.text = v == null ? '' : v.toString();
+        }
+      });
+    } catch (_) {
+      // Left empty; the seller can fill them in again, and the server says
+      // which are required if they do not.
+    }
+  }
+
+  /// What the details section holds, in the shape the server checks.
+  Map<String, dynamic> _collectAttributes() {
+    final out = <String, dynamic>{};
+    for (final f in _attrFields) {
+      switch (f.type) {
+        case 'multi':
+          final v = _attributes[f.key];
+          if (v is List && v.isNotEmpty) out[f.key] = List<String>.from(v);
+        case 'single':
+          final v = _attributes[f.key];
+          if (v is String && v.isNotEmpty) out[f.key] = v;
+        case 'bool':
+          if (_attributes[f.key] == true) out[f.key] = true;
+        case 'number':
+          final n = num.tryParse(
+            _attrCtl(f.key).text.trim().replaceAll(',', '.'),
+          );
+          if (n != null) out[f.key] = n;
+        case 'text':
+          final t = _attrCtl(f.key).text.trim();
+          if (t.isNotEmpty) out[f.key] = t;
+      }
+    }
+    return out;
   }
 
   /// Fetch the listing's photos so removals have an id to act on.
@@ -401,6 +479,19 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       _showErrorSnackBar(l10n.createSelectAtLeastOneImage);
       return;
     }
+    // Text and number details are checked by their own validators above;
+    // chips and switches have no validator, so the required ones are here.
+    final attributes = _collectAttributes();
+    final locale = Localizations.localeOf(context);
+    final missing = _attrFields
+        .where((f) => f.required && !AttrField.answered(attributes[f.key]))
+        .map((f) => f.label(locale))
+        .toList();
+    if (missing.isNotEmpty) {
+      setState(() => _attrTried = true);
+      _showErrorSnackBar(l10n.createDetailsMissing(missing.join(', ')));
+      return;
+    }
 
     setState(() => _isSubmitting = true);
     final editingId = _editingId;
@@ -449,6 +540,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           // existing one back, so absence here must mean "leave it alone".
           if (_capturedPoint != null)
             'location': [_capturedPoint!.lng, _capturedPoint!.lat],
+          'attributes': attributes,
         });
 
         // Photos are their own endpoints — PATCH /listings/:id does not carry
@@ -530,6 +622,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         lat: _capturedPoint?.lat,
         lng: _capturedPoint?.lng,
         imagePaths: uploaded,
+        attributes: attributes,
       );
 
       if (!mounted) return;
@@ -631,6 +724,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     _quantityController.dispose();
     _locationController.dispose();
     _locationFocus.dispose();
+    for (final c in _attrControllers.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -833,6 +929,147 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     }
   }
 
+  /// The category's details: sizes for clothes and shoes, what a service
+  /// covers. Nothing at all for a category without a template.
+  List<Widget> _detailsSection() {
+    final fields = _attrFields;
+    if (fields.isEmpty) return const [];
+    final l10n = context.l10n;
+    final locale = Localizations.localeOf(context);
+    final theme = Theme.of(context);
+    return [
+      Text(
+        l10n.createDetailsTitle,
+        style: theme.textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      const SizedBox(height: 2),
+      Text(
+        l10n.createDetailsHelp,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+      const SizedBox(height: 12),
+      for (final f in fields) ...[
+        _attrInput(f, locale),
+        const SizedBox(height: 16),
+      ],
+    ];
+  }
+
+  Widget _attrInput(AttrField f, Locale locale) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final label = f.required ? '${f.label(locale)} *' : f.label(locale);
+    final border = OutlineInputBorder(borderRadius: BorderRadius.circular(12));
+
+    Widget chipsBlock(List<Widget> chips) {
+      final missing =
+          _attrTried && f.required && !AttrField.answered(_attributes[f.key]);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(spacing: 8, runSpacing: 8, children: chips),
+          if (missing)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                l10n.createDetailsRequired,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.error,
+                ),
+              ),
+            ),
+        ],
+      );
+    }
+
+    switch (f.type) {
+      case 'multi':
+        final picked = (_attributes[f.key] is List)
+            ? List<String>.from(_attributes[f.key] as List)
+            : <String>[];
+        return chipsBlock([
+          for (final o in f.options)
+            FilterChip(
+              label: Text(o.label(locale)),
+              selected: picked.contains(o.value),
+              onSelected: (on) => setState(() {
+                if (on) {
+                  picked.add(o.value);
+                } else {
+                  picked.remove(o.value);
+                }
+                _attributes[f.key] = picked;
+              }),
+            ),
+        ]);
+      case 'single':
+        return chipsBlock([
+          for (final o in f.options)
+            ChoiceChip(
+              label: Text(o.label(locale)),
+              selected: _attributes[f.key] == o.value,
+              onSelected: (on) =>
+                  setState(() => _attributes[f.key] = on ? o.value : null),
+            ),
+        ]);
+      case 'bool':
+        return SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(label),
+          value: _attributes[f.key] == true,
+          onChanged: (v) => setState(() => _attributes[f.key] = v),
+        );
+      case 'number':
+        return TextFormField(
+          controller: _attrCtl(f.key),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: label,
+            hintText: f.hint(locale),
+            border: border,
+          ),
+          validator: (v) {
+            final t = (v ?? '').trim();
+            if (t.isEmpty)
+              return f.required ? l10n.createDetailsRequired : null;
+            final n = num.tryParse(t.replaceAll(',', '.'));
+            if (n == null ||
+                (f.min != null && n < f.min!) ||
+                (f.max != null && n > f.max!)) {
+              return l10n.createDetailsNumber;
+            }
+            return null;
+          },
+        );
+      default:
+        return TextFormField(
+          controller: _attrCtl(f.key),
+          maxLength: 200,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: InputDecoration(
+            labelText: label,
+            hintText: f.hint(locale),
+            border: border,
+            counterText: '',
+          ),
+          validator: (v) => f.required && (v ?? '').trim().isEmpty
+              ? l10n.createDetailsRequired
+              : null,
+        );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -846,7 +1083,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         title: Text(isEditing ? l10n.createEditItem : l10n.createAddNewItem),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        // The submit button is the last thing in the scroll: keep it above
+        // the system navigation bar.
+        padding: EdgeInsets.fromLTRB(16, 16, 16, safeBottom(context, 16)),
         child: Form(
           key: _formKey,
           child: Column(
@@ -1020,6 +1259,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 },
               ),
               const SizedBox(height: 16),
+
+              // DETAILS — whatever the chosen category asks for.
+              ..._detailsSection(),
 
               // TITLE FIELD
               TextFormField(

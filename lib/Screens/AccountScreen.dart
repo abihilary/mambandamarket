@@ -20,6 +20,7 @@ import '../theme/theme_controller.dart';
 import 'EditProfileScreen.dart';
 import '../theme/app_tokens.dart';
 import 'ResetPasswordScreen.dart';
+import '../Components/safe_bottom.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -397,10 +398,9 @@ class _AccountScreenState extends State<AccountScreen> {
           );
         }
 
+        // A modal sheet sits above the shell's bar, not under it, so it needs
+        // its own clearance from the system navigation bar.
         return SafeArea(
-          // See HomeScreen: the list runs under the glass bar and its own
-          // bottom padding is the clearance.
-          bottom: false,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -477,7 +477,13 @@ class _AccountScreenState extends State<AccountScreen> {
             child: ListView(
               // Bottom room for the docked FAB, which overhangs the bar
               // and would otherwise sit on top of the last row.
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+              // Plus the system bar: the app draws edge-to-edge.
+              padding: EdgeInsets.fromLTRB(
+                16,
+                16,
+                16,
+                MediaQuery.viewPaddingOf(context).bottom + 96,
+              ),
               children: [
                 // The person, on the page itself — no card behind them.
                 //
@@ -670,6 +676,12 @@ class _AccountScreenState extends State<AccountScreen> {
                       title: l10n.inviteFriends,
                       subtitle: l10n.inviteFriendsSubtitle,
                       onTap: () => Navigator.pushNamed(context, '/invite'),
+                    ),
+                    MenuRow(
+                      icon: Icons.account_balance_wallet_outlined,
+                      title: l10n.walletTitle,
+                      subtitle: l10n.walletMenuSubtitle,
+                      onTap: () => Navigator.pushNamed(context, '/wallet'),
                     ),
                     // Verified merchants only — companies are provisioned by an
                     // admin, so there is nothing to show anyone else.
@@ -979,7 +991,7 @@ class _DeleteAccountSheetState extends State<_DeleteAccountSheet> {
         left: 20,
         right: 20,
         top: 20,
-        bottom: MediaQuery.viewInsetsOf(context).bottom + 20,
+        bottom: safeBottom(context),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

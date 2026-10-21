@@ -78,6 +78,30 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   api.Listing? get _listing => _full ?? widget.listing;
 
+  /// For the listing's details: the category templates that name them.
+  List<api.Category> _categories = const [];
+
+  Future<void> _loadCategories() async {
+    try {
+      final c = await ListingsRepository.instance.cachedCategories();
+      if (mounted) setState(() => _categories = c);
+    } catch (_) {
+      // Without them the details are simply not listed; the description is.
+    }
+  }
+
+  /// The listing's answered details, as (label, value) pairs.
+  List<(String, String)> _detailRows(api.Listing listing) {
+    final locale = Localizations.localeOf(context);
+    final yes = context.l10n.detailsYes;
+    return [
+      for (final f in api.attributeFieldsFor(_categories, listing.categorySlug))
+        if (f.describe(listing.attributes[f.key], locale, yes: yes)
+            case final String v)
+          (f.label(locale), v),
+    ];
+  }
+
   /// Only listings that the backend marks as buyable can use checkout.
   bool get _isBuyable => _listing?.isBuyable ?? false;
 
@@ -114,6 +138,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
     _loadDetail();
     _loadRelated();
+    _loadCategories();
   }
 
   // ===========================================================================
@@ -1255,6 +1280,39 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   Text(context.l10n.detailDetails,
                       style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
+                  // Sizes, subjects, areas covered — whatever the category
+                  // asked the seller for.
+                  if (listing != null)
+                    for (final (label, value) in _detailRows(listing))
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: 140,
+                              child: Text(
+                                label,
+                                style: TextStyle(
+                                  color: scheme.onSurfaceVariant,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                value,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  if (listing != null && _detailRows(listing).isNotEmpty)
+                    const SizedBox(height: 8),
                   Text(
                     description,
                     style: TextStyle(height: 1.5, color: scheme.onSurface, fontSize: 14),

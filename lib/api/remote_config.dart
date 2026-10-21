@@ -37,6 +37,10 @@ class RemoteConfig {
     'update_latest_version': '',
     'update_min_supported_build': 0,
     'update_blocks_at': null,
+    // Referrals (0060): what a referral pays and the smallest withdrawal, in
+    // FCFA. 0 means rewards are off, and the invite screen names no amount.
+    'referral_reward_cents': 0,
+    'referral_min_withdrawal_cents': 1000,
   };
 
   /// Bumped whenever the values change, so the update gate can re-evaluate
@@ -70,6 +74,14 @@ class RemoteConfig {
   /// a form that is going to be rejected.
   int get buyerListingLimit => _values['buyer_listing_limit'] as int? ?? 3;
 
+  /// What one referral credits to the inviter's wallet, in FCFA. 0 = off.
+  int get referralRewardCents =>
+      (_values['referral_reward_cents'] as num?)?.toInt() ?? 0;
+
+  /// The smallest withdrawal, in FCFA.
+  int get referralMinWithdrawalCents =>
+      (_values['referral_min_withdrawal_cents'] as num?)?.toInt() ?? 1000;
+
   /// Load the cache, then refresh from the API.
   ///
   /// Never throws and never blocks startup on the network: the splash screen
@@ -82,6 +94,8 @@ class RemoteConfig {
       final signup = (json['signup'] as Map?)?.cast<String, dynamic>() ?? {};
       final limits = (json['limits'] as Map?)?.cast<String, dynamic>() ?? {};
       final update = (json['update'] as Map?)?.cast<String, dynamic>() ?? {};
+      final referral =
+          (json['referral'] as Map?)?.cast<String, dynamic>() ?? {};
 
       final serverTime = DateTime.tryParse(json['server_time'] as String? ?? '');
       if (serverTime != null) {
@@ -102,6 +116,12 @@ class RemoteConfig {
         'update_min_supported_build': (update['min_supported_build'] as num?)?.toInt() ??
             _defaults['update_min_supported_build'],
         'update_blocks_at': update['blocks_at'] as String?,
+        'referral_reward_cents':
+            (referral['reward_cents'] as num?)?.toInt() ??
+            _defaults['referral_reward_cents'],
+        'referral_min_withdrawal_cents':
+            (referral['min_withdrawal_cents'] as num?)?.toInt() ??
+            _defaults['referral_min_withdrawal_cents'],
       };
       revision.value++;
       await _writeCache();

@@ -1741,5 +1741,75 @@
   "hubFixNow": "Fix now",
   "hubHiddenByTeam": "Hidden by Mambanda. Contact support to ask why.",
   "listingReviewLive": "Thanks! Your listing is live again.",
-  "listingReviewStill": "Saved, but still to fix:"
+  "listingReviewStill": "Saved, but still to fix:",
+  "createDetailsTitle": "Details",
+  "createDetailsHelp": "Buyers filter on these — the more you fill in, the easier you are to find.",
+  "createDetailsMissing": "Please fill in: {fields}",
+  "@createDetailsMissing": {
+    "placeholders": {
+      "fields": {
+        "type": "String"
+      }
+    }
+  },
+  "createDetailsRequired": "Required",
+  "createDetailsNumber": "Enter a number in range",
+  "detailsYes": "Yes",
+  "homeAnnouncementClose": "Close",
+  "walletTitle": "My wallet",
+  "walletMenuSubtitle": "Referral earnings and withdrawals",
+  "walletOpen": "Open my wallet",
+  "walletBalance": "Balance",
+  "walletWithdraw": "Withdraw",
+  "walletMinimum": "Minimum withdrawal: {amount}",
+  "@walletMinimum": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "walletRewardExplainer": "You earn {amount} each time a friend you invited completes their first purchase.",
+  "@walletRewardExplainer": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "walletRewardOff": "Referral rewards will show here when they are switched on.",
+  "walletWithdrawals": "Withdrawals",
+  "walletStatusPaid": "Sent",
+  "walletStatusRejected": "Not sent — back in your balance",
+  "walletStatusRequested": "Requested — we’ll send it soon",
+  "walletHistory": "History",
+  "walletEmpty": "Nothing yet. Invite friends to start earning.",
+  "walletEntryReward": "Referral reward",
+  "walletEntryWithdrawal": "Withdrawal",
+  "walletEntryReversal": "Withdrawal returned",
+  "walletEntryAdjustment": "Adjustment",
+  "walletWithdrawDone": "Request sent — you’ll get a notification when the money is on its way.",
+  "walletWithdrawHelp": "We send it to your mobile money number, usually within a day.",
+  "walletNumber": "Mobile money number",
+  "walletAmount": "Amount",
+  "walletWithdrawSubmit": "Request withdrawal",
+  "walletErrorMinimum": "The minimum is {amount}.",
+  "@walletErrorMinimum": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "walletErrorBalance": "That is more than your balance.",
+  "walletErrorNumber": "Enter a Cameroonian mobile number, e.g. 677 12 34 56.",
+  "walletErrorGeneric": "The request could not be sent. Try again.",
+  "inviteEarn": "Earn {amount} for every friend who joins and makes a first purchase.",
+  "@inviteEarn": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../Components/local_image.dart';
 import '../Components/image_placeholder.dart';
 import '../Components/rating_badge.dart';
+import '../Components/safe_bottom.dart';
 
 class ViewProfileScreen extends StatelessWidget {
   final api.Store? store;
@@ -112,6 +113,7 @@ class ViewProfileScreen extends StatelessWidget {
         elevation: 0,
       ),
       body: SingleChildScrollView(
+        padding: EdgeInsets.only(bottom: safeBottom(context, 16)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

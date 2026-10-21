@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'config.dart';
 import 'location_share.dart';
 import '../l10n/l10n.dart';
+import 'listing_attributes.dart';
 
 /// Domain models mirroring the Core API's JSON payloads.
 ///
@@ -89,6 +90,11 @@ class Listing {
   /// the mode, which is what lets `price_cents` stay non-nullable all the way
   /// down through orders and sales.
   final String priceMode;
+
+  /// The category's details, as answered: {"sizes": ["M", "L"]}. Keys come
+  /// from the category's template (Category.attributeSchema); empty when the
+  /// category has none or the listing predates them.
+  final Map<String, dynamic> attributes;
   final String? condition;
   final bool hasGuarantee;
   final String? city;
@@ -179,6 +185,7 @@ class Listing {
     required this.categorySlug,
     this.kind = 'product',
     this.priceMode = 'fixed',
+    this.attributes = const {},
     this.condition,
     this.hasGuarantee = false,
     this.city,
@@ -315,6 +322,9 @@ class Listing {
       // on parsing as the product it was.
       kind: json['kind']?.toString() ?? 'product',
       priceMode: json['price_mode']?.toString() ?? 'fixed',
+      attributes: json['attributes'] is Map
+          ? (json['attributes'] as Map).cast<String, dynamic>()
+          : const {},
       condition: json['condition']?.toString(),
       hasGuarantee: json['has_guarantee'] == true,
       city: json['city']?.toString(),
@@ -369,8 +379,13 @@ class Category {
   /// category is added.
   final String? defaultKind;
 
+  /// The details a listing here is asked for (0059). Use [attributeFieldsFor]
+  /// for the full list, which puts the group's own fields first.
+  final List<AttrField> attributeSchema;
+
   const Category({
     this.defaultKind,
+    this.attributeSchema = const [],
     required this.slug,
     required this.label,
     this.labelEn,
@@ -430,14 +445,41 @@ class Category {
   }
 
   factory Category.fromJson(Map<String, dynamic> json) => Category(
-        slug: json['slug'].toString(),
-        label: json['label']?.toString() ?? json['slug'].toString(),
-        labelEn: json['label_en']?.toString(),
-        labelFr: json['label_fr']?.toString(),
-        icon: json['icon']?.toString(),
-        parentSlug: json['parent_slug']?.toString(),
-        defaultKind: json['default_kind']?.toString(),
-      );
+    slug: json['slug'].toString(),
+    label: json['label']?.toString() ?? json['slug'].toString(),
+    labelEn: json['label_en']?.toString(),
+    labelFr: json['label_fr']?.toString(),
+    icon: json['icon']?.toString(),
+    parentSlug: json['parent_slug']?.toString(),
+    defaultKind: json['default_kind']?.toString(),
+    attributeSchema: AttrField.listFromJson(json['attribute_schema']),
+  );
+}
+
+/// The details a listing in [slug] answers: its group's, then its own (a leaf
+/// field replacing a group field with the same key). The server resolves the
+/// same way when it checks them.
+List<AttrField> attributeFieldsFor(List<Category> categories, String? slug) {
+  if (slug == null) return const [];
+  Category? leaf;
+  for (final c in categories) {
+    if (c.slug == slug) leaf = c;
+  }
+  if (leaf == null) return const [];
+  Category? root;
+  if (leaf.parentSlug != null) {
+    for (final c in categories) {
+      if (c.slug == leaf.parentSlug) root = c;
+    }
+  }
+  final out = <String, AttrField>{};
+  for (final f in root?.attributeSchema ?? const <AttrField>[]) {
+    out[f.key] = f;
+  }
+  for (final f in leaf.attributeSchema) {
+    out[f.key] = f;
+  }
+  return out.values.toList();
 }
 
 /// One top-level category and the leaves filed under it.

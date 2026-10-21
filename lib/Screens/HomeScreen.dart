@@ -27,6 +27,7 @@ import '../Components/category_picker.dart';
 import '../Components/glass_surface.dart';
 import 'SearchScreen.dart';
 import '../theme/app_tokens.dart';
+import '../Components/home_announcement.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -243,7 +244,13 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _refreshAll() async {
-    await Future.wait([_loadListings(), _favorites.refresh(), _loadBoards(), _loadTrending()]);
+    await Future.wait([
+      _loadListings(),
+      _favorites.refresh(),
+      _loadBoards(),
+      _loadTrending(),
+      NotificationRepository.instance.refreshHomeCard(),
+    ]);
   }
 
   /// The home tab tapped while already on home: back to the top, and fresh.
@@ -569,6 +576,9 @@ class HomeScreenState extends State<HomeScreen> {
                       onSelectCategory: _onCategoryTapped,
                     ),
                   ),
+
+                  // An announcement Mambanda floated on Home, if there is one.
+                  const SliverToBoxAdapter(child: HomeAnnouncementCard()),
 
                   // Was a hardcoded picsum.photos placeholder — a random stock
                   // photo shown to every user since this screen was written. It is

@@ -7,6 +7,7 @@ import '../api/models.dart' as api;
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
+import '../Components/safe_bottom.dart';
 
 /// One purchase, from the buyer's side.
 ///
@@ -729,7 +730,7 @@ class _PaySheetState extends State<_PaySheet> {
         left: 20,
         right: 20,
         top: 4,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+        bottom: safeBottom(context),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

@@ -7,11 +7,13 @@ import '../Components/ItemCard.dart';
 import '../Components/ItemDetailScreen.dart';
 import '../Components/category_picker.dart';
 import '../api/api_client.dart';
+import '../api/listing_attributes.dart';
 import '../api/location_service.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_tokens.dart';
+import '../Components/safe_bottom.dart';
 
 /// Everything the query is narrowed by.
 ///
@@ -27,7 +29,12 @@ class SearchFilters {
   final String sort;
   final bool nearMe;
 
+  /// Details of the chosen category to match, by field key: {'sizes': 'M'}.
+  /// Meaningless without that category, so changing it clears these.
+  final Map<String, String> attrs;
+
   const SearchFilters({
+    this.attrs = const {},
     this.categorySlug,
     this.minCents,
     this.maxCents,
@@ -42,7 +49,8 @@ class SearchFilters {
       maxCents == null &&
       condition == null &&
       sort == 'recent' &&
-      !nearMe;
+      !nearMe &&
+      attrs.isEmpty;
 
   SearchFilters copyWith({
     String? categorySlug,
@@ -51,18 +59,23 @@ class SearchFilters {
     String? condition,
     String? sort,
     bool? nearMe,
+    Map<String, String>? attrs,
     bool clearCategory = false,
     bool clearPrice = false,
     bool clearCondition = false,
-  }) =>
-      SearchFilters(
-        categorySlug: clearCategory ? null : (categorySlug ?? this.categorySlug),
-        minCents: clearPrice ? null : (minCents ?? this.minCents),
-        maxCents: clearPrice ? null : (maxCents ?? this.maxCents),
-        condition: clearCondition ? null : (condition ?? this.condition),
-        sort: sort ?? this.sort,
-        nearMe: nearMe ?? this.nearMe,
-      );
+  }) => SearchFilters(
+    categorySlug: clearCategory ? null : (categorySlug ?? this.categorySlug),
+    minCents: clearPrice ? null : (minCents ?? this.minCents),
+    maxCents: clearPrice ? null : (maxCents ?? this.maxCents),
+    condition: clearCondition ? null : (condition ?? this.condition),
+    sort: sort ?? this.sort,
+    nearMe: nearMe ?? this.nearMe,
+    attrs:
+        clearCategory ||
+            (categorySlug != null && categorySlug != this.categorySlug)
+        ? (attrs ?? const {})
+        : (attrs ?? this.attrs),
+  );
 }
 
 /// Search, as its own place rather than a filter on the feed.
@@ -226,6 +239,7 @@ class _SearchScreenState extends State<SearchScreen> {
         minCents: _filters.minCents,
         maxCents: _filters.maxCents,
         condition: _filters.condition,
+        attrs: _filters.attrs,
         lat: origin?.lat,
         lng: origin?.lng,
         // No radius, for the same reason the feed sends none: with almost no
@@ -510,6 +524,57 @@ class _FilterBar extends StatelessWidget {
     onChanged(filters.copyWith(categorySlug: picked));
   }
 
+  Future<void> _pickAttr(BuildContext context, AttrField field) async {
+    final l10n = context.l10n;
+    final locale = Localizations.localeOf(context);
+    final current = filters.attrs[field.key];
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheet) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(sheet).height * 0.7,
+          ),
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                child: Text(
+                  field.label(locale),
+                  style: Theme.of(sheet).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              for (final o in field.options)
+                ListTile(
+                  title: Text(o.label(locale)),
+                  trailing: current == o.value
+                      ? Icon(Icons.check, color: context.tokens.accentInk)
+                      : null,
+                  onTap: () => Navigator.pop(sheet, o.value),
+                ),
+              ListTile(
+                title: Text(l10n.filterAny),
+                onTap: () => Navigator.pop(sheet, ''),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (picked == null) return;
+    final next = Map<String, String>.from(filters.attrs);
+    if (picked.isEmpty) {
+      next.remove(field.key);
+    } else {
+      next[field.key] = picked;
+    }
+    onChanged(filters.copyWith(attrs: next));
+  }
+
   Future<void> _pickCondition(BuildContext context) async {
     final l10n = context.l10n;
     final picked = await showModalBottomSheet<String>(
@@ -650,6 +715,31 @@ class _FilterBar extends StatelessWidget {
                 : () => onChanged(filters.copyWith(clearCategory: true)),
           ),
           const SizedBox(width: 8),
+          // Size, shoe size, subject… whatever this category can be narrowed by.
+          for (final field
+              in attributeFieldsFor(categories, filters.categorySlug).where(
+                (f) =>
+                    f.filterable &&
+                    f.options.isNotEmpty &&
+                    (f.type == 'single' || f.type == 'multi'),
+              )) ...[
+            _Chip(
+              label: filters.attrs[field.key] == null
+                  ? field.label(locale)
+                  : '${field.label(locale)}: ${field.optionLabel(filters.attrs[field.key]!, locale)}',
+              selected: filters.attrs[field.key] != null,
+              onTap: () => _pickAttr(context, field),
+              onClear: filters.attrs[field.key] == null
+                  ? null
+                  : () => onChanged(
+                      filters.copyWith(
+                        attrs: Map<String, String>.from(filters.attrs)
+                          ..remove(field.key),
+                      ),
+                    ),
+            ),
+            const SizedBox(width: 8),
+          ],
           _Chip(
             label: _priceLabel(l10n),
             selected: filters.minCents != null || filters.maxCents != null,
@@ -876,8 +966,7 @@ class _PriceSheetState extends State<_PriceSheet> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-          20, 20, 20, MediaQuery.viewInsetsOf(context).bottom + 20),
+      padding: EdgeInsets.fromLTRB(20, 20, 20, safeBottom(context)),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -8,6 +8,7 @@ import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../Components/local_image.dart';
+import '../Components/safe_bottom.dart';
 
 class BusinessOnboardingScreen extends StatefulWidget {
   const BusinessOnboardingScreen({super.key});
@@ -200,6 +201,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
         elevation: 0,
       ),
       body: SingleChildScrollView(
+        padding: EdgeInsets.only(bottom: safeBottom(context, 16)),
         child: Column(
           children: [
             // --- BANNER & AVATAR PICKER HEADER ---

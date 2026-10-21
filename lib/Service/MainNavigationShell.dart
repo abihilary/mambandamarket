@@ -53,6 +53,7 @@ class _MainNavigationShellState extends State<MainNavigationShell>
     WidgetsBinding.instance.addObserver(this);
     ChatRepository.instance.startLive();
     unawaited(NotificationRepository.instance.refreshUnread());
+    unawaited(NotificationRepository.instance.refreshHomeCard());
     _startSweep();
   }
 
@@ -77,6 +78,7 @@ class _MainNavigationShellState extends State<MainNavigationShell>
       // badge stuck on its pre-background value until the next 45s sweep.
       unawaited(ChatRepository.instance.refresh());
       unawaited(NotificationRepository.instance.refreshUnread());
+      unawaited(NotificationRepository.instance.refreshHomeCard());
       // And ask again whether shipping is open. It is a kill switch, and one
       // that only answers at cold start is a switch that takes days to reach
       // somebody who never fully closes the app — which is most people.
@@ -543,23 +545,29 @@ class _NavItem extends StatelessWidget {
       child: InkResponse(
         onTap: onTap,
         containedInkWell: false,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            glyph,
-            const SizedBox(height: 3),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 11,
-                color: color,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+        // The whole slot answers, not just the icon and label: the column
+        // shrinks to ~42 px of a 68 px bar, and on a phone browser — where the
+        // bar sits flush against Safari's toolbar zone — the misses were
+        // reported as "the bottom nav doesn't respond".
+        child: SizedBox.expand(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              glyph,
+              const SizedBox(height: 3),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: color,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

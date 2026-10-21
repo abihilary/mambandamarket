@@ -8,6 +8,7 @@ import '../api/repositories.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_tokens.dart';
 import 'image_placeholder.dart';
+import 'safe_bottom.dart';
 
 /// Ask somebody to pick a listing, and hand back the whole thing.
 ///
@@ -171,22 +172,27 @@ class _ListingPickerSheetState extends State<_ListingPickerSheet> {
             child: _loading && items.isEmpty
                 ? const Center(child: CircularProgressIndicator())
                 : items.isEmpty
-                    ? Center(
-                        child: Text(
-                          l10n.shipPickerNoMatch,
-                          style: TextStyle(color: scheme.onSurfaceVariant),
-                        ),
-                      )
-                    : ListView.separated(
-                        controller: scrollController,
-                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
-                        itemCount: items.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
-                        itemBuilder: (context, i) => _Row(
-                          item: items[i],
-                          onTap: () => Navigator.pop(context, items[i]),
-                        ),
-                      ),
+                ? Center(
+                    child: Text(
+                      l10n.shipPickerNoMatch,
+                      style: TextStyle(color: scheme.onSurfaceVariant),
+                    ),
+                  )
+                : ListView.separated(
+                    controller: scrollController,
+                    padding: EdgeInsets.fromLTRB(
+                      12,
+                      0,
+                      12,
+                      safeBottom(context),
+                    ),
+                    itemCount: items.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, i) => _Row(
+                      item: items[i],
+                      onTap: () => Navigator.pop(context, items[i]),
+                    ),
+                  ),
           ),
         ],
       ),

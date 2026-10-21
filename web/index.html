@@ -92,8 +92,11 @@
       signs them out. Installed to the home screen it is exempt from that.
     */
     #a2hs {
+      /* At the top, never the bottom: down there it sat over the app's tab
+         bar, and taps on Home/Favourites/Messages/Account landed on this card
+         instead — the bar looked dead until the card was dismissed. */
       position: fixed; left: 12px; right: 12px; z-index: 9999;
-      bottom: calc(12px + env(safe-area-inset-bottom));
+      top: calc(12px + env(safe-area-inset-top));
       display: none; align-items: flex-start; gap: 12px;
       padding: 14px 14px 14px 16px;
       border-radius: 16px;
@@ -186,6 +189,10 @@
           bar.classList.remove('show');
           try { localStorage.setItem('a2hs-dismissed', '1'); } catch (e) {}
         });
+        // It covers the top of the screen while shown, so it does not stay:
+        // a quarter of a minute is enough to read it, and it comes back on the
+        // next visit until it is dismissed.
+        setTimeout(function () { bar.classList.remove('show'); }, 15000);
       } catch (e) {
         // A missing localStorage (private browsing) must not take the app with it.
       }
