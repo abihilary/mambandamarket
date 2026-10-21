@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../Components/brand_bag.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../Components/listing_picker.dart';
@@ -830,7 +831,7 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
           ),
           const SizedBox(height: 12),
           _PathCard(
-            icon: Icons.storefront_outlined,
+            mark: const BrandBag(size: 28),
             title: l10n.shipPathMarketTitle,
             body: l10n.shipPathMarketBody,
             // Choosing the path and choosing the product are one gesture.
@@ -907,12 +908,9 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
   /// round trip to be told there is no picture. The count is already here, so
   /// ask it first, and fall back to the glyph if the image itself fails.
   Widget _itemLeading() {
-    final icon = Icon(
-      _source == ShippingSource.mambanda
-          ? Icons.storefront_outlined
-          : Icons.link_rounded,
-      color: context.tokens.accentInk,
-    );
+    final Widget icon = _source == ShippingSource.mambanda
+        ? const BrandBag()
+        : Icon(Icons.link_rounded, color: context.tokens.accentInk);
 
     final listing = _listing;
     if (listing == null || listing.imagePaths.isEmpty) return icon;
@@ -1630,13 +1628,17 @@ class _SummaryCard extends StatelessWidget {
 
 class _PathCard extends StatelessWidget {
   const _PathCard({
-    required this.icon,
+    this.icon,
+    this.mark,
     required this.title,
     required this.body,
     required this.onTap,
   });
 
-  final IconData icon;
+  final IconData? icon;
+
+  /// Drawn instead of [icon] — the brand's bag, for the Mambanda path.
+  final Widget? mark;
   final String title;
   final String body;
   final VoidCallback onTap;
@@ -1654,7 +1656,7 @@ class _PathCard extends StatelessWidget {
           padding: const EdgeInsets.all(18),
           child: Row(
             children: [
-              Icon(icon, size: 28, color: context.tokens.accentInk),
+              mark ?? Icon(icon, size: 28, color: context.tokens.accentInk),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../Components/brand_bag.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -161,11 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 32),
-                  Icon(
-                    Icons.storefront,
-                    size: 72,
-                    color: theme.colorScheme.primary,
-                  ),
+                  const Center(child: BrandBag(size: 72)),
                   const SizedBox(height: 16),
                   Text(
                     l10n.loginTitle,

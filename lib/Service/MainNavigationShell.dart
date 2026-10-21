@@ -737,6 +737,25 @@ class _SideRail extends StatelessWidget {
       minExtendedWidth: 232,
       labelType: extended ? null : NavigationRailLabelType.none,
       backgroundColor: theme.scaffoldBackgroundColor,
+      // Spelled out rather than left to the rail's defaults (secondaryContainer
+      // for the pill, onSecondaryContainer for the icon on it): a selected tab
+      // was reported showing as a solid lime pill with no icon. Same pairing
+      // as the Sell button above — lime fill, near-black ink — so the two can
+      // never drift apart.
+      indicatorColor: tokens.accentFill,
+      indicatorShape: const StadiumBorder(),
+      selectedIconTheme: IconThemeData(color: tokens.onAccentFill, size: 24),
+      unselectedIconTheme: IconThemeData(
+        color: theme.colorScheme.onSurfaceVariant,
+        size: 24,
+      ),
+      selectedLabelTextStyle: theme.textTheme.labelLarge?.copyWith(
+        color: theme.colorScheme.onSurface,
+        fontWeight: FontWeight.w700,
+      ),
+      unselectedLabelTextStyle: theme.textTheme.labelLarge?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+      ),
       leading: Padding(
         padding: const EdgeInsets.only(top: 8, bottom: 20),
         child: Column(

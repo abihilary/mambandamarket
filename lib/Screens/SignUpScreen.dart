@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../Components/brand_bag.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../api/auth_errors.dart';
@@ -244,8 +245,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 8),
-                Icon(Icons.storefront,
-                    size: 64, color: theme.colorScheme.primary),
+                const Center(child: BrandBag(size: 64)),
                 const SizedBox(height: 16),
                 Text(
                   l10n.joinMambanda,

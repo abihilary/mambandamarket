@@ -65,12 +65,8 @@
       transition: opacity .35s ease;
     }
     #boot.done { opacity: 0; pointer-events: none; }
-    #boot .mark {
-      width: 88px; height: 88px; border-radius: 24px;
-      background: #C9E505;
-      display: flex; align-items: center; justify-content: center;
-    }
-    #boot .mark svg { width: 46px; height: 46px; }
+    #boot .mark { width: 96px; height: 96px; }
+    #boot .mark svg { display: block; width: 100%; height: 100%; }
     #boot .name {
       color: #F3F4F7; font-size: 21px; font-weight: 700; letter-spacing: .2px;
     }
@@ -129,13 +125,44 @@
 <body>
   <div id="boot">
     <div class="mark">
-      <!-- The storefront mark from the app's own splash, so the handover is seamless. -->
-      <svg viewBox="0 0 24 24" fill="none" stroke="#0A0B07" stroke-width="1.9"
-           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M3 9.5 4.5 4h15L21 9.5"/>
-        <path d="M3 9.5h18"/>
-        <path d="M4.5 9.5V20h15V9.5"/>
-        <path d="M9 20v-5.5h6V20"/>
+      <!-- The bag from inside the M (assets/brand/bag.svg). Straight on the
+           dark ground: on the old lime tile its lime rim disappeared. -->
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="36 51 440 440" aria-hidden="true">
+        <defs>
+          <linearGradient id="rim" x1="0" y1="0" x2="0.35" y2="1">
+            <stop offset="0" stop-color="#E9FF3A"/>
+            <stop offset=".55" stop-color="#B8E51C"/>
+            <stop offset="1" stop-color="#7DB517"/>
+          </linearGradient>
+          <linearGradient id="lime" x1="1" y1="0" x2="0.2" y2="1">
+            <stop offset="0" stop-color="#E4FB2A"/>
+            <stop offset="1" stop-color="#A2D11B"/>
+          </linearGradient>
+          <linearGradient id="silver" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#FFFFFF"/>
+            <stop offset=".6" stop-color="#E9EBEE"/>
+            <stop offset="1" stop-color="#B9BDC4"/>
+          </linearGradient>
+        </defs>
+      
+        <!-- handle, with the rounded feet where it meets the rim -->
+        <path d="M200 196 V128 A56 56 0 0 1 312 128 V196" fill="none" stroke="url(#rim)" stroke-width="28" stroke-linecap="round"/>
+      
+        <!-- body -->
+        <path d="M146 180 H366 Q392 180 395 206 L418 432 Q422 470 384 470 H128 Q90 470 94 432 L117 206 Q120 180 146 180 Z"
+              fill="#07080A" stroke="url(#rim)" stroke-width="28" stroke-linejoin="round"/>
+        <circle cx="200" cy="192" r="14" fill="url(#rim)"/>
+        <circle cx="312" cy="192" r="14" fill="url(#rim)"/>
+      
+        <!-- M: lime half behind, silver half in front -->
+        <path d="M316 244 H346 Q358 244 358 256 V418 Q358 430 346 430 H328 Q316 430 316 418 V318 L278 368 L256 336 Z" fill="url(#lime)"/>
+        <path d="M154 256 Q154 244 166 244 H194 L286 368 Q290 374 282 374 H262 Q256 374 252 368 L196 292 V418 Q196 430 184 430 H166 Q154 430 154 418 Z" fill="url(#silver)"/>
+      
+        <!-- the little bag at the foot of the M -->
+        <g fill="none" stroke="url(#rim)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M247 396 V389 A10 10 0 0 1 267 389 V396"/>
+          <path d="M242 396 H272 L276 426 H238 Z"/>
+        </g>
       </svg>
     </div>
     <div class="name">Mambanda Market</div>

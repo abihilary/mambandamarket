@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../Components/brand_bag.dart';
 
 import '../api/shipping_draft.dart';
 import '../l10n/l10n.dart';
@@ -46,7 +47,7 @@ class DeliveryOptionsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             _OptionCard(
-              icon: Icons.storefront_outlined,
+              mark: const BrandBag(),
               title: l10n.deliveryOptPurchaseTitle,
               subtitle: l10n.deliveryOptPurchaseBody,
               buttonText: l10n.deliveryOptPurchaseCta,
@@ -95,14 +96,18 @@ class DeliveryOptionsScreen extends StatelessWidget {
 
 class _OptionCard extends StatelessWidget {
   const _OptionCard({
-    required this.icon,
+    this.icon,
+    this.mark,
     required this.title,
     required this.subtitle,
     required this.buttonText,
     required this.onTap,
   });
 
-  final IconData icon;
+  final IconData? icon;
+
+  /// Drawn instead of [icon] — the brand's bag, for the Mambanda option.
+  final Widget? mark;
   final String title;
   final String subtitle;
   final String buttonText;
@@ -129,7 +134,7 @@ class _OptionCard extends StatelessWidget {
                   color: const Color(0xFFC9E505).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(icon, color: scheme.onSurface),
+                child: mark ?? Icon(icon, color: scheme.onSurface),
               ),
               const SizedBox(width: 16),
               Expanded(
