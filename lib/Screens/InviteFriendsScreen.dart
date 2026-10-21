@@ -11,7 +11,7 @@ import '../theme/app_theme.dart';
 import '../Components/safe_bottom.dart';
 import '../theme/breakpoints.dart';
 import '../api/share_links.dart';
-import '../web/web_share.dart';
+import '../Components/web_share_flow.dart';
 
 /// The other half of referrals: the code you give out, and what it has earned.
 ///
@@ -59,10 +59,8 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
     final l10n = context.l10n;
     final text = '$sentence\n${ShareLinks.siteBase}/download';
     if (kIsWeb) {
-      // Straight from the tap, before any await: see webShare.
-      final outcome =
-          await webShare(title: 'Mambanda Market', text: text);
-      if (outcome != WebShareOutcome.unsupported) return;
+      return shareOnWeb(context,
+          title: 'Mambanda Market', text: text, copyText: text);
     } else {
       try {
         final result = await SharePlus.instance

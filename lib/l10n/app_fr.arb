@@ -1476,5 +1476,5 @@
   "messagesPickThread": "Choisissez une conversation pour la lire ici.",
   "shareLinkCopied": "Lien copié. Collez-le où vous voulez pour le partager.",
   "locationDeniedWeb": "La localisation est bloquée pour ce site. Autorisez-la depuis l’icône à côté de l’adresse web, puis réessayez.",
-  "shareCopyFailed": "Copiez ce lien pour partager : {link}"
+  "shareCopyManualTitle": "Copiez ce lien pour le partager"
 }

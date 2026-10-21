@@ -6464,11 +6464,11 @@ abstract class AppLocalizations {
   /// **'Location is blocked for this site. Allow it from the icon beside the web address, then try again.'**
   String get locationDeniedWeb;
 
-  /// No description provided for @shareCopyFailed.
+  /// No description provided for @shareCopyManualTitle.
   ///
   /// In en, this message translates to:
-  /// **'Copy this link to share: {link}'**
-  String shareCopyFailed(String link);
+  /// **'Copy this link to share it'**
+  String get shareCopyManualTitle;
 }
 
 class _AppLocalizationsDelegate

@@ -3699,7 +3699,5 @@ class AppLocalizationsFr extends AppLocalizations {
       'La localisation est bloquée pour ce site. Autorisez-la depuis l’icône à côté de l’adresse web, puis réessayez.';
 
   @override
-  String shareCopyFailed(String link) {
-    return 'Copiez ce lien pour partager : $link';
-  }
+  String get shareCopyManualTitle => 'Copiez ce lien pour le partager';
 }

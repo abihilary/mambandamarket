@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:share_plus/share_plus.dart';
 
 import '../Screens/CheckoutScreen.dart';
@@ -21,7 +20,7 @@ import 'VerifiedBadge.dart';
 import 'report_sheet.dart';
 import 'require_account.dart';
 import '../theme/breakpoints.dart';
-import '../web/web_share.dart';
+import 'web_share_flow.dart';
 
 class ItemDetailScreen extends StatefulWidget {
   final String title;
@@ -250,27 +249,15 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     return buffer.toString().trim();
   }
 
-  /// The web build: the browser's share sheet where it has one (phones,
-  /// Safari, Edge), otherwise the link on the clipboard — which on a computer
-  /// is what sharing a page means anyway.
-  Future<void> _shareOnWeb(String title, String text) async {
-    // Before any await, so the browser still counts it as the tap.
-    final outcome = await webShare(title: title, text: text);
-    if (outcome != WebShareOutcome.unsupported) return;
+  /// The web build: see shareOnWeb. What is copied is the bare link — on a
+  /// computer, that is what sharing a page means.
+  Future<void> _shareOnWeb(String title, String text) {
     final id = _listing?.id ?? widget.listingId;
-    final link = id == null ? text : ShareLinks.listing(id).toString();
-    try {
-      await Clipboard.setData(ClipboardData(text: link));
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.shareCopyFailed(link))),
-      );
-      return;
-    }
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.l10n.shareLinkCopied)),
+    return shareOnWeb(
+      context,
+      title: title,
+      text: text,
+      copyText: id == null ? text : ShareLinks.listing(id).toString(),
     );
   }
 
@@ -543,6 +530,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             StateSetter setDialogState,
           ) {
             return AlertDialog(
+              // Scrolls when the screen is short — a phone on its side, a
+              // small browser window. Without it the rules overflowed on top
+              // of the Cancel button, and Cancel could not be pressed.
+              scrollable: true,
               shape: RoundedRectangleBorder(
                 borderRadius:
                     BorderRadius.circular(20),
