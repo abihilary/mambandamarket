@@ -16,10 +16,11 @@ import '../web/web_share.dart';
 Future<void> shareOnWeb(
   BuildContext context, {
   required String title,
-  required String text,
+  String? text,
+  String? url,
   required String copyText,
 }) async {
-  final outcome = await webShare(title: title, text: text);
+  final outcome = await webShare(title: title, text: text, url: url);
   if (outcome != WebShareOutcome.unsupported) return;
   final copied = await webCopy(copyText);
   if (!context.mounted) return;

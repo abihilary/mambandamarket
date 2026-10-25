@@ -189,77 +189,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     return ShareLinks.listing(id).toString();
   }
 
-  /// Builds the content that is shared through the native share sheet.
-  String _buildShareText() {
-    final listing = _listing;
-
-    final title = (
-      listing?.title ??
-      widget.title
-    ).trim();
-
-    final price = (
-      listing?.displayPrice ??
-      widget.price
-    ).trim();
-
-    final condition = (
-      listing?.condition ??
-      ''
-    ).trim();
-
-    final city = (
-      listing?.city ??
-      ''
-    ).trim();
-
-    final buffer = StringBuffer();
-
-    buffer.writeln(title);
-
-    if (price.isNotEmpty) {
-      buffer.writeln('Price: $price');
-    }
-
-    if (condition.isNotEmpty) {
-      buffer.writeln('Condition: $condition');
-    }
-
-    if (city.isNotEmpty) {
-      buffer.writeln('Location: $city');
-    }
-
-    final shareUrl = _buildListingShareUrl();
-
-    if (shareUrl != null) {
-      buffer.writeln();
-      buffer.writeln('View this listing on Mambanda Market:');
-      buffer.writeln(shareUrl);
-    } else {
-      buffer.writeln();
-      buffer.writeln('Shared from Mambanda Market.');
-
-      if (widget.listingId != null &&
-          widget.listingId!.trim().isNotEmpty) {
-        buffer.writeln(
-          'Listing ID: ${widget.listingId!.trim()}',
-        );
-      }
-    }
-
-    return buffer.toString().trim();
-  }
-
-  /// The web build: see shareOnWeb. What is copied is the bare link — on a
-  /// computer, that is what sharing a page means.
-  Future<void> _shareOnWeb(String title, String text) {
-    final id = _listing?.id ?? widget.listingId;
-    return shareOnWeb(
-      context,
-      title: title,
-      text: text,
-      copyText: id == null ? text : ShareLinks.listing(id).toString(),
-    );
+  /// The web build: see shareOnWeb. The link goes in the share's link field
+  /// and is what gets copied where there is no share sheet.
+  Future<void> _shareOnWeb(String title, String link) {
+    return shareOnWeb(context, title: title, url: link, copyText: link);
   }
 
   /// Opens the native platform share sheet.
@@ -289,9 +222,15 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       return;
     }
 
-    final text = _buildShareText();
+    // Just the link. It used to be a block of text — title, price,
+    // condition, place, then the link — which WhatsApp coped with, but pasted
+    // into a browser's address bar it became a search and never opened the
+    // listing. WhatsApp, Messenger and SMS build their own card (photo, title
+    // and price) from the link page's preview tags, so the text added nothing
+    // there either. The title still travels as the share's subject.
+    final link = _buildListingShareUrl() ?? title;
 
-    if (kIsWeb) return _shareOnWeb(title, text);
+    if (kIsWeb) return _shareOnWeb(title, link);
 
     final renderObject =
         buttonContext.findRenderObject();
@@ -313,16 +252,14 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     });
 
     try {
-      // share_plus 13 replaced the static Share.share with an instance and a
-      // params object. The pin moved because 10.1.4 does not compile against
-      // this project's Kotlin/AGP — its Android source references a
-      // ShareSuccessManager that no longer resolves — so the call site moves
-      // with it. Behaviour is unchanged: same text, same subject, same origin
-      // rect, same handling of the result.
+      // share_plus 13: an instance and a params object (10.1.4 does not
+      // compile against this project's Kotlin/AGP). `title` names the
+      // Android chooser; `subject` fills an email's subject line.
       final result = await SharePlus.instance.share(
         ShareParams(
-          text: text,
-          subject: 'Check out this listing: $title',
+          text: link,
+          subject: title,
+          title: title,
           sharePositionOrigin: sharePositionOrigin,
         ),
       );

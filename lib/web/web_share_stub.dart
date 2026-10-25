@@ -4,7 +4,8 @@ enum WebShareOutcome { shared, dismissed, unsupported }
 /// Only the web build has a browser to ask.
 Future<WebShareOutcome> webShare({
   required String title,
-  required String text,
+  String? text,
+  String? url,
 }) async =>
     WebShareOutcome.unsupported;
 

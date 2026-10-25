@@ -16,15 +16,23 @@ enum WebShareOutcome { shared, dismissed, unsupported }
 ///
 /// Call it straight from the tap, before any await: browsers only allow a
 /// share from inside the user's gesture.
+///
+/// A [url] goes in the share's own link field, so "Copy" in a share sheet
+/// copies just the link; [text] is only for shares that are a message.
 Future<WebShareOutcome> webShare({
   required String title,
-  required String text,
+  String? text,
+  String? url,
 }) async {
   final navigator = globalContext['navigator'] as JSObject?;
   if (navigator == null || !navigator.has('share')) {
     return WebShareOutcome.unsupported;
   }
-  final data = {'title': title, 'text': text}.jsify()!;
+  final data = {
+    'title': title,
+    if (text != null) 'text': text,
+    if (url != null) 'url': url,
+  }.jsify()!;
   try {
     await navigator.callMethod<JSPromise<JSAny?>>('share'.toJS, data).toDart;
     return WebShareOutcome.shared;
