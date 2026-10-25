@@ -479,15 +479,16 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     }
   }
 
+  /// The list is reversed, so the bottom is offset 0 — a fixed point, not an
+  /// estimate that grows as bubbles finish laying out.
   void _scrollToBottom() {
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOut,
-        );
-      }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients || _scrollController.offset <= 0) return;
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
     });
   }
 
@@ -738,12 +739,26 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                           )
                         : ListView.builder(
                             controller: _scrollController,
-                            padding: const EdgeInsets.all(12),
-                            // Item 0 is the screening notice; messages follow.
+                            // Anchored at the bottom, as chat apps are: the
+                            // newest message is item 0 and sits just above the
+                            // composer. It used to run top-down and jump to
+                            // maxScrollExtent after each change, but that
+                            // figure is an estimate until every bubble below
+                            // has been laid out — a photo or a long message
+                            // grew it after the jump, and the last message was
+                            // left half under the composer (Product Workspace,
+                            // "chart screen fix"). The keyboard opening no
+                            // longer hides it either: offset 0 is the bottom.
+                            reverse: true,
+                            // Padding stays visual under reverse: the bottom
+                            // figure is the room under the newest bubble.
+                            padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
+                            // The screening notice is the last item, so it
+                            // sits above the oldest message.
                             itemCount: _messages.length + 1,
                             itemBuilder: (context, index) {
-                              if (index == 0) return _screeningNotice();
-                              final i = index - 1;
+                              if (index == _messages.length) return _screeningNotice();
+                              final i = _messages.length - 1 - index;
                               final m = _messages[i];
                               final mine = m.senderId == _myId;
                               final moderated = mine && (m.isHeld || m.isRejected);
