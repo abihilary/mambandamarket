@@ -334,6 +334,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Impossible de joindre la marketplace. Vérifiez votre connexion.';
 
   @override
+  String get offlineChangeNotSaved =>
+      'Vous êtes hors ligne : rien n\'a été modifié. Réessayez une fois connecté.';
+
+  @override
   String get errorTimeout =>
       'La marketplace met trop de temps à répondre. Veuillez réessayer.';
 
@@ -3404,6 +3408,18 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get priceNegotiable => 'Prix à négocier';
+
+  @override
+  String priceNegotiableAmount(String price) {
+    return '$price · à négocier';
+  }
+
+  @override
+  String get createPriceOptionalLabel => 'Prix (FCFA) — facultatif';
+
+  @override
+  String get createPriceNegotiableHelper =>
+      'Les acheteurs le voient comme votre prix de départ, à négocier. Laissez vide pour afficher seulement « Prix à négocier ».';
 
   @override
   String get priceOnRequest => 'Sur demande';

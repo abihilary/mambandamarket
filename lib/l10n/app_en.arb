@@ -158,6 +158,10 @@
   },
   "retry": "Try again",
   "connectionError": "Couldn't reach the marketplace. Check your connection.",
+  "offlineChangeNotSaved": "You're offline, so nothing was changed. Try again when you're connected.",
+  "@offlineChangeNotSaved": {
+    "description": "Shown when someone tries to post, send, save or delete something with no connection. Reads still show saved content."
+  },
   "errorTimeout": "The marketplace is taking too long to answer. Please try again.",
   "errorServer": "The marketplace is having trouble right now. Please try again in a moment.",
   "errorBadResponse": "We got an unexpected reply. If you're on public Wi-Fi, you may need to sign in to it first.",
@@ -1620,6 +1624,24 @@
   "priceNegotiable": "Negotiable",
   "@priceNegotiable": {
     "description": "Pricing mode: seller will discuss the price in chat."
+  },
+  "priceNegotiableAmount": "{price} · Negotiable",
+  "@priceNegotiableAmount": {
+    "description": "A negotiable listing that still states a price: the price, open to offers.",
+    "placeholders": {
+      "price": {
+        "example": "50.000 FCFA",
+        "type": "String"
+      }
+    }
+  },
+  "createPriceOptionalLabel": "Price (FCFA) — optional",
+  "@createPriceOptionalLabel": {
+    "description": "Price field label when the pricing is Negotiable, where a price is optional."
+  },
+  "createPriceNegotiableHelper": "Buyers see it as your asking price, open to offers. Leave it empty to show just “Negotiable”.",
+  "@createPriceNegotiableHelper": {
+    "description": "Helper under the price field when pricing is Negotiable."
   },
   "priceOnRequest": "On request",
   "@priceOnRequest": {

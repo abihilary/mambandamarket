@@ -20,6 +20,7 @@ import 'package:mambandamarket/DashBoards/CreateListingScreen.dart';
 import 'package:mambandamarket/DashBoards/SellerDashboardScreen.dart';
 import 'package:mambandamarket/Screens/BusinessOnboardingScreen.dart';
 import 'package:mambandamarket/Screens/LoginScreen.dart';
+import 'api/offline_cache.dart';
 import 'DashBoards/BusinessDashboardScreen.dart';
 import 'DashBoards/CompanyDashboardScreen.dart';
 import 'Screens/AccountStatusScreen.dart';
@@ -48,6 +49,9 @@ Future<void> main() async {
   // Ahead of runApp so this observer precedes WidgetsApp's: an auth callback
   // arriving as a deep link must not be pushed onto the Navigator as a route.
   WidgetsBinding.instance.addObserver(DeepLinkGuard());
+
+  // Saved answers for when there is no connection. Before anything reads.
+  await OfflineCache.init();
 
   await Supabase.initialize(
     url: AppConfig.supabaseUrl,

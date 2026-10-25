@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../api/models.dart' as api;
 import '../l10n/l10n.dart';
@@ -77,8 +78,8 @@ class ViewSellerProfileScreen extends StatelessWidget {
     Widget placeholder() => const ImagePlaceholder();
 
     if (path.startsWith('http://') || path.startsWith('https://')) {
-      return Image.network(
-        path,
+      return Image(
+        image: CachedNetworkImageProvider(path),
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) => placeholder(),
       );

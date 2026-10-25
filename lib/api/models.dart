@@ -220,14 +220,22 @@ class Listing {
 
   /// True when [priceCents] is a placeholder rather than an amount, so nothing
   /// should render it, filter on it or add it up.
-  bool get hasNoAmount => priceMode == 'negotiable' || priceMode == 'on_request';
+  ///
+  /// Negotiable may carry an amount since 0062 ("50.000 FCFA, open to
+  /// offers"); only a negotiable listing left at 0 has none.
+  bool get hasNoAmount =>
+      priceMode == 'on_request' || (priceMode == 'negotiable' && priceCents <= 0);
 
   /// Can this be ordered and paid for inside the app? Only a verified
   /// company's listing can, because only a company can be held to escrow —
   /// and only a product, because checkout takes a quantity and a delivery
   /// address, neither of which means anything for a job.
+  ///
+  /// Negotiable stays out even with an amount: checkout charges the listed
+  /// price, which is the one thing a negotiable seller has said is not final.
   bool get isBuyable => isProduct &&
       !hasNoAmount &&
+      priceMode != 'negotiable' &&
       companyId != null &&
       companyId!.isNotEmpty &&
       !isSold &&
@@ -244,7 +252,9 @@ class Listing {
     final l10n = l10nNow;
     switch (priceMode) {
       case 'negotiable':
-        return l10n.priceNegotiable;
+        return priceCents > 0
+            ? l10n.priceNegotiableAmount(formatPrice(priceCents, currency: currency))
+            : l10n.priceNegotiable;
       case 'on_request':
         return l10n.priceOnRequest;
       case 'free':

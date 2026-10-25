@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
@@ -899,8 +900,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             });
           },
           itemBuilder: (context, index) {
-            return Image.network(
-              _imageList[index],
+            return Image(
+              image: CachedNetworkImageProvider(_imageList[index]),
               fit: fit,
               width: double.infinity,
               height: double.infinity,
@@ -1608,8 +1609,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        _imageList[i],
+                      child: Image(
+                        image: CachedNetworkImageProvider(_imageList[i]),
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) =>
                             ColoredBox(color: scheme.surfaceContainerHighest),
@@ -1791,7 +1792,7 @@ class _SellerRow extends StatelessWidget {
             CircleAvatar(
               radius: 24,
               backgroundColor: scheme.primary.withValues(alpha: 0.12),
-              backgroundImage: hasImage ? NetworkImage(image!) : null,
+              backgroundImage: hasImage ? CachedNetworkImageProvider(image!) : null,
               child: hasImage
                   ? null
                   : Text(

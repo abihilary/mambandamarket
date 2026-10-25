@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'offline_cache.dart';
 
 import 'api_client.dart';
 import 'config.dart';
@@ -416,6 +417,8 @@ class AuthService {
     // another account's messages after somebody else signed in on it.
     await PushService.instance.unregister();
     await _client.auth.signOut();
+    // Saved reads are per account already; emptied anyway, for a shared phone.
+    await OfflineCache.clear();
     NotificationRepository.instance.clear();
     me.value = null;
     needsRoleSelection.value = false;

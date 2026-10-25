@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -71,8 +72,8 @@ class ItemCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8.0),
                   child: AspectRatio(
                     aspectRatio: 1.0,
-                    child: Image.network(
-                      imageUrl,
+                    child: Image(
+                      image: CachedNetworkImageProvider(imageUrl),
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) =>
                           Container(color: scheme.surfaceContainerHighest),

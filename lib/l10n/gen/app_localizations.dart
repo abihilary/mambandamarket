@@ -686,6 +686,12 @@ abstract class AppLocalizations {
   /// **'Couldn\'t reach the marketplace. Check your connection.'**
   String get connectionError;
 
+  /// Shown when someone tries to post, send, save or delete something with no connection. Reads still show saved content.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline, so nothing was changed. Try again when you\'re connected.'**
+  String get offlineChangeNotSaved;
+
   /// No description provided for @errorTimeout.
   ///
   /// In en, this message translates to:
@@ -5953,6 +5959,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Negotiable'**
   String get priceNegotiable;
+
+  /// A negotiable listing that still states a price: the price, open to offers.
+  ///
+  /// In en, this message translates to:
+  /// **'{price} · Negotiable'**
+  String priceNegotiableAmount(String price);
+
+  /// Price field label when the pricing is Negotiable, where a price is optional.
+  ///
+  /// In en, this message translates to:
+  /// **'Price (FCFA) — optional'**
+  String get createPriceOptionalLabel;
+
+  /// Helper under the price field when pricing is Negotiable.
+  ///
+  /// In en, this message translates to:
+  /// **'Buyers see it as your asking price, open to offers. Leave it empty to show just “Negotiable”.'**
+  String get createPriceNegotiableHelper;
 
   /// Pricing mode: price quoted per job after contact.
   ///

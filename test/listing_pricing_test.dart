@@ -50,6 +50,13 @@ void main() {
       expect({p('negotiable'), p('on_request'), p('free')}, hasLength(3));
     });
 
+    test('negotiable with a price shows the price and says it is negotiable', () {
+      final text = _listing(priceMode: 'negotiable', priceCents: 50000).displayPrice;
+      expect(text, contains('50.000 FCFA'));
+      expect(text, isNot('50.000 FCFA'), reason: 'must say negotiable, not read as fixed');
+      expect(text, contains(_listing(priceMode: 'negotiable', priceCents: 0).displayPrice));
+    });
+
     test('from / hourly / daily keep the amount and qualify it', () {
       expect(_listing(priceMode: 'from').displayPrice, contains('5.000 FCFA'));
       expect(_listing(priceMode: 'from').displayPrice,
@@ -76,7 +83,14 @@ void main() {
 
     test('free is a real amount, so it does not block the other gates', () {
       expect(_listing(priceMode: 'free', priceCents: 0).hasNoAmount, isFalse);
-      expect(_listing(priceMode: 'negotiable').hasNoAmount, isTrue);
+      expect(_listing(priceMode: 'negotiable', priceCents: 0).hasNoAmount, isTrue);
+    });
+
+    test('a negotiable listing with a price has an amount, but is still not buyable', () {
+      final l = _listing(priceMode: 'negotiable', priceCents: 50000);
+      expect(l.hasNoAmount, isFalse);
+      expect(l.isBuyable, isFalse,
+          reason: 'checkout charges the listed price, which a negotiable seller has not fixed');
     });
 
     test('isProduct is what the shipping and condition chips key off', () {

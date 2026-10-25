@@ -103,6 +103,8 @@ dependencies:
   geolocator: ^14.0.0
   video_player: ^2.14.0
   flutter_cache_manager: ^3.4.2
+  hive_ce: ^2.22.0
+  hive_ce_flutter: ^2.5.0
 
 dev_dependencies:
   flutter_test:

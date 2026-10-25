@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../Components/ItemDetailScreen.dart';
@@ -297,8 +298,8 @@ class _FavoriteRow extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  item.primaryImageUrl,
+                child: Image(
+                  image: CachedNetworkImageProvider(item.primaryImageUrl),
                   width: 56,
                   height: 56,
                   fit: BoxFit.cover,

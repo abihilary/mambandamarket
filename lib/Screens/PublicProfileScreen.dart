@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -179,8 +180,8 @@ class _Header extends StatelessWidget {
         if (store?.bannerUrl?.isNotEmpty ?? false)
           SizedBox(
             height: 132,
-            child: Image.network(
-              store!.bannerUrl!,
+            child: Image(
+              image: CachedNetworkImageProvider(store!.bannerUrl!),
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(color: cs.surfaceContainerHighest),
             ),
@@ -197,7 +198,7 @@ class _Header extends StatelessWidget {
                     radius: 34,
                     backgroundColor: cs.primary.withValues(alpha: 0.15),
                     backgroundImage:
-                        (imageUrl?.isNotEmpty ?? false) ? NetworkImage(imageUrl!) : null,
+                        (imageUrl?.isNotEmpty ?? false) ? CachedNetworkImageProvider(imageUrl!) : null,
                     child: (imageUrl?.isNotEmpty ?? false)
                         ? null
                         : Text(

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../Service/ChatRoomScreen.dart';
@@ -283,7 +284,7 @@ class ChatInboxScreenState extends State<ChatInboxScreen> {
           : CircleAvatar(
         backgroundColor: cs.primary.withValues(alpha: 0.12),
         backgroundImage:
-            (avatar != null && avatar.isNotEmpty) ? NetworkImage(avatar) : null,
+            (avatar != null && avatar.isNotEmpty) ? CachedNetworkImageProvider(avatar) : null,
         child: (avatar == null || avatar.isEmpty)
             ? Text(
                 name.isEmpty ? '?' : name[0].toUpperCase(),

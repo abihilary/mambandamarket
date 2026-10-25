@@ -118,12 +118,17 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   /// Modes that carry no amount at all — the price box is hidden and 0 is
   /// stored, because the column is still NOT NULL.
   static const Set<String> _amountlessModes = {
-    'negotiable',
     'on_request',
     'free',
   };
 
   bool get _wantsAmount => !_amountlessModes.contains(_priceMode);
+
+  /// Negotiable shows the price box but does not insist on it: "50.000 FCFA,
+  /// negotiable" is how most sellers put it, and a bare "Negotiable" is still
+  /// allowed (0062). Left empty, 0 is stored and the listing reads
+  /// "Negotiable".
+  bool get _amountOptional => _priceMode == 'negotiable';
   bool get _isProduct => _kind == 'product';
 
   String _selectedCondition = 'New';
@@ -225,6 +230,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   String _priceFieldFor(Map<String, dynamic> listing) {
     final cents = listing['priceCents'] ?? listing['price_cents'];
     if (cents is! int) return listing['price']?.toString() ?? '';
+    // A negotiable listing at 0 has no price; an empty box says so, "0" would
+    // read as giving it away.
+    final mode = listing['priceMode'] ?? listing['price_mode'];
+    if (cents == 0 && mode == 'negotiable') return '';
     final currency = (listing['currency'] ?? 'XAF').toString();
     final amount = api.fromMinorUnits(cents, currency: currency);
     // 145000, not 145000.0 — the box is a text field and that ends up in
@@ -1328,6 +1337,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               if (_wantsAmount) ...[
                 const SizedBox(height: 16),
                 Row(
+                  // Top, not centre: the negotiable hint under the price makes
+                  // that box taller, and centring dropped Quantity out of line.
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       flex: _isProduct ? 2 : 1,
@@ -1336,15 +1348,22 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                         keyboardType:
                             const TextInputType.numberWithOptions(decimal: true),
                         decoration: InputDecoration(
-                          labelText: l10n.createPriceLabel,
+                          labelText: _amountOptional
+                              ? l10n.createPriceOptionalLabel
+                              : l10n.createPriceLabel,
+                          helperText: _amountOptional
+                              ? l10n.createPriceNegotiableHelper
+                              : null,
+                          helperMaxLines: 3,
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12)),
                         ),
                         validator: (val) {
                           // Only demanded for the modes that carry a number;
-                          // the field is not even built for the others.
-                          if (val == null || val.isEmpty) {
-                            return l10n.createEnterPrice;
+                          // the field is not even built for the others, and
+                          // negotiable may leave it empty.
+                          if (val == null || val.trim().isEmpty) {
+                            return _amountOptional ? null : l10n.createEnterPrice;
                           }
                           final n = double.tryParse(val.replaceAll(',', '.'));
                           // Parsed the same way submission parses it. The old

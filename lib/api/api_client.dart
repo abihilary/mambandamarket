@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
 import 'app_info.dart';
+import 'offline_cache.dart';
 import '../l10n/l10n.dart';
 
 /// A failed API call, carrying the server's machine-readable error code.
@@ -131,17 +132,51 @@ class ApiClient {
     );
   }
 
-  Future<dynamic> get(String path, {Map<String, dynamic>? query}) async =>
-      _decode(await _send(() => _http.get(_uri(path, query), headers: _headers())));
+  /// A read. Answered from [OfflineCache] when there is no connection and a
+  /// copy of this exact read was saved earlier, so screens keep showing what
+  /// they last showed instead of going blank.
+  Future<dynamic> get(String path, {Map<String, dynamic>? query}) async {
+    final uri = _uri(path, query);
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final http.Response res;
+    try {
+      res = await _send(() => _http.get(uri, headers: _headers()));
+    } on ApiException catch (e) {
+      if (e.isNetwork || e.isTimeout) {
+        final saved = OfflineCache.read(userId, uri);
+        if (saved != null) {
+          OfflineCache.showingSaved.value = true;
+          return jsonDecode(saved);
+        }
+      }
+      rethrow;
+    }
+    final body = _decode(res); // throws on an error status, which is not saved
+    OfflineCache.showingSaved.value = false;
+    unawaited(OfflineCache.save(userId, uri, res.body));
+    return body;
+  }
+
+  /// A change. Never answered from the cache and never queued: a message or a
+  /// purchase replayed later from a stale screen is worse than being told it
+  /// did not go. With no connection, the message says so plainly.
+  Future<http.Response> _sendChange(Future<http.Response> Function() call) async {
+    try {
+      return await _send(call);
+    } on ApiException catch (e) {
+      if (e.isNetwork) throw ApiException(0, 'network', l10nNow.offlineChangeNotSaved);
+      rethrow;
+    }
+  }
 
   Future<dynamic> post(String path, [Map<String, dynamic>? body]) async =>
-      _decode(await _send(() => _http.post(_uri(path),
+      _decode(await _sendChange(() => _http.post(_uri(path),
           headers: _headers(), body: jsonEncode(body ?? {}))));
 
   Future<dynamic> patch(String path, [Map<String, dynamic>? body]) async =>
-      _decode(await _send(() => _http.patch(_uri(path),
+      _decode(await _sendChange(() => _http.patch(_uri(path),
           headers: _headers(), body: jsonEncode(body ?? {}))));
 
   Future<dynamic> delete(String path) async =>
-      _decode(await _send(() => _http.delete(_uri(path), headers: _headers())));
+      _decode(await _sendChange(() => _http.delete(_uri(path), headers: _headers())));
 }
