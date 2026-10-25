@@ -1480,5 +1480,211 @@
   "messagesPickThread": "Choisissez une conversation pour la lire ici.",
   "shareLinkCopied": "Lien copié. Collez-le où vous voulez pour le partager.",
   "locationDeniedWeb": "La localisation est bloquée pour ce site. Autorisez-la depuis l’icône à côté de l’adresse web, puis réessayez.",
-  "shareCopyManualTitle": "Copiez ce lien pour le partager"
+  "shareCopyManualTitle": "Copiez ce lien pour le partager",
+  "detailCategory": "Catégorie",
+  "detailWarranty": "Garantie vendeur",
+  "detailInStock": "En stock : {count}",
+  "@detailInStock": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "detailShowAllDetails": "Voir les {count} détails",
+  "@detailShowAllDetails": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "detailShowFewerDetails": "Voir moins",
+  "detailHighlights": "Points forts",
+  "detailBySeller": "Détails fournis par le vendeur.",
+  "detailDescription": "Description",
+  "detailShowMore": "Voir plus",
+  "detailShowLess": "Voir moins",
+  "detailNoDescriptionYet": "Le vendeur n'a pas ajouté de description.",
+  "detailNegotiableChip": "Négociable",
+  "detailDeliveryQuote": "Livraison : demandez un devis Mambanda",
+  "detailBuyerTipsTitle": "Avant de payer",
+  "detailBuyerTipsMore": "Voir les conseils ({count})",
+  "@detailBuyerTipsMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tipDefault1": "Voyez et testez l'article avant de payer.",
+  "tipDefault2": "Rencontrez-vous dans un lieu public fréquenté, en journée.",
+  "tipDefault3": "N'envoyez jamais d'acompte par Mobile Money à quelqu'un que vous n'avez pas rencontré.",
+  "tipProtected": "Achat protégé : payez dans l'application, jamais en dehors.",
+  "ctaQuote": "Demander un devis",
+  "ctaApply": "Postuler",
+  "ctaVisit": "Demander une visite",
+  "sellerPrivate": "Particulier",
+  "sellerShop": "Boutique",
+  "sellerShopVerified": "Boutique vérifiée",
+  "sellerBusinessVerified": "Entreprise vérifiée",
+  "sellerListings": "{count, plural, =1{1 annonce} other{{count} annonces}}",
+  "@sellerListings": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sellerMemberSince": "Membre depuis {monthYear}",
+  "@sellerMemberSince": {
+    "placeholders": {
+      "monthYear": {
+        "type": "String"
+      }
+    }
+  },
+  "sellerNew": "Nouveau sur Mambanda",
+  "sellerReviews": "{avg} · {count} avis",
+  "@sellerReviews": {
+    "placeholders": {
+      "avg": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sellerViewShop": "Voir la boutique",
+  "priceNegShort": "nég.",
+  "priceFromShort": "Dès {price}",
+  "@priceFromShort": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "createWhatTitle": "Que vendez-vous ?",
+  "createKindLine": "{kind} · modifier",
+  "@createKindLine": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "categoryPickerSomethingElse": "Autre chose dans {name}",
+  "@categoryPickerSomethingElse": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "createPhotoCount": "{count}/{max}",
+  "@createPhotoCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "createPhotoMax": "Vous pouvez ajouter jusqu'à {max} photos.",
+  "@createPhotoMax": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "createCoverBadge": "Couverture",
+  "createCoverHint": "La 1re photo sert de couverture.",
+  "createPhotoTipsTitle": "Photos qui font vendre ({count})",
+  "@createPhotoTipsTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "createPhotoMin": "Ce type d'annonce marche mieux avec au moins {count} photos.",
+  "@createPhotoMin": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "createDetailsProgress": "{done} sur {total} renseignés · les acheteurs filtrent avec",
+  "@createDetailsProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "createDetailsMore": "Plus de détails (facultatif) · {count}",
+  "@createDetailsMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "createDetailsRecommended": "recommandé",
+  "createConditionPick": "Choisissez l'état",
+  "createTitleSuggestion": "Titre suggéré : {title}",
+  "@createTitleSuggestion": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "createTitleUse": "Utiliser",
+  "createTitleUsed": "Titre remplacé",
+  "createUndo": "Annuler",
+  "createDescPrompts": "Les acheteurs demandent souvent :",
+  "createPriceLabelCustom": "{label} (FCFA)",
+  "@createPriceLabelCustom": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "createPriceCheck": "{price} pour cet article, c'est bien ça ?",
+  "@createPriceCheck": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "createPriceCheckYes": "Oui, publier",
+  "createPriceCheckFix": "Corriger le prix",
+  "createLocationLabel": "Quartier, ville",
+  "createLocationExample": "ex. Bonamoussadi, Douala",
+  "createEditNewDetails": "Nouveau : les annonces {category} ont maintenant des détails. Remplissez-les pour apparaître dans les filtres.",
+  "@createEditNewDetails": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "shareMenuTitle": "Partager l'annonce",
+  "shareCopyLink": "Copier le lien",
+  "shareCopied": "Lien copié",
+  "shareWhatsApp": "Envoyer sur WhatsApp",
+  "shareFacebook": "Partager sur Facebook",
+  "shareMoreOptions": "Plus d'options…"
 }

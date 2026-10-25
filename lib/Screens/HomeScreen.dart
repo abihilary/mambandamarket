@@ -737,12 +737,18 @@ class HomeScreenState extends State<HomeScreen> {
                               itemCount: gallery.length,
                               itemBuilder: (context, index) {
                                 final item = gallery[index];
+                                // Badge and price only: the rail's 218 has no
+                                // room for a spec line.
+                                final card = cardText(context, item, _categories,
+                                    withSpec: false);
                                 return Padding(
                                   padding: const EdgeInsets.only(right: 12.0),
                                   child: ItemCard(
                                     imageUrl: item.primaryImageUrl,
                                     title: item.title,
-                                    price: item.displayPrice,
+                                    price: card.price,
+                                    priceTail: card.priceTail,
+                                    badge: card.badge,
                                     location: item.city,
                                     distanceMeters: item.distanceMeters,
                                     isCompact: true,
@@ -770,36 +776,43 @@ class HomeScreenState extends State<HomeScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 16.0),
                           sliver: ValueListenableBuilder<Set<String>>(
                             valueListenable: _favorites.favoriteIds,
-                            builder: (context, favIds, _) => SliverGrid(
-                              gridDelegate:
-                              // Column count from the width available, not a
-                              // fixed two. On a tablet, two columns stretched
-                              // each card to half a very wide screen: enormous
-                              // images, a third of the screen left empty
-                              // between rows. 200dp is the width a card was
-                              // drawn for, so a phone still gets two and a
-                              // tablet gets four.
-                              const SliverGridDelegateWithMaxCrossAxisExtent(
-                                maxCrossAxisExtent: 200,
-                                mainAxisSpacing: 16,
-                                crossAxisSpacing: 12,
-                                childAspectRatio: 0.72,
-                              ),
-                              delegate: SliverChildBuilderDelegate(
-                                    (context, index) {
-                                  final item = _listings[index];
-                                  return ItemCard(
-                                    imageUrl: item.primaryImageUrl,
-                                    title: item.title,
-                                    price: item.displayPrice,
-                                    location: item.city,
-                                    distanceMeters: item.distanceMeters,
-                                    isFavorite: favIds.contains(item.id),
-                                    onTap: () => _openItemDetail(item),
-                                    onFavoriteToggle: () => _toggleFavorite(item),
-                                  );
-                                },
-                                childCount: _listings.length,
+                            builder: (context, favIds, _) => SliverLayoutBuilder(
+                              builder: (context, constraints) => SliverGrid(
+                                gridDelegate:
+                                // Column count from the width available, not a
+                                // fixed two. On a tablet, two columns stretched
+                                // each card to half a very wide screen: enormous
+                                // images, a third of the screen left empty
+                                // between rows. 200dp is the width a card was
+                                // drawn for, so a phone still gets two and a
+                                // tablet gets four.
+                                ItemCard.gridDelegate(
+                                  constraints.crossAxisExtent,
+                                  MediaQuery.textScalerOf(context),
+                                  spacing: 12,
+                                  runSpacing: 16,
+                                ),
+                                delegate: SliverChildBuilderDelegate(
+                                      (context, index) {
+                                    final item = _listings[index];
+                                    final card =
+                                        cardText(context, item, _categories);
+                                    return ItemCard(
+                                      imageUrl: item.primaryImageUrl,
+                                      title: item.title,
+                                      price: card.price,
+                                      priceTail: card.priceTail,
+                                      specLine: card.specLine,
+                                      badge: card.badge,
+                                      location: item.city,
+                                      distanceMeters: item.distanceMeters,
+                                      isFavorite: favIds.contains(item.id),
+                                      onTap: () => _openItemDetail(item),
+                                      onFavoriteToggle: () => _toggleFavorite(item),
+                                    );
+                                  },
+                                  childCount: _listings.length,
+                                ),
                               ),
                             ),
                           ),

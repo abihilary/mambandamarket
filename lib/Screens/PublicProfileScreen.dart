@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../Components/ItemCard.dart';
 import '../Components/ItemDetailScreen.dart';
 import '../Components/VerifiedBadge.dart';
+import '../Components/listing_details.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
@@ -36,10 +37,21 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   bool _loading = true;
   bool _failed = false;
 
+  /// For the shop's spec lines and prices; the shop still draws without them.
+  List<Category> _categories = const [];
+
   @override
   void initState() {
     super.initState();
     _load();
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final c = await ListingsRepository.instance.cachedCategories();
+      if (mounted) setState(() => _categories = c);
+    } catch (_) {}
   }
 
   Future<void> _load() async {
@@ -104,7 +116,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 padding: EdgeInsets.only(bottom: safeBottom(context, 16)),
                 children: [
                   _Header(data: data, onCallSupport: _callSupport),
-                  _Shop(data: data, onOpen: _openListing),
+                  _Shop(
+                    data: data,
+                    categories: _categories,
+                    onOpen: _openListing,
+                  ),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -258,20 +274,18 @@ class _Header extends StatelessWidget {
                   ),
                 ],
               ),
-              if (data.ratingCount > 0) ...[
+              // The same chips as the seller card on a listing, so the two
+              // never disagree: listings, membership, and a rating only once
+              // three reviews stand behind it, in the readable amber.
+              if (data.listings.isNotEmpty ||
+                  profile.createdAt != null ||
+                  data.ratingCount >= SellerChips.minReviews) ...[
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Icon(Icons.star_rounded, size: 18, color: Colors.amber.shade700),
-                    const SizedBox(width: 4),
-                    Text(
-                      data.ratingAverage.toStringAsFixed(1),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(l10n.profileRatingCount(data.ratingCount),
-                        style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13)),
-                  ],
+                SellerChips(
+                  listings: data.listings.length,
+                  memberSince: profile.createdAt,
+                  ratingAvg: data.ratingAverage,
+                  ratingCount: data.ratingCount,
                 ),
               ],
               if (store?.description?.isNotEmpty ?? false) ...[
@@ -317,9 +331,14 @@ class _Header extends StatelessWidget {
 /// Their shop. Empty is a real answer — most accounts are buyers.
 class _Shop extends StatelessWidget {
   final PublicProfile data;
+  final List<Category> categories;
   final ValueChanged<Listing> onOpen;
 
-  const _Shop({required this.data, required this.onOpen});
+  const _Shop({
+    required this.data,
+    required this.categories,
+    required this.onOpen,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -356,26 +375,33 @@ class _Shop extends StatelessWidget {
               ),
             )
           else
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: listings.length,
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 220,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.68,
+            LayoutBuilder(
+              builder: (context, box) => GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: listings.length,
+                gridDelegate: ItemCard.gridDelegate(
+                  box.maxWidth,
+                  MediaQuery.textScalerOf(context),
+                  maxTileWidth: 220,
+                  spacing: 12,
+                  runSpacing: 12,
+                ),
+                itemBuilder: (context, i) {
+                  final item = listings[i];
+                  final card = cardText(context, item, categories);
+                  return ItemCard(
+                    imageUrl: item.primaryImageUrl,
+                    title: item.title,
+                    price: card.price,
+                    priceTail: card.priceTail,
+                    specLine: card.specLine,
+                    badge: card.badge,
+                    location: item.city,
+                    onTap: () => onOpen(item),
+                  );
+                },
               ),
-              itemBuilder: (_, i) {
-                final item = listings[i];
-                return ItemCard(
-                  imageUrl: item.primaryImageUrl,
-                  title: item.title,
-                  price: item.displayPrice,
-                  location: item.city,
-                  onTap: () => onOpen(item),
-                );
-              },
             ),
         ],
       ),

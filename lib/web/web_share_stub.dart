@@ -9,5 +9,8 @@ Future<WebShareOutcome> webShare({
 }) async =>
     WebShareOutcome.unsupported;
 
+/// Only the web build has a share sheet to ask about.
+bool webCanShare() => false;
+
 /// Only the web build copies through the browser.
 Future<bool> webCopy(String text) async => false;

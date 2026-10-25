@@ -1,13 +1,18 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../Screens/CheckoutScreen.dart';
 import '../Screens/PublicProfileScreen.dart';
+import '../Screens/SearchScreen.dart';
 import '../Screens/ShippingRequestScreen.dart';
 import '../Service/ChatRoomScreen.dart';
 import '../api/api_client.dart';
+import '../api/listing_attributes.dart';
+import '../api/listing_guide.dart';
+import '../api/listing_presentation.dart';
 import '../api/models.dart' as api;
 import '../api/repositories.dart';
 import '../api/share_links.dart';
@@ -17,9 +22,10 @@ import 'glass_surface.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_tokens.dart';
 import 'ItemCard.dart';
-import 'VerifiedBadge.dart';
+import 'listing_details.dart';
 import 'report_sheet.dart';
 import 'require_account.dart';
+import 'share_menu.dart';
 import '../theme/breakpoints.dart';
 import 'web_share_flow.dart';
 
@@ -70,6 +76,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   /// Prevents multiple share requests from being triggered by repeated taps.
   bool _isSharing = false;
 
+  /// What pressed the share button last. A browser cannot be asked whether it
+  /// has a touch screen, but the tap itself says whether it was a finger.
+  PointerDeviceKind? _sharePointer;
+
   late List<String> _imageList;
 
   List<api.Listing> _relatedItems = [];
@@ -94,16 +104,28 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     }
   }
 
-  /// The listing's answered details, as (label, value) pairs.
-  List<(String, String)> _detailRows(api.Listing listing) {
-    final locale = Localizations.localeOf(context);
-    final yes = context.l10n.detailsYes;
-    return [
-      for (final f in api.attributeFieldsFor(_categories, listing.categorySlug))
-        if (f.describe(listing.attributes[f.key], locale, yes: yes)
-            case final String v)
-          (f.label(locale), v),
-    ];
+  /// The listing's category template, leaf fields first.
+  List<AttrField> get _fields =>
+      api.attributeFieldsFor(_categories, _listing?.categorySlug);
+
+  /// How the category wants it shown: price label, buyer tips, whether
+  /// condition, warranty and delivery mean anything, the button's wording.
+  ListingGuide get _guide => api.guideFor(_categories, _listing?.categorySlug);
+
+  api.Category? get _category {
+    final slug = _listing?.categorySlug;
+    for (final c in _categories) {
+      if (c.slug == slug) return c;
+    }
+    return null;
+  }
+
+  /// Everything the details block shows, worked out once per build.
+  ListingDetails _detailsOf(BuildContext context) {
+    final listing = _listing;
+    if (listing == null) return ListingDetails.empty;
+    return ListingDetails.of(listing, _fields, _guide, context.l10n,
+        Localizations.localeOf(context));
   }
 
   /// Only listings that the backend marks as buyable can use checkout.
@@ -230,7 +252,22 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     // there either. The title still travels as the share's subject.
     final link = _buildListingShareUrl() ?? title;
 
-    if (kIsWeb) return _shareOnWeb(title, link);
+    if (kIsWeb) {
+      // A desktop gets our own menu, "Copy link" first. A phone browser keeps
+      // its share sheet, sent the bare link exactly as the app does.
+      final touch = _sharePointer == PointerDeviceKind.touch ||
+          _sharePointer == PointerDeviceKind.stylus;
+      if (context.isWideLayout || !touch) {
+        return showShareMenu(
+          context,
+          anchor: buttonContext,
+          title: title,
+          priceText: listing?.displayPrice ?? widget.price,
+          link: link,
+        );
+      }
+      return _shareOnWeb(title, link);
+    }
 
     final renderObject =
         buttonContext.findRenderObject();
@@ -804,10 +841,13 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   // IMAGE GALLERY
   // ===========================================================================
 
+  /// [indicatorLift] raises the dots and the counter clear of whatever sits
+  /// on the photo's bottom edge — the key-facts card's top on a phone.
   Widget _buildGallery(
     BuildContext context,
     ColorScheme scheme, {
     BoxFit fit = BoxFit.cover,
+    double indicatorLift = 0,
   }) {
     if (_imageList.isEmpty) {
       return Container(
@@ -897,8 +937,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
         // Page indicator (Number)
         Positioned(
-          bottom: 14,
-          right: 14,
+          bottom: 14 + indicatorLift,
+          right: 14 + indicatorLift,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
@@ -919,8 +959,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         // Dot indicators
         if (_imageList.length > 1)
           Positioned(
-            bottom: 16,
-            left: 16,
+            bottom: 16 + indicatorLift,
+            left: 16 + indicatorLift,
             child: Row(
               children: List.generate(
                 _imageList.length,
@@ -946,171 +986,159 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     );
   }
 
-  /// Title, price, seller, details and description — the page's words.
-  /// One column on a phone; the right-hand column beside the photos on a
-  /// desktop.
-  List<Widget> _infoChildren(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+  /// The key-facts card: where, what, how much, the facts a buyer decides on.
+  /// On a phone it hangs from the gallery ([attachedTop]); on a desktop it
+  /// heads the sticky column and carries the buttons ([actions]).
+  Widget _keyFactsCard(
+    BuildContext context, {
+    Widget? actions,
+    bool attachedTop = false,
+  }) {
+    final l10n = context.l10n;
+    final locale = Localizations.localeOf(context);
     final listing = _listing;
-    final title = listing?.title ?? widget.title;
-    final price = listing?.displayPrice ?? widget.price;
-    // Only a product has a condition. The fallback string is "Local pickup
-    // only", which is a sentence about delivering an object — printed beside
-    // a job advert it is nonsense, so non-products show no chip at all.
-    final showsCondition = listing == null || listing.isProduct;
-    final condition = listing?.condition ?? context.l10n.detailConditionFallback;
-    final city = listing?.city ?? '—';
-    final description = (listing?.description?.trim().isNotEmpty ?? false)
-        ? listing!.description!
-        : context.l10n.detailNoDescription;
+    final guide = _guide;
+    final category = _category;
+    final city = listing?.city?.trim() ?? '';
+    final views = listing?.viewCount ?? 0;
+    return KeyFactsCard(
+      attachedTop: attachedTop,
+      title: listing?.title ?? widget.title,
+      // Until the listing arrives, the price the feed already showed.
+      price: listing == null
+          ? (main: widget.price, tail: null, negotiableChip: false)
+          : priceLine(listing, guide, l10n),
+      priceLabel: guide.priceLabel(locale),
+      city: city,
+      onCityTap: city.isEmpty ? null : () => _openSearch(query: city),
+      facts: listing == null
+          ? const []
+          : keyFacts(listing, _fields, guide, l10n, locale),
+      onDeliveryTap: _showsShipping ? _shipThis : null,
+      categoryLabel: category?.displayLabel(locale),
+      onCategoryTap: category == null
+          ? null
+          : () => _openSearch(categorySlug: category.slug),
+      posted: _postedLabel,
+      // Below ten the count is mostly link-preview crawlers, and says nothing.
+      views: views >= 10 ? l10n.detailViews(views) : null,
+      actions: actions,
+    );
+  }
+
+  /// "Achat protégé", directly under the key facts — only where it is true:
+  /// a buyable listing whose company sells through escrow.
+  List<Widget> _escrowBand(BuildContext context) {
+    if (!_isBuyable || !(_listing?.companyEscrow ?? true)) return const [];
     return [
-                  if (city != '—' && city.isNotEmpty)
-                    Row(
-                      children: [
-                        Icon(Icons.location_on_outlined, size: 17, color: scheme.primary),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            city,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: scheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  const SizedBox(height: 8),
-                  Text(
-                    title,
-                    style: const TextStyle(fontSize: 21, fontWeight: FontWeight.bold, height: 1.2),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          price,
-                          style: TextStyle(
-                            fontSize: 25,
-                            fontWeight: FontWeight.bold,
-                            color: scheme.primary,
-                          ),
-                        ),
-                      ),
-                      if (showsCondition)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: scheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            condition,
-                            style: const TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                    ],
-                  ),
-                  if (_isBuyable) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: AppColors.success.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.verified, size: 16, color: AppColors.success),
-                          const SizedBox(width: 6),
-                          Text(
-                            context.l10n.detailVerifiedCompany,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.success,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  const Divider(height: 40),
-                  Row(
-                    children: [
-                      Icon(Icons.calendar_today_outlined, size: 16, color: scheme.onSurfaceVariant),
-                      const SizedBox(width: 5),
-                      Flexible(
-                        child: Text(
-                          _postedLabel,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
-                        ),
-                      ),
-                      const SizedBox(width: 18),
-                      Icon(Icons.remove_red_eye_outlined,
-                          size: 16, color: scheme.onSurfaceVariant),
-                      const SizedBox(width: 5),
-                      Text(
-                        context.l10n.detailViews(listing?.viewCount ?? 0),
-                        style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
-                      ),
-                    ],
-                  ),
-                  const Divider(height: 40),
-                  if (listing != null && listing.sellerId.isNotEmpty) ...[
-                    _SellerRow(listing: listing),
-                    const Divider(height: 40),
-                  ],
-                  Text(context.l10n.detailDetails,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  // Sizes, subjects, areas covered — whatever the category
-                  // asked the seller for.
-                  if (listing != null)
-                    for (final (label, value) in _detailRows(listing))
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              width: 140,
-                              child: Text(
-                                label,
-                                style: TextStyle(
-                                  color: scheme.onSurfaceVariant,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Text(
-                                value,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  if (listing != null && _detailRows(listing).isNotEmpty)
-                    const SizedBox(height: 8),
-                  Text(
-                    description,
-                    style: TextStyle(height: 1.5, color: scheme.onSurface, fontSize: 14),
-                  ),
+      const SizedBox(height: 12),
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.success.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.lock_outline, size: 16, color: AppColors.success),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                context.l10n.detailBuyerProtected,
+                style: const TextStyle(
+                  fontSize: 12,
+                  height: 1.3,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.success,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     ];
+  }
+
+  /// Details, description, [seller] when given, and the buyer tips — the
+  /// long part of the page, in that order. Under the key facts on a phone;
+  /// under the gallery on a desktop, where the table may run in two columns
+  /// and the seller sits in the side column instead.
+  List<Widget> _bodySections(
+    BuildContext context,
+    ListingDetails details, {
+    int columns = 1,
+    int descriptionLines = 5,
+    Widget? seller,
+  }) {
+    final listing = _listing;
+    final description = listing?.description?.trim() ?? '';
+    // An empty description is only worth a line when the details are thin,
+    // and never while the full listing is still on its way.
+    final showDescription = description.isNotEmpty ||
+        (!_loadingDetail && listing != null && details.rows.length < 4);
+    final tips = listing == null
+        ? const <String>[]
+        : BuyerTipsCard.tipsFor(
+            listing,
+            _guide,
+            context.l10n,
+            Localizations.localeOf(context),
+            protected: _isBuyable && listing.companyEscrow,
+          );
+    return [
+      if (!details.isEmpty) ...[
+        const SizedBox(height: 24),
+        DetailsTable(details: details, columns: columns),
+      ],
+      if (showDescription) ...[
+        const SizedBox(height: 24),
+        CollapsibleDescription(
+          text: description,
+          maxLines: descriptionLines,
+        ),
+      ],
+      if (seller != null) ...[
+        const SizedBox(height: 24),
+        seller,
+      ],
+      if (tips.isNotEmpty) ...[
+        SizedBox(height: seller != null ? 16 : 24),
+        BuyerTipsCard(tips: tips),
+      ],
+    ];
+  }
+
+  Widget? _sellerCard() {
+    final listing = _listing;
+    if (listing == null || listing.sellerId.isEmpty) return null;
+    return SellerCard(listing: listing, onTap: () => _openSeller(listing));
+  }
+
+  void _openSeller(api.Listing listing) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PublicProfileScreen(
+          userId: listing.sellerId,
+          initialName: listing.sellerLabel,
+        ),
+      ),
+    );
+  }
+
+  /// Search for the place or the category, from the key-facts card.
+  void _openSearch({String? query, String? categorySlug}) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SearchScreen(
+          initialQuery: query,
+          initialCategorySlug: categorySlug,
+        ),
+      ),
+    );
   }
 
   Widget _relatedHeader(BuildContext context) {
@@ -1163,41 +1191,48 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
     return SliverPadding(
       padding: padding,
-      sliver: SliverGrid(
-        // Columns from the width, as on Home: a fixed two made each card half
-        // a desktop window wide.
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 220,
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 12,
-          childAspectRatio: 0.72,
-        ),
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final item = _relatedItems[index];
-            return ItemCard(
-              imageUrl: item.primaryImageUrl,
-              title: item.title,
-              price: item.displayPrice,
-              location: item.city,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ItemDetailScreen(
-                      title: item.title,
-                      price: item.displayPrice,
-                      imageUrl: item.primaryImageUrl,
-                      images: item.imageUrls,
-                      listingId: item.id,
-                      listing: item,
+      // Columns from the width, as on Home: a fixed two made each card half
+      // a desktop window wide.
+      sliver: SliverLayoutBuilder(
+        builder: (context, constraints) => SliverGrid(
+          gridDelegate: ItemCard.gridDelegate(
+            constraints.crossAxisExtent,
+            MediaQuery.textScalerOf(context),
+            maxTileWidth: 220,
+            spacing: 12,
+            runSpacing: 16,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final item = _relatedItems[index];
+              final card = cardText(context, item, _categories);
+              return ItemCard(
+                imageUrl: item.primaryImageUrl,
+                title: item.title,
+                price: card.price,
+                priceTail: card.priceTail,
+                specLine: card.specLine,
+                badge: card.badge,
+                location: item.city,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ItemDetailScreen(
+                        title: item.title,
+                        price: item.displayPrice,
+                        imageUrl: item.primaryImageUrl,
+                        images: item.imageUrls,
+                        listingId: item.id,
+                        listing: item,
+                      ),
                     ),
-                  ),
-                );
-              },
-            );
-          },
-          childCount: _relatedItems.length,
+                  );
+                },
+              );
+            },
+            childCount: _relatedItems.length,
+          ),
         ),
       ),
     );
@@ -1235,19 +1270,49 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               ),
             ),
             actions: _headerActions(context),
-            flexibleSpace: FlexibleSpaceBar(
-              collapseMode: CollapseMode.parallax,
-              background: _buildGallery(context, scheme),
-            ),
+            // The key-facts card overlaps the photo by its top 16px. That
+            // piece is drawn here, in the bar, because a pinned bar paints
+            // over the slivers after it: a card shifted up from below would
+            // disappear under the picture.
+            flexibleSpace: Builder(builder: (context) {
+              final bar = context
+                  .dependOnInheritedWidgetOfExactType<FlexibleSpaceBarSettings>();
+              final span = bar == null ? 0.0 : bar.maxExtent - bar.minExtent;
+              final open = bar == null || span <= 0
+                  ? 1.0
+                  : ((bar.currentExtent - bar.minExtent) / span).clamp(0.0, 1.0);
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  FlexibleSpaceBar(
+                    collapseMode: CollapseMode.parallax,
+                    background:
+                        _buildGallery(context, scheme, indicatorLift: 16),
+                  ),
+                  Positioned(
+                    left: 16,
+                    right: 16,
+                    bottom: 0,
+                    height: 16,
+                    // Gone by the time the card reaches the toolbar and
+                    // starts to slide beneath it.
+                    child: KeyFactsCap(opacity: (open / 0.2).clamp(0.0, 1.0)),
+                  ),
+                ],
+              );
+            }),
           ),
 
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ..._infoChildren(context),
+                  _keyFactsCard(context, attachedTop: true),
+                  ..._escrowBand(context),
+                  ..._bodySections(context, _detailsOf(context),
+                      seller: _sellerCard()),
                   const Divider(height: 56),
                   _relatedHeader(context),
                 ],
@@ -1255,11 +1320,11 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             ),
           ),
           _buildRelatedSection(),
-          // Clearance for the action bar the content now runs beneath. Sized
-          // for the tallest version of that bar — buyer-protection line, buy
-          // button and message button — so the last row of related items is
-          // never left half-covered by it.
-          const SliverToBoxAdapter(child: SizedBox(height: 165)),
+          // Clearance for the action bar the content now runs beneath, so the
+          // last row of related items is never left half-covered by it.
+          SliverToBoxAdapter(
+            child: SizedBox(height: MediaQuery.viewPaddingOf(context).bottom + 96),
+          ),
         ],
       ),
       bottomNavigationBar: GlassSurface(
@@ -1276,51 +1341,26 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     );
   }
 
-  /// Buy, message and ship, with the buyer-protection line above them.
+  /// Buy, message and ship. The buyer-protection line that sat above them is
+  /// now the band under the key facts, said once.
   Widget _buildActions(BuildContext context) {
-    return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_isBuyable && (_listing?.companyEscrow ?? true)) ...[
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.lock_outline, size: 15, color: AppColors.success),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        context.l10n.detailBuyerProtected,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          height: 1.3,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.success,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-              ],
-              Row(
-                children: [
-                  if (_isBuyable) ...[
-                    Expanded(flex: 3, child: _buyButton()),
-                    const SizedBox(width: 10),
-                    Expanded(flex: 2, child: _chatButton(primary: false)),
-                  ] else
-                    Expanded(child: _chatButton(primary: true)),
-                  // The way in sits with the other actions rather than
-                  // somewhere they would have to go looking for. Icon-only and
-                  // last, so it never competes with buying or messaging.
-                  if (_showsShipping) ...[
-                    const SizedBox(width: 10),
-                    _shipButton(),
-                  ],
-                ],
-              ),
-            ],
-            );
+    return Row(
+      children: [
+        if (_isBuyable) ...[
+          Expanded(flex: 3, child: _buyButton()),
+          const SizedBox(width: 10),
+          Expanded(flex: 2, child: _chatButton(primary: false)),
+        ] else
+          Expanded(child: _chatButton(primary: true)),
+        // The way in sits with the other actions rather than
+        // somewhere they would have to go looking for. Icon-only and
+        // last, so it never competes with buying or messaging.
+        if (_showsShipping) ...[
+          const SizedBox(width: 10),
+          _shipButton(),
+        ],
+      ],
+    );
   }
 
   /// The app bar's buttons: save, share, report.
@@ -1348,20 +1388,23 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Builder(builder: (shareButtonContext) {
-                  return CircleAvatar(
-                    backgroundColor: Colors.black.withValues(alpha: 0.45),
-                    child: IconButton(
-                      onPressed: _isSharing ? null : () => _shareListing(shareButtonContext),
-                      icon: _isSharing
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.share, color: Colors.white, size: 20),
+                  return Listener(
+                    onPointerDown: (e) => _sharePointer = e.kind,
+                    child: CircleAvatar(
+                      backgroundColor: Colors.black.withValues(alpha: 0.45),
+                      child: IconButton(
+                        onPressed: _isSharing ? null : () => _shareListing(shareButtonContext),
+                        icon: _isSharing
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.share, color: Colors.white, size: 20),
+                      ),
                     ),
                   );
                 }),
@@ -1403,56 +1446,83 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     ];
   }
 
-  /// The desktop page: photos on the left at a size that shows the whole
-  /// picture, the words and the buttons beside them, related items below.
+  /// The desktop page: the photos and everything long — details,
+  /// description, tips, related items — in a column that scrolls, and beside
+  /// it a sticky one with the key facts, the buttons and the seller.
   ///
   /// On a phone the gallery is a 320px header the page scrolls over, which at
   /// 1440px wide became a letterbox strip cropping every photo to its middle.
+  /// And with the words and buttons in one column beside the photos, a long
+  /// description pushed the buttons off the screen.
   Widget _buildWide(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final title = _listing?.title ?? widget.title;
     final side = frameInsets(context, min: 32);
+    final seller = _sellerCard();
 
     return Scaffold(
       appBar: AppBar(
         title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
         actions: _headerActions(context),
       ),
-      body: CustomScrollView(
-        slivers: [
-          SliverPadding(
-            padding: side.copyWith(top: 24, bottom: 8),
-            sliver: SliverToBoxAdapter(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 7,
-                    child: _buildWideGallery(context, scheme),
-                  ),
-                  const SizedBox(width: 40),
-                  Expanded(
-                    flex: 5,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ..._infoChildren(context),
-                        const SizedBox(height: 28),
-                        _buildActions(context),
-                      ],
+      body: Padding(
+        padding: side,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              flex: 7,
+              child: CustomScrollView(
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.only(top: 24),
+                    sliver: SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildWideGallery(context, scheme),
+                          ..._bodySections(
+                            context,
+                            _detailsOf(context),
+                            columns: context.isLargeLayout ? 2 : 1,
+                            descriptionLines: 8,
+                          ),
+                          const Divider(height: 56),
+                          _relatedHeader(context),
+                        ],
+                      ),
                     ),
                   ),
+                  _buildRelatedSection(padding: EdgeInsets.zero),
+                  const SliverToBoxAdapter(child: SizedBox(height: 48)),
                 ],
               ),
             ),
-          ),
-          SliverPadding(
-            padding: side.copyWith(top: 24),
-            sliver: SliverToBoxAdapter(child: _relatedHeader(context)),
-          ),
-          _buildRelatedSection(padding: side),
-          const SliverToBoxAdapter(child: SizedBox(height: 48)),
-        ],
+            const SizedBox(width: 32),
+            // Its own scroll, which only moves when the column is taller than
+            // the window: the buttons stay put however long the page gets.
+            SizedBox(
+              width: 380,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _keyFactsCard(context, actions: _buildActions(context)),
+                      ..._escrowBand(context),
+                      if (seller != null) ...[
+                        const SizedBox(height: 16),
+                        seller,
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1583,9 +1653,13 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   /// The kind check is not cosmetic: before 0048 every listing was a product,
   /// so a job advert carried a working "ship this item" button that opened a
   /// courier request for a vacancy.
+  ///
+  /// The category can switch it off as well (`listing_guide.delivery`): a
+  /// plot of land is filed as a product, and nobody ships one.
   bool get _showsShipping =>
       _listing != null &&
       _listing!.isProduct &&
+      _guide.delivery &&
       ShippingRepository.instance.enabled;
 
   Widget _shipButton() {
@@ -1661,8 +1735,17 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           )
         : const Icon(Icons.chat_bubble_outline);
 
+    // Worded for the category — "Ask for a visit" on a flat, "Apply" on a
+    // job — but every one opens the same chat.
+    final l10n = context.l10n;
     final label = Text(
-      context.l10n.detailMessageSeller,
+      switch (_guide.cta) {
+        'quote' => l10n.ctaQuote,
+        'apply' => l10n.ctaApply,
+        'visit' => l10n.ctaVisit,
+        _ => l10n.detailMessageSeller,
+      },
+      textAlign: TextAlign.center,
       style: TextStyle(fontSize: primary ? 15 : 13, fontWeight: FontWeight.bold),
     );
 
@@ -1691,88 +1774,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       onPressed: disabled ? null : _onChatPressed,
       icon: icon,
       label: label,
-    );
-  }
-}
-
-class _SellerRow extends StatelessWidget {
-  final api.Listing listing;
-  const _SellerRow({required this.listing});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
-    final name = (listing.sellerLabel?.trim().isNotEmpty ?? false)
-        ? listing.sellerLabel!
-        : l10n.profileFallbackName;
-    final image = listing.sellerImageUrl;
-    final hasImage = image != null && image.trim().isNotEmpty;
-
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PublicProfileScreen(
-              userId: listing.sellerId,
-              initialName: listing.sellerLabel,
-            ),
-          ),
-        );
-      },
-      borderRadius: BorderRadius.circular(14),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: scheme.primary.withValues(alpha: 0.12),
-              backgroundImage: hasImage ? CachedNetworkImageProvider(image!) : null,
-              child: hasImage
-                  ? null
-                  : Text(
-                      name.isEmpty ? '?' : name[0].toUpperCase(),
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 17, color: scheme.primary),
-                    ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(l10n.detailSoldBy,
-                      style: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant)),
-                  const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      if (listing.sellerVerified) ...[
-                        const SizedBox(width: 5),
-                        const VerifiedBadge(dense: true),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(l10n.profileViewSeller,
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: scheme.primary)),
-            const SizedBox(width: 2),
-            Icon(Icons.chevron_right, size: 19, color: scheme.primary),
-          ],
-        ),
-      ),
     );
   }
 }

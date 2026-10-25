@@ -1844,5 +1844,262 @@
   "messagesPickThread": "Pick a conversation to read it here.",
   "shareLinkCopied": "Link copied. Paste it anywhere to share.",
   "locationDeniedWeb": "Location is blocked for this site. Allow it from the icon beside the web address, then try again.",
-  "shareCopyManualTitle": "Copy this link to share it"
+  "shareCopyManualTitle": "Copy this link to share it",
+  "detailCategory": "Category",
+  "@detailCategory": {
+    "description": "Detail page: the category row label."
+  },
+  "detailWarranty": "Seller warranty",
+  "@detailWarranty": {
+    "description": "Detail page: the seller offers a guarantee."
+  },
+  "detailInStock": "In stock: {count}",
+  "@detailInStock": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "detailShowAllDetails": "Show all {count} details",
+  "@detailShowAllDetails": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "detailShowFewerDetails": "Show fewer",
+  "detailHighlights": "Highlights",
+  "@detailHighlights": {
+    "description": "Detail page: sub-head over the true yes/no details."
+  },
+  "detailBySeller": "Details provided by the seller.",
+  "@detailBySeller": {
+    "description": "Footnote under the details table."
+  },
+  "detailDescription": "Description",
+  "detailShowMore": "Show more",
+  "detailShowLess": "Show less",
+  "detailNoDescriptionYet": "The seller hasn't added a description.",
+  "detailNegotiableChip": "Negotiable",
+  "@detailNegotiableChip": {
+    "description": "Chip beside a negotiable price that states an amount."
+  },
+  "detailDeliveryQuote": "Delivery: ask Mambanda for a quote",
+  "@detailDeliveryQuote": {
+    "description": "Detail page action row: opens the shipping request. Makes no promise."
+  },
+  "detailBuyerTipsTitle": "Before you pay",
+  "detailBuyerTipsMore": "See all tips ({count})",
+  "@detailBuyerTipsMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tipDefault1": "See and test the item before you pay.",
+  "@tipDefault1": {
+    "description": "Default buyer tip for a product category without its own."
+  },
+  "tipDefault2": "Meet in a busy public place, in daylight.",
+  "tipDefault3": "Never send a Mobile Money deposit to someone you haven't met.",
+  "tipProtected": "Protected purchase: pay in the app, never outside it.",
+  "@tipProtected": {
+    "description": "First buyer tip on an escrow-protected listing."
+  },
+  "ctaQuote": "Ask for a quote",
+  "@ctaQuote": {
+    "description": "Bottom button for services: opens the chat."
+  },
+  "ctaApply": "Apply",
+  "@ctaApply": {
+    "description": "Bottom button for jobs: opens the chat."
+  },
+  "ctaVisit": "Ask for a visit",
+  "@ctaVisit": {
+    "description": "Bottom button for property: opens the chat."
+  },
+  "sellerPrivate": "Private seller",
+  "sellerShop": "Shop",
+  "sellerShopVerified": "Verified shop",
+  "sellerBusinessVerified": "Verified business",
+  "sellerListings": "{count, plural, =1{1 listing} other{{count} listings}}",
+  "@sellerListings": {
+    "description": "Seller card: their active listings.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sellerMemberSince": "Member since {monthYear}",
+  "@sellerMemberSince": {
+    "placeholders": {
+      "monthYear": {
+        "type": "String"
+      }
+    }
+  },
+  "sellerNew": "New on Mambanda",
+  "@sellerNew": {
+    "description": "Seller card: account under 30 days old."
+  },
+  "sellerReviews": "{avg} · {count} reviews",
+  "@sellerReviews": {
+    "description": "Seller card rating; only shown from 3 reviews.",
+    "placeholders": {
+      "avg": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sellerViewShop": "View shop",
+  "priceNegShort": "neg.",
+  "@priceNegShort": {
+    "description": "Card: short tail after a negotiable price."
+  },
+  "priceFromShort": "From {price}",
+  "@priceFromShort": {
+    "description": "Card: a starting price, short form.",
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "createWhatTitle": "What are you selling?",
+  "createKindLine": "{kind} · change",
+  "@createKindLine": {
+    "description": "Create form: the listing kind under the category, tap to change.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "categoryPickerSomethingElse": "Something else in {name}",
+  "@categoryPickerSomethingElse": {
+    "description": "Category picker when filing a listing: the group itself, offered last.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "createPhotoCount": "{count}/{max}",
+  "@createPhotoCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "createPhotoMax": "You can add up to {max} photos.",
+  "@createPhotoMax": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "createCoverBadge": "Cover",
+  "@createCoverBadge": {
+    "description": "Badge on the first photo."
+  },
+  "createCoverHint": "The first photo is the cover.",
+  "createPhotoTipsTitle": "Photos that sell ({count})",
+  "@createPhotoTipsTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "createPhotoMin": "Listings like this do best with at least {count} photos.",
+  "@createPhotoMin": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "createDetailsProgress": "{done} of {total} filled · buyers filter by these",
+  "@createDetailsProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "createDetailsMore": "More details (optional) · {count}",
+  "@createDetailsMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "createDetailsRecommended": "recommended",
+  "@createDetailsRecommended": {
+    "description": "Suffix on a detail that is not required but worth filling."
+  },
+  "createConditionPick": "Choose the condition",
+  "createTitleSuggestion": "Suggested title: {title}",
+  "@createTitleSuggestion": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "createTitleUse": "Use",
+  "createTitleUsed": "Title replaced",
+  "createUndo": "Undo",
+  "createDescPrompts": "Buyers often ask:",
+  "createPriceLabelCustom": "{label} (FCFA)",
+  "@createPriceLabelCustom": {
+    "description": "Price field label from the category, e.g. Rent (FCFA).",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "createPriceCheck": "{price} for this item — is that right?",
+  "@createPriceCheck": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "createPriceCheckYes": "Yes, publish",
+  "createPriceCheckFix": "Change the price",
+  "createLocationLabel": "Neighbourhood, town",
+  "createLocationExample": "e.g. Bonamoussadi, Douala",
+  "createEditNewDetails": "New: {category} listings now have details. Fill them in to show up in filters.",
+  "@createEditNewDetails": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "shareMenuTitle": "Share this listing",
+  "shareCopyLink": "Copy link",
+  "shareCopied": "Link copied",
+  "shareWhatsApp": "Send on WhatsApp",
+  "shareFacebook": "Share on Facebook",
+  "shareMoreOptions": "More options…"
 }

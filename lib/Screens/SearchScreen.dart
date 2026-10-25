@@ -9,6 +9,7 @@ import '../Components/ItemDetailScreen.dart';
 import '../Components/category_picker.dart';
 import '../api/api_client.dart';
 import '../api/listing_attributes.dart';
+import '../api/listing_presentation.dart';
 import '../api/location_service.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
@@ -93,7 +94,14 @@ class SearchScreen extends StatefulWidget {
   /// chose on the feed.
   final String? initialCategorySlug;
 
-  const SearchScreen({super.key, this.initialCategorySlug});
+  /// Words to search for straight away — a place tapped on a listing.
+  final String? initialQuery;
+
+  const SearchScreen({
+    super.key,
+    this.initialCategorySlug,
+    this.initialQuery,
+  });
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -138,11 +146,17 @@ class _SearchScreenState extends State<SearchScreen> {
   void initState() {
     super.initState();
     _filters = SearchFilters(categorySlug: widget.initialCategorySlug);
+    final query = widget.initialQuery?.trim() ?? '';
+    if (query.isNotEmpty) {
+      _controller.text = query;
+      _query = query;
+    }
     _loadCategories();
     _loadRecents();
     _scrollController.addListener(_onScroll);
-    // A category arriving from the feed is already a query worth running.
-    if (widget.initialCategorySlug != null) _run();
+    // A category arriving from the feed, or a place from a listing, is
+    // already a query worth running.
+    if (widget.initialCategorySlug != null || query.isNotEmpty) _run();
   }
 
   @override
@@ -435,31 +449,35 @@ class _SearchScreenState extends State<SearchScreen> {
           // it is how the old favourites screen went wrong, one step earlier.
           sliver: ValueListenableBuilder<Set<String>>(
             valueListenable: _favorites.favoriteIds,
-            builder: (context, favIds, _) => SliverGrid(
-              // See the note on the feed's grid: the count comes from the
-              // width so a wide screen gets more columns rather than bigger
-              // cards.
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 200,
-                crossAxisSpacing: 14,
-                mainAxisSpacing: 18,
-                childAspectRatio: 0.66,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final item = _results[index];
-                  return ItemCard(
-                    imageUrl: item.primaryImageUrl,
-                    title: item.title,
-                    price: item.displayPrice,
-                    location: item.city,
-                    distanceMeters: item.distanceMeters,
-                    isFavorite: favIds.contains(item.id),
-                    onTap: () => _openDetail(item),
-                    onFavoriteToggle: () => _toggleFavorite(item),
-                  );
-                },
-                childCount: _results.length,
+            builder: (context, favIds, _) => SliverLayoutBuilder(
+              builder: (context, constraints) => SliverGrid(
+                // See the note on the feed's grid: the count comes from the
+                // width so a wide screen gets more columns rather than bigger
+                // cards.
+                gridDelegate: ItemCard.gridDelegate(
+                  constraints.crossAxisExtent,
+                  MediaQuery.textScalerOf(context),
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final item = _results[index];
+                    final card = cardText(context, item, _categories);
+                    return ItemCard(
+                      imageUrl: item.primaryImageUrl,
+                      title: item.title,
+                      price: card.price,
+                      priceTail: card.priceTail,
+                      specLine: card.specLine,
+                      badge: card.badge,
+                      location: item.city,
+                      distanceMeters: item.distanceMeters,
+                      isFavorite: favIds.contains(item.id),
+                      onTap: () => _openDetail(item),
+                      onFavoriteToggle: () => _toggleFavorite(item),
+                    );
+                  },
+                  childCount: _results.length,
+                ),
               ),
             ),
           ),
@@ -500,14 +518,6 @@ class _FilterBar extends StatelessWidget {
         'price_desc' => l10n.sortPriceHigh,
         'distance' => l10n.sortNearest,
         _ => l10n.sortNewest,
-      };
-
-  String _conditionLabel(AppLocalizations l10n, String condition) =>
-      switch (condition) {
-        'Like New' => l10n.createConditionLikeNew,
-        'Used' => l10n.createConditionUsed,
-        'Refurbished' => l10n.createConditionRefurbished,
-        _ => l10n.createConditionNew,
       };
 
   String _priceLabel(AppLocalizations l10n) {
@@ -592,7 +602,7 @@ class _FilterBar extends StatelessWidget {
           children: [
             for (final c in const ['New', 'Like New', 'Used', 'Refurbished'])
               ListTile(
-                title: Text(_conditionLabel(l10n, c)),
+                title: Text(conditionLabel(l10n, c) ?? c),
                 trailing: filters.condition == c
                     ? Icon(Icons.check, color: context.tokens.accentInk)
                     : null,
@@ -759,7 +769,8 @@ class _FilterBar extends StatelessWidget {
           _Chip(
             label: filters.condition == null
                 ? l10n.filterCondition
-                : _conditionLabel(l10n, filters.condition!),
+                : conditionLabel(l10n, filters.condition!) ??
+                    filters.condition!,
             selected: filters.condition != null,
             onTap: () => _pickCondition(context),
           ),

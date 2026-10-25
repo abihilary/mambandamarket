@@ -6493,6 +6493,390 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Copy this link to share it'**
   String get shareCopyManualTitle;
+
+  /// Detail page: the category row label.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get detailCategory;
+
+  /// Detail page: the seller offers a guarantee.
+  ///
+  /// In en, this message translates to:
+  /// **'Seller warranty'**
+  String get detailWarranty;
+
+  /// No description provided for @detailInStock.
+  ///
+  /// In en, this message translates to:
+  /// **'In stock: {count}'**
+  String detailInStock(int count);
+
+  /// No description provided for @detailShowAllDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all {count} details'**
+  String detailShowAllDetails(int count);
+
+  /// No description provided for @detailShowFewerDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Show fewer'**
+  String get detailShowFewerDetails;
+
+  /// Detail page: sub-head over the true yes/no details.
+  ///
+  /// In en, this message translates to:
+  /// **'Highlights'**
+  String get detailHighlights;
+
+  /// Footnote under the details table.
+  ///
+  /// In en, this message translates to:
+  /// **'Details provided by the seller.'**
+  String get detailBySeller;
+
+  /// No description provided for @detailDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get detailDescription;
+
+  /// No description provided for @detailShowMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show more'**
+  String get detailShowMore;
+
+  /// No description provided for @detailShowLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get detailShowLess;
+
+  /// No description provided for @detailNoDescriptionYet.
+  ///
+  /// In en, this message translates to:
+  /// **'The seller hasn\'t added a description.'**
+  String get detailNoDescriptionYet;
+
+  /// Chip beside a negotiable price that states an amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Negotiable'**
+  String get detailNegotiableChip;
+
+  /// Detail page action row: opens the shipping request. Makes no promise.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery: ask Mambanda for a quote'**
+  String get detailDeliveryQuote;
+
+  /// No description provided for @detailBuyerTipsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Before you pay'**
+  String get detailBuyerTipsTitle;
+
+  /// No description provided for @detailBuyerTipsMore.
+  ///
+  /// In en, this message translates to:
+  /// **'See all tips ({count})'**
+  String detailBuyerTipsMore(int count);
+
+  /// Default buyer tip for a product category without its own.
+  ///
+  /// In en, this message translates to:
+  /// **'See and test the item before you pay.'**
+  String get tipDefault1;
+
+  /// No description provided for @tipDefault2.
+  ///
+  /// In en, this message translates to:
+  /// **'Meet in a busy public place, in daylight.'**
+  String get tipDefault2;
+
+  /// No description provided for @tipDefault3.
+  ///
+  /// In en, this message translates to:
+  /// **'Never send a Mobile Money deposit to someone you haven\'t met.'**
+  String get tipDefault3;
+
+  /// First buyer tip on an escrow-protected listing.
+  ///
+  /// In en, this message translates to:
+  /// **'Protected purchase: pay in the app, never outside it.'**
+  String get tipProtected;
+
+  /// Bottom button for services: opens the chat.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for a quote'**
+  String get ctaQuote;
+
+  /// Bottom button for jobs: opens the chat.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get ctaApply;
+
+  /// Bottom button for property: opens the chat.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for a visit'**
+  String get ctaVisit;
+
+  /// No description provided for @sellerPrivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Private seller'**
+  String get sellerPrivate;
+
+  /// No description provided for @sellerShop.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop'**
+  String get sellerShop;
+
+  /// No description provided for @sellerShopVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified shop'**
+  String get sellerShopVerified;
+
+  /// No description provided for @sellerBusinessVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified business'**
+  String get sellerBusinessVerified;
+
+  /// Seller card: their active listings.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 listing} other{{count} listings}}'**
+  String sellerListings(int count);
+
+  /// No description provided for @sellerMemberSince.
+  ///
+  /// In en, this message translates to:
+  /// **'Member since {monthYear}'**
+  String sellerMemberSince(String monthYear);
+
+  /// Seller card: account under 30 days old.
+  ///
+  /// In en, this message translates to:
+  /// **'New on Mambanda'**
+  String get sellerNew;
+
+  /// Seller card rating; only shown from 3 reviews.
+  ///
+  /// In en, this message translates to:
+  /// **'{avg} · {count} reviews'**
+  String sellerReviews(String avg, int count);
+
+  /// No description provided for @sellerViewShop.
+  ///
+  /// In en, this message translates to:
+  /// **'View shop'**
+  String get sellerViewShop;
+
+  /// Card: short tail after a negotiable price.
+  ///
+  /// In en, this message translates to:
+  /// **'neg.'**
+  String get priceNegShort;
+
+  /// Card: a starting price, short form.
+  ///
+  /// In en, this message translates to:
+  /// **'From {price}'**
+  String priceFromShort(String price);
+
+  /// No description provided for @createWhatTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What are you selling?'**
+  String get createWhatTitle;
+
+  /// Create form: the listing kind under the category, tap to change.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind} · change'**
+  String createKindLine(String kind);
+
+  /// Category picker when filing a listing: the group itself, offered last.
+  ///
+  /// In en, this message translates to:
+  /// **'Something else in {name}'**
+  String categoryPickerSomethingElse(String name);
+
+  /// No description provided for @createPhotoCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}/{max}'**
+  String createPhotoCount(int count, int max);
+
+  /// No description provided for @createPhotoMax.
+  ///
+  /// In en, this message translates to:
+  /// **'You can add up to {max} photos.'**
+  String createPhotoMax(int max);
+
+  /// Badge on the first photo.
+  ///
+  /// In en, this message translates to:
+  /// **'Cover'**
+  String get createCoverBadge;
+
+  /// No description provided for @createCoverHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The first photo is the cover.'**
+  String get createCoverHint;
+
+  /// No description provided for @createPhotoTipsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos that sell ({count})'**
+  String createPhotoTipsTitle(int count);
+
+  /// No description provided for @createPhotoMin.
+  ///
+  /// In en, this message translates to:
+  /// **'Listings like this do best with at least {count} photos.'**
+  String createPhotoMin(int count);
+
+  /// No description provided for @createDetailsProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} filled · buyers filter by these'**
+  String createDetailsProgress(int done, int total);
+
+  /// No description provided for @createDetailsMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More details (optional) · {count}'**
+  String createDetailsMore(int count);
+
+  /// Suffix on a detail that is not required but worth filling.
+  ///
+  /// In en, this message translates to:
+  /// **'recommended'**
+  String get createDetailsRecommended;
+
+  /// No description provided for @createConditionPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the condition'**
+  String get createConditionPick;
+
+  /// No description provided for @createTitleSuggestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested title: {title}'**
+  String createTitleSuggestion(String title);
+
+  /// No description provided for @createTitleUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Use'**
+  String get createTitleUse;
+
+  /// No description provided for @createTitleUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Title replaced'**
+  String get createTitleUsed;
+
+  /// No description provided for @createUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get createUndo;
+
+  /// No description provided for @createDescPrompts.
+  ///
+  /// In en, this message translates to:
+  /// **'Buyers often ask:'**
+  String get createDescPrompts;
+
+  /// Price field label from the category, e.g. Rent (FCFA).
+  ///
+  /// In en, this message translates to:
+  /// **'{label} (FCFA)'**
+  String createPriceLabelCustom(String label);
+
+  /// No description provided for @createPriceCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'{price} for this item — is that right?'**
+  String createPriceCheck(String price);
+
+  /// No description provided for @createPriceCheckYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, publish'**
+  String get createPriceCheckYes;
+
+  /// No description provided for @createPriceCheckFix.
+  ///
+  /// In en, this message translates to:
+  /// **'Change the price'**
+  String get createPriceCheckFix;
+
+  /// No description provided for @createLocationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Neighbourhood, town'**
+  String get createLocationLabel;
+
+  /// No description provided for @createLocationExample.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Bonamoussadi, Douala'**
+  String get createLocationExample;
+
+  /// No description provided for @createEditNewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'New: {category} listings now have details. Fill them in to show up in filters.'**
+  String createEditNewDetails(String category);
+
+  /// No description provided for @shareMenuTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share this listing'**
+  String get shareMenuTitle;
+
+  /// No description provided for @shareCopyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get shareCopyLink;
+
+  /// No description provided for @shareCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied'**
+  String get shareCopied;
+
+  /// No description provided for @shareWhatsApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Send on WhatsApp'**
+  String get shareWhatsApp;
+
+  /// No description provided for @shareFacebook.
+  ///
+  /// In en, this message translates to:
+  /// **'Share on Facebook'**
+  String get shareFacebook;
+
+  /// No description provided for @shareMoreOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'More options…'**
+  String get shareMoreOptions;
 }
 
 class _AppLocalizationsDelegate

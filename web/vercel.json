@@ -6,6 +6,17 @@
       "destination": "/:path*"
     },
     {
+      "source": "/l/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(whatsapp|facebookexternalhit|facebot|twitterbot|telegrambot|slackbot|discordbot|linkedinbot|skypeuripreview|snapchat|pinterest).*"
+        }
+      ],
+      "destination": "https://mambandamarket.com/l/:id"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

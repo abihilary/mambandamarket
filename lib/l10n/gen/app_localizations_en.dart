@@ -3654,4 +3654,243 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareCopyManualTitle => 'Copy this link to share it';
+
+  @override
+  String get detailCategory => 'Category';
+
+  @override
+  String get detailWarranty => 'Seller warranty';
+
+  @override
+  String detailInStock(int count) {
+    return 'In stock: $count';
+  }
+
+  @override
+  String detailShowAllDetails(int count) {
+    return 'Show all $count details';
+  }
+
+  @override
+  String get detailShowFewerDetails => 'Show fewer';
+
+  @override
+  String get detailHighlights => 'Highlights';
+
+  @override
+  String get detailBySeller => 'Details provided by the seller.';
+
+  @override
+  String get detailDescription => 'Description';
+
+  @override
+  String get detailShowMore => 'Show more';
+
+  @override
+  String get detailShowLess => 'Show less';
+
+  @override
+  String get detailNoDescriptionYet =>
+      'The seller hasn\'t added a description.';
+
+  @override
+  String get detailNegotiableChip => 'Negotiable';
+
+  @override
+  String get detailDeliveryQuote => 'Delivery: ask Mambanda for a quote';
+
+  @override
+  String get detailBuyerTipsTitle => 'Before you pay';
+
+  @override
+  String detailBuyerTipsMore(int count) {
+    return 'See all tips ($count)';
+  }
+
+  @override
+  String get tipDefault1 => 'See and test the item before you pay.';
+
+  @override
+  String get tipDefault2 => 'Meet in a busy public place, in daylight.';
+
+  @override
+  String get tipDefault3 =>
+      'Never send a Mobile Money deposit to someone you haven\'t met.';
+
+  @override
+  String get tipProtected =>
+      'Protected purchase: pay in the app, never outside it.';
+
+  @override
+  String get ctaQuote => 'Ask for a quote';
+
+  @override
+  String get ctaApply => 'Apply';
+
+  @override
+  String get ctaVisit => 'Ask for a visit';
+
+  @override
+  String get sellerPrivate => 'Private seller';
+
+  @override
+  String get sellerShop => 'Shop';
+
+  @override
+  String get sellerShopVerified => 'Verified shop';
+
+  @override
+  String get sellerBusinessVerified => 'Verified business';
+
+  @override
+  String sellerListings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count listings',
+      one: '1 listing',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String sellerMemberSince(String monthYear) {
+    return 'Member since $monthYear';
+  }
+
+  @override
+  String get sellerNew => 'New on Mambanda';
+
+  @override
+  String sellerReviews(String avg, int count) {
+    return '$avg · $count reviews';
+  }
+
+  @override
+  String get sellerViewShop => 'View shop';
+
+  @override
+  String get priceNegShort => 'neg.';
+
+  @override
+  String priceFromShort(String price) {
+    return 'From $price';
+  }
+
+  @override
+  String get createWhatTitle => 'What are you selling?';
+
+  @override
+  String createKindLine(String kind) {
+    return '$kind · change';
+  }
+
+  @override
+  String categoryPickerSomethingElse(String name) {
+    return 'Something else in $name';
+  }
+
+  @override
+  String createPhotoCount(int count, int max) {
+    return '$count/$max';
+  }
+
+  @override
+  String createPhotoMax(int max) {
+    return 'You can add up to $max photos.';
+  }
+
+  @override
+  String get createCoverBadge => 'Cover';
+
+  @override
+  String get createCoverHint => 'The first photo is the cover.';
+
+  @override
+  String createPhotoTipsTitle(int count) {
+    return 'Photos that sell ($count)';
+  }
+
+  @override
+  String createPhotoMin(int count) {
+    return 'Listings like this do best with at least $count photos.';
+  }
+
+  @override
+  String createDetailsProgress(int done, int total) {
+    return '$done of $total filled · buyers filter by these';
+  }
+
+  @override
+  String createDetailsMore(int count) {
+    return 'More details (optional) · $count';
+  }
+
+  @override
+  String get createDetailsRecommended => 'recommended';
+
+  @override
+  String get createConditionPick => 'Choose the condition';
+
+  @override
+  String createTitleSuggestion(String title) {
+    return 'Suggested title: $title';
+  }
+
+  @override
+  String get createTitleUse => 'Use';
+
+  @override
+  String get createTitleUsed => 'Title replaced';
+
+  @override
+  String get createUndo => 'Undo';
+
+  @override
+  String get createDescPrompts => 'Buyers often ask:';
+
+  @override
+  String createPriceLabelCustom(String label) {
+    return '$label (FCFA)';
+  }
+
+  @override
+  String createPriceCheck(String price) {
+    return '$price for this item — is that right?';
+  }
+
+  @override
+  String get createPriceCheckYes => 'Yes, publish';
+
+  @override
+  String get createPriceCheckFix => 'Change the price';
+
+  @override
+  String get createLocationLabel => 'Neighbourhood, town';
+
+  @override
+  String get createLocationExample => 'e.g. Bonamoussadi, Douala';
+
+  @override
+  String createEditNewDetails(String category) {
+    return 'New: $category listings now have details. Fill them in to show up in filters.';
+  }
+
+  @override
+  String get shareMenuTitle => 'Share this listing';
+
+  @override
+  String get shareCopyLink => 'Copy link';
+
+  @override
+  String get shareCopied => 'Link copied';
+
+  @override
+  String get shareWhatsApp => 'Send on WhatsApp';
+
+  @override
+  String get shareFacebook => 'Share on Facebook';
+
+  @override
+  String get shareMoreOptions => 'More options…';
 }

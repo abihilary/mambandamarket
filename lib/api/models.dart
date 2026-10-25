@@ -6,6 +6,7 @@ import 'config.dart';
 import 'location_share.dart';
 import '../l10n/l10n.dart';
 import 'listing_attributes.dart';
+import 'listing_guide.dart';
 
 /// Domain models mirroring the Core API's JSON payloads.
 ///
@@ -158,6 +159,22 @@ class Listing {
   final String? storeLogoUrl;
   final bool storeVerified;
 
+  /// The store's review average and count, from the detail embed. Null and 0
+  /// for a private seller, and wherever the embed is absent. A rating is only
+  /// worth showing with a few reviews behind it — see the seller card.
+  final double? storeRatingAvg;
+  final int storeRatingCount;
+
+  /// Where the seller says they are, which can differ from the listing's city.
+  final String? sellerCity;
+
+  /// When the seller joined ("Membre depuis …"). Detail only.
+  final DateTime? sellerCreatedAt;
+
+  /// How many active listings the seller has, counted by the detail route.
+  /// Null when the server did not count — not the same as none.
+  final int? sellerActiveListings;
+
   /// Has this seller actually been checked? True for an admin-provisioned
   /// company, or a storefront an admin marked verified.
   bool get sellerVerified => sellerRole == 'company' || storeVerified;
@@ -209,6 +226,11 @@ class Listing {
     this.storeName,
     this.storeLogoUrl,
     this.storeVerified = false,
+    this.storeRatingAvg,
+    this.storeRatingCount = 0,
+    this.sellerCity,
+    this.sellerCreatedAt,
+    this.sellerActiveListings,
   });
 
   bool get isSold => status == 'sold';
@@ -312,6 +334,9 @@ class Listing {
 
     final seller = (json['seller'] as Map?)?.cast<String, dynamic>();
     final store = (json['store'] as Map?)?.cast<String, dynamic>();
+    final stats = json['seller_stats'] is Map ? json['seller_stats'] as Map : null;
+    final ratingAvg = store?['rating_avg'];
+    final activeListings = stats?['active_listings'];
 
     return Listing(
       id: json['id'].toString(),
@@ -358,6 +383,14 @@ class Listing {
       storeName: store?['shop_name']?.toString(),
       storeLogoUrl: store?['logo_url']?.toString(),
       storeVerified: store?['is_verified'] == true,
+      // numeric columns can arrive as strings through PostgREST.
+      storeRatingAvg: ratingAvg is num
+          ? ratingAvg.toDouble()
+          : double.tryParse(ratingAvg?.toString() ?? ''),
+      storeRatingCount: _asInt(store?['rating_count']),
+      sellerCity: seller?['city']?.toString(),
+      sellerCreatedAt: DateTime.tryParse(seller?['created_at']?.toString() ?? ''),
+      sellerActiveListings: activeListings == null ? null : _asInt(activeListings),
     );
   }
 }
@@ -390,12 +423,17 @@ class Category {
   final String? defaultKind;
 
   /// The details a listing here is asked for (0059). Use [attributeFieldsFor]
-  /// for the full list, which puts the group's own fields first.
+  /// for the full list, which adds the group's fields after the leaf's own.
   final List<AttrField> attributeSchema;
+
+  /// This category's own `listing_guide` (0066), unparsed: a guide is resolved
+  /// over the group's raw map before it is read. Use [guideFor].
+  final Map<String, dynamic>? listingGuideRaw;
 
   const Category({
     this.defaultKind,
     this.attributeSchema = const [],
+    this.listingGuideRaw,
     required this.slug,
     required this.label,
     this.labelEn,
@@ -463,33 +501,54 @@ class Category {
     parentSlug: json['parent_slug']?.toString(),
     defaultKind: json['default_kind']?.toString(),
     attributeSchema: AttrField.listFromJson(json['attribute_schema']),
+    listingGuideRaw: json['listing_guide'] is Map
+        ? (json['listing_guide'] as Map).cast<String, dynamic>()
+        : null,
   );
 }
 
-/// The details a listing in [slug] answers: its group's, then its own (a leaf
-/// field replacing a group field with the same key). The server resolves the
-/// same way when it checks them.
-List<AttrField> attributeFieldsFor(List<Category> categories, String? slug) {
-  if (slug == null) return const [];
+/// [slug]'s category and the group it sits under. The group is null for a
+/// root; both are null for an unknown slug.
+(Category?, Category?) _leafAndRoot(List<Category> categories, String? slug) {
+  if (slug == null) return (null, null);
   Category? leaf;
   for (final c in categories) {
     if (c.slug == slug) leaf = c;
   }
-  if (leaf == null) return const [];
+  if (leaf == null) return (null, null);
   Category? root;
   if (leaf.parentSlug != null) {
     for (final c in categories) {
       if (c.slug == leaf.parentSlug) root = c;
     }
   }
-  final out = <String, AttrField>{};
-  for (final f in root?.attributeSchema ?? const <AttrField>[]) {
-    out[f.key] = f;
-  }
-  for (final f in leaf.attributeSchema) {
-    out[f.key] = f;
-  }
-  return out.values.toList();
+  return (leaf, root);
+}
+
+/// The details a listing in [slug] answers: the leaf's own first, in its
+/// order, then the group's fields the leaf does not replace.
+///
+/// Leaf first because the leaf's fields are what the item is — a phone reads
+/// Brand, Model, Storage before the group's Colour; a tutor's subjects come
+/// before the shared Where. The server resolves group-then-leaf, but only to
+/// validate, and order does not matter there.
+List<AttrField> attributeFieldsFor(List<Category> categories, String? slug) {
+  final (leaf, root) = _leafAndRoot(categories, slug);
+  if (leaf == null) return const [];
+  final leafKeys = {for (final f in leaf.attributeSchema) f.key};
+  return [
+    ...leaf.attributeSchema,
+    for (final f in root?.attributeSchema ?? const <AttrField>[])
+      if (!leafKeys.contains(f.key)) f,
+  ];
+}
+
+/// The guide a listing in [slug] follows: the group's, overridden key by key
+/// by the leaf's. [ListingGuide.empty] for an unknown slug or no guide.
+ListingGuide guideFor(List<Category> categories, String? slug) {
+  final (leaf, root) = _leafAndRoot(categories, slug);
+  if (leaf == null) return ListingGuide.empty;
+  return ListingGuide.resolve(root?.listingGuideRaw, leaf.listingGuideRaw);
 }
 
 /// One top-level category and the leaves filed under it.
@@ -547,6 +606,9 @@ class Profile {
   /// moved is the product, not marketing.
   final bool notifyMarketing;
 
+  /// When the account was made, for "Membre depuis …" on the seller page.
+  final DateTime? createdAt;
+
   const Profile({
     required this.id,
     required this.role,
@@ -557,6 +619,7 @@ class Profile {
     this.city,
     this.locale,
     this.notifyMarketing = true,
+    this.createdAt,
   });
 
   bool get isBusiness => role == 'business';
@@ -577,6 +640,7 @@ class Profile {
         city: json['city']?.toString(),
         locale: json['locale']?.toString(),
         notifyMarketing: json['notify_marketing'] != false,
+        createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
       );
 }
 

@@ -20,10 +20,17 @@ import 'category_icons.dart';
 ///
 /// Returns null if the sheet is dismissed, which the caller must treat as "no
 /// change" rather than "cleared".
+///
+/// [forListing] is for filing a listing rather than browsing: inside a group
+/// the leaves come first and the group itself is the last row, "Something
+/// else in …". Browsing keeps "Everything in …" on top, where it means what it
+/// says. Sellers tap the first row, and when that row was the group nearly
+/// half of all listings ended up filed on one, where no template applies.
 Future<String?> showCategoryPicker(
   BuildContext context, {
   required List<Category> categories,
   String? selectedSlug,
+  bool forListing = false,
 }) {
   return showModalBottomSheet<String>(
     context: context,
@@ -36,6 +43,7 @@ Future<String?> showCategoryPicker(
     builder: (_) => _CategoryPickerSheet(
       categories: categories,
       selectedSlug: selectedSlug,
+      forListing: forListing,
     ),
   );
 }
@@ -60,8 +68,13 @@ String foldForSearch(String input) {
 class _CategoryPickerSheet extends StatefulWidget {
   final List<Category> categories;
   final String? selectedSlug;
+  final bool forListing;
 
-  const _CategoryPickerSheet({required this.categories, this.selectedSlug});
+  const _CategoryPickerSheet({
+    required this.categories,
+    this.selectedSlug,
+    this.forListing = false,
+  });
 
   @override
   State<_CategoryPickerSheet> createState() => _CategoryPickerSheetState();
@@ -253,24 +266,29 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
   }
 
   Widget _buildGroup(ScrollController controller, CategoryGroup group) {
+    // Where the group's own row goes: first when browsing, last when filing.
+    final rootRow = widget.forListing ? group.children.length : 0;
     return ListView.builder(
       controller: controller,
       itemCount: group.children.length + 1,
       itemBuilder: (context, i) {
-        if (i == 0) {
+        if (i == rootRow) {
           // Filing on the root stays possible. Every listing published before
           // the tree existed sits on one, and some things genuinely do not
           // belong to any single leaf.
+          final name = _labelOf(group.root);
           return ListTile(
             leading: Icon(categoryIcon(group.root)),
             title: Text(
-              context.l10n.categoryPickerAllIn(_labelOf(group.root)),
+              widget.forListing
+                  ? context.l10n.categoryPickerSomethingElse(name)
+                  : context.l10n.categoryPickerAllIn(name),
             ),
             selected: widget.selectedSlug == group.root.slug,
             onTap: () => Navigator.pop(context, group.root.slug),
           );
         }
-        final child = group.children[i - 1];
+        final child = group.children[i < rootRow ? i : i - 1];
         return ListTile(
           leading: Icon(categoryIcon(child)),
           title: Text(_labelOf(child)),

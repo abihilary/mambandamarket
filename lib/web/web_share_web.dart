@@ -46,6 +46,13 @@ Future<WebShareOutcome> webShare({
   }
 }
 
+/// Whether the browser has a share sheet at all. Firefox on a desktop and
+/// Chrome on Linux do not, and there [webShare] can only report unsupported.
+bool webCanShare() {
+  final navigator = globalContext['navigator'] as JSObject?;
+  return navigator != null && navigator.has('share');
+}
+
 /// Put [text] on the clipboard, reporting honestly whether it got there.
 ///
 /// Flutter's Clipboard.setData on the web did not report a refusal: when the
