@@ -38,7 +38,28 @@ class _AccountScreenState extends State<AccountScreen> {
     // failed refresh at startup hides every role-gated entry below — a verified
     // company would open this screen and find no Company dashboard at all.
     AuthService.instance.ensureMe();
+    // The totals this device saved last time paint at once; the read below
+    // revalidates them.
+    final uid = AuthService.instance.userId;
+    if (uid != null) {
+      final saved = ListingsRepository.instance.savedDashboard(uid);
+      _dashboard = saved?.value;
+      _dashboardStamp = saved?.stamp;
+    }
+    // Publishing, editing or selling changes the totals; the tabs live in an
+    // IndexedStack, so this screen is not rebuilt on its own.
+    ListingsRepository.instance.revision.addListener(_onCatalogueChanged);
     _loadDashboard();
+  }
+
+  @override
+  void dispose() {
+    ListingsRepository.instance.revision.removeListener(_onCatalogueChanged);
+    super.dispose();
+  }
+
+  void _onCatalogueChanged() {
+    if (mounted) _loadDashboard();
   }
 
   /// Totals for the stat strip: earnings and active listings from the seller
@@ -47,14 +68,27 @@ class _AccountScreenState extends State<AccountScreen> {
   /// call costs a card, not the screen.
   SellerDashboard? _dashboard;
 
+  /// What the strip shows (null: nothing yet), and which load may land: only
+  /// the latest, and only when its answer differs.
+  String? _dashboardStamp;
+  int _dashboardSeq = 0;
+
   Future<void> _loadDashboard() async {
     final uid = AuthService.instance.userId;
     if (uid == null) return;
+    final seq = ++_dashboardSeq;
     try {
-      final d = await ListingsRepository.instance.dashboard(uid);
-      if (mounted) setState(() => _dashboard = d);
+      final r = await ListingsRepository.instance.fetchDashboard(uid);
+      if (!mounted || seq != _dashboardSeq || !r.isCurrent) return;
+      if (_dashboard == null || r.stamp != _dashboardStamp) {
+        setState(() {
+          _dashboard = r.value;
+          _dashboardStamp = r.stamp;
+        });
+      }
     } catch (_) {
-      // Leave the strip hidden rather than showing zeros that look like fact.
+      // Leave the strip as it is (hidden, or the saved totals) rather than
+      // showing zeros that look like fact.
     }
   }
 
@@ -474,7 +508,8 @@ class _AccountScreenState extends State<AccountScreen> {
           final avatar = profile?.avatarUrl;
 
           return RefreshIndicator(
-            onRefresh: () async => auth.refreshMe(),
+            onRefresh: () async =>
+                Future.wait([auth.refreshMe(), _loadDashboard()]),
             child: ListView(
               // Bottom room for the docked FAB, which overhangs the bar
               // and would otherwise sit on top of the last row.
@@ -648,13 +683,17 @@ class _AccountScreenState extends State<AccountScreen> {
                 // fabricated zero.
                 if (_dashboard != null) ...[
                   const SizedBox(height: 4),
-                  _StatStrip(
-                    earnings: _dashboard!.displayEarnings,
-                    activeListings: _dashboard!.activeListings,
-                    messages: ChatRepository.instance.threads.value.length,
-                    earningsLabel: l10n.statTotalEarnings,
-                    activeLabel: l10n.statActiveListings,
-                    messagesLabel: l10n.statMessages,
+                  // The inbox revalidates on its own; the count follows it.
+                  ValueListenableBuilder<List<Conversation>>(
+                    valueListenable: ChatRepository.instance.threads,
+                    builder: (context, threads, _) => _StatStrip(
+                      earnings: _dashboard!.displayEarnings,
+                      activeListings: _dashboard!.activeListings,
+                      messages: threads.length,
+                      earningsLabel: l10n.statTotalEarnings,
+                      activeLabel: l10n.statActiveListings,
+                      messagesLabel: l10n.statMessages,
+                    ),
                   ),
                 ],
 

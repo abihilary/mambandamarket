@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../Components/saved_note.dart';
 import '../Service/ChatRoomScreen.dart';
+import '../api/api_client.dart';
 import '../api/auth_service.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
@@ -29,6 +31,9 @@ class ChatInboxScreenState extends State<ChatInboxScreen> {
   static const _errLoad = '__load__';
 
   final _chat = ChatRepository.instance;
+
+  /// Only while there is nothing to show yet. An inbox restored from the
+  /// device is painted at once and revalidated underneath.
   bool _isLoading = true;
   String? _error;
 
@@ -51,9 +56,14 @@ class ChatInboxScreenState extends State<ChatInboxScreen> {
   static const double _listWidth = 360;
   bool _twoPane = false;
 
+  /// The repository already holds threads to show: restored from the device
+  /// at launch, or loaded earlier in this run.
+  bool get _painted => _chat.loadedOnce || _chat.threads.value.isNotEmpty;
+
   @override
   void initState() {
     super.initState();
+    _isLoading = !_painted;
     _load();
   }
 
@@ -70,7 +80,9 @@ class ChatInboxScreenState extends State<ChatInboxScreen> {
   /// again, a conversation that starts after the app opened never appears.
   void reload() => _load();
 
-  Future<void> _load() async {
+  /// [userAsked]: a pull. A failure then says so; a background reload with
+  /// threads on screen stays quiet and keeps them.
+  Future<void> _load({bool userAsked = false}) async {
     if (AuthService.instance.session == null) {
       setState(() {
         _isLoading = false;
@@ -78,15 +90,40 @@ class ChatInboxScreenState extends State<ChatInboxScreen> {
       });
       return;
     }
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+    final painted = _painted;
+    // The spinner is only for an inbox with nothing in it yet. One that has
+    // threads keeps them on screen while the server is asked.
+    if (!painted) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
     try {
       await _chat.refresh();
-      if (mounted) setState(() => _isLoading = false);
-    } catch (_) {
       if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _error = null;
+        });
+      }
+    } catch (_) {
+      if (!mounted) return;
+      if (painted) {
+        // Threads arrived since an earlier failure (the shell's sweep): they
+        // are what to show, not that failure.
+        if (_error != null || _isLoading) {
+          setState(() {
+            _error = null;
+            _isLoading = false;
+          });
+        }
+        if (userAsked) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(context.l10n.couldNotLoadMessages)),
+          );
+        }
+      } else {
         setState(() {
           _error = _errLoad;
           _isLoading = false;
@@ -214,6 +251,12 @@ class ChatInboxScreenState extends State<ChatInboxScreen> {
                     final visible = _filter(chats);
                     return Column(
                       children: [
+                        // The threads came from the device because the server
+                        // could not be asked. Nothing once it answers again.
+                        ValueListenableBuilder<SavedReason?>(
+                          valueListenable: _chat.savedReason,
+                          builder: (_, r, _) => SavedNote(reason: r),
+                        ),
                         // The header stays put whether or not there are results,
                         // so a search that matches nothing can still be cleared.
                         if (chats.isNotEmpty)
@@ -228,7 +271,7 @@ class ChatInboxScreenState extends State<ChatInboxScreen> {
                         Expanded(
                           child: visible.isEmpty
                               ? _EmptyState(
-                                  onRefresh: _load,
+                                  onRefresh: () => _load(userAsked: true),
                                   message: chats.isEmpty
                                       ? l10n.noChatsYet
                                       : _unreadOnly && _query.trim().isEmpty
@@ -236,7 +279,7 @@ class ChatInboxScreenState extends State<ChatInboxScreen> {
                                           : l10n.messagesNoMatches,
                                 )
                               : RefreshIndicator(
-                                  onRefresh: _load,
+                                  onRefresh: () => _load(userAsked: true),
                                   child: ListView.separated(
                                     // Clearance for the docked publish button.
                                     // Plus the system bar (edge-to-edge).

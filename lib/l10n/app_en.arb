@@ -158,12 +158,34 @@
   },
   "retry": "Try again",
   "connectionError": "Couldn't reach the marketplace. Check your connection.",
+  "@connectionError": {
+    "description": "No connection reached the marketplace. Also shown on Favourites when nothing is saved on the phone and the first load failed."
+  },
   "offlineChangeNotSaved": "You're offline, so nothing was changed. Try again when you're connected.",
   "@offlineChangeNotSaved": {
     "description": "Shown when someone tries to post, send, save or delete something with no connection. Reads still show saved content."
   },
+  "savedCopyNote": "You're offline. Showing what's saved on this device.",
+  "@savedCopyNote": {
+    "description": "One quiet row above a screen that is showing content saved on the phone because there is no connection."
+  },
+  "savedCopyServerNote": "Couldn't refresh right now. Showing what's saved on this device.",
+  "@savedCopyServerNote": {
+    "description": "One quiet row above a screen that is showing content saved on the phone because the server could not answer (an error page, a gateway error, public Wi-Fi sign-in)."
+  },
+  "savedCopyActionsOff": "Connect to the internet to pay, confirm or cancel.",
+  "@savedCopyActionsOff": {
+    "description": "Under the saved-copy note on an order shown from the phone: why Pay, Confirm and Cancel are switched off."
+  },
+  "listingGone": "This listing is no longer available.",
+  "@listingGone": {
+    "description": "Shown on a listing the server says was sold, removed or deleted, in place of Chat and Buy."
+  },
   "errorTimeout": "The marketplace is taking too long to answer. Please try again.",
   "errorServer": "The marketplace is having trouble right now. Please try again in a moment.",
+  "@errorServer": {
+    "description": "The server could not answer (a 5xx). Also the error shown when a search fails."
+  },
   "errorBadResponse": "We got an unexpected reply. If you're on public Wi-Fi, you may need to sign in to it first.",
   "errorUnexpected": "Something went wrong loading this. Please try again.",
   "errorReference": "Ref: {ref}",
@@ -184,6 +206,9 @@
   "noChatsYet": "No active chats yet.",
   "signInToSeeMessages": "Sign in to see your messages.",
   "couldNotLoadMessages": "Could not load your messages.",
+  "@couldNotLoadMessages": {
+    "description": "The inbox could not refresh; shown as a SnackBar after a pull when the saved list stays on screen."
+  },
   "messagesSearchHint": "Search messages",
   "messagesFilterAll": "All",
   "messagesFilterUnread": "Unread",
@@ -287,6 +312,9 @@
   "chatDefaultUser": "User",
   "chatDefaultListing": "Listing",
   "chatLoadError": "Could not load this conversation.",
+  "@chatLoadError": {
+    "description": "A conversation could not be opened: it no longer exists, or nothing is saved on the phone and the load failed."
+  },
   "chatTryAgain": "Try again",
   "chatEmpty": "Say hello to start the conversation.",
   "chatInputHint": "Write a message…",
@@ -979,6 +1007,9 @@
   "walletLedgerTitle": "Wallet activity",
   "walletNoEntries": "No wallet activity yet.",
   "walletLoadError": "Could not load your wallet. Check your connection.",
+  "@walletLoadError": {
+    "description": "The wallet could not refresh. The balance on screen stays; balances are never shown from the phone's saved copy."
+  },
   "walletKindEscrowHold": "Held in escrow",
   "walletKindEscrowRelease": "Escrow released",
   "walletKindCommission": "Platform commission",

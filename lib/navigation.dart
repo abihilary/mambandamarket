@@ -132,7 +132,11 @@ Future<void> maybeResumePasswordReset() async {
 
 Future<void> openSharedListing(String id) async {
   try {
-    final listing = await ListingsRepository.instance.detail(id);
+    // A copy saved on this device opens at once, and the screen fetches the
+    // fresh one. Otherwise the fetch here is the screen's: it is told so, and
+    // does not ask (and count a view) a second time.
+    final saved = ListingsRepository.instance.savedDetail(id);
+    final listing = saved ?? await ListingsRepository.instance.detail(id);
     final navigator = rootNavigatorKey.currentState;
     if (navigator == null) return;
     await navigator.push(MaterialPageRoute(
@@ -143,6 +147,7 @@ Future<void> openSharedListing(String id) async {
         images: listing.imageUrls,
         listingId: listing.id,
         listing: listing,
+        detailPrefetched: saved == null,
       ),
     ));
   } catch (e) {

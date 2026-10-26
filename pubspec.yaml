@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.46+52
+version: 1.0.47+53
 
 environment:
   sdk: ^3.12.2
@@ -105,6 +105,9 @@ dependencies:
   flutter_cache_manager: ^3.4.2
   hive_ce: ^2.22.0
   hive_ce_flutter: ^2.5.0
+  # sha1 for the short keys of saved reads (lib/api/offline_cache.dart). Pure
+  # Dart, so it works on web; already resolved through other packages.
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_test:

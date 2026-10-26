@@ -335,6 +335,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'You\'re offline, so nothing was changed. Try again when you\'re connected.';
 
   @override
+  String get savedCopyNote =>
+      'You\'re offline. Showing what\'s saved on this device.';
+
+  @override
+  String get savedCopyServerNote =>
+      'Couldn\'t refresh right now. Showing what\'s saved on this device.';
+
+  @override
+  String get savedCopyActionsOff =>
+      'Connect to the internet to pay, confirm or cancel.';
+
+  @override
+  String get listingGone => 'This listing is no longer available.';
+
+  @override
   String get errorTimeout =>
       'The marketplace is taking too long to answer. Please try again.';
 

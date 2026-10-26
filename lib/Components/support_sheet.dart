@@ -59,7 +59,7 @@ Future<void> openSupportThread(BuildContext context) async {
 
 /// The inbox should know about the new thread without waiting for a tab switch.
 void unawaitedRefresh() {
-  ChatRepository.instance.refresh().catchError((_) {});
+  ChatRepository.instance.refresh().then((_) {}, onError: (_) {});
 }
 
 void _fail(BuildContext context, String message) {

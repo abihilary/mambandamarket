@@ -20,7 +20,7 @@ import 'package:mambandamarket/DashBoards/CreateListingScreen.dart';
 import 'package:mambandamarket/DashBoards/SellerDashboardScreen.dart';
 import 'package:mambandamarket/Screens/BusinessOnboardingScreen.dart';
 import 'package:mambandamarket/Screens/LoginScreen.dart';
-import 'api/offline_cache.dart';
+import 'api/saved_state.dart';
 import 'DashBoards/BusinessDashboardScreen.dart';
 import 'DashBoards/CompanyDashboardScreen.dart';
 import 'Screens/AccountStatusScreen.dart';
@@ -50,13 +50,15 @@ Future<void> main() async {
   // arriving as a deep link must not be pushed onto the Navigator as a route.
   WidgetsBinding.instance.addObserver(DeepLinkGuard());
 
-  // Saved answers for when there is no connection. Before anything reads.
-  await OfflineCache.init();
-
-  await Supabase.initialize(
-    url: AppConfig.supabaseUrl,
-    publishableKey: AppConfig.supabasePublishableKey,
-  );
+  // Saved answers and the session load side by side; neither needs the other.
+  // Both are done before anything reads.
+  await Future.wait([
+    SavedState.boot(),
+    Supabase.initialize(
+      url: AppConfig.supabaseUrl,
+      publishableKey: AppConfig.supabasePublishableKey,
+    ),
+  ]);
 
   // Touched here so its auth listener exists before anything else can fire one.
   // It cannot be earlier — the listener needs the client Supabase.initialize
@@ -64,6 +66,10 @@ Future<void> main() async {
   // is already handled by then, and why AuthService.consumePendingRecovery
   // exists to pick that case up below.
   AuthService.instance;
+  // Paints the profile, favourites, inbox and notifications from the device
+  // for whoever is signed in, so the first screens open with what they showed
+  // last time while the network revalidates.
+  SavedState.restore();
 
   // Read once so the very first API request already says which build it is.
   await AppInfo.warm();

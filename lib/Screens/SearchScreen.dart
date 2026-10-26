@@ -151,6 +151,9 @@ class _SearchScreenState extends State<SearchScreen> {
       _controller.text = query;
       _query = query;
     }
+    // The categories this device saved fill the filter at once; the read
+    // below brings them up to date.
+    _categories = _repo.savedCategories()?.value ?? _categories;
     _loadCategories();
     _loadRecents();
     _scrollController.addListener(_onScroll);
@@ -284,7 +287,7 @@ class _SearchScreenState extends State<SearchScreen> {
     } catch (_) {
       if (!mounted || id != _requestId) return;
       setState(() {
-        _error = context.l10n.couldNotLoadMessages;
+        _error = context.l10n.errorServer;
         _loading = false;
         _loadingMore = false;
       });

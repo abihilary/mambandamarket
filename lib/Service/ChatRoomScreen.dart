@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,10 +11,12 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../Components/VerifiedBadge.dart';
 import '../Components/local_image.dart';
+import '../Components/saved_note.dart';
 import '../Screens/PublicProfileScreen.dart';
 import '../Screens/ShippingRequestScreen.dart';
 import '../api/api_client.dart';
 import '../api/auth_service.dart';
+import '../api/chat_attachment_cache.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
 import '../api/shipping_draft.dart';
@@ -34,9 +37,11 @@ import '../Components/safe_bottom.dart';
 
 /// A single chat thread.
 ///
-/// Messages are fetched over REST and refreshed on a timer. The Socket.IO
-/// service will later push them instead, but the payload shape is the same, so
-/// that swap is a transport change rather than a rewrite of this screen.
+/// The room paints the messages stored on the device at once, then asks the
+/// server only for what is newer ([ChatRepository.syncThread]). A realtime
+/// event for this thread syncs it again; the poll behind it is a backstop that
+/// stays quiet while realtime is healthy and stops while the app is in the
+/// background.
 ///
 /// Sending is optimistic: the bubble is appended the moment Send is tapped and
 /// only then reconciled with the server, so the thread never feels like it is
@@ -51,9 +56,10 @@ class ChatRoomScreen extends StatefulWidget {
   State<ChatRoomScreen> createState() => _ChatRoomScreenState();
 }
 
-class _ChatRoomScreenState extends State<ChatRoomScreen> {
+class _ChatRoomScreenState extends State<ChatRoomScreen>
+    with WidgetsBindingObserver {
   // Sentinel stored in [_error] when the generic load failure fires. It is
-  // translated in build(), since _load() can run from initState (pre-build).
+  // translated in build(), since _sync() can run from initState (pre-build).
   static const _loadErrorSentinel = ' chatLoadError';
 
   /// Attachments above this never leave the device — the upload would stall on
@@ -76,6 +82,27 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   Timer? _poll;
   int _seq = 0;
 
+  /// Realtime events for this thread, from the repository.
+  StreamSubscription<String>? _changes;
+
+  /// Messages the server confirmed that no sync has returned yet, by id.
+  ///
+  /// A send is stored on the device as soon as it is confirmed, but a sync
+  /// that was already in flight can finish without it. Kept here until a sync
+  /// includes it, so the bubble never blinks out in between.
+  final Map<String, Message> _sentAwaitingSync = {};
+
+  /// Why the messages on screen could not be brought up to date, or null.
+  SavedReason? _savedReason;
+
+  /// When a sync last succeeded. The poll skips while realtime is healthy
+  /// and this is recent.
+  DateTime? _lastSyncAt;
+
+  /// The app is in the background: no poll, and realtime events wait for
+  /// the resume, which syncs anyway.
+  bool _paused = false;
+
   /// Threads whose shipping prompt has been waved away, by id.
   ///
   /// Persisted because a prompt that comes back every time the thread is
@@ -97,23 +124,69 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     // message arriving here is visible the moment it lands; a banner over the
     // top of it would be telling the user about something they are reading.
     PushService.activeConversationId = widget.conversation.id;
-    _load(markRead: true);
-    // The live subscription is what delivers a reply as it is sent. The poll
-    // stays as the backstop for a dropped socket, at a quarter of the rate it
-    // used to run now that it is no longer the only thing arriving.
-    ChatRepository.instance.pulse.addListener(_onLivePulse);
-    _poll = Timer.periodic(const Duration(seconds: 45), (_) => _load());
+    // What this device already has, on the first frame. The sync below then
+    // asks only for what is newer.
+    final stored = _chat.storedMessages(widget.conversation.id);
+    if (stored != null) {
+      _messages = stored;
+      _isLoading = false;
+    }
+    WidgetsBinding.instance.addObserver(this);
+    // The live subscription is what delivers a reply as it is sent. It names
+    // the threads that changed, so only this one's events sync this room.
+    _changes = _chat.changedThreads
+        .where((id) => id == widget.conversation.id)
+        .listen((_) {
+      // Not while in the background: nobody is reading, so nothing should be
+      // marked read, and the resume syncs anyway.
+      if (mounted && !_paused) _sync(markRead: true);
+    });
+    _startPoll();
+    _sync(markRead: true);
     _watchShares();
     _readShipPromptDismissal();
+  }
+
+  /// The backstop for a dropped socket. Every 45 s while realtime is down;
+  /// while it is healthy, only when the last sync is five minutes old.
+  void _startPoll() {
+    _poll?.cancel();
+    _poll = Timer.periodic(const Duration(seconds: 45), (_) {
+      final last = _lastSyncAt;
+      if (!_chat.liveHealthy.value || last == null ||
+          DateTime.now().difference(last) >= const Duration(minutes: 5)) {
+        _sync();
+      }
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.hidden:
+        // Nothing to poll for while nobody is looking.
+        _paused = true;
+        _poll?.cancel();
+      case AppLifecycleState.resumed:
+        if (!_paused) return;
+        _paused = false;
+        _startPoll();
+        _sync(markRead: true);
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.detached:
+        // Inactive fires on every pull of the notification shade.
+        break;
+    }
   }
 
   /// Follow the location shares in this thread as they move.
   ///
   /// A share that moves writes no message, so nothing else in the app would
-  /// notice: the pulse fires on conversation rows and the poll refetches a
-  /// history that has not changed. Without this the other person's pin would
-  /// sit wherever it was when the thread was opened, which is worse than not
-  /// showing it at all.
+  /// notice: realtime fires on conversation rows and a sync asks only for
+  /// messages newer than the stored ones. Without this the other person's pin
+  /// would sit wherever it was when the thread was opened, which is worse than
+  /// not showing it at all.
   void _watchShares() {
     _shares = Supabase.instance.client
         .channel('loc:${widget.conversation.id}')
@@ -134,17 +207,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 for (final m in _messages)
                   if (m.location?.id == share.id) m.copyWith(location: share) else m,
               ];
+              _sentAwaitingSync.updateAll((_, m) =>
+                  m.location?.id == share.id ? m.copyWith(location: share) : m);
             });
+            // And on the device, so the next paint from it is not behind.
+            unawaited(_chat.patchStoredShare(widget.conversation.id, payload.newRecord));
           },
         )
         .subscribe();
-  }
-
-  /// Something changed in one of this account's threads. It is usually this
-  /// one — the room is open — and reloading a thread that did not change costs
-  /// a single request.
-  void _onLivePulse() {
-    if (mounted) _load(markRead: true);
   }
 
   @override
@@ -152,7 +222,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     if (PushService.activeConversationId == widget.conversation.id) {
       PushService.activeConversationId = null;
     }
-    ChatRepository.instance.pulse.removeListener(_onLivePulse);
+    WidgetsBinding.instance.removeObserver(this);
+    _changes?.cancel();
     final shares = _shares;
     if (shares != null) Supabase.instance.client.removeChannel(shares);
     _poll?.cancel();
@@ -166,8 +237,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   /// `widget.conversation` is a snapshot taken at navigation time. Reading the
   /// count off it meant a thread opened with nothing unread never cleared
   /// again: a message arriving while the room was on screen bumped the tab
-  /// badge, and the pulse-driven reload below declined to clear it because the
-  /// snapshot still said zero — so the badge sat there claiming one unread
+  /// badge, and the realtime-driven sync below declined to clear it because
+  /// the snapshot still said zero — so the badge sat there claiming one unread
   /// while the user was looking straight at it. The repository's copy is
   /// refreshed by the same event that delivered the message, so ask that.
   int get _unread {
@@ -177,32 +248,69 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     return widget.conversation.unread;
   }
 
-  Future<void> _load({bool markRead = false}) async {
+  /// Bring the thread up to date: what is newer than the newest stored
+  /// message, or a full page when the counts say something further back
+  /// changed. Repaints only when something on screen would look different.
+  Future<void> _sync({bool markRead = false}) async {
     try {
-      final page = await _chat.messages(widget.conversation.id);
+      final s = await _chat.syncThread(widget.conversation.id);
       if (!mounted) return;
+      _lastSyncAt = DateTime.now();
+      final ids = {for (final m in s.messages) m.id};
+      _sentAwaitingSync.removeWhere((id, _) => ids.contains(id));
       // Keep anything this device hasn't successfully sent yet — a refresh
       // must never drop a pending upload or a failed message awaiting retry.
+      // These are never stored, so a restart forgets them.
       final unsent =
           _messages.where((m) => m.sendState != MessageSendState.sent).toList();
-      final grew = page.items.length + unsent.length != _messages.length;
-      setState(() {
-        _messages = [...page.items, ...unsent];
-        _isLoading = false;
-        _error = null;
-      });
-      if (grew) _scrollToBottom();
+      final next = [...s.messages, ..._sentAwaitingSync.values, ...unsent];
+      if (s.changed || _isLoading || _error != null || _savedReason != null ||
+          next.length != _messages.length) {
+        // The list is reversed: offset 0 is the newest message. Somebody
+        // scrolled up into the history is left where they are.
+        final atBottom =
+            !_scrollController.hasClients || _scrollController.offset < 80;
+        setState(() {
+          _messages = next;
+          _isLoading = false;
+          _error = null;
+          _savedReason = null;
+        });
+        if (s.added > 0 && (atBottom || s.newestIsMine)) _scrollToBottom();
+      }
       if (markRead && _unread > 0) {
-        await _chat.markRead(widget.conversation.id);
+        try {
+          await _chat.markRead(widget.conversation.id);
+        } catch (_) {
+          // The thread is up to date on screen; the badge clears on the next
+          // sync that reaches the server.
+        }
       }
     } on ApiException catch (e) {
-      if (mounted) setState(() { _error = e.message; _isLoading = false; });
+      if (!mounted) return;
+      if (_messages.isNotEmpty && !e.isGone) {
+        // Keep what is painted and say why it is not fresh.
+        setState(() {
+          _savedReason = e.savedReason ?? SavedReason.serverUnavailable;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _error = e.isGone ? _loadErrorSentinel : e.message;
+          _isLoading = false;
+        });
+      }
+    } on StateError {
+      // The account changed under this room; the shell is being replaced.
     } catch (_) {
-      if (mounted) {
+      if (!mounted) return;
+      if (_messages.isEmpty) {
         setState(() {
           _error = _loadErrorSentinel;
           _isLoading = false;
         });
+      } else if (_isLoading) {
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -269,9 +377,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       if (!mounted) return;
       _localFiles.remove(optimistic.id);
       setState(() {
-        _messages = [
-          for (final m in _messages) if (m.id == optimistic.id) sent else m,
-        ];
+        // A sync can land between the post and its answer and bring the same
+        // message back first; then the optimistic bubble just goes.
+        final already = _messages.any((m) => m.id == sent.id);
+        _messages = already
+            ? [for (final m in _messages) if (m.id != optimistic.id) m]
+            : [for (final m in _messages) if (m.id == optimistic.id) sent else m];
+        _sentAwaitingSync[sent.id] = sent;
       });
     } catch (_) {
       if (!mounted) return;
@@ -351,7 +463,12 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         locale: Localizations.localeOf(context).languageCode == 'fr' ? 'fr' : 'en',
       );
       if (!mounted) return;
-      setState(() => _messages = [..._messages, message]);
+      setState(() {
+        if (!_messages.any((m) => m.id == message.id)) {
+          _messages = [..._messages, message];
+        }
+        _sentAwaitingSync[message.id] = message;
+      });
       _scrollToBottom();
       final share = message.location;
       if (live && share != null) LiveLocation.instance.follow(share);
@@ -467,9 +584,12 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     _sendFile(file, name);
   }
 
+  /// A signed URL expires, and the one on a stored message may be older than
+  /// its window: ask for one that will still open before handing it over.
   Future<void> _openAttachment(Message m) async {
-    final url = m.attachmentUrl;
-    if (url == null) return;
+    final url = await _chat.freshAttachmentUrl(widget.conversation.id, m.id) ??
+        m.attachmentUrl;
+    if (url == null || !mounted) return;
     final ok = await launchUrl(Uri.parse(url),
         mode: LaunchMode.externalApplication);
     if (!ok && mounted) {
@@ -509,13 +629,20 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     final local = _localFiles[m.id];
 
     if (m.attachmentIsImage) {
+      // Keyed by the storage path, not the URL: the URL is signed afresh on
+      // every full fetch, and the photo itself never changes.
       final image = local != null
           ? LocalImage(local.path, width: 180, fit: BoxFit.cover)
           : (m.attachmentUrl != null
-              ? Image.network(m.attachmentUrl!,
+              ? CachedNetworkImage(
+                  imageUrl: m.attachmentUrl!,
+                  cacheKey: 'chat:${m.attachmentPath}',
+                  cacheManager: chatAttachmentCache,
                   width: 180,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink())
+                  memCacheWidth: 360,
+                  errorWidget: (_, _, _) => const SizedBox.shrink(),
+                )
               : const SizedBox.shrink());
       return Padding(
         padding: const EdgeInsets.only(bottom: 6),
@@ -712,6 +839,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               ),
             ),
 
+          // The messages below are what the device had: say why they could
+          // not be brought up to date. Renders nothing once a sync succeeds.
+          if (!_isLoading && _error == null && _messages.isNotEmpty)
+            SavedNote(reason: _savedReason),
+
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -727,7 +859,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                 style: TextStyle(color: cs.onSurfaceVariant)),
                             const SizedBox(height: 12),
                             OutlinedButton(
-                                onPressed: () => _load(),
+                                onPressed: () => _sync(),
                                 child: Text(l10n.chatTryAgain)),
                           ],
                         ),
@@ -1250,7 +1382,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     );
     if (note == null || !mounted) return;
     try {
-      await _chat.appeal(m.id, note: note);
+      await _chat.appeal(m.id, note: note, conversationId: widget.conversation.id);
       if (!mounted) return;
       setState(() {
         _messages = [

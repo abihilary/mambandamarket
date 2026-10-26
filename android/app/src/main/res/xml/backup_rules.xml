@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 and below. app_flutter/ holds the Hive boxes of saved reads and
+     chat copies: per account, rebuilt from the network, never restored. -->
+<full-backup-content>
+    <exclude domain="root" path="app_flutter/" />
+</full-backup-content>

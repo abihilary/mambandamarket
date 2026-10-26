@@ -49,6 +49,11 @@ class ItemDetailScreen extends StatefulWidget {
   /// immediately display useful information while the detail request runs.
   final api.Listing? listing;
 
+  /// [listing] is the full record, fetched from the network just before this
+  /// screen was pushed (a shared link with nothing saved): the screen does
+  /// not fetch it a second time, which would also count a second view.
+  final bool detailPrefetched;
+
   const ItemDetailScreen({
     Key? key,
     required this.title,
@@ -57,6 +62,7 @@ class ItemDetailScreen extends StatefulWidget {
     this.images,
     this.listingId,
     this.listing,
+    this.detailPrefetched = false,
   }) : super(key: key);
 
   @override
@@ -72,6 +78,26 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   bool _dontShowSafetyNoticeAgain = false;
   bool _startingChat = false;
   bool _loadingDetail = false;
+
+  /// The server confirmed this listing since the screen opened. What is on
+  /// screen may be a copy saved on the device; checkout only opens on a
+  /// confirmed one, so nobody pays a price that has since changed.
+  bool _fresh = false;
+
+  /// The server said this listing no longer exists (404/410).
+  bool _gone = false;
+
+  /// The detail read in flight, so a Buy press joins it instead of asking
+  /// twice. Null when none is running.
+  Future<void>? _detailFuture;
+
+  /// When the heart was last pressed, and when the running detail read
+  /// started: a read that began before the press must not undo it.
+  DateTime? _toggledAt;
+  DateTime? _fetchStartedAt;
+
+  /// Buy pressed on a saved copy: the button waits for the fresh one.
+  bool _buying = false;
 
   /// Prevents multiple share requests from being triggered by repeated taps.
   bool _isSharing = false;
@@ -128,8 +154,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         Localizations.localeOf(context));
   }
 
-  /// Only listings that the backend marks as buyable can use checkout.
-  bool get _isBuyable => _listing?.isBuyable ?? false;
+  /// Only listings that the backend marks as buyable can use checkout, and
+  /// never one the server has said is gone.
+  bool get _isBuyable => !_gone && (_listing?.isBuyable ?? false);
 
   // ===========================================================================
   // SHARE CONFIGURATION
@@ -162,7 +189,33 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       );
     }
 
-    _loadDetail();
+    final repo = ListingsRepository.instance;
+    final id = widget.listingId;
+
+    if (widget.detailPrefetched) {
+      // [widget.listing] is the server's answer of a moment ago.
+      _fresh = true;
+      final listing = widget.listing;
+      if (listing != null) _isFavorite = listing.isFavorited;
+    } else {
+      // The full record this device saved last time paints at once, under
+      // the card's own title, price and photo (the card is the fresher of
+      // the two); the read below then confirms or replaces it. The heart
+      // stays as the favourites list says.
+      final saved = widget.listing != null
+          ? repo.savedDetailFor(widget.listing!)
+          : (id == null ? null : repo.savedDetail(id));
+      if (saved != null) {
+        _full = saved;
+        _adoptImages(saved);
+      }
+    }
+
+    if (id != null && id.isNotEmpty) {
+      _relatedItems = repo.savedRelated(id)?.value ?? [];
+    }
+
+    if (!widget.detailPrefetched) _ensureDetail();
     _loadRelated();
     _loadCategories();
   }
@@ -335,6 +388,22 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   // API
   // ===========================================================================
 
+  /// The listing's photos, once a fuller record than the card is known.
+  void _adoptImages(api.Listing listing) {
+    final serverImages = listing.imageUrls
+        .where((url) => url.trim().isNotEmpty)
+        .toList();
+
+    if (serverImages.isNotEmpty) {
+      _imageList = serverImages;
+    }
+  }
+
+  /// The detail read: the running one, or a new one. A Buy press after an
+  /// offline open therefore asks again rather than reusing the failure.
+  Future<void> _ensureDetail() =>
+      _detailFuture ??= _loadDetail().whenComplete(() => _detailFuture = null);
+
   Future<void> _loadDetail() async {
     final id = widget.listingId;
 
@@ -348,24 +417,43 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       });
     }
 
+    _fetchStartedAt = DateTime.now();
+
     try {
-      final full =
-          await ListingsRepository.instance.detail(id);
+      final r = await ListingsRepository.instance.fetchDetail(id);
 
       if (!mounted) return;
 
-      final serverImages = full.imageUrls
-          .where((url) => url.trim().isNotEmpty)
-          .toList();
+      // A copy from the device (offline, or the server unwell) is not a
+      // confirmation, and the card stays the fresher of the two for what it
+      // carries.
+      final card = widget.listing;
+      final full = r.isSaved && card != null
+          ? card.withDetailFrom(r.value)
+          : r.value;
+      final toggled = _toggledAt;
+      final pressedSince =
+          toggled != null && toggled.isAfter(_fetchStartedAt!);
 
       setState(() {
         _full = full;
-        _isFavorite = full.isFavorited;
-
-        if (serverImages.isNotEmpty) {
-          _imageList = serverImages;
+        if (!r.isSaved) {
+          _fresh = true;
+          _gone = false;
+          // The heart is per account: not from an answer to the previous
+          // one, nor over a press made while this read was out.
+          if (!pressedSince && r.isCurrent) _isFavorite = full.isFavorited;
         }
 
+        _adoptImages(full);
+
+        _loadingDetail = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        if (e.isGone) _gone = true;
         _loadingDetail = false;
       });
     } catch (_) {
@@ -403,6 +491,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   // ===========================================================================
 
   Future<void> _toggleFavorite() async {
+    _toggledAt = DateTime.now();
+
     final id = widget.listingId;
 
     if (id == null || id.isEmpty) {
@@ -446,9 +536,33 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   // ===========================================================================
 
   Future<void> _buyNow() async {
+    if (_buying) return;
+
+    // On screen may be a copy from the device. Checkout is only opened on
+    // what the server says now: the price, the stock and whether the listing
+    // still exists may all have changed since it was saved.
+    if (!_fresh) {
+      setState(() => _buying = true);
+      try {
+        await _ensureDetail();
+      } finally {
+        if (mounted) setState(() => _buying = false);
+      }
+      if (!mounted) return;
+      if (!_fresh) {
+        final l10n = context.l10n;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_gone ? l10n.listingGone : l10n.offlineChangeNotSaved),
+          ),
+        );
+        return;
+      }
+    }
+
     final listing = _listing;
 
-    if (listing == null || !listing.isBuyable) {
+    if (listing == null || !_isBuyable) {
       return;
     }
 
@@ -1344,6 +1458,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   /// Buy, message and ship. The buyer-protection line that sat above them is
   /// now the band under the key facts, said once.
   Widget _buildActions(BuildContext context) {
+    // Nothing left to buy, message about or ship. The heart stays in the
+    // header, so it can still be taken off the favourites.
+    if (_gone) return _goneNotice(context);
     return Row(
       children: [
         if (_isBuyable) ...[
@@ -1702,6 +1819,33 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     );
   }
 
+  /// In place of the actions once the server has said the listing is gone.
+  Widget _goneNotice(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 50),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.remove_shopping_cart_outlined,
+              size: 20, color: scheme.onSurfaceVariant),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              context.l10n.listingGone,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buyButton() {
     final scheme = Theme.of(context).colorScheme;
     return ElevatedButton.icon(
@@ -1712,8 +1856,17 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
         elevation: 2,
       ),
-      onPressed: _buyNow,
-      icon: const Icon(Icons.shopping_bag_outlined),
+      onPressed: _buying ? null : _buyNow,
+      icon: _buying
+          ? SizedBox(
+              height: 18,
+              width: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: scheme.onPrimary,
+              ),
+            )
+          : const Icon(Icons.shopping_bag_outlined),
       label: Text(
         context.l10n.detailBuyNow,
         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),

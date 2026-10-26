@@ -44,6 +44,18 @@ class _WalletScreenState extends State<WalletScreen> {
       });
     } catch (_) {
       if (!mounted) return;
+      // The wallet is never read from the device, so a failure is said out
+      // loud. A balance already on screen (this visit's own) stays there.
+      if (_summary != null) {
+        setState(() {
+          _loading = false;
+          _failed = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.walletLoadError)),
+        );
+        return;
+      }
       setState(() {
         _loading = false;
         _failed = true;

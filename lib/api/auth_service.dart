@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'offline_cache.dart';
 
 import 'api_client.dart';
 import 'config.dart';
@@ -10,6 +9,7 @@ import 'remote_config.dart';
 import 'models.dart';
 import 'notification_repository.dart';
 import 'push_service.dart';
+import 'saved_state.dart';
 
 /// Where Google sends the user back after consent.
 ///
@@ -59,8 +59,18 @@ enum SignUpOutcome {
 /// `/auth/sync` on first sign-in. The same token authenticates every API call
 /// (and later the Chat API), so there is one identity across the whole product.
 class AuthService {
-  AuthService._() {
+  AuthService._() : _lastUid = Supabase.instance.client.auth.currentUser?.id {
     _client.auth.onAuthStateChange.listen((state) async {
+      // Before anything else, including the recovery early return: a
+      // different account (or none) means nothing of the previous one may
+      // stay in memory or in flight. The first event of a launch, a token
+      // refresh and a profile update keep the same uid and change nothing.
+      final uid = state.session?.user.id;
+      if (uid != _lastUid) {
+        _lastUid = uid;
+        await SavedState.switchTo(uid);
+      }
+
       final signedIn = state.session != null;
       isSignedIn.value = signedIn;
 
@@ -153,6 +163,11 @@ class AuthService {
   static final AuthService instance = AuthService._();
 
   final SupabaseClient _client = Supabase.instance.client;
+
+  /// The account the app's memory currently belongs to. Set from the restored
+  /// session before the listener starts, so the launch's first event (same
+  /// uid) does not wipe what was just painted from the device.
+  String? _lastUid;
 
   /// Current session state, for reactive UI (splash routing, account screen).
   final ValueNotifier<bool> isSignedIn = ValueNotifier(false);
@@ -417,8 +432,10 @@ class AuthService {
     // another account's messages after somebody else signed in on it.
     await PushService.instance.unregister();
     await _client.auth.signOut();
-    // Saved reads are per account already; emptied anyway, for a shared phone.
-    await OfflineCache.clear();
+    // Saved reads, chat copies and chat photos are per account already;
+    // emptied anyway, for a shared phone. The listener's own switch may run
+    // alongside this; both are idempotent.
+    await SavedState.wipeAll();
     NotificationRepository.instance.clear();
     me.value = null;
     needsRoleSelection.value = false;
@@ -444,15 +461,39 @@ class AuthService {
   }
 
   /// Load profile + subscription + entitlements.
-  Future<Me?> refreshMe() async {
+  ///
+  /// Calls made while one is in flight share it (unless a write changed
+  /// things since it started). Leaves [me] alone when the answer is the same
+  /// as what is shown, and when the account changed mid-flight.
+  Future<Me?> refreshMe() {
     if (session == null) {
       me.value = null;
-      return null;
+      _meStamp = null;
+      return Future.value(null);
     }
-    final json = await ApiClient.instance.get('/me') as Map<String, dynamic>;
-    final value = Me.fromJson(json);
-    me.value = value;
-    return value;
+    return _meInflight.run(() async {
+      final r = await ApiClient.instance.read('/me');
+      if (!r.isCurrent) return me.value;
+      final current = me.value;
+      if (current != null && r.stamp == _meStamp) return current;
+      final value = Me.fromJson((r.body as Map).cast<String, dynamic>());
+      _meStamp = r.stamp;
+      me.value = value;
+      return value;
+    });
+  }
+
+  final Inflight<Me?> _meInflight = Inflight<Me?>();
+  String? _meStamp;
+
+  /// [me] from the device, at launch, when nothing has loaded it yet.
+  void restoreMe() {
+    if (me.value != null) return;
+    final s = ApiClient.instance.saved('/me');
+    final body = s?.body;
+    if (s == null || body is! Map) return;
+    me.value = Me.fromJson(body.cast<String, dynamic>());
+    _meStamp = s.stamp;
   }
 
   // ── Referral held over from sign-up ────────────────────────────────────────

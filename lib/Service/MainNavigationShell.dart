@@ -10,12 +10,12 @@ import '../DashBoards/CreateListingScreen.dart';
 import '../api/auth_service.dart';
 import '../api/notification_repository.dart';
 import '../api/repositories.dart';
+import '../api/saved_state.dart';
 import '../Screens/AccountScreen.dart';
 import '../Screens/ChatInboxScreen.dart';
 import '../Screens/FavoritesScreen.dart';
 import '../Screens/HomeScreen.dart';
 import '../Screens/MabandaDeliveryHomeScreen.dart';
-import '../Screens/ShipmentsScreen.dart';
 import '../Components/require_account.dart';
 import '../Components/shipping_button.dart';
 import '../api/shipping_repository.dart';
@@ -41,9 +41,15 @@ class _MainNavigationShellState extends State<MainNavigationShell>
   /// Realtime is a socket, and sockets drop — on a train, on a lift, on a
   /// carrier that decides an idle connection has had long enough. This sweeps
   /// quietly in the background so a missed event costs a minute rather than
-  /// lasting until somebody thinks to open the tab.
+  /// lasting until somebody thinks to open the tab. The notification badge is
+  /// read on every tick; the inbox only while realtime is down, or every five
+  /// minutes while it is healthy (see [_quietRefresh]).
   static const Duration _sweepInterval = Duration(seconds: 45);
   Timer? _sweep;
+
+  /// The account-status screen has been pushed once already; a second
+  /// change to `me` while it is on its way must not push it again.
+  bool _routedToStatus = false;
 
   @override
   void initState() {
@@ -55,10 +61,19 @@ class _MainNavigationShellState extends State<MainNavigationShell>
       if (mounted) setState(() {});
     });
     WidgetsBinding.instance.addObserver(this);
+    // Every account change resets the repositories, which closes the socket;
+    // this is what opens it again for whoever is signed in now.
+    SavedState.session.addListener(_onSession);
     // A visitor browsing the web app without an account: no inbox, no
     // notifications, no Home card — each of those is an authenticated call
     // that would only come back 401.
     if (_guest) return;
+    // The profile painted at launch is the saved one. If the revalidated one
+    // says the account was restricted meanwhile, this is where it is noticed.
+    AuthService.instance.me.addListener(_onMe);
+    // And once now, for a profile that revalidated between the splash
+    // choosing this route and the shell being built.
+    _onMe();
     ChatRepository.instance.startLive();
     unawaited(NotificationRepository.instance.refreshUnread());
     unawaited(NotificationRepository.instance.refreshHomeCard());
@@ -79,8 +94,30 @@ class _MainNavigationShellState extends State<MainNavigationShell>
   void dispose() {
     _sweep?.cancel();
     WidgetsBinding.instance.removeObserver(this);
+    SavedState.session.removeListener(_onSession);
+    AuthService.instance.me.removeListener(_onMe);
     if (!_guest) ChatRepository.instance.stopLive();
     super.dispose();
+  }
+
+  /// A restricted account never stays past the account-status screen. The
+  /// splash decided on the saved profile; this follows the fresh one.
+  void _onMe() {
+    if (!AuthService.instance.isAccountRestricted || _routedToStatus) return;
+    _routedToStatus = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Navigator.of(context).pushNamedAndRemoveUntil('/account-status', (_) => false);
+    });
+    // A profile can land while nothing else is redrawing.
+    WidgetsBinding.instance.ensureVisualUpdate();
+  }
+
+  /// The signed-in account changed (or was restored) underneath the shell.
+  void _onSession() {
+    if (!_guest && AuthService.instance.userId != null) {
+      ChatRepository.instance.startLive();
+    }
   }
 
   @override
@@ -121,13 +158,24 @@ class _MainNavigationShellState extends State<MainNavigationShell>
 
   /// Refresh without touching the screen's own loading state, so the inbox
   /// updates underneath the user instead of flashing a spinner at them.
+  ///
+  /// While both realtime channels are subscribed the socket already says when
+  /// a thread changes, so the inbox is only re-read every five minutes; while
+  /// it is down, on every tick. The notification badge has no socket and is
+  /// read every time. Each is tried on its own: an inbox that failed does not
+  /// cost the badge its turn.
   Future<void> _quietRefresh() async {
+    final last = ChatRepository.instance.lastInboxRefreshAt;
+    final inboxDue = !ChatRepository.instance.liveHealthy.value || last == null ||
+        DateTime.now().difference(last) >= const Duration(minutes: 5);
     try {
-      await ChatRepository.instance.refresh();
-      await NotificationRepository.instance.refreshUnread();
+      if (inboxDue) await ChatRepository.instance.refresh();
     } catch (_) {
       // Offline, most likely. The next sweep tries again.
     }
+    try {
+      await NotificationRepository.instance.refreshUnread();
+    } catch (_) {}
   }
 
   /// Whether this account still has room to publish.

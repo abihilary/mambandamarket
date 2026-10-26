@@ -310,6 +310,68 @@ class Listing {
       .map((p) => AppConfig.storagePublicUrl('listing-images', p))
       .toList();
 
+  static String? _orElse(String? mine, String? other) =>
+      (mine == null || mine.isEmpty) ? other : mine;
+
+  /// This listing (a card from a feed) with what only [saved] (an earlier
+  /// detail of the same listing, from the device) has: the description, the
+  /// details, the seller and store. The card always keeps what it has of its
+  /// own and what can change between the two (title, price, mode, quantity,
+  /// status), and its primary image unless [saved] has the same one and more.
+  Listing withDetailFrom(Listing saved) {
+    final sameFirst = imagePaths.isNotEmpty &&
+        saved.imagePaths.isNotEmpty &&
+        imagePaths.first == saved.imagePaths.first;
+    final images = imagePaths.isEmpty || (sameFirst && saved.imagePaths.length > imagePaths.length)
+        ? saved.imagePaths
+        : imagePaths;
+    return Listing(
+      id: id,
+      sellerId: sellerId.isEmpty ? saved.sellerId : sellerId,
+      storeId: storeId ?? saved.storeId,
+      companyId: companyId,
+      // Only the detail embeds the company; a card assumes escrow.
+      companyEscrow: companyId != null && companyId == saved.companyId ? saved.companyEscrow : companyEscrow,
+      title: title,
+      description: _orElse(description, saved.description),
+      priceCents: priceCents,
+      currency: currency,
+      quantity: quantity,
+      categorySlug: categorySlug,
+      kind: kind,
+      priceMode: priceMode,
+      attributes: attributes.isEmpty ? saved.attributes : attributes,
+      condition: _orElse(condition, saved.condition),
+      hasGuarantee: hasGuarantee || saved.hasGuarantee,
+      city: _orElse(city, saved.city),
+      viewCount: viewCount,
+      favoriteCount: favoriteCount,
+      createdAt: createdAt,
+      distanceMeters: distanceMeters,
+      hasLocation: hasLocation || saved.hasLocation,
+      imagePaths: images,
+      isFavorited: isFavorited,
+      inquiryCount: inquiryCount,
+      status: status,
+      reviewState: reviewState,
+      reviewMessagesEn: reviewMessagesEn,
+      reviewMessagesFr: reviewMessagesFr,
+      reviewNote: reviewNote,
+      moderationLocked: moderationLocked,
+      sellerName: _orElse(sellerName, saved.sellerName),
+      sellerAvatarUrl: _orElse(sellerAvatarUrl, saved.sellerAvatarUrl),
+      sellerRole: _orElse(sellerRole, saved.sellerRole),
+      storeName: _orElse(storeName, saved.storeName),
+      storeLogoUrl: _orElse(storeLogoUrl, saved.storeLogoUrl),
+      storeVerified: storeVerified || saved.storeVerified,
+      storeRatingAvg: storeRatingAvg ?? saved.storeRatingAvg,
+      storeRatingCount: storeRatingCount == 0 ? saved.storeRatingCount : storeRatingCount,
+      sellerCity: _orElse(sellerCity, saved.sellerCity),
+      sellerCreatedAt: sellerCreatedAt ?? saved.sellerCreatedAt,
+      sellerActiveListings: sellerActiveListings ?? saved.sellerActiveListings,
+    );
+  }
+
   static int _asInt(dynamic v, [int fallback = 0]) {
     if (v is int) return v;
     if (v is num) return v.toInt();

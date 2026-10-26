@@ -680,7 +680,7 @@ abstract class AppLocalizations {
   /// **'Try again'**
   String get retry;
 
-  /// No description provided for @connectionError.
+  /// No connection reached the marketplace. Also shown on Favourites when nothing is saved on the phone and the first load failed.
   ///
   /// In en, this message translates to:
   /// **'Couldn\'t reach the marketplace. Check your connection.'**
@@ -692,13 +692,37 @@ abstract class AppLocalizations {
   /// **'You\'re offline, so nothing was changed. Try again when you\'re connected.'**
   String get offlineChangeNotSaved;
 
+  /// One quiet row above a screen that is showing content saved on the phone because there is no connection.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Showing what\'s saved on this device.'**
+  String get savedCopyNote;
+
+  /// One quiet row above a screen that is showing content saved on the phone because the server could not answer (an error page, a gateway error, public Wi-Fi sign-in).
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t refresh right now. Showing what\'s saved on this device.'**
+  String get savedCopyServerNote;
+
+  /// Under the saved-copy note on an order shown from the phone: why Pay, Confirm and Cancel are switched off.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to the internet to pay, confirm or cancel.'**
+  String get savedCopyActionsOff;
+
+  /// Shown on a listing the server says was sold, removed or deleted, in place of Chat and Buy.
+  ///
+  /// In en, this message translates to:
+  /// **'This listing is no longer available.'**
+  String get listingGone;
+
   /// No description provided for @errorTimeout.
   ///
   /// In en, this message translates to:
   /// **'The marketplace is taking too long to answer. Please try again.'**
   String get errorTimeout;
 
-  /// No description provided for @errorServer.
+  /// The server could not answer (a 5xx). Also the error shown when a search fails.
   ///
   /// In en, this message translates to:
   /// **'The marketplace is having trouble right now. Please try again in a moment.'**
@@ -776,7 +800,7 @@ abstract class AppLocalizations {
   /// **'Sign in to see your messages.'**
   String get signInToSeeMessages;
 
-  /// No description provided for @couldNotLoadMessages.
+  /// The inbox could not refresh; shown as a SnackBar after a pull when the saved list stays on screen.
   ///
   /// In en, this message translates to:
   /// **'Could not load your messages.'**
@@ -1082,7 +1106,7 @@ abstract class AppLocalizations {
   /// **'Listing'**
   String get chatDefaultListing;
 
-  /// No description provided for @chatLoadError.
+  /// A conversation could not be opened: it no longer exists, or nothing is saved on the phone and the load failed.
   ///
   /// In en, this message translates to:
   /// **'Could not load this conversation.'**
@@ -3890,7 +3914,7 @@ abstract class AppLocalizations {
   /// **'No wallet activity yet.'**
   String get walletNoEntries;
 
-  /// No description provided for @walletLoadError.
+  /// The wallet could not refresh. The balance on screen stays; balances are never shown from the phone's saved copy.
   ///
   /// In en, this message translates to:
   /// **'Could not load your wallet. Check your connection.'**

@@ -59,10 +59,17 @@
          prompt cannot be raised at all. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Backup leaves out app_flutter/, where the saved reads and chat copies
+         live (Hive boxes). They belong to whoever is signed in on this phone,
+         and restoring them onto another phone, or after a reinstall under a
+         different account, would show one person's inbox to another. They
+         rebuild themselves from the network anyway. -->
     <application
         android:label="Mambanda Market"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules">
         <activity
             android:name=".MainActivity"
             android:exported="true"

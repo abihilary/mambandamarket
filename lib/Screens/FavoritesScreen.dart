@@ -2,6 +2,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../Components/ItemDetailScreen.dart';
+import '../Components/saved_note.dart';
+import '../api/api_client.dart';
 import '../api/auth_service.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
@@ -28,7 +30,14 @@ class FavoritesScreen extends StatefulWidget {
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
   final _repo = FavoritesRepository.instance;
-  bool _isLoading = true;
+
+  /// Only while there is nothing to show yet: the list restored from the
+  /// device at launch stays on screen while the network revalidates it.
+  late bool _isLoading;
+
+  /// Nothing was ever loaded and the first load failed. Without this the
+  /// screen said "no favourites yet" to somebody who simply had no signal.
+  bool _failed = false;
 
   /// Slug → category, for the section headings. Purely cosmetic: without it the
   /// headings fall back to the slug, which is readable if ugly, so a failed
@@ -38,18 +47,57 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   void initState() {
     super.initState();
+    _isLoading = _nothingShown;
+    final saved = ListingsRepository.instance.savedCategories();
+    if (saved != null) _categories = {for (final c in saved.value) c.slug: c};
     _load();
     _loadCategories();
   }
 
-  Future<void> _load() async {
-    setState(() => _isLoading = true);
+  bool get _nothingShown => !_repo.loadedOnce && _repo.favorites.value.isEmpty;
+
+  /// [userAsked]: a pull. It says why it failed; a background load keeps the
+  /// list and stays quiet.
+  Future<void> _load({bool userAsked = false}) async {
+    if (_nothingShown) {
+      setState(() {
+        _isLoading = true;
+        _failed = false;
+      });
+    }
     try {
       await _repo.refresh();
-    } catch (_) {
-      // Keep whatever is cached; the empty state explains the rest.
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _failed = false;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      if (_nothingShown) {
+        setState(() {
+          _failed = true;
+          _isLoading = false;
+        });
+        return;
+      }
+      // The list on screen stays.
+      setState(() => _isLoading = false);
+      if (userAsked) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(_errorText(e))));
+      }
     }
-    if (mounted) setState(() => _isLoading = false);
+  }
+
+  String _errorText(Object e) {
+    final l10n = context.l10n;
+    if (e is! ApiException) return l10n.errorUnexpected;
+    if (e.isNetwork) return l10n.connectionError;
+    if (e.isTimeout) return l10n.errorTimeout;
+    if (e.isBadResponse) return l10n.errorBadResponse;
+    return e.message;
   }
 
   Future<void> _loadCategories() async {
@@ -143,70 +191,124 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             )
           : _isLoading
               ? const Center(child: CircularProgressIndicator())
-              : ValueListenableBuilder<List<Listing>>(
-                  valueListenable: _repo.favorites,
-                  builder: (context, favorites, _) {
-                    if (favorites.isEmpty) {
-                      // Scrollable, so the empty state can still be pulled to
-                      // refresh — a saved item added on another device has no
-                      // other way of appearing.
-                      return RefreshIndicator(
-                        onRefresh: _load,
-                        child: ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          children: [
-                            SizedBox(
-                              height: MediaQuery.sizeOf(context).height * 0.5,
-                              child: Center(
-                                child: Text(l10n.noFavoritesYet,
-                                    style: TextStyle(
-                                        color: scheme.onSurfaceVariant)),
-                              ),
-                            ),
-                          ],
+              : _failed
+                  ? _FailedView(onRetry: _load)
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // The list is what this device saved, and why it
+                        // could not be refreshed. Nothing when the server
+                        // answered.
+                        ValueListenableBuilder<SavedReason?>(
+                          valueListenable: _repo.savedReason,
+                          builder: (context, reason, _) =>
+                              SavedNote(reason: reason),
                         ),
-                      );
-                    }
+                        Expanded(child: _favoritesList(context)),
+                      ],
+                    ),
+    );
+  }
 
-                    final sections = _sections(favorites);
-                    return RefreshIndicator(
-                      onRefresh: _load,
-                      child: ListView(
-                        // Clearance for the docked publish button, and for
-                        // the shipping button sitting above it.
-                        // Centred on a desktop, where the rows also go two
-                        // or three across instead of one 1400px row each.
-                        padding: frameInsets(
-                          context,
-                          maxWidth: Breakpoints.dashboard,
-                          min: 16,
-                        ).copyWith(
-                          top: 8,
-                          bottom: shippingButtonClearance(context),
-                        ),
-                        children: [
-                          for (final (slug, items) in sections) ...[
-                            _SectionHeading(
-                              label: _sectionLabel(context, slug),
-                              count: items.length,
-                            ),
-                            _RowColumns(
-                              children: [
-                                for (final item in items)
-                                  _FavoriteRow(
-                                    item: item,
-                                    onTap: () => _openDetail(item),
-                                    onRemove: () => _repo.toggle(item.id),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                          ],
-                        ],
-                      ),
-                    );
-                  },
+  Widget _favoritesList(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    return ValueListenableBuilder<List<Listing>>(
+      valueListenable: _repo.favorites,
+      builder: (context, favorites, _) {
+        if (favorites.isEmpty) {
+          // Scrollable, so the empty state can still be pulled to
+          // refresh — a saved item added on another device has no
+          // other way of appearing.
+          return RefreshIndicator(
+            onRefresh: () => _load(userAsked: true),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SizedBox(
+                  height: MediaQuery.sizeOf(context).height * 0.5,
+                  child: Center(
+                    child: Text(l10n.noFavoritesYet,
+                        style: TextStyle(color: scheme.onSurfaceVariant)),
+                  ),
                 ),
+              ],
+            ),
+          );
+        }
+
+        final sections = _sections(favorites);
+        return RefreshIndicator(
+          onRefresh: () => _load(userAsked: true),
+          child: ListView(
+            // Clearance for the docked publish button, and for
+            // the shipping button sitting above it.
+            // Centred on a desktop, where the rows also go two
+            // or three across instead of one 1400px row each.
+            padding: frameInsets(
+              context,
+              maxWidth: Breakpoints.dashboard,
+              min: 16,
+            ).copyWith(
+              top: 8,
+              bottom: shippingButtonClearance(context),
+            ),
+            children: [
+              for (final (slug, items) in sections) ...[
+                _SectionHeading(
+                  label: _sectionLabel(context, slug),
+                  count: items.length,
+                ),
+                _RowColumns(
+                  children: [
+                    for (final item in items)
+                      _FavoriteRow(
+                        item: item,
+                        onTap: () => _openDetail(item),
+                        onRemove: () => _repo.toggle(item.id),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// The first load failed with nothing saved to show instead.
+class _FailedView extends StatelessWidget {
+  const _FailedView({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.cloud_off, size: 48, color: scheme.onSurfaceVariant),
+            const SizedBox(height: 12),
+            Text(
+              context.l10n.connectionError,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton(
+              onPressed: onRetry,
+              child: Text(context.l10n.retry),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

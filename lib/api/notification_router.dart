@@ -84,7 +84,10 @@ Future<void> openNotificationTarget(Map<String, dynamic> data) async {
       case 'message':
         final conversationId = data['conversation_id']?.toString();
         if (conversationId == null || conversationId.isEmpty) return;
-        final thread = await ChatRepository.instance.thread(conversationId);
+        // The inbox in memory first (restored at launch): a tap opens the room
+        // at once, even offline, and the room fetches only what is new.
+        final thread = ChatRepository.instance.threadById(conversationId) ??
+            await ChatRepository.instance.thread(conversationId);
         await navigator.push(MaterialPageRoute(builder: (_) => ChatRoomScreen(conversation: thread)));
         return;
       case 'shipping':

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../Components/order_status_chip.dart';
+import '../Components/saved_note.dart';
 import '../api/api_client.dart';
 import '../api/models.dart' as api;
 import '../api/repositories.dart';
@@ -34,6 +35,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   static const String _kLoadError = '__order_detail_load__';
   String? _error;
 
+  /// Non-null while the order on screen is the copy saved on this device
+  /// (the server could not be asked). Money is never moved on a copy: pay,
+  /// confirm and cancel stay off until the server answers again.
+  SavedReason? _savedReason;
+
   @override
   void initState() {
     super.initState();
@@ -46,10 +52,23 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       _error = null;
     });
     try {
-      final order = await OrdersRepository.instance.detail(widget.orderId);
+      // Network first. A saved copy only stands in when the network fails,
+      // and never for one this device has acted on since (the write dropped
+      // it).
+      final r = await OrdersRepository.instance.fetchDetail(widget.orderId);
       if (!mounted) return;
+      if (!r.isCurrent) {
+        // Another account signed in meanwhile: not this one's to show.
+        setState(() {
+          _order = null;
+          _error = _kLoadError;
+          _loading = false;
+        });
+        return;
+      }
       setState(() {
-        _order = order;
+        _order = r.value;
+        _savedReason = r.savedReason;
         _loading = false;
       });
     } on ApiException catch (e) {
@@ -213,33 +232,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             ? const Center(child: CircularProgressIndicator())
             : order == null
                 ? _errorState(l10n)
-                : RefreshIndicator(
-                    onRefresh: _load,
-                    child: ListView(
-                      padding: const EdgeInsets.all(16),
-                      children: [
-                        _headerCard(l10n, order),
-                        const SizedBox(height: 16),
-                        _escrowCard(l10n, order),
-                        // Above the items: when a driver is at the door, the
-                        // code is the only thing on this screen that matters.
-                        if (order.shipment != null) ...[
-                          const SizedBox(height: 16),
-                          _shipmentCard(l10n, order.shipment!),
-                        ],
-                        const SizedBox(height: 16),
-                        _itemsCard(l10n, order),
-                        const SizedBox(height: 16),
-                        _deliveryCard(l10n, order),
-                        if (order.note != null && order.note!.isNotEmpty) ...[
-                          const SizedBox(height: 16),
-                          _noteCard(l10n, order),
-                        ],
-                        const SizedBox(height: 16),
-                        _totalsCard(l10n, order),
-                        const SizedBox(height: 24),
-                      ],
-                    ),
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SavedNote(reason: _savedReason, actionsOff: true),
+                      Expanded(child: _orderList(l10n, order)),
+                    ],
                   ),
       ),
       ),
@@ -249,6 +247,37 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   // --- WIDGET BUILDERS ---
+
+  Widget _orderList(AppLocalizations l10n, api.Order order) {
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _headerCard(l10n, order),
+          const SizedBox(height: 16),
+          _escrowCard(l10n, order),
+          // Above the items: when a driver is at the door, the
+          // code is the only thing on this screen that matters.
+          if (order.shipment != null) ...[
+            const SizedBox(height: 16),
+            _shipmentCard(l10n, order.shipment!),
+          ],
+          const SizedBox(height: 16),
+          _itemsCard(l10n, order),
+          const SizedBox(height: 16),
+          _deliveryCard(l10n, order),
+          if (order.note != null && order.note!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _noteCard(l10n, order),
+          ],
+          const SizedBox(height: 16),
+          _totalsCard(l10n, order),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
 
   Widget _errorState(AppLocalizations l10n) {
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
@@ -622,13 +651,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   Widget? _actions(AppLocalizations l10n, api.Order order) {
     final scheme = Theme.of(context).colorScheme;
     final buttons = <Widget>[];
+    // A saved copy, or an action already running: nothing can be pressed.
+    final off = _busy || _savedReason != null;
 
     if (order.canConfirm) {
       buttons.add(
         ElevatedButton.icon(
           // Releasing the money is a success action, so it keeps the green even
           // where the brand CTA would otherwise be lime/black.
-          onPressed: _busy ? null : () => _confirmDelivery(order),
+          onPressed: off ? null : () => _confirmDelivery(order),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.success,
             foregroundColor: Colors.white,
@@ -654,7 +685,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     if (order.canCancel) {
       buttons.add(
         ElevatedButton.icon(
-          onPressed: _busy ? null : () => _pay(order),
+          onPressed: off ? null : () => _pay(order),
           style: ElevatedButton.styleFrom(
             backgroundColor: scheme.primary,
             foregroundColor: scheme.onPrimary,
@@ -670,7 +701,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       );
       buttons.add(
         OutlinedButton.icon(
-          onPressed: _busy ? null : () => _cancelOrder(order),
+          onPressed: off ? null : () => _cancelOrder(order),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.danger,
             minimumSize: const Size(double.infinity, 48),

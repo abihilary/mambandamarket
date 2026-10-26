@@ -7,10 +7,48 @@ import 'package:cross_file/cross_file.dart';
 import 'package:flutter/foundation.dart' hide Category;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../l10n/l10n.dart';
 import 'api_client.dart';
 import 'auth_service.dart';
+import 'cache_rules.dart';
+import 'chat_store.dart';
+import 'chat_sync.dart';
 import 'location_share.dart';
 import 'models.dart';
+import 'offline_cache.dart';
+
+String? _uid() {
+  try {
+    return AuthService.instance.userId;
+  } catch (_) {
+    return null;
+  }
+}
+
+/// The listings in a body's [key] list.
+List<Listing> _listingsOf(Object? json, {String key = 'items'}) =>
+    ((json is Map ? json[key] : null) as List? ?? const [])
+        .whereType<Map>()
+        .map((m) => Listing.fromJson(m.cast<String, dynamic>()))
+        .toList();
+
+/// A saved list as it may be shown: without the listings the network has
+/// since said are gone, and without any the saved copy itself shows as not
+/// live. Only for saved answers; a network answer is shown as it is.
+List<Listing> _liveOnly(List<Listing> items) =>
+    [for (final l in items) if (!OfflineCache.isGone(l.id) && l.status == 'active') l];
+
+/// A stamp for a filtered list: the body's own, plus how many were left out,
+/// so the same body filtered differently still repaints.
+String _stampMinus(String stamp, int removed) => removed == 0 ? stamp : '$stamp:$removed';
+
+/// The network showed these live: whatever was remembered as gone (sold,
+/// then relisted) is not any more.
+void _noteActive(Iterable<Listing> items) {
+  for (final l in items) {
+    if (l.status == 'active') OfflineCache.unGone(l.id);
+  }
+}
 
 /// Browse, publish and manage listings.
 class ListingsRepository {
@@ -31,8 +69,103 @@ class ListingsRepository {
   /// not to splice one object into a list it did not build.
   final ValueNotifier<int> revision = ValueNotifier<int>(0);
 
+  /// The one place the browse query is built, so the saved-first paint and
+  /// the read that follows ask for exactly the same address. `near` is
+  /// rounded to about 100 m: a GPS fix that wobbles in the fifth decimal
+  /// would otherwise make every launch a new address with nothing saved.
+  Map<String, dynamic> _browseQuery({
+    String? query,
+    String? categorySlug,
+    int? minCents,
+    int? maxCents,
+    String? condition,
+    double? lat,
+    double? lng,
+    int? radiusMeters,
+    String sort = 'recent',
+    int limit = 20,
+    int offset = 0,
+    Map<String, String> attrs = const {},
+  }) =>
+      {
+        for (final e in attrs.entries) 'attr.${e.key}': e.value,
+        'q': query,
+        'category': categorySlug,
+        'min': minCents,
+        'max': maxCents,
+        'condition': condition,
+        if (lat != null && lng != null) 'near': '${lat.toStringAsFixed(3)},${lng.toStringAsFixed(3)}',
+        'radius': radiusMeters,
+        'sort': sort,
+        'limit': limit,
+        'offset': offset,
+      };
+
+  /// The saved copy of this browse, for a first paint, or null. Listings the
+  /// network has since said are gone are left out.
+  Saved<List<Listing>>? savedBrowse({
+    String? query,
+    String? categorySlug,
+    int? minCents,
+    int? maxCents,
+    String? condition,
+    double? lat,
+    double? lng,
+    int? radiusMeters,
+    String sort = 'recent',
+    int limit = 20,
+    int offset = 0,
+    Map<String, String> attrs = const {},
+  }) =>
+      _savedListings(_api.saved('/listings',
+          query: _browseQuery(
+            query: query,
+            categorySlug: categorySlug,
+            minCents: minCents,
+            maxCents: maxCents,
+            condition: condition,
+            lat: lat,
+            lng: lng,
+            radiusMeters: radiusMeters,
+            sort: sort,
+            limit: limit,
+            offset: offset,
+            attrs: attrs,
+          )));
+
   /// Browse / search. Every filter is optional; the server applies full-text
   /// search, category/price filters and PostGIS radius in one query.
+  Future<Fetched<List<Listing>>> fetchBrowse({
+    String? query,
+    String? categorySlug,
+    int? minCents,
+    int? maxCents,
+    String? condition,
+    double? lat,
+    double? lng,
+    int? radiusMeters,
+    String sort = 'recent',
+    int limit = 20,
+    int offset = 0,
+    // A detail of [categorySlug]'s template to match, e.g. {'sizes': 'M'}.
+    Map<String, String> attrs = const {},
+  }) async =>
+      _fetchedListings(await _api.read('/listings',
+          query: _browseQuery(
+            query: query,
+            categorySlug: categorySlug,
+            minCents: minCents,
+            maxCents: maxCents,
+            condition: condition,
+            lat: lat,
+            lng: lng,
+            radiusMeters: radiusMeters,
+            sort: sort,
+            limit: limit,
+            offset: offset,
+            attrs: attrs,
+          )));
+
   Future<List<Listing>> browse({
     String? query,
     String? categorySlug,
@@ -47,57 +180,118 @@ class ListingsRepository {
     int offset = 0,
     // A detail of [categorySlug]'s template to match, e.g. {'sizes': 'M'}.
     Map<String, String> attrs = const {},
-  }) async {
-    final json =
-        await _api.get(
-              '/listings',
-              query: {
-                for (final e in attrs.entries) 'attr.${e.key}': e.value,
-                'q': query,
-                'category': categorySlug,
-                'min': minCents,
-                'max': maxCents,
-                'condition': condition,
-                if (lat != null && lng != null) 'near': '$lat,$lng',
-                'radius': radiusMeters,
-                'sort': sort,
-                'limit': limit,
-                'offset': offset,
-              },
-            )
-            as Map<String, dynamic>;
+  }) async =>
+      (await fetchBrowse(
+        query: query,
+        categorySlug: categorySlug,
+        minCents: minCents,
+        maxCents: maxCents,
+        condition: condition,
+        lat: lat,
+        lng: lng,
+        radiusMeters: radiusMeters,
+        sort: sort,
+        limit: limit,
+        offset: offset,
+        attrs: attrs,
+      ))
+          .value;
 
-    return (json['items'] as List? ?? [])
-        .whereType<Map>()
-        .map((m) => Listing.fromJson(m.cast<String, dynamic>()))
-        .toList();
+  /// A saved listing, for a first paint: null when the network has said it is
+  /// gone, when the saved copy is not live (unless it is the caller's own),
+  /// or when it is too old to show before the network answers.
+  Listing? savedDetail(String id) {
+    if (OfflineCache.isGone(id)) return null;
+    final s = _api.saved('/listings/$id');
+    final m = s?.body is Map ? (s!.body as Map)['listing'] : null;
+    if (m is! Map) return null;
+    final listing = Listing.fromJson(m.cast<String, dynamic>());
+    return _showableSaved(listing) ? listing : null;
   }
 
-  Future<Listing> detail(String id) async {
-    final json = await _api.get('/listings/$id') as Map<String, dynamic>;
-    return Listing.fromJson(
-        (json['listing'] as Map).cast<String, dynamic>());
+  /// Whether a listing from the device may be shown: not one the network has
+  /// since said is gone, and live unless it is the caller's own.
+  bool _showableSaved(Listing l) =>
+      !OfflineCache.isGone(l.id) && (l.status == 'active' || l.sellerId == _uid());
+
+  /// [card] (from a feed) filled in with what only the saved detail has. The
+  /// card keeps its title, price, mode, status, quantity and primary image:
+  /// it is the fresher of the two.
+  Listing? savedDetailFor(Listing card) {
+    final saved = savedDetail(card.id);
+    return saved == null ? null : card.withDetailFrom(saved);
   }
 
-  Future<List<Category>> categories() async {
-    // Served by the API rather than read from Supabase directly, so the client
-    // depends on one contract instead of also knowing the table shape.
-    final json = await _api.get('/categories') as Map<String, dynamic>;
-    final list = (json['items'] as List? ?? [])
-        .whereType<Map>()
-        .map((m) => Category.fromJson(m.cast<String, dynamic>()))
-        .toList();
-    _categoriesCache = list;
-    _categoriesAt = DateTime.now();
-    return list;
+  /// The listing in full. Throws [ApiException] with `isGone` on 404/410, and
+  /// then remembers it is gone so no saved copy shows it as live again.
+  ///
+  /// With no network it may answer from the device ([Fetched.isSaved]): not
+  /// fresh, so nothing may be bought from it. A saved copy of a listing the
+  /// network has since said is gone never stands in; the failure is thrown
+  /// instead, as if nothing were saved.
+  Future<Fetched<Listing>> fetchDetail(String id) async {
+    try {
+      final r = await _api.read('/listings/$id');
+      final listing = Listing.fromJson(((r.body as Map)['listing'] as Map).cast<String, dynamic>());
+      if (r.isSaved) {
+        if (!_showableSaved(listing)) {
+          throw r.savedReason == SavedReason.offline
+              ? ApiException(0, 'network', l10nNow.connectionError)
+              : ApiException(503, 'http_503', l10nNow.errorServer);
+        }
+      } else if (r.isCurrent && listing.status == 'active') {
+        OfflineCache.unGone(id);
+      }
+      return Fetched.of(r, listing);
+    } on ApiException catch (e) {
+      if (e.isGone) {
+        OfflineCache.markGone(id);
+        unawaited(OfflineCache.drop(prefixes: ['/listings/$id']));
+      }
+      rethrow;
+    }
   }
+
+  Future<Listing> detail(String id) async => (await fetchDetail(id)).value;
+
+  static List<Category> _categoriesOf(Object? json) =>
+      ((json is Map ? json['items'] : null) as List? ?? const [])
+          .whereType<Map>()
+          .map((m) => Category.fromJson(m.cast<String, dynamic>()))
+          .toList();
+
+  /// The saved categories, and the ten-minute memo seeded from them when it
+  /// is empty (so [cachedCategories] answers at once on a cold start).
+  Saved<List<Category>>? savedCategories() {
+    final s = _api.saved('/categories');
+    if (s == null) return null;
+    final list = _categoriesOf(s.body);
+    if (list.isEmpty) return null;
+    if (_categoriesCache == null) {
+      _categoriesCache = list;
+      _categoriesAt = DateTime.now();
+    }
+    return Saved(value: list, stamp: s.stamp, validatedAt: s.validatedAt);
+  }
+
+  final Inflight<List<Category>> _categoriesInflight = Inflight<List<Category>>();
+
+  Future<List<Category>> categories() => _categoriesInflight.run(() async {
+        // Served by the API rather than read from Supabase directly, so the
+        // client depends on one contract instead of also knowing the table.
+        final r = await _api.read('/categories');
+        final list = _categoriesOf(r.body);
+        _categoriesCache = list;
+        _categoriesAt = DateTime.now();
+        return list;
+      });
 
   List<Category>? _categoriesCache;
   DateTime? _categoriesAt;
 
-  /// The categories, from memory when fetched in the last ten minutes. For
-  /// screens that only need names and detail templates to draw a listing —
-  /// the server's own answer is cached for five minutes anyway.
+  /// The categories: from memory when fetched in the last ten minutes, else
+  /// from the device (refreshed in the background), else from the network.
+  /// For screens that only need names and detail templates to draw a listing.
   Future<List<Category>> cachedCategories() async {
     final at = _categoriesAt;
     final cached = _categoriesCache;
@@ -106,18 +300,20 @@ class ListingsRepository {
         DateTime.now().difference(at) < const Duration(minutes: 10)) {
       return cached;
     }
+    final saved = savedCategories();
+    if (saved != null) {
+      unawaited(categories().then((_) {}, onError: (_) {}));
+      return saved.value;
+    }
     return categories();
   }
 
+  Saved<List<Listing>>? savedRelated(String id, {int limit = 8}) =>
+      _savedListings(_api.saved('/listings/$id/related', query: {'limit': limit}));
+
   /// "More like this" for the detail screen — same seller first, then category.
-  Future<List<Listing>> related(String id, {int limit = 8}) async {
-    final json = await _api.get('/listings/$id/related', query: {'limit': limit})
-        as Map<String, dynamic>;
-    return (json['items'] as List? ?? [])
-        .whereType<Map>()
-        .map((m) => Listing.fromJson(m.cast<String, dynamic>()))
-        .toList();
-  }
+  Future<List<Listing>> related(String id, {int limit = 8}) async =>
+      _fetchedListings(await _api.read('/listings/$id/related', query: {'limit': limit})).value;
 
   /// The seller's own feed — includes sold and hidden items, and carries
   /// `inquiry_count` per listing for the hub's "N chats" line.
@@ -165,18 +361,23 @@ class ListingsRepository {
       'images': [for (final p in storagePaths) {'storage_path': p}],
     }) as Map<String, dynamic>;
     _noteReview(json);
+    revision.value++;
     return (json['items'] as List? ?? [])
         .whereType<Map>()
         .map((m) => ListingImage.fromJson(m.cast<String, dynamic>()))
         .toList();
   }
 
-  Future<void> removeImage(String listingId, String imageId) =>
-      _api.delete('/listings/$listingId/images/$imageId');
+  Future<void> removeImage(String listingId, String imageId) async {
+    await _api.delete('/listings/$listingId/images/$imageId');
+    revision.value++;
+  }
 
   /// [orderedIds] must list every image on the listing exactly once.
-  Future<void> reorderImages(String listingId, List<String> orderedIds) =>
-      _api.patch('/listings/$listingId/images', {'order': orderedIds});
+  Future<void> reorderImages(String listingId, List<String> orderedIds) async {
+    await _api.patch('/listings/$listingId/images', {'order': orderedIds});
+    revision.value++;
+  }
 
   // ── Seller reputation ──────────────────────────────────────────────────────
 
@@ -275,10 +476,42 @@ class ListingsRepository {
     revision.value++;
   }
 
-  Future<SellerDashboard> dashboard(String sellerId) async {
-    final json =
-        await _api.get('/sellers/$sellerId/dashboard') as Map<String, dynamic>;
-    return SellerDashboard.fromJson(json);
+  Saved<SellerDashboard>? savedDashboard(String sellerId) {
+    final s = _api.saved('/sellers/$sellerId/dashboard');
+    final body = s?.body;
+    if (s == null || body is! Map) return null;
+    return Saved(
+      value: SellerDashboard.fromJson(body.cast<String, dynamic>()),
+      stamp: s.stamp,
+      validatedAt: s.validatedAt,
+    );
+  }
+
+  Future<Fetched<SellerDashboard>> fetchDashboard(String sellerId) async {
+    final r = await _api.read('/sellers/$sellerId/dashboard');
+    return Fetched.of(r, SellerDashboard.fromJson((r.body as Map).cast<String, dynamic>()));
+  }
+
+  Future<SellerDashboard> dashboard(String sellerId) async =>
+      (await fetchDashboard(sellerId)).value;
+
+  /// A saved list of listings for a first paint, minus the ones the network
+  /// has since said are gone or that the saved copy shows as not live.
+  Saved<List<Listing>>? _savedListings(SavedRead? s, {String key = 'items'}) {
+    if (s == null) return null;
+    final all = _listingsOf(s.body, key: key);
+    final live = _liveOnly(all);
+    return Saved(value: live, stamp: _stampMinus(s.stamp, all.length - live.length), validatedAt: s.validatedAt);
+  }
+
+  Fetched<List<Listing>> _fetchedListings(ApiRead r, {String key = 'items'}) {
+    final all = _listingsOf(r.body, key: key);
+    if (r.isSaved) {
+      final live = _liveOnly(all);
+      return Fetched.of(r, live, stamp: _stampMinus(r.stamp, all.length - live.length));
+    }
+    if (r.isCurrent) _noteActive(all);
+    return Fetched.of(r, all);
   }
 
   /// Upload an image straight to Supabase Storage using a short-lived signed
@@ -398,6 +631,9 @@ class ListingsRepository {
 
 /// Saved items. Keeps a local set of ids so cards can render instantly while
 /// the server stays the source of truth.
+///
+/// Restored from the device at launch; [refresh] revalidates (usually a 304)
+/// and only reassigns the lists when the answer changed.
 class FavoritesRepository {
   FavoritesRepository._();
   static final FavoritesRepository instance = FavoritesRepository._();
@@ -407,21 +643,87 @@ class FavoritesRepository {
   final ValueNotifier<List<Listing>> favorites = ValueNotifier([]);
   final ValueNotifier<Set<String>> favoriteIds = ValueNotifier({});
 
-  Future<void> refresh() async {
+  /// Why the list on screen came from the device, or null when it came from
+  /// the server.
+  final ValueNotifier<SavedReason?> savedReason = ValueNotifier(null);
+
+  bool _loadedOnce = false;
+  String? _stamp;
+  final Inflight<void> _inflight = Inflight<void>();
+
+  /// True once a list (saved or fresh) has been shown: an empty list then
+  /// means "none", not "not loaded".
+  bool get loadedOnce => _loadedOnce;
+
+  /// Parses a /favorites body. A row whose listing is gone (deleted, or no
+  /// longer visible) marks it gone when the body came from the network; a
+  /// saved body also leaves out what is gone or not live.
+  (List<Listing>, int) _parse(Object? json, {required bool saved}) {
+    final items = <Listing>[];
+    var removed = 0;
+    for (final row in ((json is Map ? json['items'] : null) as List? ?? const []).whereType<Map>()) {
+      final m = row['listing'];
+      if (m is! Map) {
+        final id = row['listing_id']?.toString();
+        if (!saved && id != null && id.isNotEmpty) {
+          OfflineCache.markGone(id);
+          unawaited(OfflineCache.drop(prefixes: ['/listings/$id']));
+        }
+        continue;
+      }
+      final listing = Listing.fromJson(m.cast<String, dynamic>());
+      if (saved && (OfflineCache.isGone(listing.id) || listing.status != 'active')) {
+        removed++;
+        continue;
+      }
+      if (!saved && listing.status == 'active') OfflineCache.unGone(listing.id);
+      items.add(listing);
+    }
+    return (items, removed);
+  }
+
+  void _assign(List<Listing> items, String stamp) {
+    favorites.value = items;
+    favoriteIds.value = items.map((l) => l.id).toSet();
+    _stamp = stamp;
+    _loadedOnce = true;
+  }
+
+  /// The list from the device, at launch.
+  void restore() {
+    final s = _api.saved('/favorites');
+    if (s == null) return;
+    final (items, removed) = _parse(s.body, saved: true);
+    _assign(items, _stampMinus(s.stamp, removed));
+  }
+
+  /// Another account: nothing of this one's stays.
+  void reset() {
+    favorites.value = [];
+    favoriteIds.value = {};
+    savedReason.value = null;
+    _loadedOnce = false;
+    _stamp = null;
+    _inflight.reset();
+  }
+
+  Future<void> refresh() {
     if (AuthService.instance.session == null) {
       favorites.value = [];
       favoriteIds.value = {};
-      return;
+      return Future.value();
     }
-    final json = await _api.get('/favorites') as Map<String, dynamic>;
-    final items = (json['items'] as List? ?? [])
-        .whereType<Map>()
-        .map((m) => (m['listing'] as Map?)?.cast<String, dynamic>())
-        .whereType<Map<String, dynamic>>()
-        .map(Listing.fromJson)
-        .toList();
-    favorites.value = items;
-    favoriteIds.value = items.map((l) => l.id).toSet();
+    return _inflight.run(_refresh);
+  }
+
+  Future<void> _refresh() async {
+    final r = await _api.read('/favorites');
+    if (!r.isCurrent) return;
+    savedReason.value = r.savedReason;
+    final (items, removed) = _parse(r.body, saved: r.isSaved);
+    final stamp = _stampMinus(r.stamp, removed);
+    if (_loadedOnce && stamp == _stamp) return;
+    _assign(items, stamp);
   }
 
   bool isFavorite(String listingId) => favoriteIds.value.contains(listingId);
@@ -492,13 +794,13 @@ class StoresRepository {
 
   /// Public storefront: the store plus its active listings.
   Future<({Store store, List<Listing> listings})> publicStore(String id) async {
-    final json = await _api.get('/stores/$id') as Map<String, dynamic>;
+    final r = await _api.read('/stores/$id');
+    final json = r.body as Map<String, dynamic>;
+    final listings = _listingsOf(json, key: 'listings');
     return (
       store: Store.fromJson((json['store'] as Map).cast<String, dynamic>()),
-      listings: (json['listings'] as List? ?? [])
-          .whereType<Map>()
-          .map((m) => Listing.fromJson(m.cast<String, dynamic>()))
-          .toList(),
+      // From the device (offline), a storefront leaves out what has since gone.
+      listings: r.isSaved ? _liveOnly(listings) : listings,
     );
   }
 
@@ -530,27 +832,50 @@ class UsersRepository {
   final _api = ApiClient.instance;
 
   Future<PublicProfile> profile(String userId) async {
-    final json = await _api.get('/users/$userId') as Map<String, dynamic>;
+    final r = await _api.read('/users/$userId');
+    final json = r.body as Map<String, dynamic>;
     final store = (json['store'] as Map?)?.cast<String, dynamic>();
     final rating = (json['rating'] as Map?)?.cast<String, dynamic>();
+    final listings = _listingsOf(json, key: 'listings');
+    if (!r.isSaved && r.isCurrent) _noteActive(listings);
     return PublicProfile(
       profile: Profile.fromJson((json['profile'] as Map).cast<String, dynamic>()),
       store: store == null ? null : Store.fromJson(store),
-      listings: (json['listings'] as List? ?? [])
-          .whereType<Map>()
-          .map((m) => Listing.fromJson(m.cast<String, dynamic>()))
-          .toList(),
+      // From the device (offline), a shop leaves out what has since gone.
+      listings: r.isSaved ? _liveOnly(listings) : listings,
       ratingAverage: (rating?['average'] as num?)?.toDouble() ?? 0,
       ratingCount: (rating?['count'] as num?)?.toInt() ?? 0,
     );
   }
 }
 
+/// What a thread's sync came back with.
+class ThreadSync {
+  const ThreadSync({required this.messages, this.changed = false, this.added = 0, this.newestIsMine = false});
+
+  /// Oldest first, server rows only.
+  final List<Message> messages;
+
+  /// Something on screen would look different: repaint.
+  final bool changed;
+
+  /// New server rows since the last sync.
+  final int added;
+  final bool newestIsMine;
+}
+
+class _SyncJob {
+  bool rerun = false;
+  Completer<ThreadSync>? waiter;
+}
+
 /// Chat threads and message history.
 ///
-/// Real-time delivery arrives later with the Socket.IO service; until then the
-/// room screen polls. The shapes are identical either way, so swapping in live
-/// push is a transport change, not a data change.
+/// The inbox is restored from the device at launch and revalidated (a 304
+/// when nothing changed). Each conversation's messages live in [ChatStore]:
+/// a room paints them at once and [syncThread] asks only for what is newer
+/// than the newest stored one, falling back to a full page when the counts
+/// say something further back changed.
 class ChatRepository {
   ChatRepository._();
   static final ChatRepository instance = ChatRepository._();
@@ -562,9 +887,37 @@ class ChatRepository {
   final ValueNotifier<int> totalUnread = ValueNotifier(0);
 
   /// Bumped every time the server says one of the caller's threads changed.
-  /// An open conversation watches this so a reply lands the moment it is sent
-  /// rather than on the room's next poll.
+  /// Kept for screens that only need "something changed" (shipments); rooms
+  /// listen to [changedThreads] instead.
   final ValueNotifier<int> pulse = ValueNotifier(0);
+
+  /// Why the inbox on screen came from the device, or null.
+  final ValueNotifier<SavedReason?> savedReason = ValueNotifier(null);
+
+  /// Both realtime channels are subscribed. While true, the polls back off.
+  final ValueNotifier<bool> liveHealthy = ValueNotifier(false);
+
+  bool _loadedOnce = false;
+  bool get loadedOnce => _loadedOnce;
+
+  DateTime? _lastInboxRefreshAt;
+
+  /// The last time the inbox was answered by the server (200 or 304).
+  DateTime? get lastInboxRefreshAt => _lastInboxRefreshAt;
+
+  final StreamController<String> _changed = StreamController<String>.broadcast();
+
+  /// Ids of conversations that changed: from an inbox refresh that moved
+  /// them, and from realtime events (which also fire for changes that leave
+  /// the inbox body as it was, such as a moderation decision).
+  Stream<String> get changedThreads => _changed.stream;
+
+  String? _stamp;
+  Map<String, String> _rawSig = {};
+  final Set<String> _liveIds = {};
+  final Map<String, RealtimeSubscribeStatus> _status = {};
+  final Map<String, _SyncJob> _syncs = {};
+  final Inflight<List<Conversation>> _inflight = Inflight<List<Conversation>>();
 
   RealtimeChannel? _liveBuyer;
   RealtimeChannel? _liveSeller;
@@ -585,11 +938,19 @@ class ChatRepository {
     final uid = AuthService.instance.userId;
     if (uid == null || _liveBuyer != null) return;
     final client = Supabase.instance.client;
-    _liveBuyer = _watch(client, 'buyer_id', uid);
-    _liveSeller = _watch(client, 'seller_id', uid);
+    _status.clear();
+    final token = ++_liveToken;
+    _liveBuyer = _watch(client, 'buyer_id', uid, token);
+    _liveSeller = _watch(client, 'seller_id', uid, token);
   }
 
-  RealtimeChannel _watch(SupabaseClient client, String column, String uid) =>
+  /// Which start the channels belong to. Bumped by [startLive] and
+  /// [stopLive], so a late event from a channel being removed (a `closed`
+  /// arriving after an account switch already started new ones) cannot
+  /// overwrite the new channels' status or trigger a refresh.
+  int _liveToken = 0;
+
+  RealtimeChannel _watch(SupabaseClient client, String column, String uid, int token) =>
       client
           .channel('conversations:$column:$uid')
           .onPostgresChanges(
@@ -601,14 +962,23 @@ class ChatRepository {
               column: column,
               value: uid,
             ),
-            callback: (_) => _onLiveChange(),
+            callback: (p) {
+              if (token == _liveToken) _onLiveChange(p);
+            },
           )
-          .subscribe();
+          .subscribe((status, _) {
+            if (token != _liveToken) return;
+            _status[column] = status;
+            liveHealthy.value = _status.length == 2 &&
+                _status.values.every((s) => s == RealtimeSubscribeStatus.subscribed);
+          });
 
   /// One message can arrive as more than one event — the thread's timestamp
   /// and its unread counter are separate column writes. Collapse them so the
-  /// inbox is fetched once.
-  void _onLiveChange() {
+  /// inbox is fetched once (a 304 when the body did not change).
+  void _onLiveChange(PostgresChangePayload p) {
+    final id = p.newRecord['id'] ?? p.oldRecord['id'];
+    if (id != null) _liveIds.add(id.toString());
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 400), () async {
       try {
@@ -622,29 +992,112 @@ class ChatRepository {
   }
 
   Future<void> stopLive() async {
+    _liveToken++;
     _debounce?.cancel();
     _debounce = null;
-    final client = Supabase.instance.client;
-    for (final channel in [_liveBuyer, _liveSeller]) {
-      if (channel != null) await client.removeChannel(channel);
-    }
+    liveHealthy.value = false;
+    _status.clear();
+    final channels = [_liveBuyer, _liveSeller];
     _liveBuyer = null;
     _liveSeller = null;
+    final client = Supabase.instance.client;
+    for (final channel in channels) {
+      if (channel != null) await client.removeChannel(channel);
+    }
   }
 
-  Future<List<Conversation>> refresh() async {
+  static String _sigOf(Map row) =>
+      '${row['last_message_at']}|${row['buyer_unread']}|${row['seller_unread']}';
+
+  void _assign(Map<String, dynamic> body, String stamp, {required bool fromNetwork}) {
+    final rows = (body['items'] as List? ?? const []).whereType<Map>().toList();
+    if (fromNetwork) {
+      for (final row in rows) {
+        // A listing thread whose listing no longer comes back: it is gone.
+        final kind = row['kind']?.toString();
+        final listingId = row['listing_id']?.toString();
+        if ((kind == null || kind == 'listing') && row['listing'] == null && listingId != null && listingId.isNotEmpty) {
+          OfflineCache.markGone(listingId);
+        }
+      }
+    }
+    final items = rows.map((m) => Conversation.fromJson(m.cast<String, dynamic>())).toList();
+    final sig = {for (final row in rows) row['id'].toString(): _sigOf(row)};
+    final moved = {for (final e in sig.entries) if (_rawSig[e.key] != e.value) e.key};
+    threads.value = items;
+    totalUnread.value = (body['total_unread'] as num?)?.toInt() ?? items.fold<int>(0, (s, t) => s + t.unread);
+    _stamp = stamp;
+    _rawSig = sig;
+    _loadedOnce = true;
+    _emitChanged(moved);
+  }
+
+  void _emitChanged(Set<String> ids) {
+    final all = {...ids, ..._liveIds};
+    _liveIds.clear();
+    for (final id in all) {
+      _changed.add(id);
+    }
+  }
+
+  /// The inbox from the device, at launch. Not "offline": the network has
+  /// simply not been asked yet.
+  void restore() {
+    final s = _api.saved('/conversations');
+    final body = s?.body;
+    if (s == null || body is! Map) return;
+    final rows = (body['items'] as List? ?? const []).whereType<Map>().toList();
+    threads.value = rows.map((m) => Conversation.fromJson(m.cast<String, dynamic>())).toList();
+    totalUnread.value = (body['total_unread'] as num?)?.toInt() ?? 0;
+    _stamp = s.stamp;
+    _rawSig = {for (final row in rows) row['id'].toString(): _sigOf(row)};
+    _loadedOnce = true;
+  }
+
+  /// Another account: nothing of this one's stays, in memory or on the socket.
+  Future<void> reset() async {
+    _debounce?.cancel();
+    _debounce = null;
+    _liveIds.clear();
+    _rawSig = {};
+    _syncs.clear();
+    _stamp = null;
+    _inflight.reset();
+    threads.value = [];
+    totalUnread.value = 0;
+    savedReason.value = null;
+    _loadedOnce = false;
+    _lastInboxRefreshAt = null;
+    await stopLive();
+  }
+
+  /// The inbox. Calls made while one is in flight share it.
+  Future<List<Conversation>> refresh() {
     if (AuthService.instance.session == null) {
       threads.value = [];
       totalUnread.value = 0;
-      return [];
+      return Future.value(const <Conversation>[]);
     }
-    final json = await _api.get('/conversations') as Map<String, dynamic>;
-    final items = (json['items'] as List? ?? [])
-        .whereType<Map>()
-        .map((m) => Conversation.fromJson(m.cast<String, dynamic>()))
-        .toList();
-    threads.value = items;
-    totalUnread.value = (json['total_unread'] as num?)?.toInt() ?? 0;
+    return _inflight.run(_refresh);
+  }
+
+  Future<List<Conversation>> _refresh() async {
+    final uid = AuthService.instance.userId;
+    final r = await _api.read('/conversations');
+    if (!r.isCurrent) return threads.value;
+    savedReason.value = r.savedReason;
+    if (!r.isSaved) _lastInboxRefreshAt = DateTime.now();
+    if (_loadedOnce && r.stamp == _stamp) {
+      _emitChanged(const {});
+      return threads.value;
+    }
+    final body = (r.body as Map).cast<String, dynamic>();
+    _assign(body, r.stamp, fromNetwork: !r.isSaved);
+    final items = threads.value;
+    // A complete inbox from the server: a thread no longer in it is not kept.
+    if (!r.isSaved && uid != null && items.length < 100) {
+      unawaited(ChatStore.retainOnly(uid, {for (final t in items) t.id}));
+    }
     return items;
   }
 
@@ -655,9 +1108,37 @@ class ChatRepository {
     return Conversation.fromJson((json['conversation'] as Map).cast<String, dynamic>());
   }
 
+  /// The thread from the inbox already in memory, or null.
+  Conversation? threadById(String id) {
+    for (final t in threads.value) {
+      if (t.id == id) return t;
+    }
+    return null;
+  }
+
   Future<Conversation> thread(String id) async {
     final json = await _api.get('/conversations/$id') as Map<String, dynamic>;
     return Conversation.fromJson((json['conversation'] as Map).cast<String, dynamic>());
+  }
+
+  /// One page of messages, as the server sent it. [after] asks for what is
+  /// newer than a raw created_at (with a few seconds of overlap); [sync] asks
+  /// for the counts that tell whether anything further back changed. Never
+  /// saved by ApiClient: ChatStore keeps the messages.
+  Future<ChatPage> messagesPage(
+    String conversationId, {
+    int limit = 50,
+    String? before,
+    String? after,
+    bool sync = false,
+  }) async {
+    final json = await _api.get('/conversations/$conversationId/messages', query: {
+      'limit': limit,
+      'before': before,
+      'after': after,
+      'sync': sync ? '1' : null,
+    }) as Map<String, dynamic>;
+    return ChatPage.fromJson(json);
   }
 
   /// Message history, oldest first. Pass [before] to page further back.
@@ -666,32 +1147,227 @@ class ChatRepository {
     int limit = 50,
     String? before,
   }) async {
-    final json = await _api.get('/conversations/$conversationId/messages',
-        query: {'limit': limit, 'before': before}) as Map<String, dynamic>;
-    return (
-      items: (json['items'] as List? ?? [])
-          .whereType<Map>()
-          .map((m) => Message.fromJson(m.cast<String, dynamic>()))
-          .toList(),
-      nextBefore: ((json['page'] as Map?)?['next_before'])?.toString(),
-    );
+    final page = await messagesPage(conversationId, limit: limit, before: before);
+    return (items: page.items.map(Message.fromJson).toList(), nextBefore: page.nextBefore);
+  }
+
+  /// The messages stored for this thread, synchronously, for a room's first
+  /// paint. Null when nothing is stored.
+  List<Message>? storedMessages(String conversationId) {
+    final uid = AuthService.instance.userId;
+    if (uid == null) return null;
+    final t = ChatStore.read(uid, conversationId);
+    if (t == null) return null;
+    ChatStore.noteOpened(uid, conversationId);
+    return t.items.map(Message.fromJson).toList();
+  }
+
+  /// Bring the stored thread up to date and return it. A call while one is
+  /// running for the same thread waits for one more run after it, so nothing
+  /// that arrived in between is missed. Throws [ApiException] (and, on 404,
+  /// forgets the thread); a [StateError] when the account changed meanwhile.
+  Future<ThreadSync> syncThread(String conversationId) {
+    final running = _syncs[conversationId];
+    if (running != null) {
+      running.rerun = true;
+      return (running.waiter ??= Completer<ThreadSync>()).future;
+    }
+    final job = _SyncJob();
+    _syncs[conversationId] = job;
+    return _runSync(conversationId, job);
+  }
+
+  Future<ThreadSync> _runSync(String cid, _SyncJob job) async {
+    try {
+      return await _syncOnce(cid);
+    } finally {
+      if (job.rerun && identical(_syncs[cid], job)) {
+        final waiter = job.waiter!;
+        final next = _SyncJob();
+        _syncs[cid] = next;
+        _runSync(cid, next).then(waiter.complete, onError: waiter.completeError);
+      } else {
+        job.waiter?.completeError(StateError('session changed'));
+        if (identical(_syncs[cid], job)) _syncs.remove(cid);
+      }
+    }
+  }
+
+  static bool _hasAttachment(Map m) => (m['attachment_path']?.toString() ?? '').isNotEmpty;
+
+  Future<ThreadSync> _syncOnce(String cid, {bool forceFull = false}) async {
+    final uid = AuthService.instance.userId;
+    if (uid == null) throw StateError('signed out');
+    final gen = OfflineCache.generation;
+    final stored = ChatStore.read(uid, cid);
+    var mode = forceFull
+        ? ChatFetch.full
+        : chooseFetch(stored, myUid: uid, nowMs: DateTime.now().millisecondsSinceEpoch);
+    try {
+      if (mode == ChatFetch.incremental) {
+        var retried = false;
+        while (true) {
+          final cursor = (ChatStore.read(uid, cid) ?? stored)?.cursor;
+          final page = await messagesPage(cid, after: cursor);
+          MergeOutcome? outcome;
+          final t = await ChatStore.update(uid, cid, (cur) {
+            final base = cur ?? stored;
+            if (base == null) return null;
+            final o = mergeIncremental(base, page,
+                myUid: uid, nowMs: DateTime.now().millisecondsSinceEpoch, retried: retried);
+            outcome = o;
+            return o.thread;
+          }, generation: gen);
+          if (OfflineCache.generation != gen) throw StateError('session changed');
+          final o = outcome;
+          if (o == null || o.needFull) {
+            mode = ChatFetch.full;
+            break;
+          }
+          if (o.retryIncremental) {
+            retried = true;
+            continue;
+          }
+          if (t == null) {
+            mode = ChatFetch.full;
+            break;
+          }
+          return ThreadSync(
+            messages: t.items.map(Message.fromJson).toList(),
+            changed: o.changed,
+            added: o.added,
+            newestIsMine: o.newestIsMine,
+          );
+        }
+      }
+      final page = await messagesPage(cid, sync: true);
+      StoredThread? before;
+      final t = await ChatStore.update(uid, cid, (cur) {
+        before = cur;
+        return applyFull(page, nowMs: DateTime.now().millisecondsSinceEpoch, previous: cur);
+      }, generation: gen);
+      if (t == null) throw StateError('session changed');
+      final had = {for (final m in before?.items ?? const <Map<String, dynamic>>[]) m['id']?.toString()};
+      final added = [for (final m in t.items) if (!had.contains(m['id']?.toString())) m];
+      return ThreadSync(
+        messages: t.items.map(Message.fromJson).toList(),
+        // A full fetch re-signs attachment URLs: a room showing them repaints.
+        changed: signature(before?.items ?? const []) != signature(t.items) || t.items.any(_hasAttachment),
+        added: added.length,
+        newestIsMine: added.isNotEmpty && added.last['sender_id']?.toString() == uid,
+      );
+    } on ApiException catch (e) {
+      if (e.isGone) await _forgetThread(uid, cid);
+      rethrow;
+    }
+  }
+
+  /// The server says the thread is gone: off the device, out of the inbox.
+  Future<void> _forgetThread(String uid, String cid) async {
+    await ChatStore.remove(uid, cid);
+    threads.value = [for (final t in threads.value) if (t.id != cid) t];
+    totalUnread.value = threads.value.fold(0, (s, t) => s + t.unread);
+    _rawSig.remove(cid);
+    _stamp = null;
+    unawaited(OfflineCache.patch(
+      '/conversations',
+      (json) => json is Map ? CacheRules.patchInbox(json.cast<String, dynamic>(), cid, remove: true) : json,
+      uids: {uid},
+    ));
+  }
+
+  /// A URL for an attachment that will still open: the stored one while its
+  /// signature is young, else a fresh one from a full sync. Null when the
+  /// message is not stored or cannot be fetched.
+  Future<String?> freshAttachmentUrl(String conversationId, String messageId) async {
+    final uid = AuthService.instance.userId;
+    if (uid == null) return null;
+    String? find(StoredThread? t) {
+      for (final m in t?.items ?? const <Map<String, dynamic>>[]) {
+        if (m['id']?.toString() == messageId) return m['attachment_url']?.toString();
+      }
+      return null;
+    }
+
+    final t = ChatStore.read(uid, conversationId);
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (t != null && now - t.signedAt <= chatResignMinutes * 60 * 1000) {
+      final url = find(t);
+      if (url != null) return url;
+    }
+    try {
+      await _syncOnce(conversationId, forceFull: true);
+    } catch (_) {
+      return null;
+    }
+    return find(ChatStore.read(uid, conversationId));
+  }
+
+  Future<void> _patchStored(String cid, bool Function(Map<String, dynamic>) where,
+      void Function(Map<String, dynamic>) edit) async {
+    final uid = AuthService.instance.userId;
+    if (uid == null) return;
+    try {
+      await ChatStore.update(uid, cid, (cur) => cur == null ? null : patchWhere(cur, where, edit),
+          generation: OfflineCache.generation);
+    } catch (e) {
+      debugPrint('[chat] stored patch failed: $e');
+    }
+  }
+
+  static bool _isShare(Map<String, dynamic> m, String shareId) =>
+      m['location_share_id']?.toString() == shareId ||
+      (m['location'] is Map && (m['location'] as Map)['id']?.toString() == shareId);
+
+  /// A share moved or stopped (from the share channel): the stored message
+  /// follows, so the room's next paint from the device is not behind.
+  Future<void> patchStoredShare(String conversationId, Map<String, dynamic> shareRecord) async {
+    final id = shareRecord['id']?.toString();
+    if (id == null || id.isEmpty) return;
+    await _patchStored(conversationId, (m) => _isShare(m, id), (m) {
+      final loc = m['location'] is Map ? Map<String, dynamic>.from(m['location'] as Map) : <String, dynamic>{};
+      m['location'] = {...loc, ...shareRecord};
+    });
   }
 
   /// Ask a person to look again at one of my messages that was held or not
   /// delivered. One open request per message; a second answers 409.
-  Future<void> appeal(String messageId, {String? note}) async {
+  Future<void> appeal(String messageId, {String? note, String? conversationId}) async {
     await _api.post('/compliance/appeals', {
       'message_id': messageId,
       if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
     });
+    if (conversationId != null) {
+      await _patchStored(conversationId, (m) => m['id']?.toString() == messageId, (m) {
+        final mod = m['moderation'] is Map ? Map<String, dynamic>.from(m['moderation'] as Map) : <String, dynamic>{};
+        m['moderation'] = {...mod, 'appealed': true};
+      });
+    }
+  }
+
+  /// Keep what the server confirmed: the room paints it from the device next
+  /// time, and the cursor stays where it was (see upsertLocal).
+  Future<void> _storeSent(String? uid, int gen, String cid, Map<String, dynamic> raw) async {
+    if (uid == null) return;
+    try {
+      await ChatStore.update(uid, cid,
+          (cur) => upsertLocal(cur, raw, nowMs: DateTime.now().millisecondsSinceEpoch),
+          generation: gen);
+    } catch (e) {
+      debugPrint('[chat] could not store a sent message: $e');
+    }
   }
 
   Future<Message> send(String conversationId, {String? body, String? attachmentPath}) async {
+    final uid = AuthService.instance.userId;
+    final gen = OfflineCache.generation;
     final json = await _api.post('/conversations/$conversationId/messages', {
       if (body != null && body.isNotEmpty) 'body': body,
       if (attachmentPath != null) 'attachment_path': attachmentPath,
     }) as Map<String, dynamic>;
-    return Message.fromJson((json['message'] as Map).cast<String, dynamic>());
+    final raw = (json['message'] as Map).cast<String, dynamic>();
+    await _storeSent(uid, gen, conversationId, raw);
+    return Message.fromJson(raw);
   }
 
   // ── Location sharing ──────────────────────────────────────────────────────
@@ -709,6 +1385,8 @@ class ChatRepository {
     int minutes = 60,
     String locale = 'en',
   }) async {
+    final uid = AuthService.instance.userId;
+    final gen = OfflineCache.generation;
     final json = await _api.post('/conversations/$conversationId/location', {
       'mode': live ? 'live' : 'pin',
       'lat': lat,
@@ -717,7 +1395,9 @@ class ChatRepository {
       if (live) 'minutes': minutes,
       'locale': locale,
     }) as Map<String, dynamic>;
-    return Message.fromJson((json['message'] as Map).cast<String, dynamic>());
+    final raw = (json['message'] as Map).cast<String, dynamic>();
+    await _storeSent(uid, gen, conversationId, raw);
+    return Message.fromJson(raw);
   }
 
   /// The share moved. Returns null when the server says it is no longer
@@ -739,7 +1419,14 @@ class ChatRepository {
           if (accuracyM != null) 'accuracy_m': accuracyM,
         },
       ) as Map<String, dynamic>;
-      return LocationShare.fromJson((json['share'] as Map?)?.cast<String, dynamic>());
+      final share = (json['share'] as Map?)?.cast<String, dynamic>();
+      if (share != null) {
+        unawaited(_patchStored(conversationId, (m) => _isShare(m, shareId), (m) {
+          final loc = m['location'] is Map ? Map<String, dynamic>.from(m['location'] as Map) : <String, dynamic>{};
+          m['location'] = {...loc, ...share};
+        }));
+      }
+      return LocationShare.fromJson(share);
     } catch (e) {
       debugPrint('[location] could not move share ($e)');
       return null;
@@ -748,6 +1435,11 @@ class ChatRepository {
 
   Future<void> stopShare(String conversationId, String shareId) async {
     await _api.post('/conversations/$conversationId/location/$shareId/stop');
+    final at = DateTime.now().toUtc().toIso8601String();
+    await _patchStored(conversationId, (m) => _isShare(m, shareId), (m) {
+      final loc = m['location'] is Map ? Map<String, dynamic>.from(m['location'] as Map) : <String, dynamic>{};
+      m['location'] = {...loc, 'stopped_at': at};
+    });
   }
 
   /// Clears the caller's unread and stamps read_at on the other side.
@@ -829,10 +1521,14 @@ class OrdersRepository {
     );
   }
 
-  Future<Order> detail(String id) async {
-    final json = await _api.get('/orders/$id') as Map<String, dynamic>;
-    return Order.fromJson((json['order'] as Map).cast<String, dynamic>());
+  /// One order, with where it came from: a copy from the device (offline)
+  /// is shown with its actions switched off.
+  Future<Fetched<Order>> fetchDetail(String id) async {
+    final r = await _api.read('/orders/$id');
+    return Fetched.of(r, Order.fromJson(((r.body as Map)['order'] as Map).cast<String, dynamic>()));
   }
+
+  Future<Order> detail(String id) async => (await fetchDetail(id)).value;
 
   /// Starts payment. [provider] is the payment processor (`campay`) and
   /// [method] the wallet (`mtn_momo` | `orange_money`).

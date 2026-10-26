@@ -338,6 +338,21 @@ class AppLocalizationsFr extends AppLocalizations {
       'Vous êtes hors ligne : rien n\'a été modifié. Réessayez une fois connecté.';
 
   @override
+  String get savedCopyNote =>
+      'Vous êtes hors ligne. Affichage des données enregistrées sur cet appareil.';
+
+  @override
+  String get savedCopyServerNote =>
+      'Actualisation impossible pour le moment. Affichage des données enregistrées sur cet appareil.';
+
+  @override
+  String get savedCopyActionsOff =>
+      'Connectez-vous à Internet pour payer, confirmer ou annuler.';
+
+  @override
+  String get listingGone => 'Cette annonce n\'est plus disponible.';
+
+  @override
   String get errorTimeout =>
       'La marketplace met trop de temps à répondre. Veuillez réessayer.';
 

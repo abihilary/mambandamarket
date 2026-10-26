@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12 and above. Same rule as backup_rules.xml, for cloud backup and
+     for moving to a new phone: the saved reads and chat copies in app_flutter/
+     stay on this device. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" path="app_flutter/" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" path="app_flutter/" />
+    </device-transfer>
+</data-extraction-rules>

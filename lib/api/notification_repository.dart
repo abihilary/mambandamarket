@@ -26,17 +26,49 @@ class NotificationRepository {
   /// is what keeps it closed on every device and clears it from the bell.
   final ValueNotifier<AppNotification?> homeCard = ValueNotifier(null);
 
+  /// A card whose `home_until` has passed is not shown from the device: the
+  /// server would no longer send it.
+  static bool _stillDue(AppNotification n) {
+    final raw = n.data['home_until'];
+    if (raw == null || raw.isEmpty) return true;
+    final until = DateTime.tryParse(raw);
+    return until == null || until.isAfter(DateTime.now());
+  }
+
+  static AppNotification? _homeOf(Object? json, {required bool saved}) {
+    final n = json is Map ? json['notification'] : null;
+    if (n is! Map) return null;
+    final card = AppNotification.fromJson(Map<String, dynamic>.from(n));
+    return (saved && !_stillDue(card)) ? null : card;
+  }
+
   Future<void> refreshHomeCard() async {
     try {
-      final json =
-          await _api.get('/me/notifications/home') as Map<String, dynamic>;
-      final n = json['notification'];
-      homeCard.value = n is Map
-          ? AppNotification.fromJson(Map<String, dynamic>.from(n))
-          : null;
+      final r = await _api.read('/me/notifications/home');
+      if (!r.isCurrent) return;
+      homeCard.value = _homeOf(r.body, saved: r.isSaved);
     } catch (_) {
       // Offline, or signed out: no card is the right answer to both.
     }
+  }
+
+  /// The list, the badge and the home card from the device, at launch.
+  void restore() {
+    final list = _api.saved('/me/notifications', query: {'limit': '30'});
+    final body = list?.body;
+    if (body is Map) {
+      items.value = (body['items'] as List? ?? const [])
+          .whereType<Map>()
+          .map((e) => AppNotification.fromJson(Map<String, dynamic>.from(e)))
+          .toList(growable: false);
+      unread.value = (body['unread'] as num?)?.toInt() ?? unread.value;
+      _nextBefore = body['next_before']?.toString();
+      _exhausted = _nextBefore == null;
+    }
+    final count = _api.saved('/me/notifications/unread')?.body;
+    if (count is Map && count['unread'] is num) unread.value = (count['unread'] as num).toInt();
+    final home = _api.saved('/me/notifications/home');
+    if (home != null) homeCard.value = _homeOf(home.body, saved: true);
   }
 
   Future<void> dismissHomeCard() async {
@@ -69,7 +101,9 @@ class NotificationRepository {
   }
 
   Future<void> _refresh() async {
-    final json = await _api.get('/me/notifications', query: {'limit': '30'}) as Map<String, dynamic>;
+    final r = await _api.read('/me/notifications', query: {'limit': '30'});
+    if (!r.isCurrent) return;
+    final json = r.body as Map<String, dynamic>;
     final list = (json['items'] as List? ?? const [])
         .whereType<Map>()
         .map((e) => AppNotification.fromJson(Map<String, dynamic>.from(e)))
@@ -96,7 +130,9 @@ class NotificationRepository {
   /// Just the count — what the shell's sweep and a foreground push call.
   Future<void> refreshUnread() async {
     try {
-      final json = await _api.get('/me/notifications/unread') as Map<String, dynamic>;
+      final r = await _api.read('/me/notifications/unread');
+      if (!r.isCurrent) return;
+      final json = r.body as Map<String, dynamic>;
       unread.value = (json['unread'] as num?)?.toInt() ?? unread.value;
     } catch (_) {
       // Offline. The next sweep tries again.
@@ -140,5 +176,6 @@ class NotificationRepository {
     unread.value = 0;
     _nextBefore = null;
     _exhausted = false;
+    _inflight = null;
   }
 }

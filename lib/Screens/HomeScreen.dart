@@ -1,12 +1,13 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, listEquals;
 import 'package:flutter/material.dart';
 
 // Components
 import '../Components/CategoryItem.dart';
 import '../Components/ItemCard.dart';
 import '../Components/ItemDetailScreen.dart';
+import '../Components/saved_note.dart';
 
 // Backend
 import '../api/api_client.dart';
@@ -58,6 +59,23 @@ class HomeScreenState extends State<HomeScreen> {
   /// localizations are ready.
   Object? _error;
 
+  /// Saved-first: the grid paints from the device and the network then
+  /// revalidates it (usually a 304). [_seq] lets only the latest load land;
+  /// [_stamp] identifies what is painted (null: nothing yet), so an answer
+  /// with the same content does not rebuild forty cards; [_savedReason] is
+  /// why the grid is a saved copy, or null when the server confirmed it.
+  int _seq = 0;
+  String? _stamp;
+  SavedReason? _savedReason;
+
+  /// A changed feed that arrived while the person was reading further down.
+  /// Swapping it in there would move the cards under their thumb, so it waits
+  /// until they are back near the top (or pull).
+  Fetched<List<Listing>>? _pending;
+
+  /// Catalogue changes come in bursts (publish, then photos): one reload.
+  Timer? _revisionDebounce;
+
   /// Whether the feed is being asked to annotate distances.
   ///
   /// Off until the buyer presses the pin, and it stays off if they decline the
@@ -88,6 +106,15 @@ class HomeScreenState extends State<HomeScreen> {
     // listing missing from it.
     _repo.revision.addListener(_onCatalogueChanged);
     _scroll.addListener(_onScroll);
+    // What this device saved last time paints at once; the loads below
+    // revalidate it behind the first frame.
+    _categories = _repo.savedCategories()?.value ?? _categories;
+    final saved = _savedFeed();
+    if (saved != null) {
+      _listings = saved.value;
+      _stamp = saved.stamp;
+      _isLoading = false;
+    }
     _loadCategories();
     _loadListings();
     _loadBoards();
@@ -99,6 +126,7 @@ class HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _repo.revision.removeListener(_onCatalogueChanged);
     AuthService.instance.me.removeListener(_onMeChanged);
+    _revisionDebounce?.cancel();
     _scroll.dispose();
     super.dispose();
   }
@@ -115,6 +143,13 @@ class HomeScreenState extends State<HomeScreen> {
     // scroll, and rebuilding the whole feed each time would cost more than the
     // bar is worth.
     if (pinned != _searchPinned) setState(() => _searchPinned = pinned);
+    // Back near the top: the held feed can go in without moving anything the
+    // person is looking at.
+    final pending = _pending;
+    if (pending != null && offset < 200) {
+      _pending = null;
+      if (pending.isCurrent) _apply(pending);
+    }
   }
 
   Future<void> _loadCategories() async {
@@ -126,18 +161,73 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _loadListings() async {
+  /// The saved copy of the feed as it is currently set up (category, near
+  /// me), or null. Asks for exactly what [_loadListings] asks for, so the two
+  /// meet at the same saved address.
+  Saved<List<Listing>>? _savedFeed() {
+    final origin = _nearMe ? LocationService.instance.cached : null;
+    return _repo.savedBrowse(
+      categorySlug: _selectedSlug,
+      lat: origin?.lat,
+      lng: origin?.lng,
+      sort: origin != null ? 'distance' : 'recent',
+      limit: 40,
+    );
+  }
+
+  /// The feed's set-up changed: show that feed's saved copy at once (or the
+  /// spinner when there is none). Call inside setState, then [_loadListings].
+  void _swapToSavedFeed() {
+    final saved = _savedFeed();
+    _pending = null;
+    _listings = saved?.value ?? [];
+    _stamp = saved?.stamp;
+    _savedReason = null;
+    _error = null;
+    _isLoading = saved == null;
+  }
+
+  void _apply(Fetched<List<Listing>> r) {
+    _pending = null;
     setState(() {
-      _isLoading = true;
+      _listings = r.value;
+      _stamp = r.stamp;
+      _savedReason = r.savedReason;
+      _isLoading = false;
       _error = null;
     });
+  }
+
+  /// A background answer that would rearrange the top of the feed while the
+  /// person is reading well below it.
+  bool _shouldHold(List<Listing> next) {
+    if (!_scroll.hasClients || _scroll.offset <= 600) return false;
+    final painted = [for (final l in _listings.take(6)) l.id];
+    final incoming = [for (final l in next.take(6)) l.id];
+    return !listEquals(painted, incoming);
+  }
+
+  /// [userAsked]: a pull or a tap on the home tab. Those always apply what
+  /// comes back and say why when it fails; a background load stays quiet and
+  /// keeps whatever is on screen.
+  Future<void> _loadListings({bool userAsked = false}) async {
+    final seq = ++_seq;
+    // Something on screen already (saved or fresh): it stays there while the
+    // network answers. The spinner is only for an empty screen.
+    final painted = _stamp != null;
+    if (!painted) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
     // Read synchronously. This is the whole reason the service caches: an
     // `await` on a platform call here would put a plugin round trip in front of
     // every feed load, including for the people who have refused location and
     // would wait only to arrive at exactly the request they get today.
     final origin = _nearMe ? LocationService.instance.cached : null;
     try {
-      final items = await _repo.browse(
+      final r = await _repo.fetchBrowse(
         categorySlug: _selectedSlug,
         // No radius: the RPC skips its st_dwithin guard when radius is null, so
         // this annotates every listing with a distance and hides none. With a
@@ -149,20 +239,40 @@ class HomeScreenState extends State<HomeScreen> {
         sort: origin != null ? 'distance' : 'recent',
         limit: 40,
       );
-      if (!mounted) return;
-      setState(() {
-        _listings = items;
-        _isLoading = false;
-      });
+      if (!mounted || seq != _seq || !r.isCurrent) return;
+      if (painted && !userAsked && r.stamp != _stamp && _shouldHold(r.value)) {
+        // Held, not dropped: it goes in on the way back to the top. Only the
+        // note follows the answer now, since it describes the connection.
+        _pending = r;
+        if (r.savedReason != _savedReason) {
+          setState(() => _savedReason = r.savedReason);
+        }
+        return;
+      }
+      _pending = null;
+      if (!painted || r.stamp != _stamp || r.savedReason != _savedReason) {
+        _apply(r);
+      }
     } catch (e, st) {
       // Not only network failures land here: a reply the app cannot read
       // does too, and used to be reported as "check your connection".
       if (e is! ApiException) debugPrint('Home feed failed: $e\n$st');
-      if (!mounted) return;
-      setState(() {
-        _error = e;
-        _isLoading = false;
-      });
+      if (!mounted || seq != _seq) return;
+      if (painted) {
+        // The grid stays. The note says why it may be out of date; a pull
+        // also says what went wrong.
+        final reason = e is ApiException ? e.savedReason : null;
+        if (reason != null) setState(() => _savedReason = reason);
+        if (userAsked) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(_errorText(e))));
+        }
+      } else {
+        setState(() {
+          _error = e;
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -184,7 +294,10 @@ class HomeScreenState extends State<HomeScreen> {
   /// answer: say what happened, leave the chip off, change nothing else.
   Future<void> _toggleNearMe() async {
     if (_nearMe) {
-      setState(() => _nearMe = false);
+      setState(() {
+        _nearMe = false;
+        _swapToSavedFeed();
+      });
       _loadListings();
       return;
     }
@@ -201,7 +314,10 @@ class HomeScreenState extends State<HomeScreen> {
         (outcome == LocationOutcome.unavailable &&
             LocationService.instance.cached != null);
     if (usable) {
-      setState(() => _nearMe = true);
+      setState(() {
+        _nearMe = true;
+        _swapToSavedFeed();
+      });
       _loadListings();
       return;
     }
@@ -248,8 +364,10 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _refreshAll() async {
     await Future.wait([
-      _loadListings(),
-      _favorites.refresh(),
+      _loadListings(userAsked: true),
+      // The feed's own failure is reported above; a favourites failure here
+      // has nothing to add and would only escape the pull.
+      _favorites.refresh().catchError((_) {}),
       _loadBoards(),
       _loadTrending(),
       if (AuthService.instance.session != null)
@@ -274,8 +392,13 @@ class HomeScreenState extends State<HomeScreen> {
     await BoardMediaCache.instance.reconcileAll(BoardRepository.instance.live);
   }
 
+  /// This device changed the catalogue. Its own writes have already dropped
+  /// the saved feeds they affect, so the reload is a fresh read, not a 304.
   void _onCatalogueChanged() {
-    if (mounted) _loadListings();
+    _revisionDebounce?.cancel();
+    _revisionDebounce = Timer(const Duration(milliseconds: 400), () {
+      if (mounted) _loadListings();
+    });
   }
 
   /// The categories the bar offers: top-level groups only.
@@ -293,7 +416,10 @@ class HomeScreenState extends State<HomeScreen> {
   /// link to a leaf, and leaves are deliberately not in the bar.
   void _onCategorySlug(String slug) {
     if (!_categories.any((c) => c.slug == slug)) return; // since removed
-    setState(() => _selectedSlug = slug);
+    setState(() {
+      _selectedSlug = slug;
+      _swapToSavedFeed();
+    });
     _loadListings();
     _loadTrending();
   }
@@ -309,6 +435,7 @@ class HomeScreenState extends State<HomeScreen> {
     setState(() {
       // Index 0 is the synthetic "For You" entry.
       _selectedSlug = index == 0 ? null : bar[index - 1].slug;
+      _swapToSavedFeed();
     });
     _loadListings();
     _loadTrending();
@@ -323,7 +450,10 @@ class HomeScreenState extends State<HomeScreen> {
       selectedSlug: _selectedSlug,
     );
     if (picked == null || !mounted) return;
-    setState(() => _selectedSlug = picked);
+    setState(() {
+      _selectedSlug = picked;
+      _swapToSavedFeed();
+    });
     _loadListings();
     _loadTrending();
   }
@@ -587,6 +717,10 @@ class HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
+
+                  // The grid below is what this device saved, and why it could
+                  // not be refreshed. Nothing at all when the server answered.
+                  SliverToBoxAdapter(child: SavedNote(reason: _savedReason)),
 
                   SliverToBoxAdapter(
                     child: CategoryBar(

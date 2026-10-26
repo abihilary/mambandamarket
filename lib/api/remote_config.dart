@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api_client.dart';
+import 'app_info.dart';
 
 /// Settings the server decides and the app obeys.
 ///
@@ -41,6 +43,9 @@ class RemoteConfig {
     // FCFA. 0 means rewards are off, and the invite screen names no amount.
     'referral_reward_cents': 0,
     'referral_min_withdrawal_cents': 1000,
+    // Whether this platform sends If-None-Match (1.0.47). On unless the
+    // server says otherwise: a switch for a CDN that mishandles 304s.
+    'http_conditional': true,
   };
 
   /// Bumped whenever the values change, so the update gate can re-evaluate
@@ -82,11 +87,33 @@ class RemoteConfig {
   int get referralMinWithdrawalCents =>
       (_values['referral_min_withdrawal_cents'] as num?)?.toInt() ?? 1000;
 
+  /// Whether reads on this platform may revalidate with If-None-Match.
+  /// Read from `app_settings` through /config, so it can be switched off
+  /// without a release.
+  bool get conditionalRequests => _values['http_conditional'] as bool? ?? true;
+
+  /// For the splash screen: the values saved on this device right away, and
+  /// the network in the background. Only a first launch, with nothing saved,
+  /// waits for the network, and then for six seconds at most.
+  Future<void> loadFast() async {
+    final hadCache = await _readCache();
+    if (hadCache) {
+      unawaited(load());
+      return;
+    }
+    try {
+      await load().timeout(const Duration(seconds: 6));
+    } catch (_) {
+      // The compile-time defaults stand; load() finishes on its own.
+    }
+  }
+
   /// Load the cache, then refresh from the API.
   ///
-  /// Never throws and never blocks startup on the network: the splash screen
-  /// awaits this, and a marketplace that will not open because a settings
-  /// endpoint is slow is worse than one running on yesterday's settings.
+  /// Never throws, but does wait for the network (bounded by the client's
+  /// timeout). [loadFast] is the one that never blocks startup on it: a
+  /// marketplace that will not open because a settings endpoint is slow is
+  /// worse than one running on yesterday's settings.
   Future<void> load() async {
     await _readCache();
     try {
@@ -96,6 +123,8 @@ class RemoteConfig {
       final update = (json['update'] as Map?)?.cast<String, dynamic>() ?? {};
       final referral =
           (json['referral'] as Map?)?.cast<String, dynamic>() ?? {};
+      final conditional =
+          ((json['http'] as Map?)?['conditional'] as Map?)?.cast<String, dynamic>() ?? {};
 
       final serverTime = DateTime.tryParse(json['server_time'] as String? ?? '');
       if (serverTime != null) {
@@ -122,6 +151,9 @@ class RemoteConfig {
         'referral_min_withdrawal_cents':
             (referral['min_withdrawal_cents'] as num?)?.toInt() ??
             _defaults['referral_min_withdrawal_cents'],
+        'http_conditional': conditional[AppInfo.platform] is bool
+            ? conditional[AppInfo.platform] as bool
+            : _defaults['http_conditional'],
       };
       revision.value++;
       await _writeCache();
@@ -183,18 +215,21 @@ class RemoteConfig {
     }
   }
 
-  Future<void> _readCache() async {
+  /// True when a saved copy was found.
+  Future<bool> _readCache() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_kCacheKey);
-      if (raw == null) return;
+      if (raw == null) return false;
       final decoded = jsonDecode(raw);
       if (decoded is Map) {
         _values = {..._defaults, ...decoded.cast<String, dynamic>()};
+        return true;
       }
     } catch (_) {
       // A corrupt or unavailable cache is not worth failing a launch over.
     }
+    return false;
   }
 
   Future<void> _writeCache() async {

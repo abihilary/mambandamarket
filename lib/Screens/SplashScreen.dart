@@ -29,11 +29,13 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _handleNavigation() async {
     final auth = AuthService.instance;
+    final started = DateTime.now();
 
     // Before anything decides what to show: how sign-up behaves and what a new
-    // account may do are the server's call, not the build's. Falls back to the
-    // cache and then to defaults, so this never blocks the launch.
-    await RemoteConfig.instance.load();
+    // account may do are the server's call, not the build's. With a copy from
+    // a previous launch on the device this answers from it at once and
+    // refreshes in the background; only a first launch waits (at most 6 s).
+    await RemoteConfig.instance.loadFast();
 
     // Reads a cached coordinate off disk — it never touches the platform and
     // never prompts, so it costs nothing for the majority who have not granted
@@ -46,26 +48,41 @@ class _SplashScreenState extends State<SplashScreen> {
     // the user must be sent back to role selection rather than into the app.
     var profileMissing = false;
 
-    // Supabase restores any persisted session during initialize(); warm the
-    // profile and saved items so the first screen renders with real data.
+    // Supabase restores any persisted session during initialize(). When the
+    // profile was restored from the device at boot, the app opens on it at
+    // once and the network revalidates behind the first screen: a phone with
+    // no signal reaches its saved feed in a second or two, not after a 30 s
+    // timeout. Only a device with nothing saved waits for the profile, since
+    // routing (onboarding, restriction) needs it.
     if (auth.session != null) {
-      try {
-        final results = await Future.wait([
-          auth.refreshMe(),
-          FavoritesRepository.instance.refresh(),
-        ]);
-        profileMissing = (results[0] as Me?)?.profile == null;
-        // A code entered at sign-up can only be claimed once a session exists,
-        // which for the email-confirmation path is here, not there.
-        await auth.redeemPendingReferral();
-      } catch (_) {
-        // Offline or an expired token — don't assume onboarding is incomplete;
-        // fall through to /home (or the signed-out flow) rather than blocking.
+      if (auth.me.value?.profile != null) {
+        profileMissing = false;
+        unawaited(_revalidate());
+      } else {
+        try {
+          final results = await Future.wait([
+            auth.refreshMe().timeout(const Duration(seconds: 12)),
+            FavoritesRepository.instance
+                .refresh()
+                .timeout(const Duration(seconds: 12)),
+          ]);
+          profileMissing = (results[0] as Me?)?.profile == null;
+          // A code entered at sign-up can only be claimed once a session
+          // exists, which for the email-confirmation path is here, not there.
+          await auth.redeemPendingReferral();
+        } catch (_) {
+          // Offline or an expired token — don't assume onboarding is
+          // incomplete; fall through to /home (or the signed-out flow) rather
+          // than blocking.
+        }
       }
     }
 
-    // Keep the brand moment visible briefly even when startup is instant.
-    await Future.delayed(const Duration(milliseconds: 800));
+    // Keep the brand moment visible briefly even when startup is instant, but
+    // count the time already spent above towards it.
+    final left = const Duration(milliseconds: 800) -
+        DateTime.now().difference(started);
+    if (left > Duration.zero) await Future.delayed(left);
     if (!mounted) return;
 
     // A session with no profile used to mean "send them to pick a role". With
@@ -115,6 +132,22 @@ class _SplashScreenState extends State<SplashScreen> {
     // Same ordering reason again: the reset screen is a route.
     unawaited(maybeResumePasswordReset());
     unawaited(PushService.instance.handleLaunchNotification());
+  }
+
+  /// The saved profile is on screen; fetch the real one (usually a 304), the
+  /// favourites, and claim a referral parked at sign-up. The shell reroutes
+  /// if the fresh profile says the account is restricted.
+  Future<void> _revalidate() async {
+    final auth = AuthService.instance;
+    try {
+      await Future.wait([
+        auth.refreshMe(),
+        FavoritesRepository.instance.refresh(),
+      ]);
+      await auth.redeemPendingReferral();
+    } catch (_) {
+      // Offline: the saved copy stays; the shell's sweeps retry.
+    }
   }
 
   @override
