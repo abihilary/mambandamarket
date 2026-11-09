@@ -1700,6 +1700,14 @@ class ReferralsRepository {
     return ReferralSummary.fromJson(json);
   }
 
+  /// Personalize or update personal referral code.
+  /// Throws [ApiException] with codes like `code_taken` or validation errors (422).
+  Future<String> updateCode(String code) async {
+    final normalized = code.trim().toUpperCase();
+    final json = await _api.patch('/referrals/code', {'code': normalized}) as Map<String, dynamic>;
+    return json['code']?.toString() ?? normalized;
+  }
+
   /// Throws [ApiException] with a specific code the caller can show verbatim:
   /// `unknown_code`, `self_referral`, `already_referred`, `empty_code`.
   Future<void> apply(String code) =>

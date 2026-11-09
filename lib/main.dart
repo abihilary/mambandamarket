@@ -36,6 +36,7 @@ import 'Screens/SplashScreen.dart';
 import 'Screens/SubscriptionScreen.dart';
 import 'Screens/WelcomeScreen.dart';
 import 'Service/MainNavigationShell.dart';
+import 'Prototypes/category_presentation_prototypes.dart';
 
 Future<void> main() async {
   // Clean addresses on the web build (app.mambandamarket.com/l/<id>, not
@@ -243,6 +244,9 @@ class _MarketplaceAppState extends State<MarketplaceApp> {
                       ? 'business'
                       : 'buyer_seller',
                 );
+                break;
+              case '/prototypes':
+                builder = const CategoryPresentationPrototypesScreen();
                 break;
               default:
                 builder = const SplashScreen();

@@ -751,6 +751,12 @@ class _AccountScreenState extends State<AccountScreen> {
                         onTap: () =>
                             Navigator.pushNamed(context, '/seller-dashboard'),
                       ),
+                    MenuRow(
+                      icon: Icons.design_services_outlined,
+                      title: 'Category Presentations Prototype',
+                      subtitle: 'Kleinanzeigen-style design prototypes',
+                      onTap: () => Navigator.pushNamed(context, '/prototypes'),
+                    ),
                   ],
                 ),
 

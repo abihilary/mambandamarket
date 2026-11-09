@@ -1638,6 +1638,33 @@ class Payout {
       );
 }
 
+class ReferralItem {
+  final String id;
+  final String referredId;
+  final String status;
+  final String? qualifiedAt;
+  final String? rewardedAt;
+  final String createdAt;
+
+  const ReferralItem({
+    required this.id,
+    required this.referredId,
+    required this.status,
+    this.qualifiedAt,
+    this.rewardedAt,
+    required this.createdAt,
+  });
+
+  factory ReferralItem.fromJson(Map<String, dynamic> json) => ReferralItem(
+        id: json['id']?.toString() ?? '',
+        referredId: json['referred_id']?.toString() ?? '',
+        status: json['status']?.toString() ?? '',
+        qualifiedAt: json['qualified_at']?.toString(),
+        rewardedAt: json['rewarded_at']?.toString(),
+        createdAt: json['created_at']?.toString() ?? '',
+      );
+}
+
 /// The caller's referral standing: the code they share, and how their invites
 /// are doing.
 ///
@@ -1650,6 +1677,7 @@ class ReferralSummary {
   final int pending;
   final int qualified;
   final int rewarded;
+  final List<ReferralItem> items;
 
   const ReferralSummary({
     this.code,
@@ -1658,6 +1686,7 @@ class ReferralSummary {
     this.pending = 0,
     this.qualified = 0,
     this.rewarded = 0,
+    this.items = const [],
   });
 
   /// Whether this user already claimed someone else's code. Attribution is
@@ -1667,6 +1696,7 @@ class ReferralSummary {
   factory ReferralSummary.fromJson(Map<String, dynamic> json) {
     final stats = (json['stats'] as Map?)?.cast<String, dynamic>() ?? const {};
     int n(String k) => (stats[k] as num?)?.toInt() ?? 0;
+    final rawItems = json['items'] as List? ?? const [];
     return ReferralSummary(
       code: json['code']?.toString(),
       referredBy: json['referred_by']?.toString(),
@@ -1674,6 +1704,10 @@ class ReferralSummary {
       pending: n('pending'),
       qualified: n('qualified'),
       rewarded: n('rewarded'),
+      items: [
+        for (final r in rawItems)
+          if (r is Map<String, dynamic>) ReferralItem.fromJson(r)
+      ],
     );
   }
 }

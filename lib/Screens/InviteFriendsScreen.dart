@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../api/api_client.dart';
 import '../api/models.dart';
 import '../api/remote_config.dart';
 import '../api/repositories.dart';
@@ -53,6 +54,66 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
     }
   }
 
+  Future<void> _showEditCodeDialog(String? currentCode) async {
+    final controller = TextEditingController(text: currentCode ?? '');
+    final l10n = context.l10n;
+    final success = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Customize Referral Code'),
+        content: TextField(
+          controller: controller,
+          textCapitalization: TextCapitalization.characters,
+          decoration: const InputDecoration(
+            labelText: 'New Referral Code',
+            hintText: '3-20 alphanumeric chars',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(l10n.avatarCancel),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final code = controller.text.trim();
+              if (code.length < 3 || code.length > 20 || !RegExp(r'^[a-zA-Z0-9]+$').hasMatch(code)) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Code must be 3-20 alphanumeric characters (a-z, 0-9).')),
+                );
+                return;
+              }
+              try {
+                await ReferralsRepository.instance.updateCode(code);
+                if (!dialogContext.mounted) return;
+                Navigator.pop(dialogContext, true);
+              } on ApiException catch (e) {
+                if (!dialogContext.mounted) return;
+                ScaffoldMessenger.of(dialogContext).showSnackBar(
+                  SnackBar(content: Text(e.message), backgroundColor: Theme.of(dialogContext).colorScheme.error),
+                );
+              } catch (_) {
+                if (!dialogContext.mounted) return;
+                ScaffoldMessenger.of(dialogContext).showSnackBar(
+                  SnackBar(content: Text('Failed to update code.'), backgroundColor: Theme.of(dialogContext).colorScheme.error),
+                );
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (success == true) {
+      _load();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Referral code updated successfully!')),
+      );
+    }
+  }
+
   /// The share sheet with the invite and where to get the app. Falls back to
   /// the clipboard where there is no sheet (a desktop browser).
   Future<void> _share(String sentence) async {
@@ -91,7 +152,16 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
     final s = _summary;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.inviteTitle)),
+      appBar: AppBar(
+        title: Text(l10n.inviteTitle),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Customize Code',
+            onPressed: () => _showEditCodeDialog(s?.code),
+          ),
+        ],
+      ),
       body: ContentFrame(
         maxWidth: Breakpoints.form,
         child: RefreshIndicator(
@@ -123,13 +193,23 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
                     ),
                     child: Column(
                       children: [
-                        Text(
-                          l10n.inviteYourCode,
-                          style: TextStyle(
-                            color: cs.onPrimary.withValues(alpha: 0.8),
-                            fontSize: 12,
-                            letterSpacing: 1.2,
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              l10n.inviteYourCode,
+                              style: TextStyle(
+                                color: cs.onPrimary.withValues(alpha: 0.8),
+                                fontSize: 12,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            InkWell(
+                              onTap: () => _showEditCodeDialog(s?.code),
+                              child: Icon(Icons.edit, size: 14, color: cs.onPrimary.withValues(alpha: 0.9)),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 8),
                         SelectableText(
@@ -159,10 +239,6 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: FilledButton.icon(
-                            // The share sheet — WhatsApp, SMS — with the
-                            // invite sentence and the download link. It used
-                            // to copy the sentence and say "Code copied",
-                            // which read as a Share button that did nothing.
                             onPressed: () =>
                                 _share(l10n.inviteShareText(s!.code!)),
                             icon: const Icon(Icons.ios_share, size: 18),
@@ -173,8 +249,6 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
                     ),
 
                   const SizedBox(height: 16),
-                  // What it pays, in so many words — only once the amount is
-                  // set in the panel, so the screen never promises nothing.
                   if (RemoteConfig.instance.referralRewardCents > 0) ...[
                     Text(
                       l10n.inviteEarn(
@@ -232,7 +306,42 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
                     label: Text(l10n.walletOpen),
                   ),
 
-                  if ((s?.total ?? 0) == 0) ...[
+                  if (s?.items.isNotEmpty == true) ...[
+                    const SizedBox(height: 28),
+                    const Text(
+                      'Invite History',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    ...s!.items.map((item) => Card(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          child: ListTile(
+                            leading: Icon(
+                              item.status == 'rewarded'
+                                  ? Icons.card_giftcard
+                                  : item.status == 'qualified'
+                                      ? Icons.check_circle_outline
+                                      : Icons.hourglass_top,
+                              color: item.status == 'rewarded'
+                                  ? cs.primary
+                                  : item.status == 'qualified'
+                                      ? AppColors.success
+                                      : Colors.orange,
+                            ),
+                            title: Text('Status: ${item.status.toUpperCase()}'),
+                            subtitle: Text('Invited: ${item.createdAt.split('T').first}'),
+                            trailing: Text(
+                              item.status,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: item.status == 'rewarded' ? cs.primary : cs.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        )),
+                  ],
+
+                  if ((s?.total ?? 0) == 0 && s?.items.isEmpty == true) ...[
                     const SizedBox(height: 32),
                     Center(
                       child: Text(l10n.inviteNoneYet,
