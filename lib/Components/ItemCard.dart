@@ -6,7 +6,6 @@ import '../api/listing_presentation.dart';
 import '../api/models.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
-import '../theme/app_tokens.dart';
 import '../theme/breakpoints.dart';
 
 /// What a card says about [item] beyond its title and photo, from the
@@ -44,6 +43,73 @@ import '../theme/breakpoints.dart';
       _ => item.priceMode == 'free' ? l10n.priceFree : null,
     },
   );
+}
+
+/// A dynamic image widget that resolves the network image's natural aspect ratio
+/// so the card height adapts to fit the image fully without cropping or letterboxing.
+class NaturalAspectImage extends StatefulWidget {
+  final String imageUrl;
+  final BoxFit fit;
+  final Widget? placeholder;
+
+  const NaturalAspectImage({
+    Key? key,
+    required this.imageUrl,
+    this.fit = BoxFit.contain,
+    this.placeholder,
+  }) : super(key: key);
+
+  @override
+  State<NaturalAspectImage> createState() => _NaturalAspectImageState();
+}
+
+class _NaturalAspectImageState extends State<NaturalAspectImage> {
+  double _aspectRatio = 1.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolveImage();
+  }
+
+  @override
+  void didUpdateWidget(covariant NaturalAspectImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.imageUrl != widget.imageUrl) {
+      _aspectRatio = 1.0;
+      _resolveImage();
+    }
+  }
+
+  void _resolveImage() {
+    final provider = CachedNetworkImageProvider(widget.imageUrl);
+    final stream = provider.resolve(ImageConfiguration.empty);
+    stream.addListener(ImageStreamListener((imageInfo, synchronousCall) {
+      if (!mounted) return;
+      final w = imageInfo.image.width.toDouble();
+      final h = imageInfo.image.height.toDouble();
+      if (h > 0) {
+        setState(() {
+          _aspectRatio = (w / h).clamp(0.5, 2.2);
+        });
+      }
+    }, onError: (_, _) {}));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: _aspectRatio,
+      child: Image(
+        image: CachedNetworkImageProvider(widget.imageUrl),
+        fit: widget.fit,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (context, error, stackTrace) =>
+            widget.placeholder ?? Container(color: Colors.grey.shade200),
+      ),
+    );
+  }
 }
 
 class ItemCard extends StatelessWidget {
@@ -96,12 +162,6 @@ class ItemCard extends StatelessWidget {
   }) : super(key: key);
 
   /// Grid columns from the width, and a row height from the card itself.
-  ///
-  /// `childAspectRatio` scaled the text block with the photo, so a wide tile
-  /// got empty space and a narrow one, or a large text size, overflowed. Here
-  /// the photo is square at whatever width the columns leave, and the text
-  /// below it gets a fixed allowance — two title lines, the spec line, the
-  /// price and the city — that grows with the reader's text size.
   static SliverGridDelegate gridDelegate(
     double crossAxisExtent,
     TextScaler scaler, {
@@ -115,15 +175,11 @@ class ItemCard extends StatelessWidget {
       crossAxisCount: n,
       crossAxisSpacing: spacing,
       mainAxisSpacing: runSpacing,
-      // title 2 lines + spec + price + city
       mainAxisExtent: tile + 4 + scaler.scale(96),
     );
   }
 
   /// "350 m" under a kilometre, "2,3 km" above it.
-  ///
-  /// No translated unit: m and km are the same word in both languages we ship,
-  /// and the separator follows the locale through NumberFormat.
   String _distanceLabel(BuildContext context, double metres) {
     if (metres < 1000) return '${metres.round()} m';
     final locale = Localizations.localeOf(context).toString();
@@ -149,14 +205,24 @@ class ItemCard extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8.0),
-                  child: AspectRatio(
-                    aspectRatio: 1.0,
-                    child: Image(
-                      image: CachedNetworkImageProvider(imageUrl),
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          Container(color: scheme.surfaceContainerHighest),
-                    ),
+                  child: ColoredBox(
+                    color: scheme.surfaceContainerHighest,
+                    child: isCompact
+                        ? SizedBox(
+                            height: 110,
+                            width: double.infinity,
+                            child: Image(
+                              image: CachedNetworkImageProvider(imageUrl),
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(color: scheme.surfaceContainerHighest),
+                            ),
+                          )
+                        : NaturalAspectImage(
+                            imageUrl: imageUrl,
+                            fit: BoxFit.contain,
+                            placeholder: Container(color: scheme.surfaceContainerHighest),
+                          ),
                   ),
                 ),
                 if (badge != null)
@@ -181,10 +247,6 @@ class ItemCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                // A heart with nothing behind it is a control that lies. It
-                // shows only where the caller has somewhere for the tap to go
-                // — the compact rail never did, and now neither does any
-                // screen that omits the callback.
                 if (!isCompact && onFavoriteToggle != null)
                   Positioned(
                     top: 8,
@@ -238,27 +300,19 @@ class ItemCard extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: 2),
-                  // Price & Addon
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
                     children: [
-                      // Flexible, so "3.500.000 FCFA nég." in a 140px card
-                      // ellipsises instead of overflowing the tile.
-                      Flexible(
-                        child: Text(
-                          price,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            // The deck prices in the brand accent, not in green.
-                            // accentInk rather than the fill, because this is
-                            // text on the page: raw lime is 1.4:1 on white.
-                            color: context.tokens.accentInk,
-                          ),
+                      Text(
+                        price,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: scheme.onSurface,
                         ),
                       ),
-                      if (priceTail != null) ...[
+                      if (priceTail != null && priceTail!.isNotEmpty) ...[
                         const SizedBox(width: 4),
                         Text(
                           priceTail!,
@@ -268,42 +322,20 @@ class ItemCard extends StatelessWidget {
                           ),
                         ),
                       ],
-                      if (priceAddon != null) ...[
-                        const SizedBox(width: 4),
-                        Text(
-                          priceAddon!,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: context.tokens.accentInk,
-                          ),
-                        ),
-                      ]
                     ],
                   ),
-                  if ((location != null && location!.trim().isNotEmpty) ||
-                      distance != null) ...[
+                  if (location != null && location!.trim().isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        Icon(
-                          Icons.location_on_outlined,
-                          size: 12,
-                          color: scheme.onSurfaceVariant,
-                        ),
+                        Icon(Icons.location_on_outlined,
+                            size: 11, color: scheme.onSurfaceVariant),
                         const SizedBox(width: 2),
-                        // One line, ellipsised. A compact card is 140px wide
-                        // and "Cité des Palmiers, Douala" does not fit; a
-                        // second line would push the price out of the grid
-                        // cell and overflow every tile in the row.
-                        Expanded(
+                        Flexible(
                           child: Text(
-                            [
-                              if (location != null && location!.trim().isNotEmpty)
-                                location!.trim(),
-                              if (distance != null)
-                                _distanceLabel(context, distance),
-                            ].join(' \u00b7 '),
+                            distance != null
+                                ? '${location!.trim()} \u00b7 ${_distanceLabel(context, distance)}'
+                                : location!.trim(),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(

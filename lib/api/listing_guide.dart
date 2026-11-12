@@ -1,9 +1,9 @@
 import 'dart:ui' show Locale;
 
 /// How a category wants its listings asked for and shown, beyond the fields
-/// themselves: the photo shot list, description prompts, buyer tips, a price
-/// label and per-unit suffix ("Loyer", "/ mois"), and which of condition,
-/// warranty and delivery mean anything here at all.
+/// themselves: the photo shot list, description prompts, buyer tips, a details
+/// heading, a price label and per-unit suffix ("Loyer", "/ mois"), and which
+/// of condition, warranty and delivery mean anything here at all.
 ///
 /// Lives in `categories.listing_guide` (migration 0066), so improving a
 /// category is SQL rather than a release. Every key is optional and the
@@ -12,6 +12,9 @@ import 'dart:ui' show Locale;
 class ListingGuide {
   final String? titleExampleEn;
   final String? titleExampleFr;
+  /// Category-native heading for the item page's details block.
+  final String? detailsTitleEn;
+  final String? detailsTitleFr;
   final String? descriptionHintEn;
   final String? descriptionHintFr;
   final String? priceLabelEn;
@@ -48,6 +51,8 @@ class ListingGuide {
   const ListingGuide({
     this.titleExampleEn,
     this.titleExampleFr,
+    this.detailsTitleEn,
+    this.detailsTitleFr,
     this.descriptionHintEn,
     this.descriptionHintFr,
     this.priceLabelEn,
@@ -74,6 +79,7 @@ class ListingGuide {
   static const ctas = {'chat', 'quote', 'apply', 'visit'};
 
   String? titleExample(Locale l) => _pick(l, titleExampleEn, titleExampleFr);
+  String? detailsTitle(Locale l) => _pick(l, detailsTitleEn, detailsTitleFr);
   String? descriptionHint(Locale l) =>
       _pick(l, descriptionHintEn, descriptionHintFr);
   String? priceLabel(Locale l) => _pick(l, priceLabelEn, priceLabelFr);
@@ -93,6 +99,8 @@ class ListingGuide {
     return ListingGuide(
       titleExampleEn: _str(raw['title_example_en']),
       titleExampleFr: _str(raw['title_example_fr']),
+      detailsTitleEn: _str(raw['details_title_en']),
+      detailsTitleFr: _str(raw['details_title_fr']),
       descriptionHintEn: _str(raw['description_hint_en']),
       descriptionHintFr: _str(raw['description_hint_fr']),
       priceLabelEn: _str(raw['price_label_en']),

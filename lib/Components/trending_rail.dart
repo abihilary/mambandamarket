@@ -235,11 +235,14 @@ class _TrendingCard extends StatelessWidget {
                   SizedBox(
                     height: 150,
                     width: double.infinity,
-                    child: CachedNetworkImage(
-                      imageUrl: item.primaryImageUrl,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => const ImagePlaceholder(),
-                      errorWidget: (_, __, ___) => const ImagePlaceholder(),
+                    child: ColoredBox(
+                      color: scheme.surfaceContainerHighest,
+                      child: CachedNetworkImage(
+                        imageUrl: item.primaryImageUrl,
+                        fit: BoxFit.contain,
+                        placeholder: (_, _) => const ImagePlaceholder(),
+                        errorWidget: (_, _, _) => const ImagePlaceholder(),
+                      ),
                     ),
                   ),
                   // Rank. The whole reason somebody looks at this row is to
@@ -295,7 +298,7 @@ class _TrendingCard extends StatelessWidget {
                 ],
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -303,7 +306,7 @@ class _TrendingCard extends StatelessWidget {
                       item.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -311,21 +314,21 @@ class _TrendingCard extends StatelessWidget {
                       style: TextStyle(
                         color: tokens.accentInk,
                         fontWeight: FontWeight.w800,
-                        fontSize: 16,
+                        fontSize: 15,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
                         CircleAvatar(
-                          radius: 10,
+                          radius: 9,
                           backgroundColor: scheme.surface,
                           backgroundImage: (item.sellerImageUrl?.isNotEmpty ?? false)
                               ? CachedNetworkImageProvider(item.sellerImageUrl!)
                               : null,
                           child: (item.sellerImageUrl?.isNotEmpty ?? false)
                               ? null
-                              : Icon(Icons.person, size: 12, color: scheme.onSurfaceVariant),
+                              : Icon(Icons.person, size: 10, color: scheme.onSurfaceVariant),
                         ),
                         const SizedBox(width: 6),
                         Flexible(
@@ -345,7 +348,7 @@ class _TrendingCard extends StatelessWidget {
                         ],
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
                         Expanded(
@@ -438,7 +441,7 @@ class _CardButton extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 9),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Center(
             child: Text(
               label,

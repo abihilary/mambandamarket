@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart' show PointerDeviceKind;
@@ -117,6 +119,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   api.Listing? _full;
 
   api.Listing? get _listing => _full ?? widget.listing;
+  bool get _isService => _listing?.kind == 'service';
 
   /// For the listing's details: the category templates that name them.
   List<api.Category> _categories = const [];
@@ -960,7 +963,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   Widget _buildGallery(
     BuildContext context,
     ColorScheme scheme, {
-    BoxFit fit = BoxFit.cover,
+    BoxFit fit = BoxFit.contain,
     double indicatorLift = 0,
   }) {
     if (_imageList.isEmpty) {
@@ -980,6 +983,34 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     return Stack(
       fit: StackFit.expand,
       children: [
+        if (fit == BoxFit.contain)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: ClipRect(
+                child: ImageFiltered(
+                  imageFilter: ImageFilter.blur(
+                    sigmaX: 24,
+                    sigmaY: 24,
+                  ),
+                  child: Image(
+                    image: CachedNetworkImageProvider(_imageList[_currentImageIndex]),
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                    errorBuilder: (_, _, _) => ColoredBox(
+                      color: scheme.surfaceContainerHighest,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        if (fit == BoxFit.contain)
+          const Positioned.fill(
+            child: IgnorePointer(
+              child: ColoredBox(color: Color(0x26000000)),
+            ),
+          ),
         PageView.builder(
           controller: _pageController,
           itemCount: _imageList.length,
@@ -991,29 +1022,33 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             });
           },
           itemBuilder: (context, index) {
+            final image = CachedNetworkImageProvider(_imageList[index]);
             return Image(
-              image: CachedNetworkImageProvider(_imageList[index]),
+              image: image,
               fit: fit,
               width: double.infinity,
               height: double.infinity,
               loadingBuilder: (context, child, loadingProgress) {
                 if (loadingProgress == null) return child;
-                return Container(
-                  color: scheme.surfaceContainerHighest,
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
-                          : null,
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    child,
+                    Center(
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
                     ),
-                  ),
+                  ],
                 );
               },
               errorBuilder: (context, error, stackTrace) {
                 return Container(
-                  color: scheme.surfaceContainerHighest,
+                  color: Colors.transparent,
                   child: Center(
                     child: Icon(
                       Icons.broken_image_outlined,
@@ -1201,11 +1236,19 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             Localizations.localeOf(context),
             protected: _isBuyable && listing.companyEscrow,
           );
-    return [
+    final locale = Localizations.localeOf(context);
+    final category = _category;
+    final detailsTitle = _guide.detailsTitle(locale) ??
+        (category == null
+            ? null
+            : '${category.displayLabel(locale)} · ${context.l10n.detailDetails}');
+    final detailBlock = <Widget>[
       if (!details.isEmpty) ...[
         const SizedBox(height: 24),
-        DetailsTable(details: details, columns: columns),
+        DetailsTable(details: details, title: detailsTitle, columns: columns),
       ],
+    ];
+    final descriptionBlock = <Widget>[
       if (showDescription) ...[
         const SizedBox(height: 24),
         CollapsibleDescription(
@@ -1213,6 +1256,12 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           maxLines: descriptionLines,
         ),
       ],
+    ];
+    return [
+      if (_isService) ...descriptionBlock,
+      if (_isService) ...detailBlock,
+      if (!_isService) ...detailBlock,
+      if (!_isService) ...descriptionBlock,
       if (seller != null) ...[
         const SizedBox(height: 24),
         seller,
@@ -1222,6 +1271,53 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         BuyerTipsCard(tips: tips),
       ],
     ];
+  }
+
+  /// A small, selectable filmstrip that makes service photos feel like a
+  /// portfolio gallery rather than a single listing image.
+  Widget _buildServiceGalleryStrip(BuildContext context, ColorScheme scheme) {
+    if (_imageList.length < 2) return const SizedBox.shrink();
+    return SizedBox(
+      height: 68,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _imageList.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final selected = index == _currentImageIndex;
+          return Semantics(
+            button: true,
+            selected: selected,
+            label: '${index + 1} / ${_imageList.length}',
+            child: InkWell(
+              onTap: () => _pageController.animateToPage(
+                index,
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+              ),
+              borderRadius: BorderRadius.circular(10),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                width: 76,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: selected
+                        ? context.tokens.accentInk
+                        : Colors.transparent,
+                    width: 2,
+                  ),
+                ),
+                child: BlurredThumbnailBox(
+                  imageUrl: _imageList[index],
+                  size: 76,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   Widget? _sellerCard() {
@@ -1369,7 +1465,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 320,
+            expandedHeight: _isService ? 400 : 320,
             pinned: true,
             elevation: 0,
             backgroundColor: scheme.surface,
@@ -1403,15 +1499,16 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     background:
                         _buildGallery(context, scheme, indicatorLift: 16),
                   ),
-                  Positioned(
-                    left: 16,
-                    right: 16,
-                    bottom: 0,
-                    height: 16,
-                    // Gone by the time the card reaches the toolbar and
-                    // starts to slide beneath it.
-                    child: KeyFactsCap(opacity: (open / 0.2).clamp(0.0, 1.0)),
-                  ),
+                  if (!_isService)
+                    Positioned(
+                      left: 16,
+                      right: 16,
+                      bottom: 0,
+                      height: 16,
+                      // Gone by the time the card reaches the toolbar and
+                      // starts to slide beneath it.
+                      child: KeyFactsCap(opacity: (open / 0.2).clamp(0.0, 1.0)),
+                    ),
                 ],
               );
             }),
@@ -1423,7 +1520,11 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _keyFactsCard(context, attachedTop: true),
+                  if (_isService && _imageList.length > 1) ...[
+                    _buildServiceGalleryStrip(context, scheme),
+                    const SizedBox(height: 16),
+                  ],
+                  _keyFactsCard(context, attachedTop: !_isService),
                   ..._escrowBand(context),
                   ..._bodySections(context, _detailsOf(context),
                       seller: _sellerCard()),
@@ -1731,14 +1832,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                         width: 2,
                       ),
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image(
-                        image: CachedNetworkImageProvider(_imageList[i]),
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            ColoredBox(color: scheme.surfaceContainerHighest),
-                      ),
+                    child: BlurredThumbnailBox(
+                      imageUrl: _imageList[i],
+                      size: 72,
                     ),
                   ),
                 );
@@ -1927,6 +2023,57 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       onPressed: disabled ? null : _onChatPressed,
       icon: icon,
       label: label,
+    );
+  }
+}
+
+/// A square thumbnail box with a blurred background wash of the image
+/// and the uncropped image centered on top using BoxFit.contain.
+class BlurredThumbnailBox extends StatelessWidget {
+  final String imageUrl;
+  final double size;
+  final BorderRadius borderRadius;
+
+  const BlurredThumbnailBox({
+    Key? key,
+    required this.imageUrl,
+    this.size = 76,
+    this.borderRadius = const BorderRadius.all(Radius.circular(8)),
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: ClipRRect(
+        borderRadius: borderRadius,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image(
+              image: CachedNetworkImageProvider(imageUrl),
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => const ColoredBox(color: Colors.black),
+            ),
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              child: ColoredBox(
+                color: Colors.black.withValues(alpha: 0.3),
+              ),
+            ),
+            Center(
+              child: Image(
+                image: CachedNetworkImageProvider(imageUrl),
+                fit: BoxFit.contain,
+                width: size,
+                height: size,
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

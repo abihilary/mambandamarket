@@ -265,6 +265,15 @@ void main() {
       expect(find.textContaining('Voir les'), findsNothing);
     });
 
+    testWidgets('uses a category-native heading when provided', (tester) async {
+      await tester.pumpWidget(_page(DetailsTable(
+        title: 'Caractéristiques du logement',
+        details: ListingDetails(rows: nine.rows.take(1).toList()),
+      )));
+      expect(find.text('Caractéristiques du logement'), findsOneWidget);
+      expect(find.text('Détails'), findsNothing);
+    });
+
     testWidgets('nothing to list draws nothing at all', (tester) async {
       await tester.pumpWidget(_page(const DetailsTable(details: ListingDetails.empty)));
       expect(find.text('Détails'), findsNothing);
@@ -477,7 +486,12 @@ void main() {
   group('item page', () {
     // No id, so nothing is fetched: the page draws from the listing it was
     // handed, the way it does while the full one loads.
-    Future<void> show(WidgetTester tester, Size size, Listing x) async {
+    Future<void> show(
+      WidgetTester tester,
+      Size size,
+      Listing x, {
+      List<String>? images,
+    }) async {
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
@@ -490,6 +504,7 @@ void main() {
           title: x.title,
           price: x.displayPrice,
           imageUrl: '',
+          images: images,
           listing: x,
         ),
       ));
@@ -559,6 +574,34 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text('Sur demande'), findsOneWidget);
       expect(find.text('Détails'), findsNothing);
+    });
+
+    testWidgets('service photos use a gallery layout with blurred fill',
+        (tester) async {
+      await show(
+        tester,
+        const Size(360, 800),
+        const Listing(
+          id: '3f2a9c1d-0000-4000-8000-000000000004',
+          sellerId: '',
+          title: 'Cours de maths',
+          description: 'Cours particuliers adaptés à votre niveau.',
+          priceCents: 0,
+          priceMode: 'on_request',
+          kind: 'service',
+          categorySlug: 'tutoring',
+        ),
+        images: const [
+          'https://example.invalid/service-one.jpg',
+          'https://example.invalid/service-two.jpg',
+        ],
+      );
+      expect(tester.takeException(), isNull);
+      expect(find.byType(ImageFiltered), findsOneWidget);
+      expect(find.byType(KeyFactsCap), findsNothing);
+      expect(find.text('Cours particuliers adaptés à votre niveau.'), findsOneWidget);
+      expect(find.bySemanticsLabel('1 / 2'), findsOneWidget);
+      expect(find.bySemanticsLabel('2 / 2'), findsOneWidget);
       expect(find.text('Avant de payer'), findsNothing);
       expect(find.text('Livraison : demandez un devis Mambanda'), findsNothing);
     });

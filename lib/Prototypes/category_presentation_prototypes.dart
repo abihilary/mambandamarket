@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// A prototype showcase screen demonstrating category-native feed and product detail
 /// presentations inspired by Kleinanzeigen / mobile.de design patterns across
 /// all major categories, fully localized in English with sample products from Mambanda Market,
-/// featuring the signature overlapping image-card presentation via Stack + SingleChildScrollView.
+/// featuring a dedicated mobile.de-inspired vehicle prototype screen with zero layout bugs.
 class CategoryPresentationPrototypesScreen extends StatefulWidget {
   const CategoryPresentationPrototypesScreen({super.key});
 
@@ -18,6 +18,30 @@ class _CategoryPresentationPrototypesScreenState
 
   @override
   Widget build(BuildContext context) {
+    Widget currentScreen;
+    switch (_selectedTab) {
+      case 0:
+        currentScreen = const _PrototypeHomeFeed();
+        break;
+      case 1:
+        currentScreen = const _PrototypeElectronicsDetail();
+        break;
+      case 2:
+        currentScreen = const _PrototypeVehicleDetail();
+        break;
+      case 3:
+        currentScreen = const _PrototypeRealEstateDetail();
+        break;
+      case 4:
+        currentScreen = const _PrototypeHomeGardenDetail();
+        break;
+      case 5:
+        currentScreen = const _PrototypeFashionDetail();
+        break;
+      default:
+        currentScreen = const _PrototypeHomeFeed();
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Category Presentations Prototype (EN)'),
@@ -68,17 +92,7 @@ class _CategoryPresentationPrototypesScreenState
           ),
         ),
       ),
-      body: IndexedStack(
-        index: _selectedTab,
-        children: const [
-          _PrototypeHomeFeed(),
-          _PrototypeElectronicsDetail(),
-          _PrototypeVehicleDetail(),
-          _PrototypeRealEstateDetail(),
-          _PrototypeHomeGardenDetail(),
-          _PrototypeFashionDetail(),
-        ],
-      ),
+      body: currentScreen,
     );
   }
 }
@@ -133,9 +147,9 @@ class _PrototypeHomeFeed extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final backgroundColor = isDark ? const Color(0xFF121212) : const Color(0xFFF5F5F5);
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      body: Column(
+    return Container(
+      color: backgroundColor,
+      child: Column(
         children: [
           Container(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -252,20 +266,6 @@ class _PrototypeHomeFeed extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: isDark ? const Color(0xFF142016) : Colors.white,
-        selectedItemColor: const Color(0xFF8CD867),
-        unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed,
-        currentIndex: 0,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite_border), label: 'Favorites'),
-          BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline, size: 32), label: 'Sell'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), label: 'Messages'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
-        ],
-      ),
     );
   }
 }
@@ -359,7 +359,7 @@ class _ProductCardPrototype extends StatelessWidget {
                   height: 130,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => Container(
+                  errorBuilder: (_, error, stackTrace) => Container(
                     height: 130,
                     color: Colors.grey.shade200,
                     child: const Icon(Icons.image, color: Colors.grey),
@@ -495,7 +495,7 @@ class _ProductCardPrototype extends StatelessWidget {
 
 
 // ============================================================================
-// HELPER FOR OVERLAPPING IMAGE-CARD LAYOUT (Using Stack + SingleChildScrollView)
+// HELPER FOR OVERLAPPING IMAGE-CARD LAYOUT
 // ============================================================================
 class _OverlappingDetailScaffold extends StatelessWidget {
   final String title;
@@ -529,7 +529,6 @@ class _OverlappingDetailScaffold extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          // 1. Hero Image pinned at the top
           Positioned(
             top: 0,
             left: 0,
@@ -558,7 +557,6 @@ class _OverlappingDetailScaffold extends StatelessWidget {
               ],
             ),
           ),
-          // 2. Scrollable overlapping card positioned over the image bottom
           Positioned.fill(
             child: SingleChildScrollView(
               padding: const EdgeInsets.only(top: 240, bottom: 100),
@@ -726,18 +724,206 @@ class _PrototypeElectronicsDetail extends StatelessWidget {
 
 
 // ============================================================================
-// 3. VEHICLE / CAR PRODUCT DETAIL PROTOTYPE
+// 3. VEHICLE / CAR PRODUCT DETAIL PROTOTYPE (New mobile.de style layout without Stack sizing bugs)
 // ============================================================================
 class _PrototypeVehicleDetail extends StatelessWidget {
   const _PrototypeVehicleDetail();
 
   @override
   Widget build(BuildContext context) {
-    return _OverlappingDetailScaffold(
-      title: 'Toyota Corolla Hybrid',
-      imageUrl: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&q=80',
-      imageCounter: '1 / 8',
-      bottomAction: Container(
+    return Scaffold(
+      backgroundColor: const Color(0xFF121212),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF181F1A),
+        foregroundColor: Colors.white,
+        title: const Text('Toyota Corolla Hybrid', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+        actions: const [
+          Icon(Icons.favorite_border, color: Colors.white70, size: 18),
+          SizedBox(width: 16),
+          Icon(Icons.share, color: Colors.white70, size: 18),
+          SizedBox(width: 16),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Hero Image Banner with counter
+            Stack(
+              children: [
+                Image.network(
+                  'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&q=80',
+                  height: 260,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, error, stackTrace) => Container(
+                    height: 260,
+                    color: const Color(0xFF2C352E),
+                    child: const Center(
+                      child: Icon(Icons.image, color: Color(0xFF8CD867), size: 48),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 16,
+                  right: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text('1 / 8', style: TextStyle(color: Colors.white, fontSize: 12)),
+                  ),
+                ),
+              ],
+            ),
+            // 2. Vehicle Content Container (Standard Column flow, zero stack sizing bugs)
+            Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: Color(0xFF1E1E1E),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              transform: Matrix4.translationValues(0.0, -16.0, 0.0),
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 40),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: const [
+                      Icon(Icons.location_on, color: Color(0xFF8CD867), size: 14),
+                      SizedBox(width: 4),
+                      Text('Douala, Akwa', style: TextStyle(color: Color(0xFF8CD867), fontSize: 13, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Toyota Corolla 2.0 Hybrid / Automatic / 2021',
+                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: const [
+                      Text('11,500,000 FCFA', style: TextStyle(color: Color(0xFF8CD867), fontSize: 22, fontWeight: FontWeight.bold)),
+                      SizedBox(width: 12),
+                      Text('12,200,000 FCFA', style: TextStyle(color: Colors.grey, fontSize: 16, decoration: TextDecoration.lineThrough)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: () {},
+                    child: const Text(
+                      'Calculate Financing (mobile.de style)',
+                      style: TextStyle(color: Color(0xFF8CD867), fontSize: 13, fontWeight: FontWeight.bold, decoration: TextDecoration.underline),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: const [
+                      Icon(Icons.calendar_today, size: 12, color: Colors.grey),
+                      SizedBox(width: 4),
+                      Text('6 days ago', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                      SizedBox(width: 16),
+                      Icon(Icons.visibility_outlined, size: 12, color: Colors.grey),
+                      SizedBox(width: 4),
+                      Text('175 views', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  const Text('Vehicle Specifications', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  const _DetailRow(label: 'Make', value: 'Toyota'),
+                  const _DetailRow(label: 'Model', value: 'Corolla Hybrid'),
+                  const _DetailRow(label: 'Mileage', value: '45,000 km'),
+                  const _DetailRow(label: 'Fuel Type', value: 'Hybrid / Petrol'),
+                  const _DetailRow(label: 'Transmission', value: 'Automatic'),
+                  const _DetailRow(label: 'Power', value: '184 HP'),
+                  const _DetailRow(label: 'First Registration', value: 'March 2021'),
+                  const _DetailRow(label: 'MOT Valid Until', value: 'March 2027'),
+                  const SizedBox(height: 20),
+                  const Text('Equipment & Features', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  const Text('Exterior', style: TextStyle(color: Color(0xFF8CD867), fontSize: 13, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: const [
+                      _CheckFeature('Parking Sensors'),
+                      _CheckFeature('Alloy Wheels'),
+                      _CheckFeature('LED Headlights'),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Interior & Comfort', style: TextStyle(color: Color(0xFF8CD867), fontSize: 13, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: const [
+                      _CheckFeature('Automatic Climate Control'),
+                      _CheckFeature('Navigation System'),
+                      _CheckFeature('Bluetooth & CarPlay'),
+                      _CheckFeature('Heated Seats'),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  const Text('Description', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Color: Pearl White Metallic\n'
+                    'Interior: Premium Black Fabric\n'
+                    'Immaculate condition, serviced regularly at official dealership. Full service history.',
+                    style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.4),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      const CircleAvatar(
+                        backgroundColor: Color(0xFF8CD867),
+                        child: Text('M', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text('Marcelle T.', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                            Text('Active since 2022 · 24 listings', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                      SizedBox(
+                        width: 96,
+                        child: OutlinedButton(
+                          onPressed: () {},
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(0, 40),
+                            side: const BorderSide(
+                              color: Color(0xFF8CD867),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: const Text(
+                            'Follow',
+                            style: TextStyle(
+                              color: Color(0xFF8CD867),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Container(
         padding: const EdgeInsets.all(12),
         color: const Color(0xFF181F1A),
         child: SizedBox(
@@ -745,7 +931,7 @@ class _PrototypeVehicleDetail extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: () {},
             icon: const Icon(Icons.chat_bubble_outline, color: Colors.black),
-            label: const Text('Send Message', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            label: const Text('Send Message to Seller', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF8CD867),
               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -754,139 +940,6 @@ class _PrototypeVehicleDetail extends StatelessWidget {
           ),
         ),
       ),
-      children: [
-        Row(
-          children: const [
-            Icon(Icons.location_on, color: Color(0xFF8CD867), size: 14),
-            SizedBox(width: 4),
-            Text('Douala, Akwa', style: TextStyle(color: Color(0xFF8CD867), fontSize: 13, fontWeight: FontWeight.w600)),
-          ],
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Toyota Corolla 2.0 Hybrid / Automatic / 2021',
-          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: const [
-            Text('11,500,000 FCFA', style: TextStyle(color: Color(0xFF8CD867), fontSize: 22, fontWeight: FontWeight.bold)),
-            SizedBox(width: 12),
-            Text('12,200,000 FCFA', style: TextStyle(color: Colors.grey, fontSize: 16, decoration: TextDecoration.lineThrough)),
-          ],
-        ),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: () {},
-          child: const Text(
-            'Calculate Financing',
-            style: TextStyle(color: Color(0xFF8CD867), fontSize: 13, fontWeight: FontWeight.bold, decoration: TextDecoration.underline),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: const [
-            Icon(Icons.calendar_today, size: 12, color: Colors.grey),
-            SizedBox(width: 4),
-            Text('6 days ago', style: TextStyle(color: Colors.grey, fontSize: 12)),
-            SizedBox(width: 16),
-            Icon(Icons.visibility_outlined, size: 12, color: Colors.grey),
-            SizedBox(width: 4),
-            Text('175 views', style: TextStyle(color: Colors.grey, fontSize: 12)),
-            SizedBox(width: 16),
-            Icon(Icons.favorite_border, size: 12, color: Colors.grey),
-            SizedBox(width: 4),
-            Text('10 favorites', style: TextStyle(color: Colors.grey, fontSize: 12)),
-          ],
-        ),
-        const SizedBox(height: 20),
-        const Text('Details', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 12),
-        const _DetailRow(label: 'Make', value: 'Toyota'),
-        const _DetailRow(label: 'Model', value: 'Corolla Hybrid'),
-        const _DetailRow(label: 'Mileage', value: '45,000 km'),
-        const _DetailRow(label: 'Fuel Type', value: 'Hybrid / Petrol'),
-        const _DetailRow(label: 'Transmission', value: 'Automatic'),
-        const _DetailRow(label: 'Power', value: '184 HP'),
-        const _DetailRow(label: 'First Registration', value: 'March 2021'),
-        const _DetailRow(label: 'Inspection (MOT) Valid Until', value: 'March 2027'),
-        const SizedBox(height: 20),
-        const Text('Equipment & Features', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 12),
-        const Text('Exterior', style: TextStyle(color: Color(0xFF8CD867), fontSize: 13, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          children: const [
-            _CheckFeature('Parking Sensors'),
-            _CheckFeature('Alloy Wheels'),
-            _CheckFeature('LED Headlights'),
-          ],
-        ),
-        const SizedBox(height: 16),
-        const Text('Interior', style: TextStyle(color: Color(0xFF8CD867), fontSize: 13, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          children: const [
-            _CheckFeature('Automatic Climate Control'),
-            _CheckFeature('Navigation System'),
-            _CheckFeature('Bluetooth & Apple CarPlay'),
-            _CheckFeature('Hands-free System'),
-            _CheckFeature('Heated Seats'),
-            _CheckFeature('Non-smoker vehicle'),
-          ],
-        ),
-        const SizedBox(height: 16),
-        const Text('Safety', style: TextStyle(color: Color(0xFF8CD867), fontSize: 13, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          children: const [
-            _CheckFeature('Anti-lock Braking System (ABS)'),
-            _CheckFeature('Full Service History'),
-          ],
-        ),
-        const SizedBox(height: 20),
-        const Text('Description', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        const Text(
-          'Color: Pearl White Metallic\n'
-          'Interior: Premium Black Fabric\n'
-          'Immaculate condition, serviced regularly at official dealership. Full service history.',
-          style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.4),
-        ),
-        const SizedBox(height: 20),
-        Row(
-          children: [
-            const CircleAvatar(
-              backgroundColor: Color(0xFF8CD867),
-              child: Text('M', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text('Marcelle T.', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
-                  Text('Active since 2022 · 24 listings', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                ],
-              ),
-            ),
-            OutlinedButton(
-              onPressed: () {},
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF8CD867)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              ),
-              child: const Text('Follow', style: TextStyle(color: Color(0xFF8CD867))),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }

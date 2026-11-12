@@ -32,6 +32,8 @@ void main() {
     'price_label_fr': 'Loyer',
     'price_per_en': 'month',
     'price_per_fr': 'mois',
+    'details_title_en': 'Property details',
+    'details_title_fr': 'Caractéristiques du logement',
     'photo_tips': [
       {'en': 'Shower', 'fr': 'Douche'},
     ],
@@ -42,6 +44,8 @@ void main() {
     expect(g.priceLabel(_fr), 'Loyer');
     expect(g.pricePer(_fr), 'mois');
     expect(g.pricePer(_en), 'month');
+    expect(g.detailsTitle(_fr), 'Caractéristiques du logement');
+    expect(g.detailsTitle(_en), 'Property details');
     expect(g.cta, 'visit');
     expect(g.condition, isFalse);
     expect(g.warranty, isFalse);
@@ -97,6 +101,7 @@ void main() {
     expect(ListingGuide.fromJson({'cta': 'call_me'}).cta, isNull);
     expect(ListingGuide.fromJson({'price_modes': ['free', 3]}).priceModes, ['free']);
     expect(ListingGuide.fromJson({'price_modes': []}).priceModes, isNull);
+    expect(ListingGuide.fromJson({'details_title_en': 42}).detailsTitle(_en), isNull);
   });
 
   test('no guide reads as the empty guide: everything on, nothing suggested', () {

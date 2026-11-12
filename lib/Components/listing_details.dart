@@ -417,10 +417,18 @@ class ListingDetails {
 class DetailsTable extends StatefulWidget {
   final ListingDetails details;
 
+  /// Category-native title, or the localized generic heading when absent.
+  final String? title;
+
   /// 2 lays the rows out as a two-column grid, for a wide window.
   final int columns;
 
-  const DetailsTable({super.key, required this.details, this.columns = 1});
+  const DetailsTable({
+    super.key,
+    required this.details,
+    this.title,
+    this.columns = 1,
+  });
 
   /// More rows than this fold, leaving [_folded] showing.
   static const _foldAbove = 8;
@@ -446,7 +454,7 @@ class _DetailsTableState extends State<DetailsTable> {
         : d.rows;
 
     final children = <Widget>[
-      Text(l10n.detailDetails,
+      Text(widget.title ?? l10n.detailDetails,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
       const SizedBox(height: 8),
     ];
