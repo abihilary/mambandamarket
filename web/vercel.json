@@ -17,6 +17,28 @@
       "destination": "https://mambandamarket.com/l/:id"
     },
     {
+      "source": "/s/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(whatsapp|facebookexternalhit|facebot|twitterbot|telegrambot|slackbot|discordbot|linkedinbot|skypeuripreview|snapchat|pinterest).*"
+        }
+      ],
+      "destination": "https://mambandamarket.com/s/:id"
+    },
+    {
+      "source": "/r/:code",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(whatsapp|facebookexternalhit|facebot|twitterbot|telegrambot|slackbot|discordbot|linkedinbot|skypeuripreview|snapchat|pinterest).*"
+        }
+      ],
+      "destination": "https://mambandamarket.com/r/:code"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

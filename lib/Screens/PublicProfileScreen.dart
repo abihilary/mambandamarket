@@ -1,11 +1,17 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../Components/ItemCard.dart';
 import '../Components/ItemDetailScreen.dart';
 import '../Components/VerifiedBadge.dart';
 import '../Components/listing_details.dart';
+import '../Components/share_menu.dart';
+import '../Components/web_share_flow.dart';
+import '../api/share_links.dart';
 import '../api/models.dart';
 import '../api/repositories.dart';
 import '../l10n/l10n.dart';
@@ -75,6 +81,74 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     }
   }
 
+  /// How the share button was pressed, on the web: a mouse gets our menu, a
+  /// finger the browser's share sheet — the same split as a listing's share.
+  PointerDeviceKind? _sharePointer;
+  bool _sharing = false;
+
+  /// A shop worth a link: a storefront, or somebody with something for sale.
+  /// A buyer's page has nothing on it for a stranger, and the web page behind
+  /// the link would say "not found".
+  bool get _shareable {
+    final d = _data;
+    return d != null && (d.store != null || d.listings.isNotEmpty);
+  }
+
+  /// The name the shop goes by, as the header shows it.
+  String _shopName(PublicProfile d) => d.store?.shopName.isNotEmpty == true
+      ? d.store!.shopName
+      : (d.profile.displayName ?? context.l10n.profileFallbackName);
+
+  /// Shares the shop as its link alone, like a listing: WhatsApp, Messenger
+  /// and SMS build the card (photo, name, item count) from the page's preview
+  /// tags, and a bare link pasted into an address bar still opens.
+  Future<void> _shareShop(BuildContext anchor) async {
+    final d = _data;
+    if (d == null || _sharing) return;
+    final l10n = context.l10n;
+    final name = _shopName(d);
+    final link = ShareLinks.shop(widget.userId).toString();
+
+    if (kIsWeb) {
+      final touch = _sharePointer == PointerDeviceKind.touch ||
+          _sharePointer == PointerDeviceKind.stylus;
+      if (context.isWideLayout || !touch) {
+        return showShareMenu(
+          context,
+          anchor: anchor,
+          title: name,
+          priceText: l10n.shopShareSubtitle(d.listings.length),
+          link: link,
+        );
+      }
+      return shareOnWeb(context, title: name, url: link, copyText: link);
+    }
+
+    final box = anchor.findRenderObject() as RenderBox?;
+    final origin = box == null ? null : box.localToGlobal(Offset.zero) & box.size;
+    setState(() => _sharing = true);
+    try {
+      final result = await SharePlus.instance.share(ShareParams(
+        text: link,
+        subject: name,
+        title: name,
+        sharePositionOrigin: origin,
+      ));
+      if (!mounted) return;
+      if (result.status == ShareResultStatus.unavailable) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.shopShareFailed)));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.shopShareFailed)));
+      }
+    } finally {
+      if (mounted) setState(() => _sharing = false);
+    }
+  }
+
   Future<void> _callSupport(String number) async {
     final uri = Uri(scheme: 'tel', path: number);
     if (await canLaunchUrl(uri)) await launchUrl(uri);
@@ -103,7 +177,23 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     final title = data?.profile.displayName ?? widget.initialName ?? l10n.profileFallbackName;
 
     return Scaffold(
-      appBar: AppBar(title: Text(title), elevation: 0),
+      appBar: AppBar(
+        title: Text(title),
+        elevation: 0,
+        actions: [
+          if (_shareable)
+            Builder(
+              builder: (anchor) => Listener(
+                onPointerDown: (e) => _sharePointer = e.kind,
+                child: IconButton(
+                  tooltip: l10n.shopShare,
+                  onPressed: _sharing ? null : () => _shareShop(anchor),
+                  icon: const Icon(Icons.share_outlined),
+                ),
+              ),
+            ),
+        ],
+      ),
       body: ContentFrame(
         maxWidth: Breakpoints.dashboard,
         child: _loading

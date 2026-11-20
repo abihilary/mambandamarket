@@ -9,6 +9,7 @@ import '../Components/CategoryItem.dart';
 import '../Components/ItemCard.dart';
 import '../Components/ItemDetailScreen.dart';
 import '../Components/listing_photo.dart';
+import '../navigation.dart';
 import '../Components/saved_note.dart';
 
 // Backend
@@ -99,6 +100,11 @@ class HomeScreenState extends State<HomeScreen> {
   static const double _pinAt = 132;
   static const double _unpinAt = 104;
 
+  /// Whether the back-to-top button shows. On after about a screen and a half
+  /// of scrolling, off a little earlier on the way back, so it does not
+  /// flicker at the threshold.
+  bool _showTop = false;
+
   @override
   void initState() {
     super.initState();
@@ -108,6 +114,7 @@ class HomeScreenState extends State<HomeScreen> {
     // listing missing from it.
     _repo.revision.addListener(_onCatalogueChanged);
     _scroll.addListener(_onScroll);
+    requestedCategory.addListener(_applyRequestedCategory);
     // What this device saved last time paints at once; the loads below
     // revalidate it behind the first frame.
     _categories = _repo.savedCategories()?.value ?? _categories;
@@ -126,6 +133,7 @@ class HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    requestedCategory.removeListener(_applyRequestedCategory);
     _repo.revision.removeListener(_onCatalogueChanged);
     AuthService.instance.me.removeListener(_onMeChanged);
     _revisionDebounce?.cancel();
@@ -145,6 +153,9 @@ class HomeScreenState extends State<HomeScreen> {
     // scroll, and rebuilding the whole feed each time would cost more than the
     // bar is worth.
     if (pinned != _searchPinned) setState(() => _searchPinned = pinned);
+    final screen = _scroll.position.viewportDimension;
+    final showTop = _showTop ? offset > screen * 1.2 : offset > screen * 1.5;
+    if (showTop != _showTop) setState(() => _showTop = showTop);
     // Back near the top: the held feed can go in without moving anything the
     // person is looking at.
     final pending = _pending;
@@ -160,6 +171,22 @@ class HomeScreenState extends State<HomeScreen> {
       if (mounted) setState(() => _categories = cats);
     } catch (_) {
       // Non-fatal: the feed still works with just "For You".
+    }
+    // A category link that arrived before the list did, applied now — or
+    // dropped, if this list does not have it.
+    _applyRequestedCategory(loaded: true);
+  }
+
+  /// A /c/<slug> link from the website (see navigation.dart).
+  void _applyRequestedCategory({bool loaded = false}) {
+    final slug = requestedCategory.value;
+    if (slug == null || !mounted) return;
+    if (_categories.any((c) => c.slug == slug)) {
+      requestedCategory.value = null;
+      if (_selectedSlug != slug) _onCategorySlug(slug);
+      if (_scroll.hasClients) _scroll.jumpTo(0);
+    } else if (loaded) {
+      requestedCategory.value = null;
     }
   }
 
@@ -375,6 +402,17 @@ class HomeScreenState extends State<HomeScreen> {
       if (AuthService.instance.session != null)
         NotificationRepository.instance.refreshHomeCard(),
     ]);
+  }
+
+  /// The back-to-top button. Glides when the top is close; from forty cards
+  /// down it jumps most of the way first, so the trip takes the same short
+  /// moment from anywhere instead of seconds of scrolling past everything.
+  Future<void> _scrollToTop() async {
+    if (!_scroll.hasClients) return;
+    final screen = _scroll.position.viewportDimension;
+    if (_scroll.offset > screen * 3) _scroll.jumpTo(screen * 1.5);
+    await _scroll.animateTo(0,
+        duration: const Duration(milliseconds: 400), curve: Curves.easeOutCubic);
   }
 
   /// The home tab tapped while already on home: back to the top, and fresh.
@@ -983,7 +1021,54 @@ class HomeScreenState extends State<HomeScreen> {
                 onSearch: _openSearch,
               ),
             ),
+
+            // Back to the top, once the feed is far enough down to need it.
+            // Stacked just above the Ship button, which owns the corner above
+            // the bar (shippingButtonClearance measures exactly that spot).
+            Positioned(
+              right: 16,
+              bottom: shippingButtonClearance(context) + 16,
+              child: _ScrollTopButton(visible: _showTop, onPressed: _scrollToTop),
+            ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A small round button with an up arrow. Fades and shrinks away rather than
+/// popping, and ignores taps while hidden.
+class _ScrollTopButton extends StatelessWidget {
+  const _ScrollTopButton({required this.visible, required this.onPressed});
+
+  final bool visible;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return IgnorePointer(
+      ignoring: !visible,
+      child: AnimatedOpacity(
+        opacity: visible ? 1 : 0,
+        duration: const Duration(milliseconds: 200),
+        child: AnimatedScale(
+          scale: visible ? 1 : 0.8,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutBack,
+          child: Material(
+            color: scheme.surface,
+            elevation: 4,
+            shadowColor: Colors.black26,
+            shape: CircleBorder(side: BorderSide(color: scheme.outlineVariant)),
+            clipBehavior: Clip.antiAlias,
+            child: IconButton(
+              tooltip: context.l10n.backToTop,
+              onPressed: onPressed,
+              icon: Icon(Icons.keyboard_arrow_up_rounded, color: scheme.onSurface),
+            ),
+          ),
         ),
       ),
     );

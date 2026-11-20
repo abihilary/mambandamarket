@@ -118,7 +118,9 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
   /// the clipboard where there is no sheet (a desktop browser).
   Future<void> _share(String sentence) async {
     final l10n = context.l10n;
-    final text = '$sentence\n${ShareLinks.siteBase}/download';
+    // The link carries the code: opening it fills the code in at sign-up,
+    // and the page behind it offers the download.
+    final text = sentence;
     if (kIsWeb) {
       return shareOnWeb(context,
           title: 'Mambanda Market', text: text, copyText: text);
@@ -239,8 +241,8 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: FilledButton.icon(
-                            onPressed: () =>
-                                _share(l10n.inviteShareText(s!.code!)),
+                            onPressed: () => _share(l10n.inviteShareText(
+                                s!.code!, ShareLinks.invite(s.code!).toString())),
                             icon: const Icon(Icons.ios_share, size: 18),
                             label: Text(l10n.inviteShare),
                           ),
@@ -262,6 +264,21 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
                     ),
                     const SizedBox(height: 8),
                   ],
+                  // The rest of the programme, as the panel set it.
+                  for (final m in RemoteConfig.instance.referralMilestones)
+                    _rule(context, Icons.emoji_events_outlined,
+                        l10n.inviteMilestone(formatPrice(m.bonusCents), m.count)),
+                  if (RemoteConfig.instance.referralSubscriptionPercent > 0)
+                    _rule(
+                      context,
+                      Icons.workspace_premium_outlined,
+                      RemoteConfig.instance.referralSubscriptionMonths > 0
+                          ? l10n.inviteCommissionMonths(
+                              _percent(RemoteConfig.instance.referralSubscriptionPercent),
+                              RemoteConfig.instance.referralSubscriptionMonths)
+                          : l10n.inviteCommission(
+                              _percent(RemoteConfig.instance.referralSubscriptionPercent)),
+                    ),
                   Text(
                     l10n.inviteExplainer,
                     style: TextStyle(
@@ -289,10 +306,10 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
                     children: [
                       _stat(context, l10n.inviteInvited, s?.total ?? 0,
                           cs.onSurface),
-                      _stat(context, l10n.inviteQualified, s?.qualified ?? 0,
-                          AppColors.success),
                       _stat(context, l10n.inviteRewarded, s?.rewarded ?? 0,
-                          cs.primary),
+                          AppColors.success),
+                      _statText(context, l10n.inviteEarnedTotal,
+                          formatPrice(s?.earnedCents ?? 0), cs.primary),
                     ],
                   ),
 
@@ -308,37 +325,35 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
 
                   if (s?.items.isNotEmpty == true) ...[
                     const SizedBox(height: 28),
-                    const Text(
-                      'Invite History',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    Text(
+                      l10n.inviteHistory,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
-                    ...s!.items.map((item) => Card(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          child: ListTile(
-                            leading: Icon(
-                              item.status == 'rewarded'
-                                  ? Icons.card_giftcard
-                                  : item.status == 'qualified'
-                                      ? Icons.check_circle_outline
-                                      : Icons.hourglass_top,
-                              color: item.status == 'rewarded'
-                                  ? cs.primary
-                                  : item.status == 'qualified'
-                                      ? AppColors.success
-                                      : Colors.orange,
-                            ),
-                            title: Text('Status: ${item.status.toUpperCase()}'),
-                            subtitle: Text('Invited: ${item.createdAt.split('T').first}'),
-                            trailing: Text(
-                              item.status,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: item.status == 'rewarded' ? cs.primary : cs.onSurfaceVariant,
-                              ),
+                    ...s!.items.map((item) {
+                      final paid = item.earnedCents > 0;
+                      final date = DateTime.tryParse(item.createdAt)?.toLocal();
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: ListTile(
+                          leading: Icon(
+                            paid ? Icons.card_giftcard : Icons.person_add_alt_1_outlined,
+                            color: paid ? AppColors.success : cs.onSurfaceVariant,
+                          ),
+                          title: Text(item.name ?? l10n.inviteSomeone),
+                          subtitle: Text(l10n.inviteJoinedOn(date == null
+                              ? item.createdAt.split('T').first
+                              : MaterialLocalizations.of(context).formatMediumDate(date))),
+                          trailing: Text(
+                            paid ? '+${formatPrice(item.earnedCents)}' : l10n.inviteUnpaid,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: paid ? AppColors.success : cs.onSurfaceVariant,
                             ),
                           ),
-                        )),
+                        ),
+                      );
+                    }),
                   ],
 
                   if ((s?.total ?? 0) == 0 && s?.items.isEmpty == true) ...[
@@ -351,6 +366,58 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
                 ],
               ),
       ),
+      ),
+    );
+  }
+
+  /// One line of the programme's rules, under the headline reward.
+  Widget _rule(BuildContext context, IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(text,
+                style: const TextStyle(fontWeight: FontWeight.w600, height: 1.35)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 10 → "10", 7.5 → "7.5".
+  static String _percent(num p) =>
+      p == p.roundToDouble() ? p.toInt().toString() : p.toString();
+
+  Widget _statText(BuildContext context, String label, String value, Color color) {
+    return Expanded(
+      child: Column(
+        children: [
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: color,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 11,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }

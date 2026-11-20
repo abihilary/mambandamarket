@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import 'Components/ItemDetailScreen.dart';
+import 'Screens/PublicProfileScreen.dart';
 import 'api/auth_service.dart';
 import 'api/repositories.dart';
 import 'api/share_links.dart';
@@ -59,6 +60,30 @@ class DeepLinkGuard with WidgetsBindingObserver {
       unawaited(openSharedListing(id));
       return true;
     }
+    // A shared shop: same checks, opens the seller's page.
+    final shopId = kIsWeb
+        ? ShareLinks.shopIdFromPath(uri.path)
+        : ShareLinks.shopIdFrom(uri);
+    if (shopId != null) {
+      openSharedShop(shopId);
+      return true;
+    }
+    // A category tile on the website: the feed, on that category.
+    final category = kIsWeb
+        ? ShareLinks.categorySlugFromPath(uri.path)
+        : ShareLinks.categorySlugFrom(uri);
+    if (category != null) {
+      openCategory(category);
+      return true;
+    }
+    // An invite: keep the code for sign-up, or claim it now.
+    final invite = kIsWeb
+        ? ShareLinks.inviteCodeFromPath(uri.path)
+        : ShareLinks.inviteCodeFrom(uri);
+    if (invite != null) {
+      unawaited(acceptInviteCode(invite));
+      return true;
+    }
     // Everything else is an auth callback. Handled, and deliberately not
     // routed — see above.
     return true;
@@ -93,15 +118,61 @@ void captureLaunchAddress() {
 /// — and it is already ours, so only the path is checked.
 Future<void> handleLaunchLink() async {
   final String? id;
+  final String? shopId;
+  final String? invite;
+  final String? category;
   if (kIsWeb) {
-    id = ShareLinks.listingIdFromPath(_webLaunchPath ?? '');
+    final path = _webLaunchPath ?? '';
+    id = ShareLinks.listingIdFromPath(path);
+    shopId = ShareLinks.shopIdFromPath(path);
+    invite = ShareLinks.inviteCodeFromPath(path);
+    category = ShareLinks.categorySlugFromPath(path);
   } else {
     final raw = WidgetsBinding.instance.platformDispatcher.defaultRouteName;
     final uri = Uri.tryParse(raw);
     id = uri == null ? null : ShareLinks.listingIdFrom(uri);
+    shopId = uri == null ? null : ShareLinks.shopIdFrom(uri);
+    invite = uri == null ? null : ShareLinks.inviteCodeFrom(uri);
+    category = uri == null ? null : ShareLinks.categorySlugFrom(uri);
   }
-  if (id == null) return;
-  await openSharedListing(id);
+  if (id != null) return openSharedListing(id);
+  if (shopId != null) return openSharedShop(shopId);
+  if (invite != null) return acceptInviteCode(invite);
+  if (category != null) openCategory(category);
+}
+
+/// A category the home feed should switch to, set by a /c/<slug> link. The
+/// shell answers by showing the Home tab; the feed answers by selecting it as
+/// soon as it knows the category (on a cold start the list is still loading),
+/// then clears it. A slug the app does not know is dropped, leaving the feed
+/// as it was.
+final ValueNotifier<String?> requestedCategory = ValueNotifier<String?>(null);
+
+/// Back to the home feed, on [slug].
+void openCategory(String slug) {
+  rootNavigatorKey.currentState?.popUntil((r) => r.isFirst);
+  requestedCategory.value = null; // the same slug twice still fires
+  requestedCategory.value = slug;
+}
+
+/// An invite link was opened. The code is parked on the device first —
+/// that alone makes it count: the sign-up form shows it, and every route
+/// through onboarding (email, Google, a later launch) claims a parked code
+/// once a profile exists. Someone already signed in claims it now; the server
+/// refuses it if they were referred before, which is the right answer.
+Future<void> acceptInviteCode(String code) async {
+  final auth = AuthService.instance;
+  await auth.stashReferralCode(code);
+  if (auth.session != null) await auth.redeemPendingReferral();
+}
+
+/// Open a seller's shop that arrived as a link. The profile screen fetches
+/// the shop itself and has its own error state with a retry, so there is
+/// nothing to prefetch here and nothing to fail.
+void openSharedShop(String userId) {
+  rootNavigatorKey.currentState?.push(MaterialPageRoute(
+    builder: (_) => PublicProfileScreen(userId: userId),
+  ));
 }
 
 /// Open a listing that arrived as a link.

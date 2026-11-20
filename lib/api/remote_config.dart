@@ -43,6 +43,11 @@ class RemoteConfig {
     // FCFA. 0 means rewards are off, and the invite screen names no amount.
     'referral_reward_cents': 0,
     'referral_min_withdrawal_cents': 1000,
+    // 0088: one-off bonuses at referral counts, and a share of every
+    // subscription payment a referred friend makes (0 = off; months 0 = no end).
+    'referral_milestones': const <Object>[],
+    'referral_subscription_percent': 0,
+    'referral_subscription_months': 0,
     // Whether this platform sends If-None-Match (1.0.47). On unless the
     // server says otherwise: a switch for a CDN that mishandles 304s.
     'http_conditional': true,
@@ -82,6 +87,29 @@ class RemoteConfig {
   /// What one referral credits to the inviter's wallet, in FCFA. 0 = off.
   int get referralRewardCents =>
       (_values['referral_reward_cents'] as num?)?.toInt() ?? 0;
+
+  /// One-off bonuses by referral count, smallest count first.
+  List<({int count, int bonusCents})> get referralMilestones {
+    final raw = _values['referral_milestones'];
+    if (raw is! List) return const [];
+    final out = <({int count, int bonusCents})>[
+      for (final m in raw)
+        if (m is Map &&
+            (m['count'] as num?) != null &&
+            (m['bonus_cents'] as num?) != null &&
+            (m['bonus_cents'] as num) > 0)
+          (count: (m['count'] as num).toInt(), bonusCents: (m['bonus_cents'] as num).toInt()),
+    ]..sort((a, b) => a.count.compareTo(b.count));
+    return out;
+  }
+
+  /// Share of a referred friend's subscription payments, in percent. 0 = off.
+  num get referralSubscriptionPercent =>
+      (_values['referral_subscription_percent'] as num?) ?? 0;
+
+  /// For how many months after the friend's first payment. 0 = no end.
+  int get referralSubscriptionMonths =>
+      (_values['referral_subscription_months'] as num?)?.toInt() ?? 0;
 
   /// The smallest withdrawal, in FCFA.
   int get referralMinWithdrawalCents =>
@@ -151,6 +179,15 @@ class RemoteConfig {
         'referral_min_withdrawal_cents':
             (referral['min_withdrawal_cents'] as num?)?.toInt() ??
             _defaults['referral_min_withdrawal_cents'],
+        'referral_milestones': referral['milestones'] is List
+            ? referral['milestones'] as List
+            : _defaults['referral_milestones'],
+        'referral_subscription_percent':
+            (referral['subscription_percent'] as num?) ??
+            _defaults['referral_subscription_percent'],
+        'referral_subscription_months':
+            (referral['subscription_months'] as num?)?.toInt() ??
+            _defaults['referral_subscription_months'],
         'http_conditional': conditional[AppInfo.platform] is bool
             ? conditional[AppInfo.platform] as bool
             : _defaults['http_conditional'],

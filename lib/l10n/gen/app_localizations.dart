@@ -1751,7 +1751,7 @@ abstract class AppLocalizations {
   /// No description provided for @inviteExplainer.
   ///
   /// In en, this message translates to:
-  /// **'Share your code. When someone signs up with it and completes their first purchase, the referral counts.'**
+  /// **'Share your link. When a friend signs up with it, the referral counts straight away.'**
   String get inviteExplainer;
 
   /// No description provided for @inviteCopy.
@@ -1775,8 +1775,8 @@ abstract class AppLocalizations {
   /// No description provided for @inviteShareText.
   ///
   /// In en, this message translates to:
-  /// **'Join me on Mambanda Market — use my code {code} when you sign up.'**
-  String inviteShareText(String code);
+  /// **'Join me on Mambanda Market. My code {code} is already in this link: {link}'**
+  String inviteShareText(String code, String link);
 
   /// No description provided for @inviteInvited.
   ///
@@ -1787,13 +1787,13 @@ abstract class AppLocalizations {
   /// No description provided for @inviteQualified.
   ///
   /// In en, this message translates to:
-  /// **'Completed a purchase'**
+  /// **'Joined'**
   String get inviteQualified;
 
   /// No description provided for @inviteRewarded.
   ///
   /// In en, this message translates to:
-  /// **'Rewarded'**
+  /// **'Paid'**
   String get inviteRewarded;
 
   /// No description provided for @inviteNoneYet.
@@ -1813,6 +1813,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You joined with a friend’s code.'**
   String get inviteReferredBy;
+
+  /// No description provided for @inviteMilestone.
+  ///
+  /// In en, this message translates to:
+  /// **'Bonus: {amount} when you reach {count} referrals.'**
+  String inviteMilestone(Object amount, Object count);
+
+  /// No description provided for @inviteCommission.
+  ///
+  /// In en, this message translates to:
+  /// **'Plus {percent}% of every subscription payment your friends make.'**
+  String inviteCommission(Object percent);
+
+  /// No description provided for @inviteCommissionMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'Plus {percent}% of your friends\' subscription payments for their first {months} months.'**
+  String inviteCommissionMonths(Object percent, Object months);
+
+  /// No description provided for @inviteEarnedTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Earned'**
+  String get inviteEarnedTotal;
+
+  /// No description provided for @inviteHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Your referrals'**
+  String get inviteHistory;
+
+  /// No description provided for @inviteJoinedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Joined {date}'**
+  String inviteJoinedOn(Object date);
+
+  /// No description provided for @inviteSomeone.
+  ///
+  /// In en, this message translates to:
+  /// **'A friend'**
+  String get inviteSomeone;
+
+  /// No description provided for @inviteUnpaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Not paid yet'**
+  String get inviteUnpaid;
 
   /// No description provided for @safetyNoticeTitle.
   ///
@@ -6374,6 +6422,18 @@ abstract class AppLocalizations {
   /// **'Referral reward'**
   String get walletEntryReward;
 
+  /// No description provided for @walletEntryMilestone.
+  ///
+  /// In en, this message translates to:
+  /// **'Referral milestone bonus'**
+  String get walletEntryMilestone;
+
+  /// No description provided for @walletEntryCommission.
+  ///
+  /// In en, this message translates to:
+  /// **'Commission on a friend\'s subscription'**
+  String get walletEntryCommission;
+
   /// No description provided for @walletEntryWithdrawal.
   ///
   /// In en, this message translates to:
@@ -6449,7 +6509,7 @@ abstract class AppLocalizations {
   /// No description provided for @inviteEarn.
   ///
   /// In en, this message translates to:
-  /// **'Earn {amount} for every friend who joins and makes a first purchase.'**
+  /// **'Earn {amount} for every friend who signs up with your code.'**
   String inviteEarn(String amount);
 
   /// No description provided for @navSell.
@@ -6505,6 +6565,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Link copied. Paste it anywhere to share.'**
   String get shareLinkCopied;
+
+  /// No description provided for @shopShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share shop'**
+  String get shopShare;
+
+  /// No description provided for @shopShareSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Shop on Mambanda Market} =1{1 item on Mambanda Market} other{{count} items on Mambanda Market}}'**
+  String shopShareSubtitle(int count);
+
+  /// No description provided for @shopShareFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t share this shop. Please try again.'**
+  String get shopShareFailed;
+
+  /// No description provided for @searchShops.
+  ///
+  /// In en, this message translates to:
+  /// **'Shops'**
+  String get searchShops;
+
+  /// No description provided for @backToTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to top'**
+  String get backToTop;
+
+  /// No description provided for @shopItemCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No items yet} =1{1 item} other{{count} items}}'**
+  String shopItemCount(int count);
 
   /// No description provided for @locationDeniedWeb.
   ///

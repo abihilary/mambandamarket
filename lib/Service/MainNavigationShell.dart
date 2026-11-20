@@ -64,6 +64,9 @@ class _MainNavigationShellState extends State<MainNavigationShell>
     // Every account change resets the repositories, which closes the socket;
     // this is what opens it again for whoever is signed in now.
     SavedState.session.addListener(_onSession);
+    // A website category link shows the feed (HomeScreen selects it).
+    requestedCategory.addListener(_onCategoryRequested);
+    _onCategoryRequested();
     // A visitor browsing the web app without an account: no inbox, no
     // notifications, no Home card — each of those is an authenticated call
     // that would only come back 401.
@@ -90,8 +93,14 @@ class _MainNavigationShellState extends State<MainNavigationShell>
   /// life of the shell: signing in replaces it with a new one.
   final bool _guest = AuthService.instance.session == null;
 
+  void _onCategoryRequested() {
+    if (requestedCategory.value == null || !mounted) return;
+    if (_currentBottomIndex != 0) setState(() => _currentBottomIndex = 0);
+  }
+
   @override
   void dispose() {
+    requestedCategory.removeListener(_onCategoryRequested);
     _sweep?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     SavedState.session.removeListener(_onSession);

@@ -831,6 +831,19 @@ class UsersRepository {
 
   final _api = ApiClient.instance;
 
+  /// Sellers whose shop or name matches [query]. Empty for a query under two
+  /// characters, the server's own floor.
+  Future<List<ShopResult>> searchShops(String query) async {
+    final q = query.trim();
+    if (q.length < 2) return const [];
+    final r = await _api.read('/shops', query: {'q': q});
+    final items = (r.body as Map<String, dynamic>)['items'] as List? ?? const [];
+    return [
+      for (final i in items)
+        if (i is Map) ShopResult.fromJson(i.cast<String, dynamic>()),
+    ].where((s) => s.id.isNotEmpty && s.name.isNotEmpty).toList();
+  }
+
   Future<PublicProfile> profile(String userId) async {
     final r = await _api.read('/users/$userId');
     final json = r.body as Map<String, dynamic>;

@@ -517,6 +517,19 @@ class AuthService {
     }
   }
 
+  /// The code parked on this device, if any — from the sign-up form or from
+  /// an invite link (/r/<code>) opened before the account existed. The sign-up
+  /// form shows it, so nobody types a code they arrived with.
+  Future<String?> pendingReferralCode() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final code = prefs.getString(_kPendingReferral);
+      return (code == null || code.isEmpty) ? null : code;
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Redeem anything parked at sign-up. Safe to call on every launch: the
   /// server treats attribution as write-once, and the code is cleared whether
   /// it was accepted or rejected, so a bad code is not retried forever.

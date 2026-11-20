@@ -464,24 +464,39 @@
   "inviteFriends": "Invite friends",
   "inviteTitle": "Invite friends",
   "inviteYourCode": "Your code",
-  "inviteExplainer": "Share your code. When someone signs up with it and completes their first purchase, the referral counts.",
+  "inviteExplainer": "Share your link. When a friend signs up with it, the referral counts straight away.",
   "inviteCopy": "Copy",
   "inviteCopied": "Code copied.",
   "inviteShare": "Share",
-  "inviteShareText": "Join me on Mambanda Market — use my code {code} when you sign up.",
+  "inviteShareText": "Join me on Mambanda Market. My code {code} is already in this link: {link}",
   "@inviteShareText": {
     "placeholders": {
       "code": {
+        "type": "String"
+      },
+      "link": {
         "type": "String"
       }
     }
   },
   "inviteInvited": "Invited",
-  "inviteQualified": "Completed a purchase",
-  "inviteRewarded": "Rewarded",
+  "inviteQualified": "Joined",
+  "inviteRewarded": "Paid",
   "inviteNoneYet": "No invites yet.",
   "inviteLoadError": "Could not load your referrals.",
   "inviteReferredBy": "You joined with a friend’s code.",
+  "inviteMilestone": "Bonus: {amount} when you reach {count} referrals.",
+  "@inviteMilestone": {"placeholders": {"amount": {}, "count": {}}},
+  "inviteCommission": "Plus {percent}% of every subscription payment your friends make.",
+  "@inviteCommission": {"placeholders": {"percent": {}}},
+  "inviteCommissionMonths": "Plus {percent}% of your friends' subscription payments for their first {months} months.",
+  "@inviteCommissionMonths": {"placeholders": {"percent": {}, "months": {}}},
+  "inviteEarnedTotal": "Earned",
+  "inviteHistory": "Your referrals",
+  "inviteJoinedOn": "Joined {date}",
+  "@inviteJoinedOn": {"placeholders": {"date": {}}},
+  "inviteSomeone": "A friend",
+  "inviteUnpaid": "Not paid yet",
   "safetyNoticeTitle": "Safety & Payment Notice",
   "safetyNoticeIntro": "Please keep your transaction safe by adhering to the following rules:",
   "safetyOnSiteTitle": "On-Site Transaction",
@@ -1838,6 +1853,8 @@
   "walletHistory": "History",
   "walletEmpty": "Nothing yet. Invite friends to start earning.",
   "walletEntryReward": "Referral reward",
+  "walletEntryMilestone": "Referral milestone bonus",
+  "walletEntryCommission": "Commission on a friend's subscription",
   "walletEntryWithdrawal": "Withdrawal",
   "walletEntryReversal": "Withdrawal returned",
   "walletEntryAdjustment": "Adjustment",
@@ -1857,7 +1874,7 @@
   "walletErrorBalance": "That is more than your balance.",
   "walletErrorNumber": "Enter a Cameroonian mobile number, e.g. 677 12 34 56.",
   "walletErrorGeneric": "The request could not be sent. Try again.",
-  "inviteEarn": "Earn {amount} for every friend who joins and makes a first purchase.",
+  "inviteEarn": "Earn {amount} for every friend who signs up with your code.",
   "@inviteEarn": {
     "placeholders": {
       "amount": {
@@ -1874,6 +1891,14 @@
   "guestWelcome": "Welcome to Mambanda Market 👋",
   "messagesPickThread": "Pick a conversation to read it here.",
   "shareLinkCopied": "Link copied. Paste it anywhere to share.",
+  "shopShare": "Share shop",
+  "shopShareSubtitle": "{count, plural, =0{Shop on Mambanda Market} =1{1 item on Mambanda Market} other{{count} items on Mambanda Market}}",
+  "@shopShareSubtitle": {"placeholders": {"count": {"type": "int"}}},
+  "shopShareFailed": "Couldn't share this shop. Please try again.",
+  "searchShops": "Shops",
+  "backToTop": "Back to top",
+  "shopItemCount": "{count, plural, =0{No items yet} =1{1 item} other{{count} items}}",
+  "@shopItemCount": {"placeholders": {"count": {"type": "int"}}},
   "locationDeniedWeb": "Location is blocked for this site. Allow it from the icon beside the web address, then try again.",
   "shareCopyManualTitle": "Copy this link to share it",
   "detailCategory": "Category",

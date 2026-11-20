@@ -937,7 +937,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inviteExplainer =>
-      'Share your code. When someone signs up with it and completes their first purchase, the referral counts.';
+      'Share your link. When a friend signs up with it, the referral counts straight away.';
 
   @override
   String get inviteCopy => 'Copy';
@@ -949,18 +949,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inviteShare => 'Share';
 
   @override
-  String inviteShareText(String code) {
-    return 'Join me on Mambanda Market — use my code $code when you sign up.';
+  String inviteShareText(String code, String link) {
+    return 'Join me on Mambanda Market. My code $code is already in this link: $link';
   }
 
   @override
   String get inviteInvited => 'Invited';
 
   @override
-  String get inviteQualified => 'Completed a purchase';
+  String get inviteQualified => 'Joined';
 
   @override
-  String get inviteRewarded => 'Rewarded';
+  String get inviteRewarded => 'Paid';
 
   @override
   String get inviteNoneYet => 'No invites yet.';
@@ -970,6 +970,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inviteReferredBy => 'You joined with a friend’s code.';
+
+  @override
+  String inviteMilestone(Object amount, Object count) {
+    return 'Bonus: $amount when you reach $count referrals.';
+  }
+
+  @override
+  String inviteCommission(Object percent) {
+    return 'Plus $percent% of every subscription payment your friends make.';
+  }
+
+  @override
+  String inviteCommissionMonths(Object percent, Object months) {
+    return 'Plus $percent% of your friends\' subscription payments for their first $months months.';
+  }
+
+  @override
+  String get inviteEarnedTotal => 'Earned';
+
+  @override
+  String get inviteHistory => 'Your referrals';
+
+  @override
+  String inviteJoinedOn(Object date) {
+    return 'Joined $date';
+  }
+
+  @override
+  String get inviteSomeone => 'A friend';
+
+  @override
+  String get inviteUnpaid => 'Not paid yet';
 
   @override
   String get safetyNoticeTitle => 'Safety & Payment Notice';
@@ -3589,6 +3621,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walletEntryReward => 'Referral reward';
 
   @override
+  String get walletEntryMilestone => 'Referral milestone bonus';
+
+  @override
+  String get walletEntryCommission => 'Commission on a friend\'s subscription';
+
+  @override
   String get walletEntryWithdrawal => 'Withdrawal';
 
   @override
@@ -3631,7 +3669,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String inviteEarn(String amount) {
-    return 'Earn $amount for every friend who joins and makes a first purchase.';
+    return 'Earn $amount for every friend who signs up with your code.';
   }
 
   @override
@@ -3662,6 +3700,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareLinkCopied => 'Link copied. Paste it anywhere to share.';
+
+  @override
+  String get shopShare => 'Share shop';
+
+  @override
+  String shopShareSubtitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items on Mambanda Market',
+      one: '1 item on Mambanda Market',
+      zero: 'Shop on Mambanda Market',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get shopShareFailed => 'Couldn\'t share this shop. Please try again.';
+
+  @override
+  String get searchShops => 'Shops';
+
+  @override
+  String get backToTop => 'Back to top';
+
+  @override
+  String shopItemCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+      zero: 'No items yet',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get locationDeniedWeb =>

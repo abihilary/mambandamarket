@@ -137,6 +137,13 @@
                 <data android:scheme="https"
                       android:host="mambandamarket.blacksilvergroups.xyz"
                       android:pathPrefix="/l/"/>
+                <!-- A seller's shop (/s/<user id>). Data elements in one
+                     filter combine, so this prefix applies to both hosts. -->
+                <data android:pathPrefix="/s/"/>
+                <!-- An invite (/r/<referral code>). -->
+                <data android:pathPrefix="/r/"/>
+                <!-- A category tile on the website (/c/<slug>). -->
+                <data android:pathPrefix="/c/"/>
             </intent-filter>
         </activity>
         <!-- Push: the channel and icon the system uses for a notification that

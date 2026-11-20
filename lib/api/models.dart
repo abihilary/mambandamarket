@@ -795,6 +795,45 @@ class PublicProfile {
   bool get hasStorefront => store != null;
 }
 
+/// A seller found by `GET /shops?q=`: enough to draw a search row and open
+/// their page ([id] is the user id the profile screen and `/s/:id` take).
+class ShopResult {
+  final String id;
+  final String name;
+  final String? imageUrl;
+  final String? city;
+  final bool verified;
+  final bool hasStore;
+  final int listingCount;
+
+  const ShopResult({
+    required this.id,
+    required this.name,
+    this.imageUrl,
+    this.city,
+    this.verified = false,
+    this.hasStore = false,
+    this.listingCount = 0,
+  });
+
+  factory ShopResult.fromJson(Map<String, dynamic> json) {
+    String? text(Object? v) {
+      final t = v?.toString().trim() ?? '';
+      return t.isEmpty ? null : t;
+    }
+
+    return ShopResult(
+      id: json['id'].toString(),
+      name: text(json['name']) ?? '',
+      imageUrl: text(json['image_url']),
+      city: text(json['city']),
+      verified: json['verified'] == true,
+      hasStore: json['has_store'] == true,
+      listingCount: (json['listing_count'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
 /// Account moderation state, as computed by `/me` (an expired suspension
 /// already reads as `active` there, so the client can trust [status]).
 class Moderation {
@@ -1646,6 +1685,13 @@ class ReferralItem {
   final String? rewardedAt;
   final String createdAt;
 
+  /// The friend's first name, when they have one.
+  final String? name;
+
+  /// What this referral has earned so far: the reward plus any subscription
+  /// commission on it.
+  final int earnedCents;
+
   const ReferralItem({
     required this.id,
     required this.referredId,
@@ -1653,6 +1699,8 @@ class ReferralItem {
     this.qualifiedAt,
     this.rewardedAt,
     required this.createdAt,
+    this.name,
+    this.earnedCents = 0,
   });
 
   factory ReferralItem.fromJson(Map<String, dynamic> json) => ReferralItem(
@@ -1662,6 +1710,10 @@ class ReferralItem {
         qualifiedAt: json['qualified_at']?.toString(),
         rewardedAt: json['rewarded_at']?.toString(),
         createdAt: json['created_at']?.toString() ?? '',
+        name: (json['name']?.toString().trim().isEmpty ?? true)
+            ? null
+            : json['name'].toString().trim(),
+        earnedCents: (json['earned_cents'] as num?)?.toInt() ?? 0,
       );
 }
 
@@ -1679,6 +1731,9 @@ class ReferralSummary {
   final int rewarded;
   final List<ReferralItem> items;
 
+  /// Everything referrals have credited to the wallet, all sources.
+  final int earnedCents;
+
   const ReferralSummary({
     this.code,
     this.referredBy,
@@ -1687,6 +1742,7 @@ class ReferralSummary {
     this.qualified = 0,
     this.rewarded = 0,
     this.items = const [],
+    this.earnedCents = 0,
   });
 
   /// Whether this user already claimed someone else's code. Attribution is
@@ -1704,6 +1760,8 @@ class ReferralSummary {
       pending: n('pending'),
       qualified: n('qualified'),
       rewarded: n('rewarded'),
+      earnedCents:
+          ((json['earnings'] as Map?)?['total_cents'] as num?)?.toInt() ?? 0,
       items: [
         for (final r in rawItems)
           if (r is Map<String, dynamic>) ReferralItem.fromJson(r)

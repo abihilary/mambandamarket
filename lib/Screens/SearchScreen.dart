@@ -1,11 +1,13 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../Components/ItemCard.dart';
 import '../Components/ItemDetailScreen.dart';
+import '../Components/VerifiedBadge.dart';
 import '../Components/category_picker.dart';
 import '../api/api_client.dart';
 import '../api/listing_attributes.dart';
@@ -18,6 +20,7 @@ import '../theme/app_tokens.dart';
 import '../Components/safe_bottom.dart';
 import '../Components/require_account.dart';
 import '../theme/breakpoints.dart';
+import 'PublicProfileScreen.dart';
 
 /// Everything the query is narrowed by.
 ///
@@ -132,6 +135,10 @@ class _SearchScreenState extends State<SearchScreen> {
   List<String> _recents = [];
 
   final List<Listing> _results = [];
+
+  /// Sellers matching the typed words, shown above the items. They follow the
+  /// text only: a price or condition filter says nothing about a shop.
+  List<ShopResult> _shops = const [];
   bool _loading = false;
   bool _loadingMore = false;
   bool _exhausted = false;
@@ -229,6 +236,7 @@ class _SearchScreenState extends State<SearchScreen> {
     if (!_hasCriteria) {
       setState(() {
         _results.clear();
+        _shops = const [];
         _exhausted = true;
         _loading = false;
         _error = null;
@@ -246,6 +254,8 @@ class _SearchScreenState extends State<SearchScreen> {
       }
       _error = null;
     });
+
+    if (!more) _searchShops(id);
 
     // Read synchronously, as the feed does: a denied permission must not turn
     // into a platform round trip in front of every search.
@@ -292,6 +302,29 @@ class _SearchScreenState extends State<SearchScreen> {
         _loadingMore = false;
       });
     }
+  }
+
+  /// The shop half of a search. Its own request, so the items never wait on
+  /// it; a failure (or an API that predates /shops) just shows no shops.
+  Future<void> _searchShops(int id) async {
+    final q = _query.trim();
+    List<ShopResult> shops = const [];
+    if (q.length >= 2) {
+      try {
+        shops = await UsersRepository.instance.searchShops(q);
+      } catch (_) {}
+    }
+    if (!mounted || id != _requestId) return;
+    setState(() => _shops = shops);
+  }
+
+  void _openShop(ShopResult shop) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PublicProfileScreen(userId: shop.id, initialName: shop.name),
+      ),
+    );
   }
 
   void _applyFilters(SearchFilters next) {
@@ -422,12 +455,27 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     }
     if (_loading) return const Center(child: CircularProgressIndicator());
+    final noItems = _Message(
+      icon: Icons.search_off,
+      text: _query.trim().isEmpty
+          ? l10n.searchNoResultsFiltered
+          : l10n.searchNoResults(_query.trim()),
+    );
+    if (_results.isEmpty && _shops.isEmpty) return noItems;
+
+    final shops = _shops.isEmpty
+        ? null
+        : SliverToBoxAdapter(
+            child: _ShopsStrip(shops: _shops, onOpen: _openShop),
+          );
     if (_results.isEmpty) {
-      return _Message(
-        icon: Icons.search_off,
-        text: _query.trim().isEmpty
-            ? l10n.searchNoResultsFiltered
-            : l10n.searchNoResults(_query.trim()),
+      // Shops but no items: the shops, then the usual "nothing matches".
+      return CustomScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        slivers: [
+          shops!,
+          SliverFillRemaining(hasScrollBody: false, child: noItems),
+        ],
       );
     }
 
@@ -435,6 +483,7 @@ class _SearchScreenState extends State<SearchScreen> {
       controller: _scrollController,
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       slivers: [
+        ?shops,
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
@@ -935,6 +984,132 @@ class _Message extends StatelessWidget {
                 style: TextStyle(color: scheme.onSurfaceVariant)),
             if (action != null) ...[const SizedBox(height: 16), action!],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "Shops": the sellers a search matched, as a row of cards above the items.
+/// A Row in a horizontal scroll view, so the row is exactly as tall as its
+/// cards at any text size.
+class _ShopsStrip extends StatelessWidget {
+  final List<ShopResult> shops;
+  final ValueChanged<ShopResult> onOpen;
+
+  const _ShopsStrip({required this.shops, required this.onOpen});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.only(top: 12, bottom: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Text(l10n.searchShops,
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+          ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final shop in shops)
+                  Padding(
+                    key: ValueKey(shop.id),
+                    padding: const EdgeInsets.only(right: 10),
+                    child: _ShopTile(shop: shop, onTap: () => onOpen(shop)),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ShopTile extends StatelessWidget {
+  final ShopResult shop;
+  final VoidCallback onTap;
+
+  const _ShopTile({required this.shop, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final image = shop.imageUrl;
+    final subtitle = [
+      l10n.shopItemCount(shop.listingCount),
+      if (shop.city != null) shop.city!,
+    ].join(' \u00b7 ');
+    return SizedBox(
+      width: 236,
+      child: Material(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: scheme.primary.withValues(alpha: 0.15),
+                  backgroundImage:
+                      image == null ? null : CachedNetworkImageProvider(image),
+                  child: image == null
+                      ? Text(shop.name.characters.first.toUpperCase(),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, color: scheme.primary))
+                      : null,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              shop.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w700, fontSize: 13.5),
+                            ),
+                          ),
+                          if (shop.verified) ...[
+                            const SizedBox(width: 4),
+                            const VerifiedBadge(dense: true, size: 14),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: 12, color: scheme.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded,
+                    size: 20, color: scheme.onSurfaceVariant),
+              ],
+            ),
+          ),
         ),
       ),
     );

@@ -33,6 +33,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _passwordController = TextEditingController();
   final _referralController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    // Arrived through an invite link: the code is already known.
+    AuthService.instance.pendingReferralCode().then((code) {
+      if (code != null && mounted && _referralController.text.isEmpty) {
+        _referralController.text = code;
+      }
+    });
+  }
+
   bool _obscurePassword = true;
   bool _isLoading = false;
   bool _awaitingConfirmation = false;

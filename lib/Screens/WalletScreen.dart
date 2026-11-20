@@ -67,6 +67,8 @@ class _WalletScreenState extends State<WalletScreen> {
     final l10n = context.l10n;
     return switch (kind) {
       'referral_reward' => l10n.walletEntryReward,
+      'referral_milestone' => l10n.walletEntryMilestone,
+      'referral_commission' => l10n.walletEntryCommission,
       'withdrawal' => l10n.walletEntryWithdrawal,
       'withdrawal_reversal' => l10n.walletEntryReversal,
       _ => l10n.walletEntryAdjustment,
