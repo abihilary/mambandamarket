@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart' show kIsWeb, listEquals;
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 // Components
 import '../Components/CategoryItem.dart';
 import '../Components/ItemCard.dart';
 import '../Components/ItemDetailScreen.dart';
+import '../Components/listing_photo.dart';
 import '../Components/saved_note.dart';
 
 // Backend
@@ -860,36 +862,43 @@ class HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
 
+                        // Same principle as the trending row: one width,
+                        // heights from the photos, the row as tall as its
+                        // tallest card. A fixed-height ListView forced every
+                        // card to one height and overflowed whichever photo
+                        // or text size did not fit it.
                         SliverToBoxAdapter(
-                          child: SizedBox(
-                            // A two-line title plus price plus a city line needs the
-                            // extra few pixels; at 210 the compact card overflowed by two.
-                            height: 218,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              itemCount: gallery.length,
-                              itemBuilder: (context, index) {
-                                final item = gallery[index];
-                                // Badge and price only: the rail's 218 has no
-                                // room for a spec line.
-                                final card = cardText(context, item, _categories,
-                                    withSpec: false);
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 12.0),
-                                  child: ItemCard(
-                                    imageUrl: item.primaryImageUrl,
-                                    title: item.title,
-                                    price: card.price,
-                                    priceTail: card.priceTail,
-                                    badge: card.badge,
-                                    location: item.city,
-                                    distanceMeters: item.distanceMeters,
-                                    isCompact: true,
-                                    onTap: () => _openItemDetail(item),
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                for (final item in gallery)
+                                  Padding(
+                                    key: ValueKey(item.id),
+                                    padding: const EdgeInsets.only(right: 12.0),
+                                    child: Builder(builder: (context) {
+                                      // Badge and price only: a compact card
+                                      // has no room for a spec line.
+                                      final card = cardText(
+                                          context, item, _categories,
+                                          withSpec: false);
+                                      return ItemCard(
+                                        imageUrl: item.primaryImageUrl,
+                                        title: item.title,
+                                        price: card.price,
+                                        priceTail: card.priceTail,
+                                        badge: card.badge,
+                                        location: item.city,
+                                        distanceMeters: item.distanceMeters,
+                                        isCompact: true,
+                                        photoShape: PhotoShape.rail,
+                                        onTap: () => _openItemDetail(item),
+                                      );
+                                    }),
                                   ),
-                                );
-                              },
+                              ],
                             ),
                           ),
                         ),
@@ -910,68 +919,40 @@ class HomeScreenState extends State<HomeScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 16.0),
                           sliver: ValueListenableBuilder<Set<String>>(
                             valueListenable: _favorites.favoriteIds,
-                            builder: (context, favIds, _) => SliverToBoxAdapter(
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      children: [
-                                        for (var i = 0; i < _listings.length; i += 2) ...[
-                                          Builder(builder: (context) {
-                                            final item = _listings[i];
-                                            final card = cardText(context, item, _categories);
-                                            return Padding(
-                                              padding: const EdgeInsets.only(bottom: 16),
-                                              child: ItemCard(
-                                                imageUrl: item.primaryImageUrl,
-                                                title: item.title,
-                                                price: card.price,
-                                                priceTail: card.priceTail,
-                                                specLine: card.specLine,
-                                                badge: card.badge,
-                                                location: item.city,
-                                                distanceMeters: item.distanceMeters,
-                                                isFavorite: favIds.contains(item.id),
-                                                onTap: () => _openItemDetail(item),
-                                                onFavoriteToggle: () => _toggleFavorite(item),
-                                              ),
-                                            );
-                                          }),
-                                        ],
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      children: [
-                                        for (var i = 1; i < _listings.length; i += 2) ...[
-                                          Builder(builder: (context) {
-                                            final item = _listings[i];
-                                            final card = cardText(context, item, _categories);
-                                            return Padding(
-                                              padding: const EdgeInsets.only(bottom: 16),
-                                              child: ItemCard(
-                                                imageUrl: item.primaryImageUrl,
-                                                title: item.title,
-                                                price: card.price,
-                                                priceTail: card.priceTail,
-                                                specLine: card.specLine,
-                                                badge: card.badge,
-                                                location: item.city,
-                                                distanceMeters: item.distanceMeters,
-                                                isFavorite: favIds.contains(item.id),
-                                                onTap: () => _openItemDetail(item),
-                                                onFavoriteToggle: () => _toggleFavorite(item),
-                                              ),
-                                            );
-                                          }),
-                                        ],
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                            // Masonry: each card goes into whichever column
+                            // is shortest so far, so the columns stay level
+                            // however tall the photos are. Lazy, like the
+                            // SliverGrid it replaces — two Columns in a
+                            // SliverToBoxAdapter built all forty cards at once
+                            // and gave each one unbounded height to lay out in.
+                            builder: (context, favIds, _) => SliverLayoutBuilder(
+                              builder: (context, constraints) =>
+                                  SliverMasonryGrid.count(
+                                crossAxisCount:
+                                    ItemCard.columnsFor(constraints.crossAxisExtent),
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 16,
+                                childCount: _listings.length,
+                                itemBuilder: (context, index) {
+                                  final item = _listings[index];
+                                  final card =
+                                      cardText(context, item, _categories);
+                                  return ItemCard(
+                                    key: ValueKey(item.id),
+                                    imageUrl: item.primaryImageUrl,
+                                    title: item.title,
+                                    price: card.price,
+                                    priceTail: card.priceTail,
+                                    specLine: card.specLine,
+                                    badge: card.badge,
+                                    location: item.city,
+                                    distanceMeters: item.distanceMeters,
+                                    photoShape: PhotoShape.feed,
+                                    isFavorite: favIds.contains(item.id),
+                                    onTap: () => _openItemDetail(item),
+                                    onFavoriteToggle: () => _toggleFavorite(item),
+                                  );
+                                },
                               ),
                             ),
                           ),

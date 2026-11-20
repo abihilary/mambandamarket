@@ -108,6 +108,7 @@ dependencies:
   # sha1 for the short keys of saved reads (lib/api/offline_cache.dart). Pure
   # Dart, so it works on web; already resolved through other packages.
   crypto: ^3.0.7
+  flutter_staggered_grid_view: ^0.7.0
 
 dev_dependencies:
   flutter_test:

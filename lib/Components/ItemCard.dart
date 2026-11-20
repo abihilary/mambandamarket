@@ -7,6 +7,7 @@ import '../api/models.dart';
 import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import '../theme/breakpoints.dart';
+import 'listing_photo.dart';
 
 /// What a card says about [item] beyond its title and photo, from the
 /// listing's own answers: the mode-aware price ("Dès 18.000 FCFA", "75.000
@@ -45,73 +46,6 @@ import '../theme/breakpoints.dart';
   );
 }
 
-/// A dynamic image widget that resolves the network image's natural aspect ratio
-/// so the card height adapts to fit the image fully without cropping or letterboxing.
-class NaturalAspectImage extends StatefulWidget {
-  final String imageUrl;
-  final BoxFit fit;
-  final Widget? placeholder;
-
-  const NaturalAspectImage({
-    Key? key,
-    required this.imageUrl,
-    this.fit = BoxFit.contain,
-    this.placeholder,
-  }) : super(key: key);
-
-  @override
-  State<NaturalAspectImage> createState() => _NaturalAspectImageState();
-}
-
-class _NaturalAspectImageState extends State<NaturalAspectImage> {
-  double _aspectRatio = 1.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _resolveImage();
-  }
-
-  @override
-  void didUpdateWidget(covariant NaturalAspectImage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.imageUrl != widget.imageUrl) {
-      _aspectRatio = 1.0;
-      _resolveImage();
-    }
-  }
-
-  void _resolveImage() {
-    final provider = CachedNetworkImageProvider(widget.imageUrl);
-    final stream = provider.resolve(ImageConfiguration.empty);
-    stream.addListener(ImageStreamListener((imageInfo, synchronousCall) {
-      if (!mounted) return;
-      final w = imageInfo.image.width.toDouble();
-      final h = imageInfo.image.height.toDouble();
-      if (h > 0) {
-        setState(() {
-          _aspectRatio = (w / h).clamp(0.5, 2.2);
-        });
-      }
-    }, onError: (_, _) {}));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: _aspectRatio,
-      child: Image(
-        image: CachedNetworkImageProvider(widget.imageUrl),
-        fit: widget.fit,
-        width: double.infinity,
-        height: double.infinity,
-        errorBuilder: (context, error, stackTrace) =>
-            widget.placeholder ?? Container(color: Colors.grey.shade200),
-      ),
-    );
-  }
-}
-
 class ItemCard extends StatelessWidget {
   final String imageUrl;
   final String title;
@@ -140,6 +74,13 @@ class ItemCard extends StatelessWidget {
   /// nothing, for the same reason a blank city renders nothing.
   final double? distanceMeters;
   final bool isCompact;
+
+  /// How the photo is shaped. Null is a square photo, for grids whose rows
+  /// have a fixed height ([gridDelegate]). A shape gives a photo whose height
+  /// follows the image, for parents that let the card choose its own height:
+  /// a masonry column or a rail that aligns cards to the top. Never pass one
+  /// inside a fixed-extent grid cell — the card would outgrow the cell.
+  final PhotoShape? photoShape;
   final bool isFavorite;
   final VoidCallback? onTap;
   final VoidCallback? onFavoriteToggle;
@@ -156,12 +97,22 @@ class ItemCard extends StatelessWidget {
     this.location,
     this.distanceMeters,
     this.isCompact = false,
+    this.photoShape,
     this.isFavorite = false,
     this.onTap,
     this.onFavoriteToggle,
   }) : super(key: key);
 
-  /// Grid columns from the width, and a row height from the card itself.
+  /// Columns for a width: as many as keep a card under [maxTileWidth], two at
+  /// the least. Shared by the fixed grids and the home masonry, so a phone
+  /// gets two and a tablet four everywhere.
+  static int columnsFor(double crossAxisExtent, {double maxTileWidth = 200}) =>
+      (crossAxisExtent / maxTileWidth).ceil().clamp(2, 8);
+
+  /// Grid columns from the width, and a row height from the card itself: a
+  /// square photo plus an allowance for two title lines, the spec line, the
+  /// price and the city that grows with the reader's text size. For cards
+  /// without a [photoShape] only.
   static SliverGridDelegate gridDelegate(
     double crossAxisExtent,
     TextScaler scaler, {
@@ -169,7 +120,7 @@ class ItemCard extends StatelessWidget {
     double spacing = 14,
     double runSpacing = 18,
   }) {
-    final n = (crossAxisExtent / maxTileWidth).ceil().clamp(2, 8);
+    final n = columnsFor(crossAxisExtent, maxTileWidth: maxTileWidth);
     final tile = (crossAxisExtent - spacing * (n - 1)) / n;
     return SliverGridDelegateWithFixedCrossAxisCount(
       crossAxisCount: n,
@@ -186,44 +137,50 @@ class ItemCard extends StatelessWidget {
     return '${NumberFormat('0.#', locale).format(metres / 1000)} km';
   }
 
+  /// Where a card's photo comes from. A seam for tests, which have no disk
+  /// cache for the network provider to open.
+  @visibleForTesting
+  static ImageProvider Function(String url) imageFor =
+      CachedNetworkImageProvider.new;
+
+  /// Width of a compact card in a horizontal rail.
+  static const compactWidth = 140.0;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final distance = distanceMeters;
+    final image = imageFor(imageUrl);
+    final shape = photoShape;
 
     return Tappable(
       onTap: onTap,
       child: Container(
-        width: isCompact ? 140 : double.infinity,
+        width: isCompact ? compactWidth : double.infinity,
         color: Colors.transparent,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min, // Prevents forced stretching
+          mainAxisSize: MainAxisSize.min,
           children: [
             // Image with rounded corners & optional heart badge
             Stack(
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8.0),
-                  child: ColoredBox(
-                    color: scheme.surfaceContainerHighest,
-                    child: isCompact
-                        ? SizedBox(
-                            height: 110,
-                            width: double.infinity,
+                  child: shape != null
+                      ? ListingPhoto(image: image, shape: shape)
+                      : AspectRatio(
+                          aspectRatio: 1,
+                          child: ColoredBox(
+                            color: scheme.surfaceContainerHighest,
                             child: Image(
-                              image: CachedNetworkImageProvider(imageUrl),
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Container(color: scheme.surfaceContainerHighest),
+                              image: image,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) =>
+                                  const SizedBox.expand(),
                             ),
-                          )
-                        : NaturalAspectImage(
-                            imageUrl: imageUrl,
-                            fit: BoxFit.contain,
-                            placeholder: Container(color: scheme.surfaceContainerHighest),
                           ),
-                  ),
+                        ),
                 ),
                 if (badge != null)
                   Positioned(
@@ -271,9 +228,11 @@ class ItemCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 4),
-            // Flexible wrapper around text prevents bottom overflow
-            Flexible(
-              child: Column(
+            // No Flexible here: a flex child asks its Column for bounded
+            // height, and a masonry column or a top-aligned rail has none.
+            // The text is capped by maxLines instead, and fixed-height grids
+            // size their rows for it (see gridDelegate).
+            Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -282,7 +241,7 @@ class ItemCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 12, // Reduced slightly for compact fitting
+                      fontSize: 12,
                       color: scheme.onSurface,
                       height: 1.15,
                     ),
@@ -304,12 +263,18 @@ class ItemCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.baseline,
                     textBaseline: TextBaseline.alphabetic,
                     children: [
-                      Text(
-                        price,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: scheme.onSurface,
+                      // Flexible, so "3.500.000 FCFA nég." in a 140px card
+                      // ellipsises instead of overflowing the row.
+                      Flexible(
+                        child: Text(
+                          price,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: scheme.onSurface,
+                          ),
                         ),
                       ),
                       if (priceTail != null && priceTail!.isNotEmpty) ...[
@@ -349,7 +314,6 @@ class ItemCard extends StatelessWidget {
                   ],
                 ],
               ),
-            ),
           ],
         ),
       ),

@@ -8,7 +8,7 @@ import '../l10n/l10n.dart';
 import '../theme/app_tokens.dart';
 import 'VerifiedBadge.dart';
 import 'home_board.dart';
-import 'image_placeholder.dart';
+import 'listing_photo.dart';
 
 /// What people are actually looking at right now.
 ///
@@ -136,23 +136,31 @@ class _TrendingRailState extends State<TrendingRail> {
                 ),
               )
             else
-              SizedBox(
-                height: 312,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: items.length,
-                  itemBuilder: (context, i) => Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: _TrendingCard(
-                      item: items[i],
-                      rank: i + 1,
-                      onTap: () => widget.onOpen(items[i]),
-                      onMessage: widget.onMessage == null
-                          ? null
-                          : () => widget.onMessage!(items[i]),
-                    ),
-                  ),
+              // A Row in a scroll view rather than a fixed-height ListView:
+              // the cards are as tall as their photos, and the row is as tall
+              // as its tallest card — nothing to guess, nothing to overflow.
+              // Not lazy, which is fine for a row this short; the photos
+              // themselves still load as they are painted.
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(16, 0, 4, 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (var i = 0; i < items.length; i++)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: _TrendingCard(
+                          key: ValueKey(items[i].id),
+                          item: items[i],
+                          rank: i + 1,
+                          onTap: () => widget.onOpen(items[i]),
+                          onMessage: widget.onMessage == null
+                              ? null
+                              : () => widget.onMessage!(items[i]),
+                        ),
+                      ),
+                  ],
                 ),
               ),
           ],
@@ -202,6 +210,7 @@ class _TabChip extends StatelessWidget {
 
 class _TrendingCard extends StatelessWidget {
   const _TrendingCard({
+    super.key,
     required this.item,
     required this.rank,
     required this.onTap,
@@ -213,6 +222,8 @@ class _TrendingCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onMessage;
 
+  static const _width = 224.0;
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -220,7 +231,7 @@ class _TrendingCard extends StatelessWidget {
     final tokens = context.tokens;
 
     return SizedBox(
-      width: 224,
+      width: _width,
       child: Material(
         color: scheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(18),
@@ -229,21 +240,16 @@ class _TrendingCard extends StatelessWidget {
           onTap: onTap,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Stack(
                 children: [
-                  SizedBox(
-                    height: 150,
-                    width: double.infinity,
-                    child: ColoredBox(
-                      color: scheme.surfaceContainerHighest,
-                      child: CachedNetworkImage(
-                        imageUrl: item.primaryImageUrl,
-                        fit: BoxFit.contain,
-                        placeholder: (_, _) => const ImagePlaceholder(),
-                        errorWidget: (_, _, _) => const ImagePlaceholder(),
-                      ),
-                    ),
+                  // Same width on every card, height from the photo, cut at
+                  // the bottom past 4:5.
+                  ListingPhoto(
+                    image: CachedNetworkImageProvider(item.primaryImageUrl),
+                    shape: PhotoShape.rail,
+                    background: scheme.surfaceContainer,
                   ),
                   // Rank. The whole reason somebody looks at this row is to
                   // know what is ahead of what.
@@ -301,6 +307,7 @@ class _TrendingCard extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       item.title,
@@ -311,6 +318,8 @@ class _TrendingCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       item.displayPrice,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: tokens.accentInk,
                         fontWeight: FontWeight.w800,
