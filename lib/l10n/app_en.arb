@@ -2173,5 +2173,6 @@
   "shipCarrierBooked": "Booked with {name}. They will confirm shortly.",
   "@shipCarrierBooked": {"placeholders": {"name": {"type": "String"}}},
   "shipCarrierUnavailable": "This company can no longer take this route. Choose another option.",
-  "shipSummaryCarrier": "Delivery company"
+  "shipSummaryCarrier": "Delivery company",
+  "chatRiderLabel": "🛵 Rider"
 }

@@ -7069,6 +7069,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delivery company'**
   String get shipSummaryCarrier;
+
+  /// No description provided for @chatRiderLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'🛵 Rider'**
+  String get chatRiderLabel;
 }
 
 class _AppLocalizationsDelegate

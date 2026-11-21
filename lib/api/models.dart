@@ -1153,6 +1153,12 @@ class Message {
   final String? moderationCaseId;
   final bool moderationAppealed;
 
+  /// Set when someone other than the two participants wrote: on a delivery
+  /// thread, the assigned rider ('rider'), with their name and company.
+  final String? senderRole;
+  final String? senderName;
+  final String? senderCompany;
+
   const Message({
     required this.id,
     required this.conversationId,
@@ -1169,7 +1175,12 @@ class Message {
     this.moderationReasonFr,
     this.moderationCaseId,
     this.moderationAppealed = false,
+    this.senderRole,
+    this.senderName,
+    this.senderCompany,
   });
+
+  bool get isFromRider => senderRole == 'rider';
 
   bool get isHeld => moderationStatus == 'held';
   bool get isRejected => moderationStatus == 'rejected';
@@ -1226,6 +1237,9 @@ class Message {
         moderationReasonFr: moderationReasonFr,
         moderationCaseId: moderationCaseId,
         moderationAppealed: moderationAppealed ?? this.moderationAppealed,
+        senderRole: senderRole,
+        senderName: senderName,
+        senderCompany: senderCompany,
       );
 
   factory Message.fromJson(Map<String, dynamic> json) => Message(
@@ -1247,6 +1261,9 @@ class Message {
         moderationReasonFr: (((json['moderation'] as Map?)?['reason']) as Map?)?['fr']?.toString(),
         moderationCaseId: ((json['moderation'] as Map?)?['case_id'])?.toString(),
         moderationAppealed: (json['moderation'] as Map?)?['appealed'] == true,
+        senderRole: json['sender_role']?.toString(),
+        senderName: json['sender_name']?.toString(),
+        senderCompany: json['sender_company']?.toString(),
       );
 }
 

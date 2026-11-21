@@ -948,6 +948,21 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
+                                              // On a delivery thread the rider
+                                              // writes here too: say so, so a
+                                              // rider is never taken for the desk.
+                                              if (!mine && m.isFromRider)
+                                                Padding(
+                                                  padding: const EdgeInsets.only(bottom: 4),
+                                                  child: Text(
+                                                    [
+                                                      l10n.chatRiderLabel,
+                                                      if ((m.senderName ?? '').isNotEmpty) m.senderName!,
+                                                      if ((m.senderCompany ?? '').isNotEmpty) m.senderCompany!,
+                                                    ].join(' · '),
+                                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.tokens.accentInk),
+                                                  ),
+                                                ),
                                               if (m.location != null)
                                                 LocationBubble(
                                                     share: m.location!,

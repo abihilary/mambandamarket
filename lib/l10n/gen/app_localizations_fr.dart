@@ -4100,4 +4100,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get shipSummaryCarrier => 'Société de livraison';
+
+  @override
+  String get chatRiderLabel => '🛵 Livreur';
 }

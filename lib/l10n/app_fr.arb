@@ -1718,5 +1718,6 @@
   "shipCarrierBestPrice": "Meilleur prix",
   "shipCarrierBooked": "Réservé avec {name}. Elle va confirmer sous peu.",
   "shipCarrierUnavailable": "Cette société ne peut plus prendre ce trajet. Choisissez une autre option.",
-  "shipSummaryCarrier": "Société de livraison"
+  "shipSummaryCarrier": "Société de livraison",
+  "chatRiderLabel": "🛵 Livreur"
 }
