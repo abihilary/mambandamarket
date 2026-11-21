@@ -115,6 +115,12 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
   String? _quoteKey;
   String? _tier;
 
+  /// Delivery companies quoting this route (POST /carrier/quote), and the
+  /// one the buyer picked. Picking a company clears [_tier] and the other way
+  /// round: one choice books either the house desk or that company.
+  List<CarrierOffer> _carriers = const [];
+  String? _carrierId;
+
   /// The city we put in the From field ourselves, so [_load] can upgrade it
   /// from free text to a catalogue place once the catalogue arrives.
   String _seededFrom = '';
@@ -404,6 +410,8 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
         _quote = ShippingQuote.manual;
         _quoteKey = null;
         _tier = null;
+        _carriers = const [];
+        _carrierId = null;
       });
       return;
     }
@@ -414,18 +422,30 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
       _quoteFailed = false;
     });
     try {
+      // The carrier list is a bonus: if it fails, the house tiers still show.
+      final carriersF = ShippingRepository.instance
+          .carrierQuote(fromPlace: _fromCode, toPlace: _toCode, sizeKey: _sizeCode)
+          .catchError((Object e) {
+        debugPrint('[shipping] carrier quote failed ($e)');
+        return <CarrierOffer>[];
+      });
       final q = await ShippingRepository.instance.quote(
         fromPlace: _fromCode,
         toPlace: _toCode,
         sizeKey: _sizeCode,
       );
+      final carriers = await carriersF;
       if (!mounted) return;
       setState(() {
         _quote = q;
+        _carriers = carriers;
+        if (!carriers.any((c) => c.carrierId == _carrierId)) _carrierId = null;
         _quoteKey = key;
         _quoteLoading = false;
         // Keep their pick if it is still on offer; otherwise the cheapest.
-        _tier = q.options.any((o) => o.tier == _tier)
+        _tier = _carrierId != null
+            ? null
+            : q.options.any((o) => o.tier == _tier)
             ? _tier
             : q.cheapest?.tier;
       });
@@ -445,8 +465,12 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
   ShippingQuoteOption? get _selected =>
       _quote?.options.where((o) => o.tier == _tier).firstOrNull;
 
+  CarrierOffer? get _carrier =>
+      _carriers.where((c) => c.carrierId == _carrierId).firstOrNull;
+
   /// A price is on the table and one option is chosen.
-  bool get _isQuoted => _quote?.quotable == true && _selected != null;
+  bool get _isQuoted =>
+      _carrier != null || (_quote?.quotable == true && _selected != null);
 
   Future<void> _submit() async {
     if (_submitting) return;
@@ -467,6 +491,43 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
       final paths = <String>[];
       for (final photo in _photos) {
         paths.add(await ListingsRepository.instance.uploadChatFile(photo));
+      }
+
+      final carrier = _carrier;
+      if (carrier != null) {
+        final title = _listing?.title ??
+            (_description.text.trim().isNotEmpty ? _description.text.trim() : _url.text.trim());
+        final request = await ShippingRepository.instance.bookCarrier(
+          carrierId: carrier.carrierId,
+          listingId: _listing?.id,
+          itemTitle: title.isEmpty ? l10n.shipSummaryItem : title,
+          itemDescription: _description.text.trim(),
+          sizeKey: _sizeCode,
+          fromPlace: _fromCode,
+          toPlace: _toCode,
+          pickupAddress: _pickupAddress.text,
+          pickupContactName: _pickupName.text,
+          pickupPhone: _pickupPhone.text,
+          contactName: _name.text,
+          contactPhone: _phone.text,
+          deliveryAddress: _address.text,
+          note: _note.text,
+          locale: locale,
+        );
+        if (!mounted) return;
+        await ChatRepository.instance.refresh();
+        unawaited(ShippingRepository.instance.refreshMine());
+        if (!mounted) return;
+        _toast(l10n.shipCarrierBooked(carrier.name));
+        if (request != null) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => ShipmentConfirmedScreen(request: request, conversation: null)),
+          );
+        } else {
+          Navigator.pop(context);
+        }
+        return;
       }
 
       final budget = _budget.text.trim();
@@ -539,6 +600,7 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
         'shipping_unavailable' => l10n.shipUnavailable,
         'rate_limited' => l10n.shipTooMany,
         'listing_unavailable' => l10n.shipListingGone,
+        'not_quotable' => l10n.shipCarrierUnavailable,
         _ => e.message,
       }, error: true);
     } catch (_) {
@@ -722,7 +784,36 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
           ];
         }
         final q = _quote;
-        if (q == null || !q.quotable) return const [_ManualQuoteCard()];
+        final carrierCards = <Widget>[
+          if (_carriers.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Text(
+              l10n.shipCarriersTitle,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l10n.shipCarriersIntro,
+              style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 14),
+            for (final c in _carriers) ...[
+              _CarrierCard(
+                offer: c,
+                currency: q?.currency ?? 'XAF',
+                selected: c.carrierId == _carrierId,
+                onTap: () => setState(() {
+                  _carrierId = c.carrierId;
+                  _tier = null;
+                }),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ],
+        ];
+        if (q == null || !q.quotable) {
+          return [const _ManualQuoteCard(), ...carrierCards];
+        }
         return [
           Text(
             l10n.shipQuoteTitle,
@@ -740,10 +831,14 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
               locale: locale,
               currency: q.currency,
               selected: o.tier == _tier,
-              onTap: () => setState(() => _tier = o.tier),
+              onTap: () => setState(() {
+                _tier = o.tier;
+                _carrierId = null;
+              }),
             ),
             const SizedBox(height: 10),
           ],
+          ...carrierCards,
         ];
 
       case ShippingStep.confirm:
@@ -755,6 +850,7 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
                   : _sizeCustom.text.trim())
             : size.labelFor(locale);
         final chosen = _selected;
+        final chosenCarrier = _carrier;
         return [
           _SummaryCard(
             rows: [
@@ -770,13 +866,22 @@ class _ShippingRequestScreenState extends State<ShippingRequestScreen> {
                 l10n.shipRoute(_fromLocation, _toLocation),
               ),
               (l10n.shipSummarySize, sizeLabel),
-              if (chosen != null)
+              if (chosenCarrier != null)
+                (
+                  l10n.shipSummaryCarrier,
+                  chosenCarrier.etaMinH != null && chosenCarrier.etaMaxH != null
+                      ? '${chosenCarrier.name} · ${l10n.shipCarrierEtaHours(chosenCarrier.etaMinH!, chosenCarrier.etaMaxH!)}'
+                      : chosenCarrier.name,
+                ),
+              if (chosen != null && chosenCarrier == null)
                 (
                   l10n.shipSummaryTier,
                   '${chosen.labelFor(locale)} · ${etaText(l10n, chosen.etaDaysMin, chosen.etaDaysMax)}',
                 ),
             ],
-            price: chosen == null
+            price: chosenCarrier != null
+                ? formatPrice(chosenCarrier.priceCents, currency: _quote?.currency ?? 'XAF')
+                : chosen == null
                 ? null
                 : formatPrice(
                     chosen.priceCents,
@@ -1451,6 +1556,100 @@ class _TierCard extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(width: 12),
+              Icon(
+                selected ? Icons.check_circle : Icons.circle_outlined,
+                color: selected ? tokens.accentInk : scheme.outlineVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One delivery company's offer on the price step: name, price, how soon,
+/// and how many of its riders are free right now.
+class _CarrierCard extends StatelessWidget {
+  const _CarrierCard({
+    required this.offer,
+    required this.currency,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final CarrierOffer offer;
+  final String currency;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final tokens = context.tokens;
+    final free = offer.availableRiders > 0;
+    return Material(
+      color: scheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: selected ? tokens.accentInk : Colors.transparent, width: 2),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: scheme.surface,
+                backgroundImage: offer.logoUrl != null ? NetworkImage(offer.logoUrl!) : null,
+                child: offer.logoUrl == null
+                    ? Text(offer.name.isEmpty ? '?' : offer.name.characters.first.toUpperCase(),
+                        style: TextStyle(fontWeight: FontWeight.w800, color: tokens.accentInk))
+                    : null,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Flexible(
+                        child: Text(offer.name,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                      ),
+                      if (offer.recommended) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(color: tokens.accentInk, borderRadius: BorderRadius.circular(6)),
+                          child: Text(l10n.shipCarrierBestPrice,
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: scheme.surface)),
+                        ),
+                      ],
+                    ]),
+                    const SizedBox(height: 3),
+                    Text(
+                      [
+                        if (offer.etaMinH != null && offer.etaMaxH != null)
+                          l10n.shipCarrierEtaHours(offer.etaMinH!, offer.etaMaxH!),
+                        l10n.shipCarrierRiders(offer.availableRiders),
+                      ].join(' · '),
+                      style: TextStyle(fontSize: 13, color: free ? scheme.onSurfaceVariant : scheme.error),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                formatPrice(offer.priceCents, currency: currency),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: tokens.accentInk),
               ),
               const SizedBox(width: 12),
               Icon(

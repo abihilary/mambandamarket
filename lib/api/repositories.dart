@@ -1568,6 +1568,43 @@ class OrdersRepository {
     );
   }
 
+  /// Pays with a mobile-money wallet, picking the processor for it.
+  ///
+  /// MTN goes straight to MTN MoMo (`mtn_momo`): the buyer gets the USSD prompt
+  /// and [refreshPayment] reports the outcome. If the server has no MTN keys
+  /// yet (`provider_not_configured`) it falls back to Campay, which fronts
+  /// both wallets — so the app works before and after MoMo is switched on.
+  /// Orange Money always goes through Campay.
+  Future<({String status, String? redirectUrl, String provider})> payWallet(
+    String id, {
+    required String method,
+    required String phone,
+  }) async {
+    if (method == 'mtn_momo') {
+      try {
+        final r = await pay(id, provider: 'mtn_momo', method: method, phone: phone);
+        return (status: r.status, redirectUrl: r.redirectUrl, provider: 'mtn_momo');
+      } on ApiException catch (e) {
+        if (e.code != 'provider_not_configured') rethrow;
+      }
+    }
+    final r = await pay(id, provider: 'campay', method: method, phone: phone);
+    return (status: r.status, redirectUrl: r.redirectUrl, provider: 'campay');
+  }
+
+  /// Asks the server to check the latest payment with MTN now (instead of
+  /// waiting for the callback). Returns the payment and order states.
+  Future<({String paymentStatus, String orderStatus, String? failureReason})> refreshPayment(String id) async {
+    final json = await _api.post('/orders/$id/pay/refresh') as Map<String, dynamic>;
+    final payment = (json['payment'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final order = (json['order'] as Map?)?.cast<String, dynamic>() ?? const {};
+    return (
+      paymentStatus: payment['status']?.toString() ?? 'pending',
+      orderStatus: order['status']?.toString() ?? 'pending_payment',
+      failureReason: payment['failure_reason']?.toString(),
+    );
+  }
+
   /// Buyer confirms delivery — this is what releases the escrowed money to the
   /// company, so callers must confirm intent before calling it.
   Future<void> confirm(String id) => _api.post('/orders/$id/confirm');

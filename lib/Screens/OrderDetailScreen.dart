@@ -19,7 +19,12 @@ import '../api/open_link.dart';
 class OrderDetailScreen extends StatefulWidget {
   final String orderId;
 
-  const OrderDetailScreen({super.key, required this.orderId});
+  /// True right after an MTN MoMo payment was started: the screen asks the
+  /// server for the outcome every few seconds while the buyer approves the
+  /// prompt on their phone.
+  final bool awaitingMomo;
+
+  const OrderDetailScreen({super.key, required this.orderId, this.awaitingMomo = false});
 
   @override
   State<OrderDetailScreen> createState() => _OrderDetailScreenState();
@@ -40,10 +45,46 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   /// confirm and cancel stay off until the server answers again.
   SavedReason? _savedReason;
 
+  /// An MTN MoMo payment is waiting for the buyer's approval on the phone.
+  bool _momoWaiting = false;
+
   @override
   void initState() {
     super.initState();
     _load();
+    if (widget.awaitingMomo) _watchMomo();
+  }
+
+  /// Polls `/orders/:id/pay/refresh` (which asks MTN directly) until the
+  /// order is paid, the payment fails, or about two minutes pass. Leaving the
+  /// screen stops it; the payment still settles server-side.
+  Future<void> _watchMomo() async {
+    if (_momoWaiting) return;
+    setState(() => _momoWaiting = true);
+    final l10n = context.l10n;
+    String? outcome;
+    for (var i = 0; i < 30 && mounted; i++) {
+      await Future<void>.delayed(const Duration(seconds: 4));
+      if (!mounted) return;
+      try {
+        final r = await OrdersRepository.instance.refreshPayment(widget.orderId);
+        if (r.orderStatus != 'pending_payment') {
+          outcome = l10n.momoPaid;
+          break;
+        }
+        if (r.paymentStatus == 'failed') {
+          outcome = l10n.momoFailed(r.failureReason ?? '—');
+          break;
+        }
+      } catch (_) {
+        // A dropped connection is not a failed payment; keep asking.
+      }
+    }
+    if (!mounted) return;
+    setState(() => _momoWaiting = false);
+    await _load();
+    if (!mounted || outcome == null) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(outcome)));
   }
 
   Future<void> _load() async {
@@ -191,12 +232,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     setState(() => _busy = true);
     var message = l10n.checkoutPaymentPending;
     try {
-      final payment = await OrdersRepository.instance.pay(
+      final payment = await OrdersRepository.instance.payWallet(
         order.id,
-        provider: 'campay',
         method: choice.method,
         phone: choice.phone,
       );
+      if (payment.provider == 'mtn_momo') {
+        await _load();
+        if (!mounted) return;
+        setState(() => _busy = false);
+        _watchMomo();
+        return;
+      }
       final url = payment.redirectUrl;
       if (url != null && url.isNotEmpty) {
         final opened = await openExternal(Uri.parse(url), afterAwait: true);
@@ -248,6 +295,36 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   // --- WIDGET BUILDERS ---
 
+  Widget _momoWaitingCard(AppLocalizations l10n) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5)),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.momoWaitingTitle,
+                    style: TextStyle(fontWeight: FontWeight.bold, color: scheme.onPrimaryContainer)),
+                const SizedBox(height: 4),
+                Text(l10n.momoWaitingBody,
+                    style: TextStyle(fontSize: 13, color: scheme.onPrimaryContainer)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _orderList(AppLocalizations l10n, api.Order order) {
     return RefreshIndicator(
       onRefresh: _load,
@@ -255,6 +332,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           _headerCard(l10n, order),
+          if (_momoWaiting) ...[
+            const SizedBox(height: 16),
+            _momoWaitingCard(l10n),
+          ],
           const SizedBox(height: 16),
           _escrowCard(l10n, order),
           // Above the items: when a driver is at the door, the

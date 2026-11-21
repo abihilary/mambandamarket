@@ -6997,6 +6997,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'More options…'**
   String get shareMoreOptions;
+
+  /// No description provided for @momoWaitingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for your approval'**
+  String get momoWaitingTitle;
+
+  /// No description provided for @momoWaitingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve the MTN MoMo prompt on your phone (or dial *126#). This page updates by itself.'**
+  String get momoWaitingBody;
+
+  /// No description provided for @momoPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment received.'**
+  String get momoPaid;
+
+  /// No description provided for @momoFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The payment was not completed: {reason}'**
+  String momoFailed(String reason);
+
+  /// No description provided for @shipCarriersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery companies'**
+  String get shipCarriersTitle;
+
+  /// No description provided for @shipCarriersIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Book directly with a verified delivery company.'**
+  String get shipCarriersIntro;
+
+  /// No description provided for @shipCarrierRiders.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No rider free right now} =1{1 rider available} other{{count} riders available}}'**
+  String shipCarrierRiders(int count);
+
+  /// No description provided for @shipCarrierEtaHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{min}–{max} h'**
+  String shipCarrierEtaHours(int min, int max);
+
+  /// No description provided for @shipCarrierBestPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Best price'**
+  String get shipCarrierBestPrice;
+
+  /// No description provided for @shipCarrierBooked.
+  ///
+  /// In en, this message translates to:
+  /// **'Booked with {name}. They will confirm shortly.'**
+  String shipCarrierBooked(String name);
+
+  /// No description provided for @shipCarrierUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This company can no longer take this route. Choose another option.'**
+  String get shipCarrierUnavailable;
+
+  /// No description provided for @shipSummaryCarrier.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery company'**
+  String get shipSummaryCarrier;
 }
 
 class _AppLocalizationsDelegate

@@ -131,6 +131,68 @@ class ShippingRepository {
     return ShippingQuote.fromJson(json);
   }
 
+  /// Delivery companies that can take this route, priced from their own
+  /// published rate cards (POST /carrier/quote). The house desk is left out:
+  /// its tiers come from [quote]. Unquotable carriers are kept so the screen
+  /// can say why; the list is already sorted best-first by the server.
+  Future<List<CarrierOffer>> carrierQuote({
+    required String fromPlace,
+    required String toPlace,
+    required String sizeKey,
+  }) async {
+    final json = await ApiClient.instance.post('/carrier/quote', {
+      'from': fromPlace,
+      'to': toPlace,
+      'size_key': sizeKey,
+    }) as Map<String, dynamic>;
+    return (json['options'] as List? ?? const [])
+        .whereType<Map>()
+        .map((m) => CarrierOffer.fromJson(m.cast<String, dynamic>()))
+        .where((o) => !o.isHouse && o.quotable)
+        .toList();
+  }
+
+  /// Books the delivery with one company. The server re-prices it, creates
+  /// the request (MB-xxxxx reference, thread, documents) and offers it to the
+  /// company; nothing the client showed is trusted.
+  Future<ShippingRequest?> bookCarrier({
+    required String carrierId,
+    String? listingId,
+    required String itemTitle,
+    String? itemDescription,
+    required String sizeKey,
+    required String fromPlace,
+    required String toPlace,
+    String? pickupAddress,
+    String? pickupContactName,
+    String? pickupPhone,
+    String? contactName,
+    required String contactPhone,
+    String? deliveryAddress,
+    String? note,
+    String locale = 'fr',
+  }) async {
+    String? opt(String? v) => v == null || v.trim().isEmpty ? null : v.trim();
+    final json = await ApiClient.instance.post('/carrier/book', {
+      'carrier_id': carrierId,
+      if (listingId != null) 'listing_id': listingId,
+      'item_title': itemTitle.length > 200 ? itemTitle.substring(0, 200) : itemTitle,
+      if (opt(itemDescription) != null) 'item_description': opt(itemDescription),
+      'size_key': sizeKey,
+      'from_place': fromPlace,
+      'to_place': toPlace,
+      if (opt(pickupAddress) != null) 'pickup_address': opt(pickupAddress),
+      if (opt(pickupContactName) != null) 'pickup_contact_name': opt(pickupContactName),
+      if (opt(pickupPhone) != null) 'pickup_phone': opt(pickupPhone),
+      if (opt(contactName) != null) 'contact_name': opt(contactName),
+      'contact_phone': contactPhone.trim(),
+      if (opt(deliveryAddress) != null) 'delivery_address': opt(deliveryAddress),
+      if (opt(note) != null) 'note': opt(note),
+      'locale': locale,
+    }) as Map<String, dynamic>;
+    return ShippingRequest.fromJson((json['request'] as Map?)?.cast<String, dynamic>());
+  }
+
   /// Say yes to a price the desk set.
   Future<ShippingRequest?> accept(String id) async {
     final json = await ApiClient.instance.post('/shipping-requests/$id/accept') as Map<String, dynamic>;
@@ -254,5 +316,51 @@ class ShippingRepository {
     } catch (_) {
       // Storage unavailable — the value still applies for this session.
     }
+  }
+}
+
+/// One delivery company's price for a route (from POST /carrier/quote).
+class CarrierOffer {
+  final String carrierId;
+  final String name;
+  final String? logoUrl;
+  final bool isHouse;
+  final bool quotable;
+  final String? reason;
+  final int priceCents;
+  final int? etaMinH;
+  final int? etaMaxH;
+  final int availableRiders;
+  final bool recommended;
+
+  const CarrierOffer({
+    required this.carrierId,
+    required this.name,
+    this.logoUrl,
+    required this.isHouse,
+    required this.quotable,
+    this.reason,
+    required this.priceCents,
+    this.etaMinH,
+    this.etaMaxH,
+    required this.availableRiders,
+    required this.recommended,
+  });
+
+  factory CarrierOffer.fromJson(Map<String, dynamic> j) {
+    int? i(Object? v) => v is num ? v.round() : int.tryParse('${v ?? ''}');
+    return CarrierOffer(
+      carrierId: '${j['carrier_id']}',
+      name: '${j['carrier_name'] ?? ''}',
+      logoUrl: j['logo_url'] as String?,
+      isHouse: j['is_house'] == true,
+      quotable: j['quotable'] == true,
+      reason: j['reason'] as String?,
+      priceCents: i(j['price_cents']) ?? 0,
+      etaMinH: i(j['eta_min_h']),
+      etaMaxH: i(j['eta_max_h']),
+      availableRiders: i(j['available_riders']) ?? 0,
+      recommended: j['recommended'] == true,
+    );
   }
 }

@@ -4046,4 +4046,58 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get shareMoreOptions => 'Plus d\'options…';
+
+  @override
+  String get momoWaitingTitle => 'En attente de votre validation';
+
+  @override
+  String get momoWaitingBody =>
+      'Validez la demande MTN MoMo sur votre téléphone (ou composez *126#). Cette page se met à jour toute seule.';
+
+  @override
+  String get momoPaid => 'Paiement reçu.';
+
+  @override
+  String momoFailed(String reason) {
+    return 'Le paiement n\'a pas abouti : $reason';
+  }
+
+  @override
+  String get shipCarriersTitle => 'Sociétés de livraison';
+
+  @override
+  String get shipCarriersIntro =>
+      'Réservez directement auprès d\'une société de livraison vérifiée.';
+
+  @override
+  String shipCarrierRiders(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count livreurs disponibles',
+      one: '1 livreur disponible',
+      zero: 'Aucun livreur libre pour le moment',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shipCarrierEtaHours(int min, int max) {
+    return '$min–$max h';
+  }
+
+  @override
+  String get shipCarrierBestPrice => 'Meilleur prix';
+
+  @override
+  String shipCarrierBooked(String name) {
+    return 'Réservé avec $name. Elle va confirmer sous peu.';
+  }
+
+  @override
+  String get shipCarrierUnavailable =>
+      'Cette société ne peut plus prendre ce trajet. Choisissez une autre option.';
+
+  @override
+  String get shipSummaryCarrier => 'Société de livraison';
 }

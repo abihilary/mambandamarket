@@ -144,13 +144,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       // The order now exists. Whatever the payment leg does, the user must end
       // up on it — losing the screen would leave them unable to pay or cancel.
       var message = l10n.checkoutPaymentPending;
+      var awaitingMomo = false;
       try {
-        final payment = await OrdersRepository.instance.pay(
+        // MTN goes straight to MTN MoMo when the server has the keys, and
+        // falls back to Campay otherwise; Orange Money uses Campay.
+        final payment = await OrdersRepository.instance.payWallet(
           order.id,
-          provider: 'campay',
           method: _method,
           phone: _momoController.text.trim(),
         );
+        awaitingMomo = payment.provider == 'mtn_momo';
         final url = payment.redirectUrl;
         if (url != null && url.isNotEmpty) {
           final opened = await openExternal(Uri.parse(url), afterAwait: true);
@@ -166,7 +169,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => OrderDetailScreen(orderId: order.id),
+          builder: (_) => OrderDetailScreen(orderId: order.id, awaitingMomo: awaitingMomo),
         ),
       );
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));

@@ -3982,4 +3982,58 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareMoreOptions => 'More options…';
+
+  @override
+  String get momoWaitingTitle => 'Waiting for your approval';
+
+  @override
+  String get momoWaitingBody =>
+      'Approve the MTN MoMo prompt on your phone (or dial *126#). This page updates by itself.';
+
+  @override
+  String get momoPaid => 'Payment received.';
+
+  @override
+  String momoFailed(String reason) {
+    return 'The payment was not completed: $reason';
+  }
+
+  @override
+  String get shipCarriersTitle => 'Delivery companies';
+
+  @override
+  String get shipCarriersIntro =>
+      'Book directly with a verified delivery company.';
+
+  @override
+  String shipCarrierRiders(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count riders available',
+      one: '1 rider available',
+      zero: 'No rider free right now',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shipCarrierEtaHours(int min, int max) {
+    return '$min–$max h';
+  }
+
+  @override
+  String get shipCarrierBestPrice => 'Best price';
+
+  @override
+  String shipCarrierBooked(String name) {
+    return 'Booked with $name. They will confirm shortly.';
+  }
+
+  @override
+  String get shipCarrierUnavailable =>
+      'This company can no longer take this route. Choose another option.';
+
+  @override
+  String get shipSummaryCarrier => 'Delivery company';
 }

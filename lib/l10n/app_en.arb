@@ -2157,5 +2157,21 @@
   "shareCopied": "Link copied",
   "shareWhatsApp": "Send on WhatsApp",
   "shareFacebook": "Share on Facebook",
-  "shareMoreOptions": "More options…"
+  "shareMoreOptions": "More options…",
+  "momoWaitingTitle": "Waiting for your approval",
+  "momoWaitingBody": "Approve the MTN MoMo prompt on your phone (or dial *126#). This page updates by itself.",
+  "momoPaid": "Payment received.",
+  "momoFailed": "The payment was not completed: {reason}",
+  "@momoFailed": {"placeholders": {"reason": {"type": "String"}}},
+  "shipCarriersTitle": "Delivery companies",
+  "shipCarriersIntro": "Book directly with a verified delivery company.",
+  "shipCarrierRiders": "{count, plural, =0{No rider free right now} =1{1 rider available} other{{count} riders available}}",
+  "@shipCarrierRiders": {"placeholders": {"count": {"type": "int"}}},
+  "shipCarrierEtaHours": "{min}–{max} h",
+  "@shipCarrierEtaHours": {"placeholders": {"min": {"type": "int"}, "max": {"type": "int"}}},
+  "shipCarrierBestPrice": "Best price",
+  "shipCarrierBooked": "Booked with {name}. They will confirm shortly.",
+  "@shipCarrierBooked": {"placeholders": {"name": {"type": "String"}}},
+  "shipCarrierUnavailable": "This company can no longer take this route. Choose another option.",
+  "shipSummaryCarrier": "Delivery company"
 }

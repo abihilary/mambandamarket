@@ -1706,5 +1706,17 @@
   "shareCopied": "Lien copié",
   "shareWhatsApp": "Envoyer sur WhatsApp",
   "shareFacebook": "Partager sur Facebook",
-  "shareMoreOptions": "Plus d'options…"
+  "shareMoreOptions": "Plus d'options…",
+  "momoWaitingTitle": "En attente de votre validation",
+  "momoWaitingBody": "Validez la demande MTN MoMo sur votre téléphone (ou composez *126#). Cette page se met à jour toute seule.",
+  "momoPaid": "Paiement reçu.",
+  "momoFailed": "Le paiement n'a pas abouti : {reason}",
+  "shipCarriersTitle": "Sociétés de livraison",
+  "shipCarriersIntro": "Réservez directement auprès d'une société de livraison vérifiée.",
+  "shipCarrierRiders": "{count, plural, =0{Aucun livreur libre pour le moment} =1{1 livreur disponible} other{{count} livreurs disponibles}}",
+  "shipCarrierEtaHours": "{min}–{max} h",
+  "shipCarrierBestPrice": "Meilleur prix",
+  "shipCarrierBooked": "Réservé avec {name}. Elle va confirmer sous peu.",
+  "shipCarrierUnavailable": "Cette société ne peut plus prendre ce trajet. Choisissez une autre option.",
+  "shipSummaryCarrier": "Société de livraison"
 }
