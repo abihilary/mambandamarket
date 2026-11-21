@@ -1706,6 +1706,24 @@ abstract class AppLocalizations {
   /// **'Continue'**
   String get referralContinue;
 
+  /// No description provided for @referralBodyLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code of the friend who invited you. It can only be used once.'**
+  String get referralBodyLater;
+
+  /// No description provided for @inviteEnterFriendsCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Invited by a friend? Enter their code'**
+  String get inviteEnterFriendsCode;
+
+  /// No description provided for @inviteFriendsCodeSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks! Your friend has been credited.'**
+  String get inviteFriendsCodeSaved;
+
   /// No description provided for @referralHeading.
   ///
   /// In en, this message translates to:
@@ -1715,7 +1733,7 @@ abstract class AppLocalizations {
   /// No description provided for @referralBody.
   ///
   /// In en, this message translates to:
-  /// **'If a friend invited you, enter their code below. You can skip this step.'**
+  /// **'If a friend invited you, enter their code below. You can skip this and add it later from Invite friends.'**
   String get referralBody;
 
   /// No description provided for @referralCodeOptional.

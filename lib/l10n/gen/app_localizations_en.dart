@@ -914,11 +914,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get referralContinue => 'Continue';
 
   @override
+  String get referralBodyLater =>
+      'Enter the code of the friend who invited you. It can only be used once.';
+
+  @override
+  String get inviteEnterFriendsCode => 'Invited by a friend? Enter their code';
+
+  @override
+  String get inviteFriendsCodeSaved => 'Thanks! Your friend has been credited.';
+
+  @override
   String get referralHeading => 'Have a referral code?';
 
   @override
   String get referralBody =>
-      'If a friend invited you, enter their code below. You can skip this step.';
+      'If a friend invited you, enter their code below. You can skip this and add it later from Invite friends.';
 
   @override
   String get referralCodeOptional => 'Referral code (optional)';

@@ -13,6 +13,7 @@ import '../Components/safe_bottom.dart';
 import '../theme/breakpoints.dart';
 import '../api/share_links.dart';
 import '../Components/web_share_flow.dart';
+import '../Components/ReferalScreen.dart';
 
 /// The other half of referrals: the code you give out, and what it has earned.
 ///
@@ -52,6 +53,18 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
         _failed = true;
       });
     }
+  }
+
+  Future<void> _enterFriendsCode() async {
+    final claimed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => const ReferralScreen(nextRoute: null)),
+    );
+    if (claimed != true || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.l10n.inviteFriendsCodeSaved)),
+    );
+    _load();
   }
 
   Future<void> _showEditCodeDialog(String? currentCode) async {
@@ -284,6 +297,22 @@ class _InviteFriendsScreenState extends State<InviteFriendsScreen> {
                     style: TextStyle(
                         color: cs.onSurfaceVariant, fontSize: 13, height: 1.4),
                   ),
+
+                  // Someone who skipped the code step at sign-up can still
+                  // credit whoever invited them — the server accepts a code
+                  // any time until one has been used. Without this, "Skip for
+                  // now" meant never.
+                  if (s != null && !s.hasReferrer) ...[
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: _enterFriendsCode,
+                        icon: const Icon(Icons.confirmation_number_outlined, size: 18),
+                        label: Text(l10n.inviteEnterFriendsCode),
+                      ),
+                    ),
+                  ],
 
                   if (s?.hasReferrer == true) ...[
                     const SizedBox(height: 12),

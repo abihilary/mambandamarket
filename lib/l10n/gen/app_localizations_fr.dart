@@ -925,11 +925,21 @@ class AppLocalizationsFr extends AppLocalizations {
   String get referralContinue => 'Continuer';
 
   @override
+  String get referralBodyLater =>
+      'Saisissez le code de l’ami qui vous a invité. Il ne peut être utilisé qu’une fois.';
+
+  @override
+  String get inviteEnterFriendsCode => 'Invité par un ami ? Saisissez son code';
+
+  @override
+  String get inviteFriendsCodeSaved => 'Merci ! Votre ami a été crédité.';
+
+  @override
   String get referralHeading => 'Vous avez un code de parrainage ?';
 
   @override
   String get referralBody =>
-      'Si un ami vous a invité, saisissez son code ci-dessous. Vous pouvez passer cette étape.';
+      'Si un ami vous a invité, saisissez son code ci-dessous. Vous pouvez passer cette étape et l’ajouter plus tard depuis Inviter des amis.';
 
   @override
   String get referralCodeOptional => 'Code de parrainage (facultatif)';

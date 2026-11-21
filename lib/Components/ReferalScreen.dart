@@ -13,10 +13,15 @@ import '../theme/breakpoints.dart';
 /// referred name any referrer they liked — including themselves. The server
 /// validates the code, refuses self-referral, and sets the attribution once.
 class ReferralScreen extends StatefulWidget {
-  /// Where to go once the step is done or skipped.
-  final String nextRoute;
+  /// Where to go once the step is done or skipped. Null when it is opened
+  /// later from Invite friends: it then pops back, with `true` once a code was
+  /// accepted.
+  final String? nextRoute;
 
   const ReferralScreen({super.key, required this.nextRoute});
+
+  /// Opened from inside the app rather than as a step of onboarding.
+  bool get isDetour => nextRoute == null;
 
   @override
   State<ReferralScreen> createState() => _ReferralScreenState();
@@ -27,14 +32,34 @@ class _ReferralScreenState extends State<ReferralScreen> {
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    _prefill();
+  }
+
+  /// A code parked from an invite link (/r/<code>) fills the box, so nobody who
+  /// arrived with one has to type it — the sign-up form already did this, the
+  /// Google route did not.
+  Future<void> _prefill() async {
+    final parked = await AuthService.instance.pendingReferralCode();
+    if (!mounted || parked == null || _referralController.text.isNotEmpty) return;
+    _referralController.text = parked;
+  }
+
+  @override
   void dispose() {
     _referralController.dispose();
     super.dispose();
   }
 
-  void _proceedToNext() {
+  void _proceedToNext({bool claimed = false}) {
     if (!mounted) return;
-    Navigator.pushNamedAndRemoveUntil(context, widget.nextRoute, (_) => false);
+    final next = widget.nextRoute;
+    if (next == null) {
+      Navigator.pop(context, claimed);
+      return;
+    }
+    Navigator.pushNamedAndRemoveUntil(context, next, (_) => false);
   }
 
   Future<void> _handleSubmit() async {
@@ -47,7 +72,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
     setState(() => _isLoading = true);
     try {
       await ReferralsRepository.instance.apply(code);
-      _proceedToNext();
+      await AuthService.instance.clearPendingReferral();
+      _proceedToNext(claimed: true);
     } on ApiException catch (e) {
       // The profile row has not caught up with the session yet. That is the one
       // refusal worth retrying, so park the code and move on rather than
@@ -83,9 +109,10 @@ class _ReferralScreenState extends State<ReferralScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.referralTitle),
-        automaticallyImplyLeading: false,
+        automaticallyImplyLeading: widget.isDetour,
         elevation: 0,
         actions: [
+          if (!widget.isDetour)
           TextButton(
             onPressed: _isLoading ? null : _proceedToNext,
             child: Text(l10n.referralSkip),
@@ -112,7 +139,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                l10n.referralBody,
+                widget.isDetour ? l10n.referralBodyLater : l10n.referralBody,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: theme.colorScheme.onSurfaceVariant,
@@ -157,6 +184,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                             fontSize: 16, fontWeight: FontWeight.bold),
                       ),
               ),
+              if (!widget.isDetour) ...[
               const SizedBox(height: 12),
               OutlinedButton(
                 onPressed: _isLoading ? null : _proceedToNext,
@@ -167,6 +195,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 ),
                 child: Text(l10n.referralSkipForNow),
               ),
+              ],
             ],
           ),
         ),

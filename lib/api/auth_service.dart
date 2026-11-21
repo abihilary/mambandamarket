@@ -517,6 +517,15 @@ class AuthService {
     }
   }
 
+  /// Forget the parked code once it has been claimed some other way (typed
+  /// into the referral step), so it is not sent a second time.
+  Future<void> clearPendingReferral() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_kPendingReferral);
+    } catch (_) {}
+  }
+
   /// The code parked on this device, if any — from the sign-up form or from
   /// an invite link (/r/<code>) opened before the account existed. The sign-up
   /// form shows it, so nobody types a code they arrived with.
@@ -554,8 +563,10 @@ class AuthService {
     }
     if (code == null || code.isEmpty) return false;
 
+    var accepted = false;
     try {
       await ApiClient.instance.post('/referrals/apply', {'code': code});
+      accepted = true;
     } on ApiException catch (e) {
       // The server reached a verdict. Anything other than "not ready yet" is
       // final — clear the code so this stops running on every launch.
@@ -565,9 +576,12 @@ class AuthService {
         try {
           await syncProfile();
           await ApiClient.instance.post('/referrals/apply', {'code': code});
+          accepted = true;
         } catch (_) {
           return false; // keep the code
         }
+      } else if (e.code == 'already_referred') {
+        accepted = true; // credited already: nothing left to ask
       }
     } catch (_) {
       // Offline, or the server is unhappy. Keep the code: discarding it here
@@ -576,6 +590,10 @@ class AuthService {
       return false;
     }
     await prefs.remove(_kPendingReferral);
+    // The invite link already credited whoever sent it, so the "Have a
+    // referral code?" step after a Google sign-up has nothing left to ask —
+    // and asking anyway ends in "You have already used a referral code".
+    if (accepted) justSignedUpSocially = false;
     return true;
   }
 
